@@ -23,14 +23,16 @@ export class PrevioService {
 
   getFacturasCalculadas(): Observable<any[]> {
     if (this.facturasCalculadasCache.value) return of(this.facturasCalculadasCache.value);
-    
+
     return this.http.get<any[]>(`${this.apiUrl}/monitor_odoo`).pipe(
       tap(data => this.facturasCalculadasCache.next(data))
-    ); 
+    );
   }
 
-  obtenerPrevio(): Observable<any[]> {
-    if (this.previoCache.value) return of(this.previoCache.value);
+  obtenerPrevio(forceRefresh: boolean = false): Observable<any[]> {
+    if (!forceRefresh && this.previoCache.value) {
+      return of(this.previoCache.value);
+    }
 
     return this.http.get<any[]>(`${this.apiUrl}/obtener_previo`).pipe(
       tap(data => this.previoCache.next(data))
@@ -45,5 +47,13 @@ export class PrevioService {
 
   obtenerPrevioSinIntegrales(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/obtener_previo_int`);
+  }
+
+  recalcularPrevio(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/recalcular_previo`, {});
+  }
+
+  limpiarCachePrevio(): void {
+    this.previoCache.next(null);
   }
 }

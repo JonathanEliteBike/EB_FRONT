@@ -48,10 +48,10 @@
     <p>No se pudieron cargar los datos o no hay clientes disponibles.</p>
   </div>
 
-  <div class="tabla-scroll-wrapper" *ngIf="!cargando && (clientesPaginados.length > 0 || integrales.length > 0)">
+  <div class="tabla-scroll-wrapper" *ngIf="tablaLista && !cargando && (clientesPaginados.length > 0 || integralesOriginal.length > 0)">
 
     <div class="dummy-scroll-wrapper" #dummyScroll (scroll)="tablaContainer.scrollLeft = dummyScroll.scrollLeft">
-      <div class="dummy-scroll-content" [style.width.px]="tabla.offsetWidth"></div>
+      <div class="dummy-scroll-content" [style.width.px]="tablaWidth"></div>
     </div>
 
     <div class="tabla-contenedor" #tablaContainer (scroll)="dummyScroll.scrollLeft = tablaContainer.scrollLeft">
@@ -432,15 +432,18 @@
 
               <td class="td-number">{{ integral.compromiso_ene_feb_app | currency:'USD':'$':'1.2-2' }}</td>
               <td class="td-number">{{ integral.avance_ene_feb_app | currency:'USD':'$':'1.2-2' }}</td>
-              <td>{{ (integral.avance_ene_feb_app || 0) / (integral.compromiso_ene_feb_app || 1) | percent:'1.0-0' }}</td>
+              <td>{{ (integral.avance_ene_feb_app || 0) / (integral.compromiso_ene_feb_app || 1) | percent:'1.0-0' }}
+              </td>
 
               <td class="td-number">{{ integral.compromiso_mar_abr_app | currency:'USD':'$':'1.2-2' }}</td>
               <td class="td-number">{{ integral.avance_mar_abr_app | currency:'USD':'$':'1.2-2' }}</td>
-              <td>{{ (integral.avance_mar_abr_app || 0) / (integral.compromiso_mar_abr_app || 1) | percent:'1.0-0' }}</td>
+              <td>{{ (integral.avance_mar_abr_app || 0) / (integral.compromiso_mar_abr_app || 1) | percent:'1.0-0' }}
+              </td>
 
               <td class="td-number">{{ integral.compromiso_may_jun_app | currency:'USD':'$':'1.2-2' }}</td>
               <td class="td-number">{{ integral.avance_may_jun_app | currency:'USD':'$':'1.2-2' }}</td>
-              <td>{{ (integral.avance_may_jun_app || 0) / (integral.compromiso_may_jun_app || 1) | percent:'1.0-0' }}</td>
+              <td>{{ (integral.avance_may_jun_app || 0) / (integral.compromiso_may_jun_app || 1) | percent:'1.0-0' }}
+              </td>
 
               <td class="td-number">{{ integral.acumulado_syncros | currency:'USD':'$':'1.2-2' }}</td>
               <td class="td-number">{{ integral.acumulado_apparel | currency:'USD':'$':'1.2-2' }}</td>

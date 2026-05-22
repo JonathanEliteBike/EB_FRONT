@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, Input, Output, EventEmitter, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { ClientesService } from '../../../services/clientes.service';
@@ -12,6 +11,7 @@ import * as XLSX from 'xlsx';
 
 import { FechaActualizacionComponent } from '../../../components/fecha-actualizacion/fecha-actualizacion.component';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 interface Cliente {
   clave: string;
@@ -117,10 +117,17 @@ interface ClienteConAcumulado extends Cliente {
   styleUrl: './previo.component.css'
 })
 
-export class PrevioComponent implements OnInit, OnDestroy {
+export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
   @Output() onInit = new EventEmitter<void>();
 
   datosPrevio: any[] = [];
+
+  @ViewChild('tablaContainer') tablaContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('dummyScroll') dummyScroll?: ElementRef<HTMLDivElement>;
+  @ViewChild('tabla') tabla?: ElementRef<HTMLTableElement>;
+
+  tablaWidth = 0;
+  tablaLista = false;
 
   tooltipPosition: { x: number, y: number } = { x: 0, y: 0 };
   clienteParaTooltip: any = null;
@@ -293,46 +300,100 @@ export class PrevioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargando = true;
 
-    Promise.all([
-      this.clientesService.getClientes().toPromise(),
-      this.previoService.getFacturasCalculadas().toPromise()
-    ]).then(([clientes, facturas]) => {
-      this.facturas = facturas ?? [];
+    this.cargarDatosPrevio();
 
-      this.filtroService.filtroAbierto$.subscribe(filtroId => {
-        this.filtroActivo = filtroId;
+    this.filtroService.filtroAbierto$.subscribe(filtroId => {
+      this.filtroActivo = filtroId;
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.sincronizarRenderTabla();
+  }
+
+  private sincronizarRenderTabla(): void {
+    setTimeout(() => {
+      if (!this.tabla?.nativeElement) {
+        return;
+      }
+
+      const anchoTabla =
+        this.tabla.nativeElement.scrollWidth ||
+        this.tabla.nativeElement.offsetWidth ||
+        0;
+
+      this.tablaWidth = anchoTabla;
+
+      if (this.tablaContainer?.nativeElement && this.dummyScroll?.nativeElement) {
+        this.dummyScroll.nativeElement.scrollLeft = this.tablaContainer.nativeElement.scrollLeft;
+      }
+
+      this.cd.detectChanges();
+
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('resize'));
       });
+    }, 100);
+  }
 
-      // 1. Mapear clientes (Cálculo en memoria)
-      const todosClientes = (clientes || []).map((cliente: Cliente) => {
-        const res = this.calcularAcumulados(cliente, this.facturas);
-        const fechaInicio = cliente.f_inicio ? new Date(cliente.f_inicio) : new Date('2025-07-01');
+  private cargarDatosPrevio(): void {
+    this.cargando = true;
+    this.tablaLista = false;
 
-        return {
-          ...cliente,
-          ...res,
-          acumulado_anticipado: res.acumulado,
-          avance_global_scott: res.scott,
-          fecha_inicio_calculo: fechaInicio.toISOString().split('T')[0]
-        };
-      });
+    this.previoService.obtenerPrevio(true).subscribe({
+      next: (datosBackend) => {
+        console.log('Datos recibidos de /obtener_previo:', datosBackend);
+        console.log('Primer registro:', datosBackend?.[0]);
 
-      // 2. Procesar integrales
-      this.clientesOriginal = this.procesarIntegrales(todosClientes);
+        const datos = this.procesarDatosDelEndpoint(datosBackend || []).map(c => ({
+          ...c,
+          esIntegral: c['es_integral'] === 1 || c['es_integral'] === true,
+          grupoIntegral: c['grupo_integral']
+        }));
 
-      // 3. Combinar datos
-      this.combinarDatos();
+        this.todosLosDatos = datos;
+        this.clientesOriginal = datos.filter(c => !c.esIntegral);
+        this.integralesOriginal = datos.filter(c => c.esIntegral);
 
-      // 4. Configurar filtros y visualización inicial
-      this.inicializarOpcionesFiltro();
-      this.aplicarFiltros();
+        this.combinarDatos();
+        this.inicializarOpcionesFiltro();
+        this.aplicarFiltros();
 
-      // 5. CAMBIO CLAVE: Guardar y luego Recargar desde BD
-      this.guardarYRefrescar();
+        this.cargando = false;
+        this.cd.detectChanges();
 
-    }).catch(error => {
-      console.error('Error al cargar datos iniciales:', error);
-      this.cargando = false;
+        setTimeout(() => {
+          this.tablaLista = true;
+          this.cd.detectChanges();
+
+          setTimeout(() => {
+            this.sincronizarRenderTabla();
+          }, 50);
+        }, 0);
+      },
+      error: (error) => {
+        console.error('Error cargando previo:', error);
+        this.cargando = false;
+        this.tablaLista = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  private dispararRecalculoEnSegundoPlano(): void {
+    this.previoService.recalcularPrevio().subscribe({
+      next: (res) => {
+        console.log('Recalculo iniciado en segundo plano:', res);
+
+        // Opcional: recargar datos después de unos segundos
+        setTimeout(() => {
+          this.previoService.limpiarCachePrevio();
+          this.cargarDatosPrevio();
+        }, 15000);
+      },
+      error: (err) => {
+        console.error('Error iniciando recalculo en segundo plano:', err);
+      }
     });
   }
 
@@ -370,35 +431,110 @@ export class PrevioComponent implements OnInit, OnDestroy {
     });
   }
 
+  private convertirNumero(valor: any): number {
+    if (valor === null || valor === undefined || valor === '') {
+      return 0;
+    }
+
+    if (typeof valor === 'number') {
+      return isNaN(valor) ? 0 : valor;
+    }
+
+    if (typeof valor === 'string') {
+      const limpio = valor
+        .replace(/\$/g, '')
+        .replace(/,/g, '')
+        .trim();
+
+      const numero = Number(limpio);
+      return isNaN(numero) ? 0 : numero;
+    }
+
+    return 0;
+  }
+
   procesarDatosDelEndpoint(datos: any[]): ClienteConAcumulado[] {
-    return datos.map(item => ({
-      ...item,
-      // Convertir todos los strings numéricos a números
-      acumulado_anticipado: parseFloat(item.acumulado_anticipado) || 0,
-      compra_minima_anual: parseFloat(item.compra_minima_anual) || 0,
-      compra_minima_inicial: parseFloat(item.compra_minima_inicial) || 0,
-      avance_global: parseFloat(item.avance_global) || 0,
-      avance_global_scott: parseFloat(item.avance_global_scott) || 0,
-      compromiso_scott: parseFloat(item.compromiso_scott) || 0,
-      compromiso_jul_ago: parseFloat(item.compromiso_jul_ago) || 0,
-      compromiso_sep_oct: parseFloat(item.compromiso_sep_oct) || 0,
-      compromiso_nov_dic: parseFloat(item.compromiso_nov_dic) || 0,
-      compromiso_apparel_syncros_vittoria: parseFloat(item.compromiso_apparel_syncros_vittoria) || 0,
-      avance_global_apparel_syncros_vittoria: parseFloat(item.avance_global_apparel_syncros_vittoria) || 0,
-      compromiso_jul_ago_app: parseFloat(item.compromiso_jul_ago_app) || 0,
-      compromiso_sep_oct_app: parseFloat(item.compromiso_sep_oct_app) || 0,
-      compromiso_nov_dic_app: parseFloat(item.compromiso_nov_dic_app) || 0,
-      avance_jul_ago: parseFloat(item.avance_jul_ago) || 0,
-      avance_sep_oct: parseFloat(item.avance_sep_oct) || 0,
-      avance_nov_dic: parseFloat(item.avance_nov_dic) || 0,
-      avance_jul_ago_app: parseFloat(item.avance_jul_ago_app) || 0,
-      avance_sep_oct_app: parseFloat(item.avance_sep_oct_app) || 0,
-      avance_nov_dic_app: parseFloat(item.avance_nov_dic_app) || 0,
-      acumulado_syncros: parseFloat(item.acumulado_syncros) || 0,
-      acumulado_apparel: parseFloat(item.acumulado_apparel) || 0,
-      acumulado_vittoria: parseFloat(item.acumulado_vittoria) || 0,
-      acumulado_bold: parseFloat(item.acumulado_bold) || 0
-    }));
+    const camposNumericos = [
+      'acumulado_anticipado',
+      'compra_minima_anual',
+      'porcentaje_anual',
+      'compra_minima_inicial',
+      'avance_global',
+      'porcentaje_global',
+
+      'compromiso_scott',
+      'avance_global_scott',
+      'porcentaje_scott',
+
+      'compromiso_jul_ago',
+      'avance_jul_ago',
+      'porcentaje_jul_ago',
+
+      'compromiso_sep_oct',
+      'avance_sep_oct',
+      'porcentaje_sep_oct',
+
+      'compromiso_nov_dic',
+      'avance_nov_dic',
+      'porcentaje_nov_dic',
+
+      'compromiso_ene_feb',
+      'avance_ene_feb',
+      'porcentaje_ene_feb',
+
+      'compromiso_mar_abr',
+      'avance_mar_abr',
+      'porcentaje_mar_abr',
+
+      'compromiso_may_jun',
+      'avance_may_jun',
+      'porcentaje_may_jun',
+
+      'compromiso_apparel_syncros_vittoria',
+      'avance_global_apparel_syncros_vittoria',
+      'porcentaje_apparel_syncros_vittoria',
+
+      'compromiso_jul_ago_app',
+      'avance_jul_ago_app',
+      'porcentaje_jul_ago_app',
+
+      'compromiso_sep_oct_app',
+      'avance_sep_oct_app',
+      'porcentaje_sep_oct_app',
+
+      'compromiso_nov_dic_app',
+      'avance_nov_dic_app',
+      'porcentaje_nov_dic_app',
+
+      'compromiso_ene_feb_app',
+      'avance_ene_feb_app',
+      'porcentaje_ene_feb_app',
+
+      'compromiso_mar_abr_app',
+      'avance_mar_abr_app',
+      'porcentaje_mar_abr_app',
+
+      'compromiso_may_jun_app',
+      'avance_may_jun_app',
+      'porcentaje_may_jun_app',
+
+      'acumulado_syncros',
+      'acumulado_apparel',
+      'acumulado_vittoria',
+      'acumulado_bold'
+    ];
+
+    return datos.map(item => {
+      const convertido: any = { ...item };
+
+      camposNumericos.forEach(campo => {
+        convertido[campo] = this.convertirNumero(item[campo]);
+      });
+
+      convertido.es_integral = this.convertirNumero(item.es_integral);
+
+      return convertido as ClienteConAcumulado;
+    });
   }
 
   manejarClickFiltro(tipoFiltro: string) {
@@ -585,6 +721,10 @@ export class PrevioComponent implements OnInit, OnDestroy {
     const inicio = (this.paginaActual - 1) * this.itemsPorPagina;
     const fin = inicio + this.itemsPorPagina;
     this.clientesPaginados = this.clientesFiltrados.slice(inicio, fin);
+
+    if (!this.cargando && this.tablaLista) {
+      this.sincronizarRenderTabla();
+    }
   }
 
   cambiarPagina(pagina: number) {
@@ -978,9 +1118,8 @@ export class PrevioComponent implements OnInit, OnDestroy {
   }
 
   calcularAvanceGlobal(cliente: any): number {
-    const avanceGlobal = (cliente.avance_global_scott || 0) +
-      (cliente.avance_global_apparel_syncros_vittoria || 0);
-    return avanceGlobal;
+    return this.convertirNumero(cliente.avance_global_scott) +
+      this.convertirNumero(cliente.avance_global_apparel_syncros_vittoria);
   }
 
   calcularCompraMinimaPorNivel(nivel: string): number {
@@ -1467,9 +1606,12 @@ export class PrevioComponent implements OnInit, OnDestroy {
   }
 
   private calcularPorcentajes(cliente: any): any {
-    const calcular = (avance: number, compromiso: number): number => {
-      if (!compromiso || compromiso === 0) return 0;
-      return Math.round((avance / compromiso) * 100);
+    const calcular = (avance: any, compromiso: any): number => {
+      const avanceNum = this.convertirNumero(avance);
+      const compromisoNum = this.convertirNumero(compromiso);
+
+      if (!compromisoNum || compromisoNum === 0) return 0;
+      return Math.round((avanceNum / compromisoNum) * 100);
     };
 
     // Mapeamos el objeto completo asegurando que TODOS los campos de 2026 viajen al Back
@@ -1477,11 +1619,11 @@ export class PrevioComponent implements OnInit, OnDestroy {
       ...cliente,
       // Porcentajes Globales
       porcentaje_anual: calcular(
-        (cliente.avance_global_scott || 0) + (cliente.avance_global_apparel_syncros_vittoria || 0),
+        this.convertirNumero(cliente.avance_global_scott) + this.convertirNumero(cliente.avance_global_apparel_syncros_vittoria),
         cliente.compra_minima_anual
       ),
       porcentaje_global: calcular(
-        (cliente.avance_global_scott || 0) + (cliente.avance_global_apparel_syncros_vittoria || 0),
+        this.convertirNumero(cliente.avance_global_scott) + this.convertirNumero(cliente.avance_global_apparel_syncros_vittoria),
         cliente.compra_minima_inicial
       ),
 
@@ -1840,29 +1982,73 @@ export class PrevioComponent implements OnInit, OnDestroy {
   }
 
   private calcularTotales2026(): void {
-    // Filtramos para no sumar doble (excluimos los componentes individuales de los integrales)
-    const clavesExcluidas = ['JC539', 'EC216', 'LC657', 'GC411', 'MC679', 'MC677', 'LC625', 'LC626', 'LC627'];
-    const clientesValidos = this.clientesFiltrados.filter(c => !clavesExcluidas.includes(c.clave));
+    const clavesExcluidas = [
+      'JC539', 'EC216',
+      'LC657', 'GC411', 'MC679', 'MC677',
+      'LC625', 'LC626', 'LC627'
+    ];
 
-    clientesValidos.forEach(c => {
-      // Sumamos Scott 2026
-      this.totales.compromiso_ene_feb += c.compromiso_ene_feb || 0;
-      this.totales.avance_ene_feb += c.avance_ene_feb || 0;
-      this.totales.compromiso_mar_abr += c.compromiso_mar_abr || 0;
-      this.totales.avance_mar_abr += c.avance_mar_abr || 0;
-      this.totales.compromiso_may_jun += c.compromiso_may_jun || 0;
-      this.totales.avance_may_jun += c.avance_may_jun || 0;
+    const datos = this.clientesFiltrados.filter(c => !clavesExcluidas.includes(c.clave));
 
-      // Sumamos Apparel 2026
-      this.totales.compromiso_ene_feb_app += c.compromiso_ene_feb_app || 0;
-      this.totales.avance_ene_feb_app += c.avance_ene_feb_app || 0;
-      this.totales.compromiso_mar_abr_app += c.compromiso_mar_abr_app || 0;
-      this.totales.avance_mar_abr_app += c.avance_mar_abr_app || 0;
-      this.totales.compromiso_may_jun_app += c.compromiso_may_jun_app || 0;
-      this.totales.avance_may_jun_app += c.avance_may_jun_app || 0;
+    this.totales.compromiso_ene_feb = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.compromiso_ene_feb),
+      0
+    );
 
-      this.totales.compromiso_apparel_syncros_vittoria += c.compromiso_apparel_syncros_vittoria || 0;
-    });
+    this.totales.avance_ene_feb = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.avance_ene_feb),
+      0
+    );
+
+    this.totales.compromiso_mar_abr = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.compromiso_mar_abr),
+      0
+    );
+
+    this.totales.avance_mar_abr = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.avance_mar_abr),
+      0
+    );
+
+    this.totales.compromiso_may_jun = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.compromiso_may_jun),
+      0
+    );
+
+    this.totales.avance_may_jun = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.avance_may_jun),
+      0
+    );
+
+    this.totales.compromiso_ene_feb_app = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.compromiso_ene_feb_app),
+      0
+    );
+
+    this.totales.avance_ene_feb_app = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.avance_ene_feb_app),
+      0
+    );
+
+    this.totales.compromiso_mar_abr_app = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.compromiso_mar_abr_app),
+      0
+    );
+
+    this.totales.avance_mar_abr_app = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.avance_mar_abr_app),
+      0
+    );
+
+    this.totales.compromiso_may_jun_app = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.compromiso_may_jun_app),
+      0
+    );
+
+    this.totales.avance_may_jun_app = datos.reduce(
+      (sum, c) => sum + this.convertirNumero(c.avance_may_jun_app),
+      0
+    );
   }
 
   // 1. Totales de anticipado - ejemplo: excluir integrales
@@ -1875,7 +2061,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.acumulado_anticipado += cliente.acumulado_anticipado || 0;
+      this.totales.acumulado_anticipado += this.convertirNumero(cliente.acumulado_anticipado);
     });
   }
 
@@ -1891,7 +2077,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     let sumaClientesNormales = 0;
 
     clientesValidos.forEach(cliente => {
-      const valor = cliente.compra_minima_anual || 0;
+      const valor = this.convertirNumero(cliente.compra_minima_anual);
 
       if (['Integral 1', 'Integral 2', 'Integral 3'].includes(cliente.clave)) {
         sumaIntegrales += valor;
@@ -1914,7 +2100,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     let sumaClientesNormales = 0;
 
     clientesValidos.forEach(cliente => {
-      const valor = cliente.compra_minima_inicial || 0;
+      const valor = this.convertirNumero(cliente.compra_minima_inicial);
 
       if (['Integral 1', 'Integral 2', 'Integral 3'].includes(cliente.clave)) {
         sumaIntegrales += valor;
@@ -1953,7 +2139,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_scott += cliente.compromiso_scott || 0;
+      this.totales.compromiso_scott += this.convertirNumero(cliente.compromiso_scott);
     });
   }
 
@@ -1965,7 +2151,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_global_scott += cliente.avance_global_scott || 0;
+      this.totales.avance_global_scott += this.convertirNumero(cliente.avance_global_scott);
     });
   }
 
@@ -1977,7 +2163,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_jul_ago += cliente.compromiso_jul_ago || 0;
+      this.totales.compromiso_jul_ago += this.convertirNumero(cliente.compromiso_jul_ago);
     });
   }
 
@@ -1989,7 +2175,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_jul_ago += cliente.avance_jul_ago || 0;
+      this.totales.avance_jul_ago += this.convertirNumero(cliente.avance_jul_ago);
     });
   }
 
@@ -2002,7 +2188,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_sep_oct += cliente.compromiso_sep_oct || 0;
+      this.totales.compromiso_sep_oct += this.convertirNumero(cliente.compromiso_sep_oct);
     });
   }
 
@@ -2014,7 +2200,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_sep_oct += cliente.avance_sep_oct || 0;
+      this.totales.avance_sep_oct += this.convertirNumero(cliente.avance_sep_oct);
     });
   }
 
@@ -2026,7 +2212,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_nov_dic += cliente.compromiso_nov_dic || 0;
+      this.totales.compromiso_nov_dic += this.convertirNumero(cliente.compromiso_nov_dic);
     });
   }
 
@@ -2038,7 +2224,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_nov_dic += cliente.avance_nov_dic || 0;
+      this.totales.avance_nov_dic += this.convertirNumero(cliente.avance_nov_dic);
     });
   }
 
@@ -2050,7 +2236,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_apparel_syncros_vittoria += cliente.compromiso_apparel_syncros_vittoria || 0;
+      this.totales.compromiso_apparel_syncros_vittoria += this.convertirNumero(cliente.compromiso_apparel_syncros_vittoria);
     });
   }
 
@@ -2062,7 +2248,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_global_apparel_syncros_vittoria += cliente.avance_global_apparel_syncros_vittoria || 0;
+      this.totales.avance_global_apparel_syncros_vittoria += this.convertirNumero(cliente.avance_global_apparel_syncros_vittoria);
     });
   }
 
@@ -2074,7 +2260,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_jul_ago_app += cliente.compromiso_jul_ago_app || 0;
+      this.totales.compromiso_jul_ago_app += this.convertirNumero(cliente.compromiso_jul_ago_app);
     });
   }
 
@@ -2102,7 +2288,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
       .reduce((total, cliente) => total + (cliente.avance_jul_ago_app || 0), 0);
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_jul_ago_app += cliente.avance_jul_ago_app || 0;
+      this.totales.avance_jul_ago_app += this.convertirNumero(cliente.avance_jul_ago_app);
     });
   }
 
@@ -2114,7 +2300,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_sep_oct_app += cliente.compromiso_sep_oct_app || 0;
+      this.totales.compromiso_sep_oct_app += this.convertirNumero(cliente.compromiso_sep_oct_app);
     });
   }
 
@@ -2126,7 +2312,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_sep_oct_app += cliente.avance_sep_oct_app || 0;
+      this.totales.avance_sep_oct_app += this.convertirNumero(cliente.avance_sep_oct_app);
     });
   }
 
@@ -2138,7 +2324,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.compromiso_nov_dic_app += cliente.compromiso_nov_dic_app || 0;
+      this.totales.compromiso_nov_dic_app += this.convertirNumero(cliente.compromiso_nov_dic_app);
     });
   }
 
@@ -2150,7 +2336,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.avance_nov_dic_app += cliente.avance_nov_dic_app || 0;
+      this.totales.avance_nov_dic_app += this.convertirNumero(cliente.avance_nov_dic_app);
     });
   }
 
@@ -2162,7 +2348,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.acumulado_syncros += cliente.acumulado_syncros || 0;
+      this.totales.acumulado_syncros += this.convertirNumero(cliente.acumulado_syncros);
     });
   }
 
@@ -2174,7 +2360,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.acumulado_apparel += cliente.acumulado_apparel || 0;
+      this.totales.acumulado_apparel += this.convertirNumero(cliente.acumulado_apparel);
     });
   }
 
@@ -2186,7 +2372,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.acumulado_vittoria += cliente.acumulado_vittoria || 0;
+      this.totales.acumulado_vittoria += this.convertirNumero(cliente.acumulado_vittoria);
     });
   }
 
@@ -2198,7 +2384,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
     );
 
     clientesValidos.forEach(cliente => {
-      this.totales.acumulado_bold += cliente.acumulado_bold || 0;
+      this.totales.acumulado_bold += this.convertirNumero(cliente.acumulado_bold);
     });
   }
 
@@ -2309,7 +2495,7 @@ export class PrevioComponent implements OnInit, OnDestroy {
           const subcategoria = String(factura?.subcategoria || '').toUpperCase();
           const esBicicleta = subcategoria === 'BICICLETA' || contieneBicicleta;
           const esApparelNo = String(factura?.apparel || '').toUpperCase() === 'NO' || contieneBicicleta;
-          
+
           esProductoValido = esBicicleta && esApparelNo;
         }
       }
@@ -2355,6 +2541,25 @@ export class PrevioComponent implements OnInit, OnDestroy {
     }
 
     return facturasValidas.reduce((total, factura) => total + (+factura.venta_total || 0), 0);
+  }
+
+  actualizarDatosPrevio(): void {
+    this.cargando = true;
+
+    this.previoService.recalcularPrevio().subscribe({
+      next: (res) => {
+        console.log('Recalculo iniciado:', res);
+
+        alert('El recalculo de previo inició en segundo plano. Espera unos segundos y vuelve a cargar los datos.');
+
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error('Error iniciando recalculo:', err);
+        alert('Error al iniciar el recalculo de previo.');
+        this.cargando = false;
+      }
+    });
   }
 }
 
