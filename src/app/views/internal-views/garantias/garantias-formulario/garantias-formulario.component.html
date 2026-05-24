@@ -1,0 +1,900 @@
+<app-home-bar></app-home-bar>
+
+<div class="form-page">
+
+  <!-- ── SUCCESS ── -->
+  <div class="success-card" *ngIf="exito">
+    <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+    <h2>¡Garantía Enviada!</h2>
+    <p>Tu solicitud ha sido registrada correctamente.</p>
+    <div class="folio-badge">Folio: <strong>{{ folio }}</strong></div>
+    <p class="success-note">Guarda este folio para dar seguimiento a tu garantía.</p>
+    <div class="success-actions">
+      <button class="btn btn-outline" (click)="reiniciar()">
+        <i class="fas fa-plus"></i> Nueva Garantía
+      </button>
+      <a class="btn btn-outline" routerLink="/garantias">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+      </a>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!exito">
+
+    <!-- ── HEADER ── -->
+    <div class="form-header">
+      <div class="form-header-left">
+        <a routerLink="/garantias" class="back-link">
+          <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+        <h1 class="form-title">
+          <span class="title-icon"><i class="fas fa-shield-alt"></i></span>
+          Formulario de Garantías
+        </h1>
+      </div>
+      <div class="step-badge">
+        Sección {{ currentSection.id }} / 34
+      </div>
+    </div>
+
+    <!-- ── PROGRESS ── -->
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="progreso"></div>
+      </div>
+      <span class="progress-label">{{ progreso }}% completado</span>
+    </div>
+
+    <!-- ── STEP LIST ── -->
+    <div class="step-nav">
+      <div *ngFor="let sec of visibleSections; let i = index"
+           class="step-dot"
+           [class.active]="i === currentStepIdx"
+           [class.done]="i < currentStepIdx"
+           [title]="sec.label">
+      </div>
+    </div>
+
+    <!-- ── FORM CARD ── -->
+    <div class="form-card">
+      <div class="section-header">
+        <span class="section-num">{{ currentSection.id }}</span>
+        <h2 class="section-title">{{ currentSection.label }}</h2>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 1: Información del Solicitante                  -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(1)" class="section-body">
+        <div class="form-intro">
+          <p>Bienvenido al formulario de garantías de <strong>Elite Bike</strong>. Complete todas las secciones requeridas para procesar su solicitud.</p>
+          <p>Una vez enviado, recibirá un número de folio para dar seguimiento.</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Correo Electrónico</label>
+          <input type="email" class="field-input" placeholder="tucorreo@ejemplo.com"
+                 [(ngModel)]="formData.email" name="email">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 2: Datos del Distribuidor                       -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(2)" class="section-body">
+        <div class="diagram-wrap">
+          <img src="assets/garantias/logos-marcas.png" alt="Marcas" class="diagram-img logos-img">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Razón Social del Distribuidor</label>
+          <select class="field-input" [(ngModel)]="formData.distribuidor" name="distribuidor">
+            <option value="">— Seleccione un distribuidor —</option>
+            <option *ngFor="let d of distribuidores" [value]="d">{{ d }}</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Nombre del Contacto</label>
+          <input type="text" class="field-input" placeholder="Nombre completo"
+                 [(ngModel)]="formData.contacto" name="contacto">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Rol que desempeña dentro de la compañía</label>
+          <div class="radio-grid" style="flex-direction:column; gap:8px;">
+            <label *ngFor="let rol of ['Dueño','Encargado de Sucursal','Servicio Técnico','Vendedor']"
+                   class="radio-option" [class.selected]="formData.puesto === rol">
+              <input type="radio" [value]="rol" [(ngModel)]="formData.puesto" name="puesto">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ rol }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Marca del Producto</label>
+          <div class="radio-grid">
+            <label *ngFor="let m of marcas" class="radio-option" [class.selected]="formData.marca === m">
+              <input type="radio" [value]="m" [(ngModel)]="formData.marca" name="marca"
+                     (change)="onMarcaChange()">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ m }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 3: MEGAMO / BOLD                                -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(3)" class="section-body">
+        <div class="brand-badge" [class.megamo]="formData.marca === 'MEGAMO'" [class.bold]="formData.marca === 'BOLD'">
+          {{ formData.marca }}
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Grupo de Productos</label>
+          <div class="radio-grid">
+            <label *ngFor="let g of megamoGrupos" class="radio-option" [class.selected]="formData.megamo_grupo === g">
+              <input type="radio" [value]="g" [(ngModel)]="formData.megamo_grupo" name="megamo_grupo">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ g }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Modelo</label>
+          <input type="text" class="field-input" placeholder="Ej. Scale 940"
+                 [(ngModel)]="formData.megamo_modelo" name="megamo_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año del Producto</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.megamo_anio" name="megamo_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.megamo_serie" name="megamo_serie">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño detalladamente..."
+                    [(ngModel)]="formData.megamo_dano" name="megamo_dano"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Fotografía / Video del Daño 1</label>
+          <div class="file-upload-wrap">
+            <input type="file" class="file-input" accept="image/*,video/*,.pdf"
+                   (change)="onFileChange($event, 'megamo_archivo1')" id="megamo_archivo1">
+            <label for="megamo_archivo1" class="file-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span *ngIf="!uploadedFiles['megamo_archivo1']">Seleccionar archivo</span>
+              <span *ngIf="uploadedFiles['megamo_archivo1']" class="file-ok">
+                <i class="fas fa-check"></i> {{ formData.megamo_archivo1_original }}
+              </span>
+            </label>
+            <span class="uploading-badge" *ngIf="uploadingFields['megamo_archivo1']">Subiendo…</span>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Fotografía / Video del Daño 2</label>
+          <div class="file-upload-wrap">
+            <input type="file" class="file-input" accept="image/*,video/*,.pdf"
+                   (change)="onFileChange($event, 'megamo_archivo2')" id="megamo_archivo2">
+            <label for="megamo_archivo2" class="file-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span *ngIf="!uploadedFiles['megamo_archivo2']">Seleccionar archivo</span>
+              <span *ngIf="uploadedFiles['megamo_archivo2']" class="file-ok">
+                <i class="fas fa-check"></i> {{ formData.megamo_archivo2_original }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 4: SCOTT — Grupo de Productos                   -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(4)" class="section-body">
+        <div class="brand-badge scott">SCOTT</div>
+        <div class="field-group">
+          <label class="field-label required">Grupo de Productos SCOTT</label>
+          <div class="radio-grid">
+            <label *ngFor="let g of scottGrupos" class="radio-option" [class.selected]="formData.scott_grupo === g">
+              <input type="radio" [value]="g" [(ngModel)]="formData.scott_grupo" name="scott_grupo">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ g }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 5: CASCOS — Datos del Producto                  -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(5)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Modelo del Casco</label>
+          <input type="text" class="field-input" placeholder="Ej. Centric Plus"
+                 [(ngModel)]="formData.casco_modelo" name="casco_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.casco_anio" name="casco_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.casco_serie" name="casco_serie">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tipo de Casco</label>
+          <input type="text" class="field-input" placeholder="Ej. MTB, Ruta, Infantil"
+                 [(ngModel)]="formData.casco_tipo" name="casco_tipo">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 6: CASCOS — Descripción del Daño                -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(6)" class="section-body">
+        <div class="diagram-wrap">
+          <p class="diagram-label">Referencia — partes del casco</p>
+          <img src="assets/garantias/casco.png" alt="Diagrama casco" class="diagram-img">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño detalladamente..."
+                    [(ngModel)]="formData.casco_dano_desc" name="casco_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Ubicación del Daño</label>
+          <input type="text" class="field-input" placeholder="Ej. Parte frontal, lateral derecho"
+                 [(ngModel)]="formData.casco_dano_ubic" name="casco_dano_ubic">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 7: PROTECCIONES — Datos del Producto            -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(7)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Modelo</label>
+          <input type="text" class="field-input" placeholder="Ej. Defender Elbow Pad"
+                 [(ngModel)]="formData.prot_modelo" name="prot_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.prot_anio" name="prot_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.prot_serie" name="prot_serie">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 8: PROTECCIONES — Descripción del Daño          -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(8)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño detalladamente..."
+                    [(ngModel)]="formData.prot_dano_desc" name="prot_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tipo de Daño</label>
+          <input type="text" class="field-input" placeholder="Ej. Fractura, desgaste, deformación"
+                 [(ngModel)]="formData.prot_dano_tipo" name="prot_dano_tipo">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 9: ZAPATOS — Datos del Producto                 -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(9)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Modelo</label>
+          <input type="text" class="field-input" placeholder="Ej. Sport Road"
+                 [(ngModel)]="formData.zapato_modelo" name="zapato_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.zapato_anio" name="zapato_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Talla</label>
+          <input type="text" class="field-input" placeholder="Ej. 42"
+                 [(ngModel)]="formData.zapato_talla" name="zapato_talla">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 10: ZAPATOS — Descripción del Daño              -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(10)" class="section-body">
+        <div class="diagram-wrap">
+          <p class="diagram-label">Referencia — partes del zapato</p>
+          <img src="assets/garantias/zapatos.jpg" alt="Diagrama zapato" class="diagram-img">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño detalladamente..."
+                    [(ngModel)]="formData.zapato_dano_desc" name="zapato_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Ubicación del Daño en el Zapato</label>
+          <input type="text" class="field-input" placeholder="Ej. Suela, velcro, puntera"
+                 [(ngModel)]="formData.zapato_dano_ubic" name="zapato_dano_ubic">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 11: COMPONENTES — Datos del Producto            -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(11)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Tipo de Componente</label>
+          <div class="radio-grid">
+            <label *ngFor="let t of tiposComponente" class="radio-option" [class.selected]="formData.comp_tipo === t">
+              <input type="radio" [value]="t" [(ngModel)]="formData.comp_tipo" name="comp_tipo">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ t }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Modelo</label>
+          <input type="text" class="field-input" placeholder="Ej. Bosch Performance CX"
+                 [(ngModel)]="formData.comp_modelo" name="comp_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie</label>
+          <input type="text" class="field-input" placeholder="Número de serie del componente"
+                 [(ngModel)]="formData.comp_serie" name="comp_serie">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 12: COMPONENTES — Descripción del Daño          -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(12)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño o falla del componente..."
+                    [(ngModel)]="formData.comp_dano_desc" name="comp_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Código de Error (si aplica)</label>
+          <input type="text" class="field-input" placeholder="Ej. E007"
+                 [(ngModel)]="formData.comp_error" name="comp_error">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 13: Documentos de Soporte SCOTT (no bicicletas) -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(13)" class="section-body">
+        <p class="section-intro">Adjunte los documentos de soporte para la garantía del producto.</p>
+
+        <ng-container *ngFor="let doc of [
+          {key:'scott_doc1', label:'Fotografía del Daño',                              accept:'image/*,video/*,.pdf', req:true},
+          {key:'scott_doc2', label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',          req:true},
+          {key:'scott_doc3', label:'Fotografía del Producto',                           accept:'image/*',             req:true},
+          {key:'scott_doc4', label:'Factura de Compra y Factura de Venta',             accept:'image/*,.pdf',        req:true}
+        ]">
+          <div class="field-group">
+            <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
+            <div class="file-upload-wrap">
+              <input type="file" class="file-input" [accept]="doc.accept"
+                     (change)="onFileChange($event, doc.key)" [id]="doc.key">
+              <label [for]="doc.key" class="file-label">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span *ngIf="!uploadedFiles[doc.key]">Agregar archivo</span>
+                <span *ngIf="uploadedFiles[doc.key]" class="file-ok">
+                  <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
+                </span>
+              </label>
+              <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">Subiendo…</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 14: SCOTT BICICLETAS — Datos                    -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(14)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Modelo de la Bicicleta</label>
+          <input type="text" class="field-input" placeholder="Ej. Spark 930"
+                 [(ngModel)]="formData.bici_modelo" name="bici_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Año del Modelo</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.bici_anio" name="bici_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Número de Serie del Marco</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.bici_serie" name="bici_serie">
+        </div>
+        <div class="field-group">
+          <label class="field-label required">Tipo de Marco</label>
+          <div class="radio-grid">
+            <label *ngFor="let t of tiposMarco" class="radio-option" [class.selected]="formData.scott_tipo_marco === t">
+              <input type="radio" [value]="t" [(ngModel)]="formData.scott_tipo_marco" name="scott_tipo_marco">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ t }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIONES 15–21: Daño en Marco (por tipo)               -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <ng-container *ngFor="let sec of [
+        {id:15, tipo:'Doble suspensión', img:'marco-doble-suspension.png'},
+        {id:16, tipo:'Rígida',           img:'marco-rigida.png'},
+        {id:17, tipo:'Plasma',           img:'marco-plasma.png'},
+        {id:18, tipo:'Foil',             img:'marco-foil.png'},
+        {id:19, tipo:'Ruta',             img:'marco-ruta.png'},
+        {id:20, tipo:'Gravel',           img:'marco-gravel.jpg'},
+        {id:21, tipo:'E-Ride',           img:'marco-e-ride.png'}
+      ]">
+        <div *ngIf="isSectionVisible(sec.id)" class="section-body">
+          <div class="brand-sub-tag">Marco {{ sec.tipo }}</div>
+          <div class="diagram-wrap" *ngIf="sec.img">
+            <p class="diagram-label">Referencia — partes del marco {{ sec.tipo }}</p>
+            <img [src]="'assets/garantias/' + sec.img" [alt]="'Diagrama marco ' + sec.tipo" class="diagram-img">
+          </div>
+
+          <!-- Localización: select con partes numeradas del diagrama -->
+          <div class="field-group">
+            <label class="field-label required">Localización del Daño (número y descripción)</label>
+            <select class="field-input"
+                    [(ngModel)]="formData['marco_localizacion_' + sec.id]"
+                    [name]="'marco_localizacion_' + sec.id">
+              <option value="">— Seleccione la parte afectada —</option>
+              <option *ngFor="let p of getPartes(sec.tipo)" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+
+          <!-- Tipo de Daño: radio buttons -->
+          <div class="field-group">
+            <label class="field-label required">Tipo de Daño</label>
+            <div class="radio-grid" style="flex-direction:column; gap:8px;">
+              <label *ngFor="let td of tiposDano" class="radio-option"
+                     [class.selected]="formData['marco_tipo_dano_' + sec.id] === td">
+                <input type="radio" [value]="td"
+                       [(ngModel)]="formData['marco_tipo_dano_' + sec.id]"
+                       [name]="'marco_tipo_dano_' + sec.id">
+                <span class="radio-mark"></span>
+                <span class="radio-label">{{ td }}</span>
+              </label>
+            </div>
+            <!-- Campo extra si eligió "Otros" -->
+            <input *ngIf="formData['marco_tipo_dano_' + sec.id] === 'Otros'"
+                   type="text" class="field-input" style="margin-top:8px;"
+                   placeholder="Especifique el tipo de daño"
+                   [(ngModel)]="formData['marco_tipo_dano_otros_' + sec.id]"
+                   [name]="'marco_tipo_dano_otros_' + sec.id">
+          </div>
+
+          <!-- Comentarios adicionales -->
+          <div class="field-group">
+            <label class="field-label required">Comentarios</label>
+            <textarea class="field-input field-textarea"
+                      placeholder="Describa con detalle el daño observado..."
+                      [(ngModel)]="formData['marco_comentarios_' + sec.id]"
+                      [name]="'marco_comentarios_' + sec.id"></textarea>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 22: Documentos de Soporte — Bicicletas          -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(22)" class="section-body">
+        <p class="section-intro">Adjunte los documentos de soporte para la garantía de la bicicleta.</p>
+
+        <ng-container *ngFor="let doc of [
+          {key:'bici_doc1', label:'Fotografía del Daño',                    hint:'Fotografía de la bicicleta del lado derecho del plato', accept:'image/*,video/*,.pdf', req:true},
+          {key:'bici_doc2', label:'Fotografía del Número de Serie',          hint:'',                                                      accept:'image/*',             req:true},
+          {key:'bici_doc3', label:'Fotografía del Producto Completo',        hint:'',                                                      accept:'image/*',             req:true},
+          {key:'bici_doc4', label:'Factura de Compra y Factura de Venta',   hint:'',                                                      accept:'image/*,.pdf',        req:true},
+          {key:'bici_doc5', label:'Hojas del Historial de Servicio',         hint:'',                                                      accept:'image/*,.pdf',        req:false}
+        ]">
+          <div class="field-group">
+            <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
+            <p *ngIf="doc.hint" class="field-hint">{{ doc.hint }}</p>
+            <div class="file-upload-wrap">
+              <input type="file" class="file-input" [accept]="doc.accept"
+                     (change)="onFileChange($event, doc.key)" [id]="doc.key">
+              <label [for]="doc.key" class="file-label">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span *ngIf="!uploadedFiles[doc.key]">Agregar archivo</span>
+                <span *ngIf="uploadedFiles[doc.key]" class="file-ok">
+                  <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
+                </span>
+              </label>
+              <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">Subiendo…</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 23: SYNCROS — Tipo de Producto                  -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(23)" class="section-body">
+        <div class="brand-badge syncros">SYNCROS</div>
+        <div class="field-group">
+          <label class="field-label required">Tipo de Producto SYNCROS</label>
+          <div class="radio-grid">
+            <label *ngFor="let t of syncrosTipos" class="radio-option" [class.selected]="formData.syncros_tipo === t">
+              <input type="radio" [value]="t" [(ngModel)]="formData.syncros_tipo" name="syncros_tipo">
+              <span class="radio-mark"></span>
+              <span class="radio-label">{{ t }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIONES 24–31: SYNCROS productos (datos y daño)       -->
+      <!-- ════════════════════════════════════════════════════════ -->
+
+      <!-- 24: Manubrios datos -->
+      <div *ngIf="isSectionVisible(24)" class="section-body">
+        <div class="brand-sub-tag">SYNCROS — Manubrios</div>
+        <div class="field-group">
+          <label class="field-label required">Modelo del Manubrio</label>
+          <input type="text" class="field-input" placeholder="Ej. FL Bar Carbon 35"
+                 [(ngModel)]="formData.manubrio_modelo" name="manubrio_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.manubrio_anio" name="manubrio_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie / Código</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.manubrio_serie" name="manubrio_serie">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Medidas (ancho/rise)</label>
+          <input type="text" class="field-input" placeholder="Ej. 760mm / 20mm rise"
+                 [(ngModel)]="formData.manubrio_medidas" name="manubrio_medidas">
+        </div>
+      </div>
+
+      <!-- 25: Manubrios daño -->
+      <div *ngIf="isSectionVisible(25)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño — Manubrios</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño detalladamente..."
+                    [(ngModel)]="formData.manubrio_dano_desc" name="manubrio_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Fotografía del Daño</label>
+          <div class="file-upload-wrap">
+            <input type="file" class="file-input" accept="image/*,video/*,.pdf"
+                   (change)="onFileChange($event, 'manubrio_archivo')" id="manubrio_archivo">
+            <label for="manubrio_archivo" class="file-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span *ngIf="!uploadedFiles['manubrio_archivo']">Seleccionar archivo</span>
+              <span *ngIf="uploadedFiles['manubrio_archivo']" class="file-ok">
+                <i class="fas fa-check"></i> {{ formData.manubrio_archivo_original }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 26: Asientos datos -->
+      <div *ngIf="isSectionVisible(26)" class="section-body">
+        <div class="brand-sub-tag">SYNCROS — Asientos</div>
+        <div class="field-group">
+          <label class="field-label required">Modelo del Asiento</label>
+          <input type="text" class="field-input" placeholder="Ej. Tofino 2.0"
+                 [(ngModel)]="formData.asiento_modelo" name="asiento_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.asiento_anio" name="asiento_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie / Código</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.asiento_serie" name="asiento_serie">
+        </div>
+      </div>
+
+      <!-- 27: Asientos daño -->
+      <div *ngIf="isSectionVisible(27)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño — Asiento</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño detalladamente..."
+                    [(ngModel)]="formData.asiento_dano_desc" name="asiento_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Fotografía del Daño</label>
+          <div class="file-upload-wrap">
+            <input type="file" class="file-input" accept="image/*,video/*,.pdf"
+                   (change)="onFileChange($event, 'asiento_archivo')" id="asiento_archivo">
+            <label for="asiento_archivo" class="file-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span *ngIf="!uploadedFiles['asiento_archivo']">Seleccionar archivo</span>
+              <span *ngIf="uploadedFiles['asiento_archivo']" class="file-ok">
+                <i class="fas fa-check"></i> {{ formData.asiento_archivo_original }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 28: Poste datos -->
+      <div *ngIf="isSectionVisible(28)" class="section-body">
+        <div class="brand-sub-tag">SYNCROS — Poste</div>
+        <div class="field-group">
+          <label class="field-label required">Modelo del Poste</label>
+          <input type="text" class="field-input" placeholder="Ej. Duncan SL Dropper 150mm"
+                 [(ngModel)]="formData.poste_modelo" name="poste_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.poste_anio" name="poste_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie / Código</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.poste_serie" name="poste_serie">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Diámetro / Longitud</label>
+          <input type="text" class="field-input" placeholder="Ej. 31.6mm / 150mm drop"
+                 [(ngModel)]="formData.poste_medidas" name="poste_medidas">
+        </div>
+      </div>
+
+      <!-- 29: Poste daño -->
+      <div *ngIf="isSectionVisible(29)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño — Poste</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño o falla..."
+                    [(ngModel)]="formData.poste_dano_desc" name="poste_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Fotografía del Daño</label>
+          <div class="file-upload-wrap">
+            <input type="file" class="file-input" accept="image/*,video/*,.pdf"
+                   (change)="onFileChange($event, 'poste_archivo')" id="poste_archivo">
+            <label for="poste_archivo" class="file-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span *ngIf="!uploadedFiles['poste_archivo']">Seleccionar archivo</span>
+              <span *ngIf="uploadedFiles['poste_archivo']" class="file-ok">
+                <i class="fas fa-check"></i> {{ formData.poste_archivo_original }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 30: Ruedos/Rines datos -->
+      <div *ngIf="isSectionVisible(30)" class="section-body">
+        <div class="brand-sub-tag">SYNCROS — Ruedos / Rines</div>
+        <div class="field-group">
+          <label class="field-label required">Modelo del Rin</label>
+          <input type="text" class="field-input" placeholder="Ej. Capital 25 29"
+                 [(ngModel)]="formData.rin_modelo" name="rin_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.rin_anio" name="rin_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Serie / Código</label>
+          <input type="text" class="field-input" placeholder="Número de serie"
+                 [(ngModel)]="formData.rin_serie" name="rin_serie">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Medida / Diámetro</label>
+          <input type="text" class="field-input" placeholder="Ej. 29 pulgadas / 622mm"
+                 [(ngModel)]="formData.rin_medida" name="rin_medida">
+        </div>
+      </div>
+
+      <!-- 31: Ruedos/Rines daño -->
+      <div *ngIf="isSectionVisible(31)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño — Ruedos/Rines</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño (abolladuras, fracturas, ovalización)..."
+                    [(ngModel)]="formData.rin_dano_desc" name="rin_dano_desc"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Fotografía del Daño</label>
+          <div class="file-upload-wrap">
+            <input type="file" class="file-input" accept="image/*,video/*,.pdf"
+                   (change)="onFileChange($event, 'rin_archivo')" id="rin_archivo">
+            <label for="rin_archivo" class="file-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span *ngIf="!uploadedFiles['rin_archivo']">Seleccionar archivo</span>
+              <span *ngIf="uploadedFiles['rin_archivo']" class="file-ok">
+                <i class="fas fa-check"></i> {{ formData.rin_archivo_original }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 32: VITTORIA — Datos del Producto               -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(32)" class="section-body">
+        <div class="brand-badge vittoria">VITTORIA</div>
+        <div class="field-group">
+          <label class="field-label required">Modelo del Producto</label>
+          <input type="text" class="field-input" placeholder="Ej. Corsa Control G2.0"
+                 [(ngModel)]="formData.vittoria_modelo" name="vittoria_modelo">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Año</label>
+          <input type="number" class="field-input" placeholder="Ej. 2023"
+                 [(ngModel)]="formData.vittoria_anio" name="vittoria_anio">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Número de Lote / Código</label>
+          <input type="text" class="field-input" placeholder="Código del producto"
+                 [(ngModel)]="formData.vittoria_lote" name="vittoria_lote">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Medida</label>
+          <input type="text" class="field-input" placeholder="Ej. 700x25C / 29x2.1"
+                 [(ngModel)]="formData.vittoria_medida" name="vittoria_medida">
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 33: VITTORIA — Descripción del Daño             -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(33)" class="section-body">
+        <div class="field-group">
+          <label class="field-label required">Descripción del Daño</label>
+          <textarea class="field-input field-textarea" placeholder="Describa el daño o defecto del producto..."
+                    [(ngModel)]="formData.vittoria_dano_desc" name="vittoria_dano_desc"></textarea>
+        </div>
+        <ng-container *ngFor="let doc of [
+          {key:'vittoria_doc1', label:'Fotografía del Daño',                              accept:'image/*,video/*,.pdf', req:true},
+          {key:'vittoria_doc2', label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',          req:true},
+          {key:'vittoria_doc3', label:'Fotografía del Producto',                           accept:'image/*',             req:true},
+          {key:'vittoria_doc4', label:'Factura de Compra y Factura de Venta',             accept:'image/*,.pdf',        req:true}
+        ]">
+          <div class="field-group">
+            <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
+            <div class="file-upload-wrap">
+              <input type="file" class="file-input" [accept]="doc.accept"
+                     (change)="onFileChange($event, doc.key)" [id]="doc.key">
+              <label [for]="doc.key" class="file-label">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span *ngIf="!uploadedFiles[doc.key]">Agregar archivo</span>
+                <span *ngIf="uploadedFiles[doc.key]" class="file-ok">
+                  <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
+                </span>
+              </label>
+              <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">Subiendo…</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- SECCIÓN 34: Términos y Condiciones                      -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <div *ngIf="isSectionVisible(34)" class="section-body">
+        <div class="diagram-wrap" style="margin-bottom:20px;">
+          <img src="assets/garantias/logo-scott.gif" alt="Términos y condiciones" class="diagram-img" style="max-height:120px; object-fit:contain; background:transparent;">
+        </div>
+        <div class="terminos-box">
+          <h3>Términos y Condiciones de Garantía</h3>
+          <div class="terminos-texto">
+            <p>Al enviar este formulario, el distribuidor declara y acepta lo siguiente:</p>
+            <ul>
+              <li>La información proporcionada es verídica y corresponde a un producto adquirido a través de Elite Bike como distribuidor autorizado.</li>
+              <li>El producto presenta un defecto de fabricación o material, y no daños causados por uso inadecuado, accidente, o modificaciones no autorizadas.</li>
+              <li>Se han adjuntado todas las evidencias fotográficas y documentos requeridos para el análisis de la garantía.</li>
+              <li>El proceso de evaluación puede tomar hasta 15 días hábiles a partir de la recepción completa de la documentación.</li>
+              <li>La resolución de la garantía (reemplazo, reparación o rechazo) será comunicada al correo electrónico registrado.</li>
+              <li>Los reemplazos de productos SYNCROS están sujetos a disponibilidad en almacén y políticas vigentes del fabricante.</li>
+              <li>Elite Bike se reserva el derecho de solicitar el envío físico del producto para su evaluación en el proceso de garantía.</li>
+            </ul>
+          </div>
+          <label class="terminos-check">
+            <input type="checkbox" [(ngModel)]="formData.terminos_aceptados" name="terminos_aceptados">
+            <span>He leído y acepto los términos y condiciones de garantía</span>
+          </label>
+        </div>
+
+        <!-- ── ASIGNACIÓN DE USUARIO (Solo Administradores) ── -->
+        <div class="admin-assign-box" *ngIf="esAdmin">
+          <div class="admin-assign-header">
+            <i class="fas fa-user-tag"></i>
+            <h4>Asignar Ticket a Usuario</h4>
+            <span class="admin-badge">Solo administradores</span>
+          </div>
+          <p class="admin-assign-hint">
+            Busca por clave o nombre del usuario al que se le asignará este ticket.
+            El usuario podrá ver el seguimiento en su panel de "Mis Garantías".
+          </p>
+
+          <!-- Buscador -->
+          <div class="admin-search-wrap">
+            <div class="admin-search-field" [class.has-value]="usuarioAsignado">
+              <i class="fas fa-search admin-search-icon"></i>
+              <input
+                type="text"
+                class="admin-search-input"
+                placeholder="Buscar por clave de sistema o nombre…"
+                [(ngModel)]="busquedaUsuario"
+                name="busquedaUsuario"
+                (focus)="mostrarListaUsuarios = true"
+                (blur)="cerrarListaConDelay()"
+                autocomplete="off">
+              <button class="admin-clear-btn" *ngIf="usuarioAsignado" (click)="limpiarAsignacion()" type="button">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <!-- Lista desplegable -->
+            <div class="admin-user-dropdown" *ngIf="mostrarListaUsuarios && !usuarioAsignado">
+              <div class="admin-user-empty" *ngIf="usuariosFiltrados.length === 0">
+                <i class="fas fa-user-slash"></i> Sin resultados
+              </div>
+              <div class="admin-user-item"
+                   *ngFor="let u of usuariosFiltrados"
+                   (mousedown)="seleccionarUsuario(u)">
+                <span class="aui-clave">{{ u.usuario }}</span>
+                <span class="aui-nombre">{{ u.nombre }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmación de asignación -->
+          <div class="admin-assign-confirm" *ngIf="usuarioAsignado">
+            <i class="fas fa-check-circle"></i>
+            Asignado a:
+            <strong>{{ usuarioAsignado.usuario }}</strong>
+            <span class="aui-confirm-nombre">— {{ usuarioAsignado.nombre }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Error mensaje ── -->
+      <div class="form-error" *ngIf="errorMensaje">
+        <i class="fas fa-exclamation-triangle"></i> {{ errorMensaje }}
+      </div>
+
+      <!-- ── Navigation ── -->
+      <div class="form-nav">
+        <button class="btn btn-outline" (click)="back()" [disabled]="isFirstStep">
+          <i class="fas fa-arrow-left"></i> Anterior
+        </button>
+        <button *ngIf="!isLastStep" class="btn btn-primary" (click)="next()">
+          Siguiente <i class="fas fa-arrow-right"></i>
+        </button>
+        <button *ngIf="isLastStep" class="btn btn-success" (click)="submit()" [disabled]="enviando">
+          <span *ngIf="!enviando"><i class="fas fa-paper-plane"></i> Enviar Garantía</span>
+          <span *ngIf="enviando"><i class="fas fa-spinner fa-spin"></i> Enviando…</span>
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

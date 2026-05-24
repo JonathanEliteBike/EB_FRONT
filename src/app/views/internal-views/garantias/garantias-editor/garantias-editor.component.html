@@ -1,0 +1,294 @@
+<app-home-bar></app-home-bar>
+
+<div class="editor-page">
+
+  <!-- ── HEADER ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/garantias" class="back-link">
+        <i class="fas fa-arrow-left"></i> Dashboard de Garantías
+      </a>
+      <h1 class="page-title">
+        <span class="title-icon"><i class="fas fa-sliders-h"></i></span>
+        Editor de Formulario
+      </h1>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline" routerLink="/garantias/formulario" target="_blank">
+        <i class="fas fa-eye"></i> Ver Formulario
+      </a>
+      <button class="btn btn-primary" (click)="guardarEstructura()" [disabled]="guardando">
+        <i class="fas" [class.fa-save]="!guardando" [class.fa-spinner]="guardando"
+           [class.fa-spin]="guardando"></i>
+        {{ guardando ? 'Guardando…' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Feedback ── -->
+  <div class="alert alert-ok" *ngIf="guardadoOk">
+    <i class="fas fa-check-circle"></i> Estructura guardada correctamente.
+  </div>
+  <div class="alert alert-err" *ngIf="errorMsg">
+    <i class="fas fa-exclamation-triangle"></i> {{ errorMsg }}
+  </div>
+
+  <!-- ── TABS ── -->
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="tab === 'editor'" (click)="tab = 'editor'">
+      <i class="fas fa-edit"></i> Estructura del Formulario
+    </button>
+    <button class="tab-btn" [class.active]="tab === 'submissions'" (click)="tab = 'submissions'; cargarFormularios()">
+      <i class="fas fa-list"></i> Solicitudes Recibidas
+      <span class="tab-badge" *ngIf="formularios.length">{{ formularios.length }}</span>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: EDITOR                                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="tab === 'editor'">
+
+    <div *ngIf="cargando" class="loading-box">
+      <div class="spinner"></div>
+      <span>Cargando estructura…</span>
+    </div>
+
+    <div class="editor-legend">
+      <span><i class="fas fa-info-circle"></i></span>
+      Edita los títulos y campos de cada sección. Los cambios se aplican al formulario al guardar.
+      Las condiciones de visibilidad (lógica de marcas) son fijas y no se modifican aquí.
+    </div>
+
+    <div class="sections-list" *ngIf="!cargando">
+      <div *ngFor="let sec of secciones" class="section-card" [class.inactive]="!sec.activa">
+
+        <!-- Section header -->
+        <div class="sec-header" (click)="toggleExpand(sec)">
+          <div class="sec-left">
+            <span class="sec-num">{{ sec.id }}</span>
+            <div class="sec-info">
+              <input *ngIf="sec.expandida" type="text" class="sec-title-input"
+                     [(ngModel)]="sec.titulo" (click)="$event.stopPropagation()"
+                     placeholder="Título de la sección">
+              <span *ngIf="!sec.expandida" class="sec-title">{{ sec.titulo }}</span>
+              <span class="sec-meta">{{ sec.campos.length }} campo{{ sec.campos.length !== 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+          <div class="sec-right" (click)="$event.stopPropagation()">
+            <label class="toggle-wrap" title="{{ sec.activa ? 'Desactivar' : 'Activar' }} sección">
+              <input type="checkbox" [(ngModel)]="sec.activa">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+            <i class="fas expand-icon" [class.fa-chevron-down]="!sec.expandida" [class.fa-chevron-up]="sec.expandida"
+               (click)="toggleExpand(sec)"></i>
+          </div>
+        </div>
+
+        <!-- Section body (expanded) -->
+        <div class="sec-body" *ngIf="sec.expandida">
+
+          <!-- Description -->
+          <div class="field-row">
+            <label class="field-label-sm">Descripción / instrucciones (opcional)</label>
+            <textarea class="field-input-sm" [(ngModel)]="sec.descripcion"
+                      placeholder="Texto de ayuda que aparece al inicio de la sección…"></textarea>
+          </div>
+
+          <!-- Fields list -->
+          <div class="campos-list">
+            <div *ngFor="let campo of sec.campos; let i = index" class="campo-card">
+
+              <div class="campo-header">
+                <i class="fas campo-tipo-icon" [class]="'fas ' + tipoIcono[campo.tipo]"></i>
+                <div class="campo-info">
+                  <ng-container *ngIf="!campo.editando">
+                    <span class="campo-label">{{ campo.label }}</span>
+                    <span class="campo-type-tag">{{ campo.tipo }}</span>
+                  </ng-container>
+                  <ng-container *ngIf="campo.editando">
+                    <input type="text" class="campo-label-input" [(ngModel)]="campo.label"
+                           placeholder="Etiqueta del campo">
+                    <select class="campo-tipo-select" [(ngModel)]="campo.tipo">
+                      <option value="text">Texto</option>
+                      <option value="email">Email</option>
+                      <option value="number">Número</option>
+                      <option value="textarea">Área de texto</option>
+                      <option value="select">Selección</option>
+                      <option value="radio">Opción única</option>
+                      <option value="file">Archivo</option>
+                      <option value="checkbox">Casilla</option>
+                    </select>
+                    <label class="required-toggle">
+                      <input type="checkbox" [(ngModel)]="campo.requerido">
+                      <span>Requerido</span>
+                    </label>
+                  </ng-container>
+                </div>
+                <div class="campo-actions">
+                  <span class="req-badge" *ngIf="campo.requerido && !campo.editando">obligatorio</span>
+                  <button class="icon-btn" title="Mover arriba" (click)="moverCampoArriba(sec, i)">
+                    <i class="fas fa-arrow-up"></i>
+                  </button>
+                  <button class="icon-btn" title="Mover abajo" (click)="moverCampoAbajo(sec, i)">
+                    <i class="fas fa-arrow-down"></i>
+                  </button>
+                  <button class="icon-btn" title="{{ campo.editando ? 'Guardar' : 'Editar' }}"
+                          (click)="campo.editando ? guardarCampo(campo) : iniciarEditarCampo(campo)">
+                    <i class="fas" [class.fa-edit]="!campo.editando" [class.fa-check]="campo.editando"></i>
+                  </button>
+                  <button class="icon-btn danger" title="Eliminar campo" (click)="eliminarCampo(sec, i)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Options editor for radio/select -->
+              <div *ngIf="campo.editando && (campo.tipo === 'radio' || campo.tipo === 'select')"
+                   class="opciones-editor">
+                <label class="field-label-sm">Opciones (una por línea)</label>
+                <textarea class="field-input-sm"
+                          [value]="campo.opciones?.join('\n') ?? ''"
+                          (input)="onOpcionesInput(campo, $event)"
+                          placeholder="Opción 1&#10;Opción 2&#10;Opción 3"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add new field -->
+          <div class="add-campo-row">
+            <ng-container *ngIf="nuevoCampoSecId === sec.id; else addBtn">
+              <input type="text" class="field-input-sm" [(ngModel)]="nuevoLabel"
+                     placeholder="Nombre del nuevo campo" (keyup.enter)="agregarCampo(sec)">
+              <button class="btn btn-sm btn-primary" (click)="agregarCampo(sec)">
+                <i class="fas fa-plus"></i> Agregar
+              </button>
+              <button class="btn btn-sm btn-outline" (click)="nuevoCampoSecId = null; nuevoLabel = ''">
+                Cancelar
+              </button>
+            </ng-container>
+            <ng-template #addBtn>
+              <button class="btn btn-sm btn-ghost" (click)="nuevoCampoSecId = sec.id; nuevoLabel = ''">
+                <i class="fas fa-plus-circle"></i> Agregar campo
+              </button>
+            </ng-template>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: SUBMISSIONS                                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="tab === 'submissions'">
+    <div *ngIf="formularios.length === 0" class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <p>No hay solicitudes de garantía registradas aún.</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="formularios.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Distribuidor</th>
+            <th>Marca</th>
+            <th>Contacto</th>
+            <th>Fecha</th>
+            <th>Estatus</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let f of formularios" (click)="verDetalle(f)" class="table-row clickable">
+            <td><span class="folio-tag">{{ f.folio }}</span></td>
+            <td>{{ f.distribuidor }}</td>
+            <td><span class="marca-tag">{{ f.marca }}</span></td>
+            <td>{{ f.contacto }}</td>
+            <td class="date-cell">{{ f.fecha_creacion }}</td>
+            <td>
+              <select class="estatus-select" [value]="f.estatus"
+                      (change)="actualizarEstatus(f.id, $any($event.target).value)"
+                      (click)="$event.stopPropagation()">
+                <option>Enviado</option>
+                <option>En revisión</option>
+                <option>Aprobado</option>
+                <option>Rechazado</option>
+                <option>Cerrado</option>
+              </select>
+            </td>
+            <td>
+              <button class="icon-btn" (click)="verDetalle(f); $event.stopPropagation()" title="Ver detalle">
+                <i class="fas fa-eye"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Detail modal -->
+    <div class="modal-overlay" *ngIf="detalle" (click)="cerrarDetalle()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <span class="folio-tag large">{{ detalle.folio }}</span>
+            <h3>{{ detalle.distribuidor }}</h3>
+          </div>
+          <button class="icon-btn" (click)="cerrarDetalle()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <div *ngIf="cargandoDetalle" class="loading-box"><div class="spinner"></div></div>
+          <ng-container *ngIf="!cargandoDetalle && detalle">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-key">Email</span>
+                <span class="detail-val">{{ detalle.email }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-key">Contacto</span>
+                <span class="detail-val">{{ detalle.contacto }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-key">Puesto</span>
+                <span class="detail-val">{{ detalle.puesto }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-key">Marca</span>
+                <span class="detail-val"><span class="marca-tag">{{ detalle.marca }}</span></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-key">Fecha</span>
+                <span class="detail-val">{{ detalle.fecha_creacion }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-key">Estatus</span>
+                <span class="detail-val">
+                  <select class="estatus-select" [value]="detalle.estatus"
+                          (change)="actualizarEstatus(detalle.id, $any($event.target).value)">
+                    <option>Enviado</option>
+                    <option>En revisión</option>
+                    <option>Aprobado</option>
+                    <option>Rechazado</option>
+                    <option>Cerrado</option>
+                  </select>
+                </span>
+              </div>
+            </div>
+            <hr class="modal-divider">
+            <h4>Datos del Formulario</h4>
+            <div class="detail-grid">
+              <div *ngFor="let entry of detalleEntries" class="detail-item">
+                <span class="detail-key">{{ entry[0] }}</span>
+                <span class="detail-val">{{ entry[1] }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

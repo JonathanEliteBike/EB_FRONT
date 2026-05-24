@@ -1,5 +1,5 @@
 import { importProvidersFrom, LOCALE_ID } from '@angular/core';
-import { provideRouter, RouterModule } from '@angular/router';
+import { provideRouter, RouterModule, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 
@@ -10,7 +10,7 @@ registerLocaleData(localeEsMx, 'es-MX');
 
 export const appConfig = {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'disabled' })),
 
     provideHttpClient(
       withFetch(),

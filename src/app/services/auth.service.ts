@@ -101,10 +101,19 @@ export class AuthService {
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.id || null; // Ajusta 'id' si tu token usa otro nombre, ej: 'userId'
+      return payload.id || null;
     } catch (e) {
       return null;
     }
+  }
+
+  isAdmin(): boolean {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.rol === 1;
+    } catch { return false; }
   }
 
   getFlujoPermiso(): number {

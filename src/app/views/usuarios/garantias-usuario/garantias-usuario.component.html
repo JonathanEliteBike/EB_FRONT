@@ -1,0 +1,302 @@
+<app-top-bar-usuarios></app-top-bar-usuarios>
+
+<div class="garantias-page">
+
+  <!-- ══════════════════════ VISTA HUB ══════════════════════ -->
+  <ng-container *ngIf="vista === 'hub'">
+    <div class="page-header">
+      <div class="header-left">
+        <a routerLink="/usuarios/dashboard" class="back-link"><i class="fas fa-arrow-left"></i> Inicio</a>
+        <h1 class="page-title"><span class="title-icon"><i class="fas fa-shield-alt"></i></span>Garantías</h1>
+      </div>
+    </div>
+    <div class="hub-grid">
+      <div class="hub-card" (click)="verMisTickets()">
+        <div class="hub-card-icon"><i class="fas fa-ticket-alt"></i></div>
+        <h2>Seguimiento de mis tickets</h2>
+        <p>Consulta el estado de tus solicitudes de garantía y sube documentos corregidos si es necesario.</p>
+        <div class="hub-card-btn">Ver mis tickets <i class="fas fa-arrow-right"></i></div>
+      </div>
+      <div class="hub-card hub-card-secondary" routerLink="/garantias/formulario">
+        <div class="hub-card-icon"><i class="fas fa-plus-circle"></i></div>
+        <h2>Crear nuevo ticket</h2>
+        <p>¿Tienes un producto con falla? Registra tu solicitud llenando el formulario correspondiente.</p>
+        <div class="hub-card-btn">Ir al formulario <i class="fas fa-arrow-right"></i></div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════════════ VISTA LISTA ══════════════════════ -->
+  <ng-container *ngIf="vista === 'tickets'">
+    <div class="page-header">
+      <div class="header-left">
+        <button class="back-link btn-reset" (click)="volverAlHub()"><i class="fas fa-arrow-left"></i> Garantías</button>
+        <h1 class="page-title"><span class="title-icon"><i class="fas fa-ticket-alt"></i></span>Mis Tickets</h1>
+      </div>
+      <button class="btn btn-outline" (click)="cargar()">
+        <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i> Actualizar
+      </button>
+    </div>
+
+    <div class="state-wrap" *ngIf="cargando"><div class="spinner"></div><span>Cargando…</span></div>
+    <div class="state-wrap error-state" *ngIf="!cargando && error">
+      <i class="fas fa-exclamation-triangle"></i><span>{{ error }}</span>
+      <button class="btn btn-outline" (click)="cargar()">Reintentar</button>
+    </div>
+
+    <div class="empty-state" *ngIf="!cargando && !error && tickets.length === 0">
+      <div class="empty-inner">
+        <i class="fas fa-inbox empty-icon"></i>
+        <h2>Sin tickets registrados</h2>
+        <p>Aún no has enviado ninguna solicitud de garantía.</p>
+        <button class="btn btn-primary" routerLink="/garantias/formulario"><i class="fas fa-plus"></i> Crear mi primer ticket</button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!cargando && !error && tickets.length > 0">
+
+      <!-- Barra de filtros -->
+      <div class="filtros-bar">
+        <div class="filtro-search">
+          <i class="fas fa-search filtro-icon"></i>
+          <input class="filtro-input" type="text" placeholder="Buscar por folio o distribuidor…"
+                 [(ngModel)]="busqueda" (ngModelChange)="onFiltroChange()">
+          <button *ngIf="busqueda" class="filtro-clear" (click)="busqueda=''; onFiltroChange()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <select class="filtro-select" [(ngModel)]="filtroEstatus" (ngModelChange)="onFiltroChange()">
+          <option value="">Todos los estatus</option>
+          <option *ngFor="let e of estatusDisponibles" [value]="e">{{ e }}</option>
+        </select>
+        <select class="filtro-select" [(ngModel)]="filtroMarca" (ngModelChange)="onFiltroChange()">
+          <option value="">Todas las marcas</option>
+          <option *ngFor="let m of marcasDisponibles" [value]="m">{{ m }}</option>
+        </select>
+        <button *ngIf="busqueda || filtroEstatus || filtroMarca" class="btn btn-outline btn-sm" (click)="resetFiltros()">
+          <i class="fas fa-filter-circle-xmark"></i> Limpiar
+        </button>
+        <span class="filtro-count">{{ ticketsFiltrados.length }} ticket{{ ticketsFiltrados.length !== 1 ? 's' : '' }}</span>
+      </div>
+
+      <!-- Tabla compacta -->
+      <div class="tabla-wrap">
+        <table class="tickets-tabla">
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Marca</th>
+              <th>Distribuidor</th>
+              <th>Estatus</th>
+              <th>Estado de Pieza</th>
+              <th>Fecha</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of ticketsPaginados" class="tabla-row" (click)="verDetalle(t)">
+              <td class="col-folio">{{ t.folio }}</td>
+              <td class="col-marca">{{ t.marca }}</td>
+              <td class="col-dist">{{ t.distribuidor }}</td>
+              <td class="col-estatus">
+                <span class="tc-badge"
+                      [style.background]="colorEstatus(t.estatus) + '22'"
+                      [style.color]="colorEstatus(t.estatus)"
+                      [style.border-color]="colorEstatus(t.estatus) + '55'">{{ t.estatus }}</span>
+              </td>
+              <td class="col-pieza">
+                <span *ngIf="t.estatus_pieza && t.estatus_pieza !== 'Sin pieza'" class="pieza-inline">
+                  <span class="pieza-dot" [style.background]="colorPieza(t.estatus_pieza)"></span>
+                  {{ t.estatus_pieza }}
+                </span>
+                <span *ngIf="!t.estatus_pieza || t.estatus_pieza === 'Sin pieza'" class="col-vacio">—</span>
+              </td>
+              <td class="col-fecha">{{ t.fecha_creacion }}</td>
+              <td class="col-accion"><i class="fas fa-chevron-right accion-icon"></i></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="tabla-empty" *ngIf="ticketsPaginados.length === 0">
+          <i class="fas fa-search"></i> Sin resultados para los filtros aplicados.
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div class="paginacion" *ngIf="totalPaginas > 1">
+        <button class="pag-btn" [disabled]="paginaActual === 1" (click)="irPagina(paginaActual - 1)">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <ng-container *ngFor="let p of paginas">
+          <button class="pag-btn" [class.pag-activa]="p === paginaActual" (click)="irPagina(p)">{{ p }}</button>
+        </ng-container>
+        <button class="pag-btn" [disabled]="paginaActual === totalPaginas" (click)="irPagina(paginaActual + 1)">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+    </ng-container>
+  </ng-container>
+
+  <!-- ══════════════════════ VISTA DETALLE ══════════════════════ -->
+  <ng-container *ngIf="vista === 'detalle' && ticketSeleccionado">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="back-link btn-reset" (click)="volverATickets()"><i class="fas fa-arrow-left"></i> Mis Tickets</button>
+        <div class="detalle-title-row">
+          <h1 class="page-title"><span class="title-icon"><i class="fas fa-file-alt"></i></span>{{ ticketSeleccionado.folio }}</h1>
+          <span class="tc-badge"
+                [style.background]="colorEstatus(ticketSeleccionado.estatus) + '22'"
+                [style.color]="colorEstatus(ticketSeleccionado.estatus)"
+                [style.border-color]="colorEstatus(ticketSeleccionado.estatus) + '55'">
+            {{ ticketSeleccionado.estatus }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-wrap" *ngIf="cargandoDetalle"><div class="spinner"></div><span>Cargando detalle…</span></div>
+
+    <ng-container *ngIf="!cargandoDetalle">
+
+      <!-- Info básica -->
+      <div class="detalle-card">
+        <h4 class="card-title"><i class="fas fa-info-circle"></i> Información del Ticket</h4>
+        <div class="info-grid">
+          <div class="info-field"><span class="info-key">Distribuidor</span><span class="info-val">{{ ticketSeleccionado.distribuidor }}</span></div>
+          <div class="info-field"><span class="info-key">Contacto</span><span class="info-val">{{ ticketSeleccionado.contacto }}</span></div>
+          <div class="info-field"><span class="info-key">Marca</span><span class="info-val">{{ ticketSeleccionado.marca }}</span></div>
+          <div class="info-field"><span class="info-key">Fecha</span><span class="info-val">{{ ticketSeleccionado.fecha_creacion }}</span></div>
+          <div class="info-field" *ngIf="ticketSeleccionado.estatus_pieza && ticketSeleccionado.estatus_pieza !== 'Sin pieza'">
+            <span class="info-key">Estado de pieza</span>
+            <span class="info-val" [style.color]="colorPieza(ticketSeleccionado.estatus_pieza)">{{ ticketSeleccionado.estatus_pieza }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentos y validación -->
+      <div class="detalle-card" *ngIf="documentosTicket.length > 0 || serieTicket">
+        <h4 class="card-title"><i class="fas fa-paperclip"></i> Documentos y Validación</h4>
+        <p class="card-hint">Los documentos marcados en rojo fueron rechazados. Puedes subir uno nuevo para que sea revisado nuevamente.</p>
+
+        <!-- Número de serie -->
+        <div *ngIf="serieTicket" class="doc-row"
+             [class.doc-rechazado]="validacionDocs['numero_serie'] === 'rechazado'"
+             [class.doc-valido]="validacionDocs['numero_serie'] === 'valido'">
+          <div class="doc-info">
+            <i class="fas fa-barcode doc-icon"></i>
+            <div class="doc-texts">
+              <span class="doc-label">Número de Serie</span>
+              <span class="doc-filename">{{ ticketSeleccionado?.datos?.['bici_serie'] }}</span>
+            </div>
+            <span *ngIf="validacionDocs['numero_serie'] === 'valido'" class="val-chip valid"><i class="fas fa-check"></i> Válido</span>
+            <span *ngIf="validacionDocs['numero_serie'] === 'rechazado'" class="val-chip rejected"><i class="fas fa-times"></i> Rechazado</span>
+          </div>
+          <div class="doc-reupload" *ngIf="validacionDocs['numero_serie'] === 'rechazado'">
+            <p class="reupload-hint"><i class="fas fa-exclamation-circle"></i> El número de serie fue rechazado. Ingrésalo nuevamente:</p>
+            <div class="serie-update-row">
+              <input class="serie-input" type="text" [(ngModel)]="nuevaSerie" placeholder="Número de serie corregido">
+              <button class="btn btn-primary btn-sm" (click)="actualizarSerie()" [disabled]="!nuevaSerie.trim() || actualizandoSerie">
+                <i class="fas" [class.fa-save]="!actualizandoSerie" [class.fa-spinner]="actualizandoSerie" [class.fa-spin]="actualizandoSerie"></i>
+                {{ actualizandoSerie ? 'Guardando…' : 'Actualizar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documentos subidos -->
+        <div *ngFor="let doc of documentosTicket" class="doc-row"
+             [class.doc-rechazado]="validacionDocs[doc.key] === 'rechazado'"
+             [class.doc-valido]="validacionDocs[doc.key] === 'valido'">
+          <div class="doc-info">
+            <a [href]="archivoVerUrl(doc.nombre)" target="_blank" class="doc-link">
+              <i class="fas doc-icon" [ngClass]="iconoArchivo(doc.nombre)"></i>
+              <div class="doc-texts">
+                <span class="doc-label">{{ doc.label }}</span>
+                <span class="doc-filename">{{ doc.legible }} <i class="fas fa-external-link-alt"></i></span>
+              </div>
+              <img *ngIf="esImagen(doc.nombre)" [src]="archivoVerUrl(doc.nombre)" class="doc-thumb" alt="">
+            </a>
+            <span *ngIf="validacionDocs[doc.key] === 'valido'" class="val-chip valid"><i class="fas fa-check"></i> Válido</span>
+            <span *ngIf="validacionDocs[doc.key] === 'rechazado'" class="val-chip rejected"><i class="fas fa-times"></i> Rechazado</span>
+          </div>
+          <div class="doc-reupload" *ngIf="validacionDocs[doc.key] === 'rechazado'">
+            <p class="reupload-hint"><i class="fas fa-exclamation-circle"></i> Este documento fue rechazado. Sube uno corregido:</p>
+            <label class="upload-label" [class.uploading]="resubiendo[doc.key]">
+              <input type="file" class="file-hidden" accept="image/*,.pdf,.mp4,.mov"
+                     (change)="onReupload($event, doc.key)" [disabled]="resubiendo[doc.key]">
+              <i class="fas" [class.fa-upload]="!resubiendo[doc.key]" [class.fa-spinner]="resubiendo[doc.key]" [class.fa-spin]="resubiendo[doc.key]"></i>
+              {{ resubiendo[doc.key] ? 'Subiendo…' : 'Seleccionar archivo nuevo' }}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout dos columnas: Comentarios + Historial -->
+      <div class="doble-panel">
+
+        <!-- Comentarios -->
+        <div class="detalle-card panel-comentarios">
+          <h4 class="card-title"><i class="fas fa-comments"></i> Comentarios</h4>
+          <div class="state-wrap sm" *ngIf="cargandoComentarios"><div class="spinner sm"></div></div>
+          <ng-container *ngIf="!cargandoComentarios">
+            <div class="comentarios-list" *ngIf="comentarios.length > 0">
+              <div *ngFor="let c of comentarios" class="comentario-item"
+                   [class.es-cliente]="c.autor !== 'Administrador' && c.autor !== 'Sistema'">
+                <div class="com-header">
+                  <span class="com-autor">{{ c.autor }}</span>
+                  <span class="com-fecha">{{ c.fecha }}</span>
+                </div>
+                <div class="com-texto">{{ c.texto }}</div>
+              </div>
+            </div>
+            <div class="empty-comments" *ngIf="comentarios.length === 0">
+              <i class="fas fa-comment-slash"></i> Sin comentarios aún.
+            </div>
+            <div class="add-comment">
+              <textarea class="comment-input" [(ngModel)]="nuevoComentario" rows="3"
+                        placeholder="Escribe un comentario o aclaración…"></textarea>
+              <button class="btn btn-primary btn-sm" (click)="enviarComentario()"
+                      [disabled]="!nuevoComentario.trim() || enviandoComentario">
+                <i class="fas" [class.fa-paper-plane]="!enviandoComentario"
+                   [class.fa-spinner]="enviandoComentario" [class.fa-spin]="enviandoComentario"></i>
+                {{ enviandoComentario ? 'Enviando…' : 'Comentar' }}
+              </button>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Historial -->
+        <div class="detalle-card panel-historial">
+          <h4 class="card-title"><i class="fas fa-history"></i> Historial de Actividad</h4>
+          <div class="state-wrap sm" *ngIf="cargandoComentarios"><div class="spinner sm"></div></div>
+          <ng-container *ngIf="!cargandoComentarios">
+            <div class="timeline" *ngIf="historial.length > 0">
+              <div *ngFor="let h of historial" class="tl-item"
+                   [attr.data-tipo]="h.tipo"
+                   [class.tl-rechazado]="h.texto.toLowerCase().includes('rechazado')">
+                <div class="tl-dot"><i class="fas" [ngClass]="'fa-' + iconoHistorial(h.tipo)"></i></div>
+                <div class="tl-body">
+                  <div class="tl-meta">
+                    <span class="tl-tipo" [attr.data-tipo]="h.tipo">
+                      {{ h.tipo === 'estatus' ? 'Estatus' : h.tipo === 'pieza' ? 'Pieza' : 'Validación' }}
+                    </span>
+                    <span class="tl-fecha">{{ h.fecha }}</span>
+                  </div>
+                  <div class="tl-texto">{{ h.texto }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="empty-comments" *ngIf="historial.length === 0">
+              <i class="fas fa-clock"></i> Sin actividad registrada aún.
+            </div>
+          </ng-container>
+        </div>
+
+      </div>
+    </ng-container>
+  </ng-container>
+
+</div>

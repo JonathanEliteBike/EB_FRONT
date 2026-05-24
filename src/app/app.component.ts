@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { filter } from 'rxjs/operators';
 import { AlertaService } from './services/alerta.service';
 import { AuthService } from './services/auth.service';
 import { AlertaComponent } from './components/alerta/alerta.component';
@@ -31,17 +32,34 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     private alerta: AlertaService,
+    private router: Router,
     // Inyectamos los servicios para iniciar la precarga
     private monitorService: MonitorOdooService,
     private previoService: PrevioService,
     private caratulasService: CaratulasService
   ) {
+    // Evita que el browser restaure su propio scroll (conflicto con el nuestro)
+    if (history.scrollRestoration) {
+      history.scrollRestoration = 'manual';
+    }
+
     this.alerta.alerta$.subscribe(data => {
       this.mensaje = data.mensaje;
       this.tipo = data.tipo;
       this.mensajeVisible = true;
       setTimeout(() => this.mensajeVisible = false, 3000);
     });
+
+    // Ocultar navbar al entrar a cualquier módulo — mide altura real del navbar
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => {
+        setTimeout(() => {
+          const navbar = document.querySelector('app-home-bar') as HTMLElement | null;
+          const offset = navbar ? navbar.offsetHeight + 2 : 64;
+          window.scrollTo({ top: offset, behavior: 'instant' });
+        }, 100);
+      });
   }
 
   ngOnInit() {

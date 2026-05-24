@@ -1,34 +1,81 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 
-<div class="dashboard-page">
-  <div class="dashboard-bg"></div>
+<div class="dash-page">
 
-  <div class="dashboard-container">
-    <h1>Inicio</h1>
-    <p class="subtexto">Bienvenido a tu portal. Selecciona la opción que deseas consultar.</p>
-
-    <div class="secciones">
-      <div class="seccion seccion-compra">
-        <div class="seccion-icono"><i class="fas fa-shopping-cart"></i></div>
-        <h2>Proyección de Compra MY26</h2>
-        <p>Consulta o planifica tu compra estimada con base en tus necesidades.</p>
-        <button type="button" [routerLink]="['/usuarios/proyeccion-compras']">Ir a Proyección</button>
-      </div>
-
-      <div class="seccion seccion-my26">
-        <div class="seccion-icono"><i class="fas fa-chart-line"></i></div>
-        <h2>Resumen de Temporada</h2>
-        <p>Aquí puedes ver tu progreso de compra anual, tus avances de compra y consultar el detalle de tus compras.</p>
-        <button type="button" [routerLink]="['/usuarios/caratula']">Ir a Resumen</button>
-      </div>
-
-      <div class="seccion seccion-retroactivos">
-        <div class="seccion-icono"><i class="fas fa-undo"></i></div>
-        <h2>Retroactivos</h2>
-        <p>Consulta tu carátula de retroactivos para conocer el estado de tus retroactivos y su impacto en tu compra anual.</p>
-        <button type="button" [routerLink]="['/usuarios/caratula-retroactivos']">Ir a Retroactivos</button>
-      </div>
+  <!-- ── Greeting ── -->
+  <header class="dash-header">
+    <div class="header-left">
+      <span class="greeting-label">Tu portal</span>
+      <h1 class="greeting-title">¿Qué quieres hacer hoy?</h1>
     </div>
+    <div class="header-logo">
+      <i class="fas fa-bicycle"></i>
+    </div>
+  </header>
 
-  </div>
+  <!-- ── Bento grid ── -->
+  <main class="bento">
+
+    <!-- Proyección — tall left -->
+    <a routerLink="/usuarios/proyeccion-compras" class="bento-card card-proyeccion">
+      <div class="card-bg-num">01</div>
+      <div class="card-glow"></div>
+      <div class="card-content">
+        <div class="card-tag">Compras</div>
+        <div class="card-icon-wrap"><i class="fas fa-shopping-cart"></i></div>
+        <div class="card-bottom">
+          <h2>Proyección de Compra<br><span>MY26</span></h2>
+          <p>Planifica tu compra estimada con base en tus necesidades de temporada.</p>
+          <div class="card-link">Abrir módulo <i class="fas fa-arrow-right"></i></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Resumen — wide top right -->
+    <a routerLink="/usuarios/caratula" class="bento-card card-resumen">
+      <div class="card-bg-num">02</div>
+      <div class="card-glow"></div>
+      <div class="card-content horizontal">
+        <div class="card-icon-wrap"><i class="fas fa-chart-line"></i></div>
+        <div class="card-text">
+          <div class="card-tag">Temporada</div>
+          <h2>Resumen de Temporada</h2>
+          <p>Progreso de compra anual, avances y detalle de tus pedidos.</p>
+          <div class="card-link">Ver resumen <i class="fas fa-arrow-right"></i></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Retroactivos — bottom center -->
+    <a routerLink="/usuarios/caratula-retroactivos" class="bento-card card-retroactivos">
+      <div class="card-bg-num">03</div>
+      <div class="card-glow"></div>
+      <div class="card-content">
+        <div class="card-tag">Bonificaciones</div>
+        <div class="card-icon-wrap"><i class="fas fa-undo"></i></div>
+        <div class="card-bottom">
+          <h2>Retroactivos</h2>
+          <p>Consulta tu carátula y su impacto en la compra anual.</p>
+          <div class="card-link">Ver carátula <i class="fas fa-arrow-right"></i></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Garantías — bottom right -->
+    <a routerLink="/usuarios/garantias" class="bento-card card-garantias">
+      <div class="card-bg-num">04</div>
+      <div class="card-glow"></div>
+      <div class="card-content">
+        <div class="card-tag">Soporte</div>
+        <div class="card-icon-wrap"><i class="fas fa-shield-alt"></i></div>
+        <div class="card-bottom">
+          <h2>Garantías</h2>
+          <p>Gestiona tus tickets y solicitudes de garantía de producto.</p>
+          <div class="card-link">Ir a garantías <i class="fas fa-arrow-right"></i></div>
+        </div>
+      </div>
+    </a>
+
+  </main>
+
 </div>

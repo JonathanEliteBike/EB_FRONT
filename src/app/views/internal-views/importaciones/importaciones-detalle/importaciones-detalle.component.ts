@@ -1,0 +1,287 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
+import { ImportacionesService, Importacion } from '../../../../services/importaciones.service';
+
+type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos';
+
+interface CampoValidar { campo: keyof Importacion; label: string; }
+
+@Component({
+  selector: 'app-importaciones-detalle',
+  standalone: true,
+  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent],
+  templateUrl: './importaciones-detalle.component.html',
+  styleUrl: './importaciones-detalle.component.css',
+})
+export class ImportacionesDetalleComponent implements OnInit {
+  embarque: Importacion | null = null;
+  cargando = true;
+  guardando = false;
+  guardadoOk = false;
+  error = '';
+  seccionActiva: Seccion = 'logistica';
+  cambiosPendientes: Partial<Importacion> = {};
+
+  validacionError: string[] = [];
+  camposConError = new Set<string>();
+
+  readonly tabs: { key: Seccion; label: string; icon: string }[] = [
+    { key: 'logistica',   label: 'Logística',   icon: 'fa-ship' },
+    { key: 'importacion', label: 'Importación',  icon: 'fa-file-alt' },
+    { key: 'despacho',    label: 'Despacho',     icon: 'fa-truck' },
+    { key: 'odoo',        label: 'Odoo / SAE',   icon: 'fa-database' },
+    { key: 'almacen',     label: 'Almacén',      icon: 'fa-warehouse' },
+    { key: 'recepcion',   label: 'Recepción',    icon: 'fa-box-open' },
+    { key: 'cierre',      label: 'Cierre',       icon: 'fa-check-circle' },
+    { key: 'costos',      label: 'Costos',       icon: 'fa-dollar-sign' },
+  ];
+
+  private readonly CAMPOS_VALIDAR: Partial<Record<Seccion, CampoValidar[]>> = {
+    logistica: [
+      { campo: 'log_fecha_notificacion',           label: 'Fecha notificación de entrega' },
+      { campo: 'log_fecha_entrega',                label: 'Fecha de entrega' },
+      { campo: 'log_titulo_correo_salida',         label: 'Título correo salida de contenedor' },
+      { campo: 'log_titulo_correo_2',              label: 'Segunda línea del correo' },
+      { campo: 'log_confirmacion_enterado',        label: 'Confirmación de enterado ELEI' },
+      { campo: 'log_origen',                       label: 'Origen' },
+      { campo: 'log_tipo_productos',               label: 'Tipo de productos' },
+      { campo: 'log_fecha_solicitud_cotizaciones', label: 'Fecha solicitud de cotizaciones' },
+      { campo: 'log_confirmacion_cotizacion',      label: 'Confirmación de cotización y forwarder' },
+      { campo: 'log_costo_flete',                  label: 'Costo de flete' },
+      { campo: 'log_fecha_shipping_instructions',  label: 'Envío shipping instructions' },
+      { campo: 'log_confirmacion_booking',         label: 'Confirmación de booking' },
+      { campo: 'log_fecha_booking',                label: 'Booking (fecha salida contenedor)' },
+      { campo: 'log_eta_puerto',                   label: 'ETA Puerto' },
+      { campo: 'log_buque',                        label: 'Buque' },
+      { campo: 'log_no_viaje',                     label: 'No. de Viaje' },
+      { campo: 'log_puerto_salida',                label: 'Puerto de salida' },
+      { campo: 'log_contenedor',                   label: 'Contenedor(es)' },
+      { campo: 'log_recepcion_bl_co',              label: 'Recepción de BL y CO' },
+      { campo: 'log_confirmacion_bl_co',           label: 'Confirmación de BL y CO definitivos' },
+      { campo: 'log_certificado_seguro',           label: 'Certificado de Seguro (número)' },
+      { campo: 'log_recepcion_documentos',         label: 'Recepción de documentos' },
+    ],
+    importacion: [
+      { campo: 'imp_fecha_traduccion',           label: 'Fecha entrega de traducción al RBF' },
+      { campo: 'imp_fecha_numeros_serie',        label: 'Fecha entrega de números de serie' },
+      { campo: 'imp_bl_guia',                    label: 'BL / Guía' },
+      { campo: 'imp_co',                         label: 'CO' },
+      { campo: 'imp_facturas',                   label: 'Facturas (números)' },
+      { campo: 'imp_series',                     label: 'Series' },
+      { campo: 'imp_solicitud_pago_forwarder',   label: 'Solicitud de pago a Forwarder' },
+      { campo: 'imp_llegada_contenedor_puerto',  label: 'Llegada de contenedor a puerto' },
+      { campo: 'imp_terminal',                   label: 'Terminal' },
+      { campo: 'imp_bl_endosado',                label: 'BL endosado por el forwarder al AA' },
+      { campo: 'imp_bl_revalidado',              label: 'BL revalidado por el AA' },
+      { campo: 'imp_carta_porte',                label: 'Carta porte (fecha)' },
+      { campo: 'imp_entrega_facturas_aa',        label: 'Entrega de facturas al AA' },
+      { campo: 'imp_traduccion_aa',              label: 'Traducción para el AA' },
+      { campo: 'imp_entrega_certificado_origen', label: 'Entrega de certificado de origen' },
+      { campo: 'imp_relacion_numeros_serie',     label: 'Relación de números de serie' },
+      { campo: 'imp_relacion_incrementables',    label: 'Relación de incrementables' },
+      { campo: 'imp_recepcion_draft_pedimento',  label: 'Recepción de draft de pedimento' },
+      { campo: 'imp_fecha_entrega_docs_aa',      label: 'Fecha entrega documentos al AA' },
+      { campo: 'imp_pedimento_revisado',         label: 'Pedimento revisado definitivo' },
+      { campo: 'imp_pedimento',                  label: 'Pedimento (número)' },
+      { campo: 'imp_coves_aa',                   label: 'Elaboración de COVES del AA' },
+      { campo: 'imp_revision_coves',             label: 'Revisión de COVES por ELEI' },
+      { campo: 'imp_aplica_verificacion',        label: '¿Aplica verificación?' },
+      { campo: 'imp_layout_verificacion',        label: 'Layout para verificación' },
+      { campo: 'imp_envio_layout',               label: 'Envío de layout (si aplica)' },
+      { campo: 'imp_carta_318',                  label: 'Carta 3.1.8' },
+      { campo: 'imp_carta_incrementables',       label: 'Carta de incrementables' },
+      { campo: 'imp_carta_no_previo',            label: 'Carta de no previo' },
+      { campo: 'imp_carta_declaracion_marca',    label: 'Carta declaración de marca' },
+      { campo: 'imp_carta_aplicacion_uva',       label: 'Carta aplicación de UVA' },
+      { campo: 'imp_articulos_verificar',        label: 'Artículos a verificar y cantidad total' },
+      { campo: 'imp_liberacion_folios',          label: 'Liberación de folios' },
+      { campo: 'imp_fecha_pago_pedimento',       label: 'Fecha de pago de pedimento' },
+      { campo: 'imp_fecha_limite_cruce',         label: 'Fecha límite cruce' },
+    ],
+    despacho: [
+      { campo: 'des_solicitud_cita_cruce',       label: 'Solicitud de cita para cruce' },
+      { campo: 'des_cita_cruce',                 label: 'Cita para cruce' },
+      { campo: 'des_fecha_cruce_real',           label: 'Fecha de cruce real' },
+      { campo: 'des_solicitud_pase_maniobras',   label: 'Solicitud de pase para maniobras' },
+      { campo: 'des_carta_maniobras',            label: 'Carta de maniobras (transportista)' },
+      { campo: 'des_fecha_carta_porte',          label: 'Datos para carta porte' },
+      { campo: 'des_fecha_entrega_almacen_prog', label: 'Fecha de entrega en almacén programada' },
+      { campo: 'des_lugar_destino',              label: 'Lugar de destino (Ciudad)' },
+      { campo: 'des_llegada_almacen',            label: 'Llegada de contenedor a almacén' },
+      { campo: 'des_solicitud_carta_vacio',      label: 'Solicitud de carta para entrega de vacío' },
+      { campo: 'des_fecha_lavado',               label: 'Fecha de lavado de contenedor' },
+      { campo: 'des_entrega_contenedor_naviera', label: 'Fecha entrega contenedor a naviera' },
+      { campo: 'des_dias_sin_demoras',           label: 'Días sin demoras para devolver contenedor' },
+      { campo: 'des_fecha_limite_naviera',       label: 'Fecha límite entrega contenedor a naviera' },
+    ],
+    odoo: [
+      { campo: 'odoo_codificacion',     label: 'Codificación de productos' },
+      { campo: 'odoo_alta_catalogo',    label: 'Alta de catálogo en Odoo' },
+      { campo: 'odoo_alta_precios',     label: 'Alta de precios en Odoo' },
+      { campo: 'odoo_alta_orden_compra', label: 'Alta de orden de compra' },
+      { campo: 'odoo_folio_orden',      label: 'Folio(s) de orden de compra' },
+    ],
+    almacen: [
+      { campo: 'alm_base_datos_etiquetas',    label: 'Base de datos para etiquetas' },
+      { campo: 'alm_base_datos_verificacion', label: 'Base de datos de artículos a verificación' },
+      { campo: 'alm_liberacion_etiquetado',   label: 'Liberación de etiquetado por almacén' },
+      { campo: 'alm_envio_info_uva',          label: 'Envío de información a la UVA' },
+      { campo: 'alm_liberacion_uva',          label: 'Liberación de etiquetado por la UVA' },
+      { campo: 'alm_fecha_limite_etiquetado', label: 'Fecha límite cumplimiento etiquetado' },
+    ],
+    recepcion: [
+      { campo: 'rec_cedula_costeo',           label: 'Cédula de costeo de IGI' },
+      { campo: 'rec_recepcion_odoo',          label: 'Recepción en Odoo' },
+      { campo: 'rec_folio_compra',            label: 'Folio de Compra en Odoo' },
+      { campo: 'rec_liberacion_verificacion', label: 'Liberación de productos a verificación' },
+    ],
+    cierre: [
+      { campo: 'cie_recepcion_cuenta_gastos', label: 'Recepción de cuenta de gastos' },
+      { campo: 'cie_saldo_favor_elite',       label: 'Saldo a favor de Elite Bike' },
+      { campo: 'cie_liquidado_elite',         label: 'Liquidado a Elite Bike' },
+      { campo: 'cie_saldo_favor_aa',          label: 'Saldo a favor del Agente Aduanal' },
+      { campo: 'cie_liquidado_aa',            label: 'Liquidado a Agente Aduanal' },
+    ],
+  };
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private svc: ImportacionesService
+  ) {}
+
+  ngOnInit(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.svc.obtener(id).subscribe({
+      next: (data) => {
+        this.embarque = data;
+        this._aplicarBorradores();
+        this.cargando = false;
+      },
+      error: () => { this.error = 'Embarque no encontrado'; this.cargando = false; },
+    });
+  }
+
+  private _aplicarBorradores(): void {
+    if (!this.embarque?.borradores) return;
+    for (const campos of Object.values(this.embarque.borradores)) {
+      for (const [campo, valor] of Object.entries(campos)) {
+        const actual = (this.embarque as any)[campo];
+        if (actual === null || actual === undefined || actual === '') {
+          (this.embarque as any)[campo] = valor;
+        }
+      }
+    }
+  }
+
+  marcarCambio(campo: keyof Importacion, valor: any): void {
+    if (!this.embarque) return;
+    (this.embarque as any)[campo] = valor;
+    (this.cambiosPendientes as any)[campo] = valor;
+    if (this.valorValido(valor)) {
+      this.camposConError.delete(campo as string);
+      if (this.camposConError.size === 0) this.validacionError = [];
+    }
+  }
+
+  private valorValido(v: any): boolean {
+    return v !== null && v !== undefined && v !== '' && v !== 'NO';
+  }
+
+  esCampoError(campo: string): boolean {
+    return this.camposConError.has(campo);
+  }
+
+  private validarSeccionActual(): string[] {
+    if (this.seccionActiva === 'costos') return [];
+    const campos = this.CAMPOS_VALIDAR[this.seccionActiva] ?? [];
+    return campos
+      .filter(c => !this.valorValido((this.embarque as any)[c.campo]))
+      .map(c => c.label);
+  }
+
+  private camposFaltantesSet(): Set<string> {
+    const campos = this.CAMPOS_VALIDAR[this.seccionActiva] ?? [];
+    return new Set(
+      campos
+        .filter(c => !this.valorValido((this.embarque as any)[c.campo]))
+        .map(c => c.campo as string)
+    );
+  }
+
+  cambiarSeccion(s: Seccion): void {
+    this.validacionError = [];
+    this.camposConError.clear();
+    this.seccionActiva = s;
+  }
+
+  guardar(): void {
+    if (!this.embarque) return;
+
+    const faltantes = this.validarSeccionActual();
+    if (faltantes.length > 0) {
+      this.validacionError = faltantes;
+      this.camposConError = this.camposFaltantesSet();
+      return;
+    }
+
+    this.validacionError = [];
+    this.camposConError.clear();
+
+    // Enviar TODOS los campos de la sección + indicar sección oficial para limpiar borrador
+    const payload: any = { _seccion_oficial: this.seccionActiva };
+    for (const c of (this.CAMPOS_VALIDAR[this.seccionActiva] ?? [])) {
+      payload[c.campo] = (this.embarque as any)[c.campo];
+    }
+
+    this.guardando = true;
+    this.svc.actualizar(this.embarque.id, payload).subscribe({
+      next: () => {
+        this.guardando = false;
+        this.guardadoOk = true;
+        this.cambiosPendientes = {};
+        this.svc.obtener(this.embarque!.id).subscribe((d) => {
+          this.embarque = d;
+          this._aplicarBorradores();
+        });
+        setTimeout(() => { this.guardadoOk = false; }, 2500);
+      },
+      error: () => { this.guardando = false; },
+    });
+  }
+
+  volver(): void {
+    if (this.hayCambios()) {
+      // Guardar cambios como BORRADOR (no cuenta en porcentajes)
+      const payload: any = { _borrador_seccion: this.seccionActiva, ...this.cambiosPendientes };
+      this.svc.actualizar(this.embarque!.id, payload).subscribe({
+        next: () => this.router.navigate(['/importaciones']),
+        error: () => this.router.navigate(['/importaciones']),
+      });
+    } else {
+      this.router.navigate(['/importaciones']);
+    }
+  }
+
+  pct(key: string): number {
+    return this.embarque?.progreso ? (this.embarque.progreso as any)[key]?.pct ?? 0 : 0;
+  }
+
+  colorPct(p: number): string {
+    if (p === 100) return '#22c55e';
+    if (p >= 60) return '#f59e0b';
+    if (p > 0) return '#3b82f6';
+    return '#374151';
+  }
+
+  hayCambios(): boolean {
+    return Object.keys(this.cambiosPendientes).length > 0;
+  }
+
+  get progresoPct(): number {
+    return this.svc.progresoPct(this.embarque!);
+  }
+}

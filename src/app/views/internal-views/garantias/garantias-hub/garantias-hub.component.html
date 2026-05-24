@@ -1,0 +1,123 @@
+<app-home-bar></app-home-bar>
+
+<div class="hub-page">
+
+  <!-- ── Capa de puntos de fondo (todo el canvas) ── -->
+  <div class="bg-dots"></div>
+  <div class="bg-glow-top"></div>
+
+  <!-- ── Botón regresar al inicio ── -->
+  <div class="back-bar">
+    <a routerLink="/home" class="back-card">
+      <i class="fas fa-arrow-left"></i>
+      <span>Regresar al Inicio</span>
+    </a>
+  </div>
+
+  <!-- ── HERO compacto ── -->
+  <div class="hub-hero">
+    <div class="hero-tag">
+      <span class="tag-dot"></span>
+      GARANTÍAS &nbsp;·&nbsp; ELITE BIKE
+    </div>
+    <h1 class="hero-title">Gestión de <span class="title-accent">Garantías</span></h1>
+    <p class="hero-sub">Plataforma centralizada para el seguimiento, análisis y configuración de solicitudes de garantía.</p>
+
+    <!-- Stats inline dentro del hero -->
+    <div class="hero-stats" *ngIf="!cargando && stats">
+      <div class="hs-item">
+        <strong>{{ stats.total }}</strong>
+        <span>tickets</span>
+      </div>
+      <div class="hs-sep"></div>
+      <div class="hs-item orange">
+        <strong>{{ stats.abiertos }}</strong>
+        <span>en proceso</span>
+      </div>
+      <div class="hs-sep"></div>
+      <div class="hs-item blue">
+        <strong>{{ stats.este_mes }}</strong>
+        <span>este mes</span>
+      </div>
+      <div class="hs-sep"></div>
+      <div class="hs-item green">
+        <strong>{{ stats.cerrados }}</strong>
+        <span>cerrados</span>
+      </div>
+    </div>
+    <div class="hero-stats-sk" *ngIf="cargando">
+      <div class="sk-pill" *ngFor="let x of [1,2,3,4]"></div>
+    </div>
+  </div>
+
+  <!-- ── GRID DE MÓDULOS ── -->
+  <div class="modules-wrap">
+
+    <!-- Resplandor en el centro del grid -->
+    <div class="center-glow"></div>
+
+    <div class="modules-grid">
+
+      <!-- ═══ CARD PRINCIPAL — Tickets ═══ -->
+      <a routerLink="/garantias/tickets" class="card card-main">
+        <span class="card-num right">01</span>
+        <div class="card-inner">
+          <div class="card-top-row">
+            <div class="card-icon orange"><i class="fas fa-ticket-alt"></i></div>
+            <span class="open-badge" *ngIf="modulos[0].badge">{{ modulos[0].badge }} abiertos</span>
+          </div>
+          <div class="card-text-block">
+            <h2>Seguimiento<br>de Tickets</h2>
+            <p>Gestiona cada solicitud: cambia estatus, agrega comentarios y mantén el historial completo de cada caso.</p>
+          </div>
+          <div class="card-cta orange">
+            <span>Abrir módulo</span>
+            <i class="fas fa-long-arrow-alt-right"></i>
+          </div>
+        </div>
+      </a>
+
+      <!-- ═══ COLUMNA DERECHA — 3 cards compactas ═══ -->
+      <div class="cards-col">
+
+        <a routerLink="/garantias/dashboard" class="card card-sm">
+          <span class="card-num right">02</span>
+          <div class="card-inner row">
+            <div class="card-icon blue sm"><i class="fas fa-chart-pie"></i></div>
+            <div class="card-info">
+              <h3>Dashboard de Análisis</h3>
+              <p>Estadísticas, tendencias y KPIs en tiempo real.</p>
+            </div>
+            <i class="fas fa-chevron-right card-arrow blue"></i>
+          </div>
+        </a>
+
+        <a routerLink="/garantias/editor" class="card card-sm">
+          <span class="card-num right">03</span>
+          <div class="card-inner row">
+            <div class="card-icon purple sm"><i class="fas fa-sliders-h"></i></div>
+            <div class="card-info">
+              <h3>Editor de Formulario</h3>
+              <p>Configura secciones, campos y opciones del formulario.</p>
+            </div>
+            <i class="fas fa-chevron-right card-arrow purple"></i>
+          </div>
+        </a>
+
+        <a routerLink="/garantias/formulario" class="card card-sm">
+          <span class="card-num right">04</span>
+          <div class="card-inner row">
+            <div class="card-icon green sm"><i class="fas fa-plus-circle"></i></div>
+            <div class="card-info">
+              <h3>Nueva Solicitud</h3>
+              <p>Registra una nueva garantía para un distribuidor.</p>
+            </div>
+            <i class="fas fa-chevron-right card-arrow green"></i>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+</div>

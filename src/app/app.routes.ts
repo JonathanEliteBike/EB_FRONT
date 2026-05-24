@@ -45,15 +45,23 @@ import { RetroactivosComponent } from './views/internal-views/retroactivos/retro
 import { CaratulaRetroactivosComponent } from './views/internal-views/caratula-retroactivos/caratula-retroactivos.component';
 import { VentasMonitorComponent } from './views/internal-views/ventas-monitor/ventas-monitor.component';
 import { CatalogoForecastComponent } from './views/internal-views/catalogo-forecast/catalogo-forecast.component';
+import { GarantiasHubComponent } from './views/internal-views/garantias/garantias-hub/garantias-hub.component';
 import { GarantiasComponent } from './views/internal-views/garantias/garantias.component';
+import { GarantiasFormularioComponent } from './views/internal-views/garantias/garantias-formulario/garantias-formulario.component';
+import { GarantiasEditorComponent } from './views/internal-views/garantias/garantias-editor/garantias-editor.component';
+import { GarantiasTicketsComponent } from './views/internal-views/garantias/garantias-tickets/garantias-tickets.component';
 import { ProyeccionesMY27Component } from './views/internal-views/proyecciones-my27/proyecciones-my27.component';
+import { ImportacionesComponent } from './views/internal-views/importaciones/importaciones.component';
+import { ImportacionesDetalleComponent } from './views/internal-views/importaciones/importaciones-detalle/importaciones-detalle.component';
 
 import { CaratulaRetroactivosUsuarioComponent } from './views/usuarios/caratula-retroactivos-usuarios/caratula-retroactivos-usuarios.component';
+import { GarantiasUsuarioComponent } from './views/usuarios/garantias-usuario/garantias-usuario.component';
 
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 import { usuarioGuard } from './guards/usuario.guard';
 import { flujoGuard } from './guards/flujo.guard';
+import { loggedInGuard } from './guards/logged-in.guard';
 
 export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
@@ -87,6 +95,7 @@ export const routes: Routes = [
   { path: 'usuarios/proyeccion-historial', component: ProyeccionHistorialComponent, canActivate: [usuarioGuard] },
   { path: 'usuarios/caratula-retroactivos', component: CaratulaRetroactivosUsuarioComponent, canActivate: [usuarioGuard] },
   { path: 'usuarios/caratula', component: CaratulaUsuariosComponent, canActivate: [usuarioGuard] },
+  { path: 'usuarios/garantias', component: GarantiasUsuarioComponent, canActivate: [usuarioGuard] },
   { path: 'flujo-dashboard', component: FlujoDashboardComponent, canActivate: [adminGuard] },
   { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [adminGuard] },
   { path: 'logistica', component: LogisticaComponent, canActivate: [adminGuard] },
@@ -102,7 +111,13 @@ export const routes: Routes = [
   { path: 'retroactivos', component: RetroactivosComponent, canActivate: [adminGuard] },
   { path: 'ventas-monitor', component: VentasMonitorComponent, canActivate: [adminGuard] },
   { path: 'catalogo-forecast', component: CatalogoForecastComponent, canActivate: [adminGuard] },
-  { path: 'garantias', component: GarantiasComponent, canActivate: [adminGuard] },
+  { path: 'garantias',            component: GarantiasHubComponent,         canActivate: [adminGuard] },
+  { path: 'garantias/dashboard',  component: GarantiasComponent,            canActivate: [adminGuard] },
+  { path: 'garantias/tickets',    component: GarantiasTicketsComponent,     canActivate: [adminGuard] },
+  { path: 'garantias/formulario', component: GarantiasFormularioComponent,  canActivate: [loggedInGuard] },
+  { path: 'garantias/editor',     component: GarantiasEditorComponent,      canActivate: [adminGuard] },
   { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
+  { path: 'importaciones', component: ImportacionesComponent, canActivate: [adminGuard] },
+  { path: 'importaciones/:id', component: ImportacionesDetalleComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' }
 ];

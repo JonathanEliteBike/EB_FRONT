@@ -1,0 +1,376 @@
+<app-home-bar></app-home-bar>
+
+<div class="tickets-page">
+
+  <!-- ── HEADER ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/garantias" class="back-link"><i class="fas fa-arrow-left"></i> Módulo de Garantías</a>
+      <h1 class="page-title">
+        <span class="title-icon"><i class="fas fa-ticket-alt"></i></span>
+        Seguimiento de Tickets
+      </h1>
+    </div>
+    <button class="btn btn-outline" (click)="cargar()">
+      <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i> Actualizar
+    </button>
+  </div>
+
+  <!-- ── LAYOUT PRINCIPAL ── -->
+  <div class="tickets-layout" [class.panel-open]="!!selected">
+
+    <!-- ════════════════════════════════════ PANEL IZQUIERDO (lista) ═══ -->
+    <div class="list-panel">
+
+      <!-- Filtros -->
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" class="search-input" placeholder="Buscar por folio, distribuidor, contacto…"
+                 [(ngModel)]="busqueda">
+        </div>
+        <div class="filter-row">
+          <select class="filter-select" [(ngModel)]="filtroEstatus">
+            <option value="Todos">Todos los estatus</option>
+            <option *ngFor="let e of estatuses.slice(1)" [value]="e">{{ e }}</option>
+          </select>
+          <select class="filter-select" [(ngModel)]="filtroMarca">
+            <option value="Todas">Todas las marcas</option>
+            <option *ngFor="let m of marcas.slice(1)" [value]="m">{{ m }}</option>
+          </select>
+        </div>
+        <select class="filter-select filter-select-mes" [(ngModel)]="filtroMes">
+          <option value="">Todos los meses</option>
+          <option *ngFor="let mes of mesesDisponibles" [value]="mes">{{ formatMes(mes) }}</option>
+        </select>
+        <span class="result-count">{{ ticketsFiltrados.length }} resultado{{ ticketsFiltrados.length !== 1 ? 's' : '' }}</span>
+      </div>
+
+      <!-- Estado de carga -->
+      <div class="list-loading" *ngIf="cargando">
+        <div class="spinner"></div><span>Cargando tickets…</span>
+      </div>
+      <div class="list-error" *ngIf="error">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+      </div>
+
+      <!-- Lista vacía -->
+      <div class="list-empty" *ngIf="!cargando && !error && ticketsFiltrados.length === 0">
+        <i class="fas fa-inbox"></i>
+        <p>No hay tickets que coincidan con los filtros.</p>
+      </div>
+
+      <!-- Ticket cards -->
+      <div class="ticket-list" *ngIf="!cargando && ticketsFiltrados.length > 0">
+        <div *ngFor="let t of ticketsFiltrados" class="ticket-card"
+             [class.active]="selected?.id === t.id"
+             (click)="seleccionarTicket(t)">
+          <div class="tc-top">
+            <span class="tc-folio">{{ t.folio }}</span>
+            <span class="tc-estatus" [style.background]="colorEstatus(t.estatus) + '22'"
+                  [style.color]="colorEstatus(t.estatus)"
+                  [style.border-color]="colorEstatus(t.estatus) + '55'">
+              {{ t.estatus }}
+            </span>
+          </div>
+          <div class="tc-distribuidor">{{ t.distribuidor }}</div>
+          <div class="tc-meta">
+            <span class="tc-marca">{{ t.marca }}</span>
+            <span class="tc-dot">·</span>
+            <span>{{ t.contacto }}</span>
+            <span class="tc-dot">·</span>
+            <span class="tc-fecha">{{ t.fecha_creacion }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════ PANEL DERECHO (detalle) ═══ -->
+    <div class="detail-panel" *ngIf="selected">
+
+      <div class="dp-header">
+        <div class="dp-header-left">
+          <span class="dp-folio">{{ selected.folio }}</span>
+          <span class="dp-estatus"
+                [style.background]="colorEstatus(selected.estatus) + '22'"
+                [style.color]="colorEstatus(selected.estatus)"
+                [style.border-color]="colorEstatus(selected.estatus) + '55'">
+            {{ selected.estatus }}
+          </span>
+        </div>
+        <button class="close-btn" (click)="cerrarDetalle()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="dp-scroll">
+        <div *ngIf="cargandoDetalle" class="dp-loading">
+          <div class="spinner"></div>
+        </div>
+
+        <ng-container *ngIf="!cargandoDetalle && selected">
+          <div class="dp-cols">
+
+            <!-- ── COLUMNA IZQUIERDA: info del ticket ── -->
+            <div class="dp-col-info">
+
+              <!-- Info básica -->
+              <div class="dp-section">
+                <h4 class="dp-section-title">Información del Ticket</h4>
+                <div class="dp-grid">
+                  <div class="dp-field"><span class="dp-key">Distribuidor</span><span class="dp-val">{{ selected.distribuidor }}</span></div>
+                  <div class="dp-field"><span class="dp-key">Contacto</span><span class="dp-val">{{ selected.contacto }}</span></div>
+                  <div class="dp-field"><span class="dp-key">Rol</span><span class="dp-val">{{ selected.puesto }}</span></div>
+                  <div class="dp-field"><span class="dp-key">Email</span><span class="dp-val">{{ selected.email }}</span></div>
+                  <div class="dp-field"><span class="dp-key">Marca</span><span class="dp-val">{{ selected.marca }}</span></div>
+                  <div class="dp-field"><span class="dp-key">Fecha</span><span class="dp-val">{{ selected.fecha_creacion }}</span></div>
+                </div>
+              </div>
+
+              <!-- Datos de la bicicleta -->
+              <div class="dp-section" *ngIf="datosBicicleta.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-bicycle"></i> Bicicleta</h4>
+                <div class="dp-grid">
+                  <div *ngFor="let f of datosBicicleta" class="dp-field">
+                    <span class="dp-key">{{ f.label }}</span>
+                    <span class="dp-val">{{ f.value }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Documentos adjuntos -->
+              <div class="dp-section" *ngIf="documentos.length > 0 || serieCard">
+                <h4 class="dp-section-title"><i class="fas fa-paperclip"></i> Documentos y validación</h4>
+                <div class="docs-grid">
+
+                  <div *ngIf="serieCard" class="doc-unit"
+                       [class.doc-valido]="validacionDocs['numero_serie'] === 'valido'"
+                       [class.doc-rechazado]="validacionDocs['numero_serie'] === 'rechazado'">
+                    <div class="doc-body doc-body-text">
+                      <div class="doc-body-icon"><i class="fas fa-barcode"></i></div>
+                      <div class="doc-body-info">
+                        <span class="doc-field-label">Número de Serie</span>
+                        <span class="doc-serie-val">{{ serieCard.value }}</span>
+                      </div>
+                      <div class="doc-val-status">
+                        <span *ngIf="validacionDocs['numero_serie'] === 'valido'"    class="val-status-chip valid"><i class="fas fa-check"></i> Válido</span>
+                        <span *ngIf="validacionDocs['numero_serie'] === 'rechazado'" class="val-status-chip rejected"><i class="fas fa-times"></i> Rechazado</span>
+                      </div>
+                    </div>
+                    <div class="doc-action-bar">
+                      <button class="val-action accept"
+                              [class.active]="validacionDocs['numero_serie'] === 'valido'"
+                              [disabled]="validandoDoc['numero_serie']"
+                              (click)="toggleValidacionDoc('numero_serie', 'Número de Serie', 'valido')">
+                        <i class="fas fa-check"></i> Válido
+                      </button>
+                      <div class="val-sep"></div>
+                      <button class="val-action reject"
+                              [class.active]="validacionDocs['numero_serie'] === 'rechazado'"
+                              [disabled]="validandoDoc['numero_serie']"
+                              (click)="toggleValidacionDoc('numero_serie', 'Número de Serie', 'rechazado')">
+                        <i class="fas fa-times"></i> Rechazar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div *ngFor="let doc of documentos" class="doc-unit"
+                       [class.doc-valido]="validacionDocs[doc.key] === 'valido'"
+                       [class.doc-rechazado]="validacionDocs[doc.key] === 'rechazado'">
+                    <a [href]="archivoVerUrl(doc.nombre)" target="_blank" class="doc-body">
+                      <div class="doc-body-icon">
+                        <i class="fas" [ngClass]="iconoArchivo(doc.nombre)"></i>
+                      </div>
+                      <div class="doc-body-info">
+                        <span class="doc-field-label">{{ doc.label }}</span>
+                        <span class="doc-filename">{{ doc.legible }}</span>
+                        <span class="doc-open-hint">
+                          {{ esImagen(doc.nombre) ? 'Ver imagen' : 'Ver PDF' }}
+                          <i class="fas fa-external-link-alt"></i>
+                        </span>
+                      </div>
+                      <div class="doc-right">
+                        <img *ngIf="esImagen(doc.nombre)" [src]="archivoVerUrl(doc.nombre)" class="doc-thumb" alt="">
+                        <div class="doc-val-status">
+                          <span *ngIf="validacionDocs[doc.key] === 'valido'"    class="val-status-chip valid"><i class="fas fa-check"></i></span>
+                          <span *ngIf="validacionDocs[doc.key] === 'rechazado'" class="val-status-chip rejected"><i class="fas fa-times"></i></span>
+                        </div>
+                      </div>
+                    </a>
+                    <div class="doc-action-bar">
+                      <button class="val-action accept"
+                              [class.active]="validacionDocs[doc.key] === 'valido'"
+                              [disabled]="validandoDoc[doc.key]"
+                              (click)="toggleValidacionDoc(doc.key, doc.label, 'valido')">
+                        <i class="fas fa-check"></i> Válido
+                      </button>
+                      <div class="val-sep"></div>
+                      <button class="val-action reject"
+                              [class.active]="validacionDocs[doc.key] === 'rechazado'"
+                              [disabled]="validandoDoc[doc.key]"
+                              (click)="toggleValidacionDoc(doc.key, doc.label, 'rechazado')">
+                        <i class="fas fa-times"></i> Rechazar
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Información de marca -->
+              <div class="dp-section" *ngIf="datosMarca.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-tag"></i> Información de marca</h4>
+                <div class="dp-grid">
+                  <div *ngFor="let f of datosMarca" class="dp-field">
+                    <span class="dp-key">{{ f.label }}</span>
+                    <span class="dp-val">{{ f.value }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Daños en el marco -->
+              <div class="dp-section" *ngIf="danosMarco.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-exclamation-triangle"></i> Daños reportados en el marco</h4>
+                <div class="danos-list">
+                  <div *ngFor="let d of danosMarco; let i = index" class="dano-card">
+                    <div class="dano-num">{{ i + 1 }}</div>
+                    <div class="dano-body">
+                      <div class="dano-row" *ngIf="d.localizacion">
+                        <span class="dano-lbl">Localización</span>
+                        <span class="dano-val">{{ d.localizacion }}</span>
+                      </div>
+                      <div class="dano-row" *ngIf="d.tipo">
+                        <span class="dano-lbl">Tipo de daño</span>
+                        <span class="dano-badge">{{ d.tipo }}</span>
+                      </div>
+                      <div class="dano-row" *ngIf="d.comentarios">
+                        <span class="dano-lbl">Comentarios</span>
+                        <span class="dano-val dano-italic">{{ d.comentarios }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ── COLUMNA DERECHA: acciones + comentarios ── -->
+            <div class="dp-col-actions">
+
+              <!-- Pieza de reemplazo -->
+              <div class="dp-section">
+                <h4 class="dp-section-title"><i class="fas fa-wrench"></i> Pieza de reemplazo</h4>
+                <div class="pieza-reem-wrap">
+                  <select class="pieza-select"
+                          [(ngModel)]="piezaSeleccionada"
+                          (ngModelChange)="cambiarPiezaReemplazo($event)"
+                          [disabled]="cambiandoPiezaReem">
+                    <option value="">— Seleccionar pieza —</option>
+                    <option *ngFor="let p of piezasReemplazo" [value]="p">{{ p }}</option>
+                  </select>
+                  <span class="pieza-saving" *ngIf="cambiandoPiezaReem">
+                    <i class="fas fa-spinner fa-spin"></i> Guardando…
+                  </span>
+                  <span class="pieza-na-badge" *ngIf="piezaEsNA">
+                    <i class="fas fa-ban"></i> No aplica
+                  </span>
+                </div>
+              </div>
+
+              <!-- Estado de la pieza -->
+              <div class="dp-section" [class.section-disabled]="piezaEsNA">
+                <h4 class="dp-section-title">
+                  <i class="fas fa-tools"></i> Estado de la pieza
+                  <span class="na-hint" *ngIf="piezaEsNA">— No aplica</span>
+                </h4>
+                <div class="estatus-buttons">
+                  <button *ngFor="let p of estatusesPieza" class="estatus-btn"
+                          [class.active]="selected.estatus_pieza === p"
+                          [style.--accent]="colorPieza(p)"
+                          [disabled]="cambiandoPieza || piezaEsNA"
+                          (click)="cambiarPieza(p)">
+                    <span class="estatus-dot" [style.background]="colorPieza(p)"></span>
+                    {{ p }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Estatus del ticket -->
+              <div class="dp-section">
+                <h4 class="dp-section-title"><i class="fas fa-exchange-alt"></i> Estatus del ticket</h4>
+                <div class="estatus-buttons">
+                  <button *ngFor="let e of estatuses.slice(1)" class="estatus-btn"
+                          [class.active]="selected.estatus === e"
+                          [style.--accent]="colorEstatus(e)"
+                          [disabled]="cambiandoEstatus"
+                          (click)="cambiarEstatus(e)">
+                    <span class="estatus-dot" [style.background]="colorEstatus(e)"></span>
+                    {{ e }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Historial y Comentarios -->
+              <div class="dp-section">
+                <h4 class="dp-section-title">Historial y Comentarios</h4>
+
+                <div class="timeline-loading" *ngIf="cargandoComentarios">
+                  <div class="spinner sm"></div>
+                </div>
+
+                <div class="timeline" *ngIf="!cargandoComentarios">
+                  <div class="timeline-empty" *ngIf="comentarios.length === 0">
+                    <i class="fas fa-comment-slash"></i> Sin comentarios aún.
+                  </div>
+                  <div *ngFor="let c of comentarios" class="timeline-item"
+                       [attr.data-tipo]="c.tipo"
+                       [class.tl-rechazado]="c.texto.toLowerCase().includes('rechazado')">
+                    <div class="tl-dot">
+                      <i class="fas"
+                         [class.fa-exchange-alt]="c.tipo === 'estatus'"
+                         [class.fa-tools]="c.tipo === 'pieza'"
+                         [class.fa-shield-alt]="c.tipo === 'validacion'"
+                         [class.fa-comment]="c.tipo === 'comentario'"></i>
+                    </div>
+                    <div class="tl-body">
+                      <div class="tl-meta">
+                        <span class="tl-autor">{{ c.autor }}</span>
+                        <span class="tl-tipo-badge" [attr.data-tipo]="c.tipo">
+                          {{ c.tipo === 'estatus' ? 'Estatus' : c.tipo === 'pieza' ? 'Pieza' : c.tipo === 'validacion' ? 'Validación' : 'Nota' }}
+                        </span>
+                        <span class="tl-fecha">{{ c.fecha }}</span>
+                      </div>
+                      <div class="tl-texto">{{ c.texto }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Agregar comentario -->
+                <div class="comment-form">
+                  <input type="text" class="comment-autor" [(ngModel)]="nuevoAutor" placeholder="Tu nombre">
+                  <textarea class="comment-input" [(ngModel)]="nuevoComentario"
+                            placeholder="Escribe un comentario o nota interna…"
+                            rows="3"></textarea>
+                  <button class="btn btn-primary btn-sm" (click)="enviarComentario()"
+                          [disabled]="!nuevoComentario.trim() || enviandoComentario">
+                    <i class="fas" [class.fa-paper-plane]="!enviandoComentario" [class.fa-spinner]="enviandoComentario"
+                       [class.fa-spin]="enviandoComentario"></i>
+                    {{ enviandoComentario ? 'Enviando…' : 'Comentar' }}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Placeholder cuando no hay nada seleccionado -->
+    <div class="detail-placeholder" *ngIf="!selected && !cargando">
+      <div class="ph-inner">
+        <i class="fas fa-ticket-alt ph-icon"></i>
+        <p>Selecciona un ticket para ver su detalle, cambiar el estatus y agregar comentarios.</p>
+      </div>
+    </div>
+
+  </div>
+</div>

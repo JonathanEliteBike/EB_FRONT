@@ -1,0 +1,203 @@
+<app-home-bar></app-home-bar>
+
+<div class="imp-page">
+
+  <!-- ── Header ── -->
+  <div class="imp-header">
+    <div class="imp-header-left">
+      <a routerLink="/home" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div>
+        <h1 class="imp-title"><i class="fas fa-ship"></i> Importaciones</h1>
+        <p class="imp-sub">Seguimiento de embarques · Elite Bike</p>
+      </div>
+    </div>
+    <button class="btn-nuevo" (click)="mostrarNuevo = true">
+      <i class="fas fa-plus"></i> Nuevo Embarque
+    </button>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="imp-stats" *ngIf="!cargando">
+    <div class="stat-card">
+      <span class="stat-num">{{ stats.total }}</span>
+      <span class="stat-lbl">Total</span>
+    </div>
+    <div class="stat-card stat-proceso">
+      <span class="stat-num">{{ stats.enProceso }}</span>
+      <span class="stat-lbl">En Proceso</span>
+    </div>
+    <div class="stat-card stat-ok">
+      <span class="stat-num">{{ stats.completados }}</span>
+      <span class="stat-lbl">Completados</span>
+    </div>
+    <div class="stat-card stat-pend">
+      <span class="stat-num">{{ stats.pendientes }}</span>
+      <span class="stat-lbl">Sin Iniciar</span>
+    </div>
+    <div class="stat-card stat-via" (click)="filtroVia = filtroVia === 'MARITIMO' ? '' : 'MARITIMO'; filtrar()" [class.active]="filtroVia === 'MARITIMO'">
+      <i class="fas fa-ship"></i>
+      <span class="stat-num">{{ stats.maritimo }}</span>
+      <span class="stat-lbl">Marítimo</span>
+    </div>
+    <div class="stat-card stat-via" (click)="filtroVia = filtroVia === 'AEREO' ? '' : 'AEREO'; filtrar()" [class.active]="filtroVia === 'AEREO'">
+      <i class="fas fa-plane"></i>
+      <span class="stat-num">{{ stats.aereo }}</span>
+      <span class="stat-lbl">Aéreo</span>
+    </div>
+  </div>
+
+  <!-- ── Filtros ── -->
+  <div class="imp-filtros">
+    <div class="search-wrap">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Buscar por referencia o nombre..." [(ngModel)]="busqueda" (ngModelChange)="filtrar()" />
+      <button *ngIf="busqueda" (click)="busqueda = ''; filtrar()">×</button>
+    </div>
+    <select [(ngModel)]="filtroOrigen" (ngModelChange)="filtrar()">
+      <option value="">Todos los orígenes</option>
+      <option *ngFor="let o of origenes" [value]="o">{{ o }}</option>
+    </select>
+  </div>
+
+  <!-- ── Spinner ── -->
+  <div class="imp-spinner" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando embarques...</p>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="imp-error" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+  </div>
+
+  <!-- ── Tabla MACRO ── -->
+  <div class="macro-wrap" *ngIf="!cargando && !error">
+
+    <!-- Cabecera de secciones (sticky) -->
+    <div class="macro-table">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-ref">Referencia / Nombre</th>
+            <th class="col-orig">Origen</th>
+            <th class="col-fecha">ETA Puerto</th>
+            <th class="col-fecha">Llegada Almacén</th>
+            <th *ngFor="let s of secciones" class="col-sec">
+              <i class="fas" [ngClass]="s.icon" [style.color]="s.color"></i>
+              {{ s.label }}
+            </th>
+            <th class="col-global">Global</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of embarquesFiltrados" class="macro-row" (click)="abrirDetalle(e.id)">
+
+            <!-- Referencia + Nombre -->
+            <td class="col-ref">
+              <div class="ref-top">
+                <span class="ref-badge">{{ e.referencia }}</span>
+                <span class="via-badge" [class.via-aereo]="e.via_transporte === 'AEREO'">
+                  <i class="fas" [ngClass]="e.via_transporte === 'AEREO' ? 'fa-plane' : 'fa-ship'"></i>
+                  {{ e.via_transporte === 'AEREO' ? 'Aéreo' : 'Marítimo' }}
+                </span>
+              </div>
+              <span class="ref-nombre">{{ e.nombre }}</span>
+            </td>
+
+            <!-- Origen -->
+            <td class="col-orig">
+              <span class="origen-tag" *ngIf="e.log_origen">{{ e.log_origen }}</span>
+              <span class="sin-dato" *ngIf="!e.log_origen">—</span>
+            </td>
+
+            <!-- ETA Puerto -->
+            <td class="col-fecha">
+              <span *ngIf="e.log_eta_puerto">{{ e.log_eta_puerto | date:'dd/MM/yy' }}</span>
+              <span class="sin-dato" *ngIf="!e.log_eta_puerto">—</span>
+            </td>
+
+            <!-- Llegada Almacén -->
+            <td class="col-fecha">
+              <span *ngIf="e.des_llegada_almacen">{{ e.des_llegada_almacen | date:'dd/MM/yy' }}</span>
+              <span class="sin-dato" *ngIf="!e.des_llegada_almacen">—</span>
+            </td>
+
+            <!-- Barra por sección -->
+            <td *ngFor="let s of secciones" class="col-sec">
+              <div class="sec-bar-wrap">
+                <div class="sec-bar-bg">
+                  <div class="sec-bar-fill"
+                    [style.width.%]="pctSeccion(e, s.key)"
+                    [style.background]="colorPct(pctSeccion(e, s.key))">
+                  </div>
+                </div>
+                <span class="sec-pct">{{ pctSeccion(e, s.key) }}%</span>
+              </div>
+            </td>
+
+            <!-- Global -->
+            <td class="col-global">
+              <div class="global-wrap">
+                <div class="global-circle" [style.--pct]="progresoPct(e) + '%'" [style.--color]="colorPct(progresoPct(e))">
+                  <span>{{ progresoPct(e) }}%</span>
+                </div>
+              </div>
+            </td>
+
+          </tr>
+
+          <tr *ngIf="embarquesFiltrados.length === 0">
+            <td [attr.colspan]="4 + secciones.length + 1" class="sin-resultados">
+              <i class="fas fa-inbox"></i> Sin embarques que coincidan con el filtro.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Modal Nuevo Embarque ── -->
+<div class="modal-overlay" *ngIf="mostrarNuevo" (click)="mostrarNuevo = false">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> Nuevo Embarque</h3>
+      <button class="modal-close" (click)="mostrarNuevo = false">×</button>
+    </div>
+    <div class="modal-body">
+      <label>Referencia <span class="req">*</span></label>
+      <input type="text" [(ngModel)]="nuevoEmbarque.referencia" placeholder="Ej: R26-1500" />
+
+      <label>Nombre / Descripción</label>
+      <input type="text" [(ngModel)]="nuevoEmbarque.nombre" placeholder="Ej: BELGICA JUNIO 1x40HC" />
+
+      <label>Vía de Transporte <span class="req">*</span></label>
+      <div class="via-selector">
+        <button type="button" class="via-btn"
+          [class.active]="nuevoEmbarque.via_transporte === 'MARITIMO'"
+          (click)="nuevoEmbarque.via_transporte = 'MARITIMO'">
+          <i class="fas fa-ship"></i> Marítimo
+        </button>
+        <button type="button" class="via-btn"
+          [class.active]="nuevoEmbarque.via_transporte === 'AEREO'"
+          (click)="nuevoEmbarque.via_transporte = 'AEREO'">
+          <i class="fas fa-plane"></i> Aéreo
+        </button>
+      </div>
+
+      <label>Origen</label>
+      <input type="text" [(ngModel)]="nuevoEmbarque.log_origen" placeholder="Ej: BELGICA, VIETNAM, TAIWAN..." />
+
+      <label>Tipo de Productos</label>
+      <input type="text" [(ngModel)]="nuevoEmbarque.log_tipo_productos" placeholder="Ej: BICICLETAS, ROPA Y ACCESORIOS" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="mostrarNuevo = false">Cancelar</button>
+      <button class="btn-crear" (click)="crearNuevo()" [disabled]="!nuevoEmbarque.referencia || guardandoNuevo">
+        <i class="fas" [ngClass]="guardandoNuevo ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+        {{ guardandoNuevo ? 'Creando...' : 'Crear y Abrir' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -5,15 +5,16 @@
   <!-- ── HEADER ── -->
   <div class="page-header">
     <div class="header-left">
+      <a routerLink="/garantias" class="back-link" style="color:#8a8077;text-decoration:none;font-size:.82rem;display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <i class="fas fa-arrow-left"></i> Módulo de Garantías
+      </a>
       <h1 class="page-title">
-        <span class="title-icon"><i class="fas fa-shield-alt"></i></span>
-        Dashboard de Garantías
+        <span class="title-icon"><i class="fas fa-chart-pie"></i></span>
+        Dashboard de Análisis
       </h1>
       <p class="subtitle" *ngIf="dashboard">
         <i class="fas fa-clock"></i>
         Actualizado: {{ dashboard.ultima_actualizacion }}
-        &nbsp;·&nbsp;
-        <span class="chip">SUGERIDO GARANTIAS</span>
       </p>
     </div>
     <div class="header-actions">
@@ -29,7 +30,7 @@
   <!-- ── LOADING ── -->
   <div class="state-box" *ngIf="cargando">
     <div class="spinner"></div>
-    <span>Cargando datos desde Google Sheets…</span>
+    <span>Cargando datos…</span>
   </div>
 
   <!-- ── ERROR ── -->
@@ -39,21 +40,24 @@
     <button class="btn btn-outline" (click)="cargar()">Reintentar</button>
   </div>
 
-  <ng-container *ngIf="!cargando && !error && dashboard">
+  <ng-container *ngIf="!cargando && !error && dashboard && vista === 'dashboard'">
 
     <!-- ── KPI CARDS ── -->
     <div class="kpi-grid">
 
-      <div class="kpi-card kpi-total">
+      <div class="kpi-card kpi-total kpi-clickable" (click)="verPorKpi('total')" title="Ver todas las garantías">
         <div class="kpi-header">
           <span class="kpi-label">Total Garantías</span>
           <div class="kpi-icon-wrap kpi-icon-orange"><i class="fas fa-list-ul"></i></div>
         </div>
         <div class="kpi-value">{{ dashboard.kpis.total }}</div>
-        <div class="kpi-foot">registros en la hoja</div>
+        <div class="kpi-foot">
+          tickets registrados
+          <span class="kpi-ver-hint"><i class="fas fa-arrow-right"></i> Ver todas</span>
+        </div>
       </div>
 
-      <div class="kpi-card kpi-cerradas">
+      <div class="kpi-card kpi-cerradas kpi-clickable" (click)="verPorKpi('cerradas')" title="Ver garantías cerradas">
         <div class="kpi-header">
           <span class="kpi-label">Cerradas</span>
           <div class="kpi-icon-wrap kpi-icon-green"><i class="fas fa-check-circle"></i></div>
@@ -62,10 +66,11 @@
         <div class="kpi-foot">
           <span class="kpi-pct kpi-pct-green">{{ ((dashboard.kpis.cerradas / dashboard.kpis.total) * 100).toFixed(1) }}%</span>
           del total
+          <span class="kpi-ver-hint"><i class="fas fa-arrow-right"></i> Ver</span>
         </div>
       </div>
 
-      <div class="kpi-card kpi-proceso">
+      <div class="kpi-card kpi-proceso kpi-clickable" (click)="verPorKpi('en_proceso')" title="Ver garantías en proceso">
         <div class="kpi-header">
           <span class="kpi-label">En Proceso</span>
           <div class="kpi-icon-wrap kpi-icon-red"><i class="fas fa-clock"></i></div>
@@ -74,18 +79,50 @@
         <div class="kpi-foot">
           <span class="kpi-pct kpi-pct-red">{{ ((dashboard.kpis.en_proceso / dashboard.kpis.total) * 100).toFixed(1) }}%</span>
           del total
+          <span class="kpi-ver-hint"><i class="fas fa-arrow-right"></i> Ver</span>
         </div>
       </div>
 
-      <div class="kpi-card kpi-latencia">
+      <div class="kpi-card kpi-lat-atencion">
         <div class="kpi-header">
-          <span class="kpi-label">Latencia Promedio</span>
-          <div class="kpi-icon-wrap kpi-icon-purple"><i class="fas fa-hourglass-half"></i></div>
+          <span class="kpi-label">Lat. de Atención</span>
+          <div class="kpi-icon-wrap kpi-icon-blue"><i class="fas fa-stamp"></i></div>
         </div>
-        <div class="kpi-value kpi-val-purple">{{ dashboard.kpis.latencia_promedio }}</div>
-        <div class="kpi-foot">días promedio de cierre</div>
+        <div class="kpi-value kpi-val-blue">{{ dashboard.kpis.lat_atencion }}</div>
+        <div class="kpi-foot">días hasta validación de docs</div>
       </div>
 
+      <div class="kpi-card kpi-lat-cierre">
+        <div class="kpi-header">
+          <span class="kpi-label">Lat. de Cierre</span>
+          <div class="kpi-icon-wrap kpi-icon-purple"><i class="fas fa-flag-checkered"></i></div>
+        </div>
+        <div class="kpi-value kpi-val-purple">{{ dashboard.kpis.lat_cierre }}</div>
+        <div class="kpi-foot">días hasta cierre de garantía</div>
+      </div>
+
+    </div>
+
+    <!-- ── Desglose por estatus ── -->
+    <div class="status-row">
+      <div class="status-chip kpi-clickable"
+           *ngFor="let pair of kpiPanels"
+           (click)="verPorKpi(pair.kpi)"
+           [style.border-color]="colorEstatus(pair.key) + '55'"
+           [style.background]="colorEstatus(pair.key) + '11'">
+        <span class="sc-dot" [style.background]="colorEstatus(pair.key)"></span>
+        <span class="sc-label">{{ pair.label }}</span>
+        <span class="sc-count" [style.color]="colorEstatus(pair.key)">
+          {{ dashboard.por_estatus[pair.key] ?? 0 }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Ver todos ── -->
+    <div class="ver-todos-bar">
+      <button class="btn btn-outline ver-todos-btn" (click)="verTodos()">
+        <i class="fas fa-list-ul"></i> Ver todas las garantías
+      </button>
     </div>
 
     <!-- ── SECCIÓN: Distribución y Tendencia ── -->
@@ -106,13 +143,81 @@
         </div>
       </div>
 
-      <div class="chart-card">
+      <!-- Tabla de latencias por ticket -->
+      <div class="chart-card lat-card">
         <div class="chart-hdr">
-          <h3><i class="fas fa-calendar-alt"></i> Latencia de Atención por Mes</h3>
-          <span class="badge-info">días promedio</span>
+          <div class="lat-hdr-left">
+            <h3><i class="fas fa-stopwatch"></i> Latencia por Ticket</h3>
+            <div class="lat-tabs-inline">
+              <span class="lat-tab lat-tab-atencion">Atención</span>
+              <span class="lat-tab-sep">/</span>
+              <span class="lat-tab lat-tab-cierre">Cierre</span>
+            </div>
+          </div>
+          <div class="lat-hdr-right">
+            <span class="badge-info">últimos 5</span>
+            <button class="btn-ver-todos" (click)="abrirModalLat()" *ngIf="latencias.length > 0">
+              <i class="fas fa-expand-alt"></i> Ver todos
+            </button>
+          </div>
         </div>
-        <div class="chart-body chart-body-tall">
-          <canvas #chartLatenciaMes></canvas>
+        <div class="lat-table-wrap">
+          <div class="lat-empty" *ngIf="latencias.length === 0">
+            <i class="fas fa-clock"></i>
+            <span>Sin datos de latencia aún.</span>
+          </div>
+          <table class="lat-table" *ngIf="latencias.length > 0">
+            <thead>
+              <tr>
+                <th class="lat-th-sort" (click)="toggleSortLat('folio')">
+                  Folio <i class="fas {{ sortIconLat('folio') }} sort-icon"></i>
+                </th>
+                <th class="lat-th-sort" (click)="toggleSortLat('distribuidor')">
+                  Distribuidor <i class="fas {{ sortIconLat('distribuidor') }} sort-icon"></i>
+                </th>
+                <th class="lat-th-sort" (click)="toggleSortLat('estatus')">
+                  Estatus <i class="fas {{ sortIconLat('estatus') }} sort-icon"></i>
+                </th>
+                <th class="lat-th-sort" (click)="toggleSortLat('lat_atencion')" title="Días desde envío hasta validación de documentos">
+                  Lat. Atención <i class="fas {{ sortIconLat('lat_atencion') }} sort-icon"></i>
+                </th>
+                <th class="lat-th-sort" (click)="toggleSortLat('lat_cierre')" title="Días desde envío hasta cierre o rechazo">
+                  Lat. Cierre <i class="fas {{ sortIconLat('lat_cierre') }} sort-icon"></i>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let l of latenciasVisibles">
+                <td class="lat-folio">{{ l.folio }}</td>
+                <td class="lat-dist">{{ l.distribuidor }}</td>
+                <td>
+                  <span class="lat-estatus-chip"
+                        [style.background]="colorEstatus(l.estatus) + '22'"
+                        [style.color]="colorEstatus(l.estatus)"
+                        [style.border-color]="colorEstatus(l.estatus) + '55'">
+                    {{ l.estatus }}
+                  </span>
+                </td>
+                <td>
+                  <span class="lat-dias"
+                        *ngIf="l.lat_atencion !== null && l.lat_atencion !== undefined"
+                        [style.color]="colorLatencia(l.lat_atencion)">
+                    {{ l.lat_atencion }} días
+                  </span>
+                  <span class="lat-na" *ngIf="l.lat_atencion === null || l.lat_atencion === undefined">—</span>
+                </td>
+                <td>
+                  <span class="lat-dias"
+                        *ngIf="l.lat_cierre !== null && l.lat_cierre !== undefined"
+                        [style.color]="colorLatencia(l.lat_cierre)">
+                    {{ l.lat_cierre }} días
+                  </span>
+                  <span class="lat-na" *ngIf="l.lat_cierre === null || l.lat_cierre === undefined">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
         </div>
       </div>
 
@@ -136,12 +241,19 @@
               <div class="rank-subtitle">Número de registros</div>
             </div>
           </div>
-          <button class="btn-ver-todos" (click)="abrirModal('garantias_cliente')">
-            <i class="fas fa-expand-alt"></i> Ver todos
-          </button>
+          <div class="rank-actions">
+            <button class="btn-sort-rank" (click)="toggleSortRank('garantias_cliente')"
+                    [title]="sortDirRank['garantias_cliente'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
+              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['garantias_cliente'] === 'desc'"
+                             [class.fa-sort-amount-up]="sortDirRank['garantias_cliente'] === 'asc'"></i>
+            </button>
+            <button class="btn-ver-todos" (click)="abrirModal('garantias_cliente')">
+              <i class="fas fa-expand-alt"></i> Ver todos
+            </button>
+          </div>
         </div>
         <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of topClientes; let i = index">
+          <div class="rank-row" *ngFor="let item of rankSorted(topClientes, 'garantias_cliente'); let i = index">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -162,12 +274,19 @@
               <div class="rank-subtitle">Días promedio de atención</div>
             </div>
           </div>
-          <button class="btn-ver-todos" (click)="abrirModal('latencia_cliente')">
-            <i class="fas fa-expand-alt"></i> Ver todos
-          </button>
+          <div class="rank-actions">
+            <button class="btn-sort-rank" (click)="toggleSortRank('latencia_cliente')"
+                    [title]="sortDirRank['latencia_cliente'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
+              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['latencia_cliente'] === 'desc'"
+                             [class.fa-sort-amount-up]="sortDirRank['latencia_cliente'] === 'asc'"></i>
+            </button>
+            <button class="btn-ver-todos" (click)="abrirModal('latencia_cliente')">
+              <i class="fas fa-expand-alt"></i> Ver todos
+            </button>
+          </div>
         </div>
         <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of topLatencia; let i = index">
+          <div class="rank-row" *ngFor="let item of rankSorted(topLatencia, 'latencia_cliente'); let i = index">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -178,22 +297,32 @@
         </div>
       </div>
 
-      <!-- Descripción del Daño -->
+      <!-- Piezas de Reemplazo -->
       <div class="rank-card">
         <div class="rank-card-header">
           <div class="rank-title">
-            <div class="rank-icon rank-icon-yellow"><i class="fas fa-tools"></i></div>
+            <div class="rank-icon rank-icon-yellow"><i class="fas fa-wrench"></i></div>
             <div>
-              <div class="rank-title-text">Descripción del Daño</div>
-              <div class="rank-subtitle">Tipos más frecuentes</div>
+              <div class="rank-title-text">Piezas de Reemplazo</div>
+              <div class="rank-subtitle">Piezas más solicitadas</div>
             </div>
           </div>
-          <button class="btn-ver-todos" (click)="abrirModal('descripcion_dano')">
-            <i class="fas fa-expand-alt"></i> Ver todos
-          </button>
+          <div class="rank-actions">
+            <button class="btn-sort-rank" (click)="toggleSortRank('piezas_reemplazo')"
+                    [title]="sortDirRank['piezas_reemplazo'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
+              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['piezas_reemplazo'] === 'desc'"
+                             [class.fa-sort-amount-up]="sortDirRank['piezas_reemplazo'] === 'asc'"></i>
+            </button>
+            <button class="btn-ver-todos" (click)="abrirModal('piezas_reemplazo')">
+              <i class="fas fa-expand-alt"></i> Ver todos
+            </button>
+          </div>
         </div>
         <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of topDanos; let i = index">
+          <div *ngIf="topPiezas.length === 0" class="rank-empty">
+            <i class="fas fa-wrench"></i> Sin piezas asignadas aún.
+          </div>
+          <div class="rank-row" *ngFor="let item of rankSorted(topPiezas, 'piezas_reemplazo'); let i = index">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -214,12 +343,19 @@
               <div class="rank-subtitle">Zonas más afectadas</div>
             </div>
           </div>
-          <button class="btn-ver-todos" (click)="abrirModal('ubicacion_dano')">
-            <i class="fas fa-expand-alt"></i> Ver todos
-          </button>
+          <div class="rank-actions">
+            <button class="btn-sort-rank" (click)="toggleSortRank('ubicacion_dano')"
+                    [title]="sortDirRank['ubicacion_dano'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
+              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['ubicacion_dano'] === 'desc'"
+                             [class.fa-sort-amount-up]="sortDirRank['ubicacion_dano'] === 'asc'"></i>
+            </button>
+            <button class="btn-ver-todos" (click)="abrirModal('ubicacion_dano')">
+              <i class="fas fa-expand-alt"></i> Ver todos
+            </button>
+          </div>
         </div>
         <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of topUbicaciones; let i = index">
+          <div class="rank-row" *ngFor="let item of rankSorted(topUbicaciones, 'ubicacion_dano'); let i = index">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -232,6 +368,86 @@
 
     </div>
   </ng-container>
+
+  <!-- ══ VISTA LISTA ══ -->
+  <ng-container *ngIf="vista === 'lista'">
+
+    <!-- Sub-header lista -->
+    <div class="lista-header">
+      <button class="btn btn-outline" (click)="volverAlDashboard()">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+      </button>
+      <div class="lista-titulo-wrap">
+        <h2 class="lista-titulo">{{ etiquetaVista }}</h2>
+        <span class="lista-total" *ngIf="!cargandoLista">
+          {{ ticketsFiltradosList.length }} resultado{{ ticketsFiltradosList.length !== 1 ? 's' : '' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Controles de filtro/orden -->
+    <div class="lista-controls">
+      <div class="orden-btns">
+        <button class="orden-btn" [class.active]="ordenDesc" (click)="ordenDesc = true">
+          <i class="fas fa-sort-amount-down"></i> Más reciente
+        </button>
+        <button class="orden-btn" [class.active]="!ordenDesc" (click)="ordenDesc = false">
+          <i class="fas fa-sort-amount-up"></i> Más antigua
+        </button>
+      </div>
+      <select class="mes-select" [(ngModel)]="filtroMes">
+        <option value="">Todos los meses</option>
+        <option *ngFor="let m of mesesDisponibles" [value]="m">{{ formatMes(m) }}</option>
+      </select>
+    </div>
+
+    <!-- Loading lista -->
+    <div class="state-box" *ngIf="cargandoLista">
+      <div class="spinner"></div>
+      <span>Cargando garantías…</span>
+    </div>
+
+    <!-- Tabla lista -->
+    <div class="lista-wrap" *ngIf="!cargandoLista">
+      <div class="lista-empty" *ngIf="ticketsFiltradosList.length === 0">
+        <i class="fas fa-inbox"></i>
+        <p>{{ mensajeVacio }}</p>
+      </div>
+      <table class="lista-table" *ngIf="ticketsFiltradosList.length > 0">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Distribuidor</th>
+            <th>Contacto</th>
+            <th>Marca</th>
+            <th>Estatus</th>
+            <th>Estado pieza</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of ticketsFiltradosList">
+            <td class="lt-folio">{{ t.folio }}</td>
+            <td>{{ t.distribuidor }}</td>
+            <td>{{ t.contacto }}</td>
+            <td>{{ t.marca }}</td>
+            <td>
+              <span class="lt-badge"
+                    [style.background]="colorEstatus(t.estatus) + '22'"
+                    [style.color]="colorEstatus(t.estatus)"
+                    [style.border-color]="colorEstatus(t.estatus) + '55'">
+                {{ t.estatus }}
+              </span>
+            </td>
+            <td>{{ t.estatus_pieza || '—' }}</td>
+            <td class="lt-fecha">{{ t.fecha_creacion | slice:0:10 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </ng-container>
+
 </div>
 
 <!-- ═══ MODAL ═══ -->
@@ -255,6 +471,100 @@
 
     <div class="modal-chart-wrap">
       <canvas #chartModal></canvas>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODAL LATENCIAS ═══ -->
+<div class="modal-overlay" *ngIf="modalLatAbierto" (click)="cerrarModalLat()">
+  <div class="modal-panel modal-lat-panel" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-icon-wrap"><i class="fas fa-stopwatch"></i></div>
+        <div>
+          <h2>Latencia por Ticket</h2>
+          <p class="modal-sub">
+            {{ latenciasModal.length }} de {{ latencias.length }} tickets
+            &nbsp;·&nbsp; días de atención y cierre
+          </p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="cerrarModalLat()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="mlat-filters">
+      <div class="mlat-search">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar por folio o distribuidor…"
+               [(ngModel)]="busquedaLat" class="mlat-search-input">
+      </div>
+      <select class="mlat-select" [(ngModel)]="filtroEstatusLat">
+        <option value="">Todos los estatus</option>
+        <option *ngFor="let e of estatusLatOpciones" [value]="e">{{ e }}</option>
+      </select>
+    </div>
+
+    <!-- Tabla -->
+    <div class="mlat-table-wrap">
+      <div class="mlat-empty" *ngIf="latenciasModal.length === 0">
+        <i class="fas fa-inbox"></i>
+        <span>Sin resultados para los filtros aplicados.</span>
+      </div>
+      <table class="lat-table mlat-table" *ngIf="latenciasModal.length > 0">
+        <thead>
+          <tr>
+            <th class="lat-th-sort" (click)="toggleSortLatMod('folio')">
+              Folio <i class="fas {{ sortIconLatMod('folio') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortLatMod('distribuidor')">
+              Distribuidor <i class="fas {{ sortIconLatMod('distribuidor') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortLatMod('estatus')">
+              Estatus <i class="fas {{ sortIconLatMod('estatus') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortLatMod('lat_atencion')" title="Días hasta validación de docs">
+              Lat. Atención <i class="fas {{ sortIconLatMod('lat_atencion') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortLatMod('lat_cierre')" title="Días hasta cierre o rechazo">
+              Lat. Cierre <i class="fas {{ sortIconLatMod('lat_cierre') }} sort-icon"></i>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of latenciasModal">
+            <td class="lat-folio">{{ l.folio }}</td>
+            <td class="lat-dist">{{ l.distribuidor }}</td>
+            <td>
+              <span class="lat-estatus-chip"
+                    [style.background]="colorEstatus(l.estatus) + '22'"
+                    [style.color]="colorEstatus(l.estatus)"
+                    [style.border-color]="colorEstatus(l.estatus) + '55'">
+                {{ l.estatus }}
+              </span>
+            </td>
+            <td>
+              <span class="lat-dias" *ngIf="l.lat_atencion !== null && l.lat_atencion !== undefined"
+                    [style.color]="colorLatencia(l.lat_atencion)">
+                {{ l.lat_atencion }} días
+              </span>
+              <span class="lat-na" *ngIf="l.lat_atencion === null || l.lat_atencion === undefined">—</span>
+            </td>
+            <td>
+              <span class="lat-dias" *ngIf="l.lat_cierre !== null && l.lat_cierre !== undefined"
+                    [style.color]="colorLatencia(l.lat_cierre)">
+                {{ l.lat_cierre }} días
+              </span>
+              <span class="lat-na" *ngIf="l.lat_cierre === null || l.lat_cierre === undefined">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
