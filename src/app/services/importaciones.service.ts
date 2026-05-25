@@ -195,6 +195,15 @@ export class ImportacionesService {
     return this.http.delete<{ ok: boolean }>(`${this.base}/${id}`);
   }
 
+  dashboard(filtros: { via: string; estado: string; origen: string; anio: string }): Observable<any> {
+    const params: Record<string, string> = {};
+    if (filtros.via)    params['via']    = filtros.via;
+    if (filtros.estado) params['estado'] = filtros.estado;
+    if (filtros.origen) params['origen'] = filtros.origen;
+    if (filtros.anio)   params['anio']   = filtros.anio;
+    return this.http.get<any>(`${this.base}/dashboard`, { params });
+  }
+
   progresoPct(imp: Importacion): number {
     if (!imp.progreso) return 0;
     const secciones = Object.values(imp.progreso);

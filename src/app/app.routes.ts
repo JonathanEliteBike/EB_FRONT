@@ -53,6 +53,7 @@ import { GarantiasTicketsComponent } from './views/internal-views/garantias/gara
 import { ProyeccionesMY27Component } from './views/internal-views/proyecciones-my27/proyecciones-my27.component';
 import { ImportacionesComponent } from './views/internal-views/importaciones/importaciones.component';
 import { ImportacionesDetalleComponent } from './views/internal-views/importaciones/importaciones-detalle/importaciones-detalle.component';
+import { ImportacionesDashboardComponent } from './views/internal-views/importaciones/importaciones-dashboard/importaciones-dashboard.component';
 
 import { CaratulaRetroactivosUsuarioComponent } from './views/usuarios/caratula-retroactivos-usuarios/caratula-retroactivos-usuarios.component';
 import { GarantiasUsuarioComponent } from './views/usuarios/garantias-usuario/garantias-usuario.component';
@@ -117,7 +118,8 @@ export const routes: Routes = [
   { path: 'garantias/formulario', component: GarantiasFormularioComponent,  canActivate: [loggedInGuard] },
   { path: 'garantias/editor',     component: GarantiasEditorComponent,      canActivate: [adminGuard] },
   { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
-  { path: 'importaciones', component: ImportacionesComponent, canActivate: [adminGuard] },
-  { path: 'importaciones/:id', component: ImportacionesDetalleComponent, canActivate: [adminGuard] },
+  { path: 'importaciones',           component: ImportacionesComponent,          canActivate: [adminGuard] },
+  { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent,  canActivate: [adminGuard] },
+  { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [adminGuard] },
   { path: '**', redirectTo: '' }
 ];

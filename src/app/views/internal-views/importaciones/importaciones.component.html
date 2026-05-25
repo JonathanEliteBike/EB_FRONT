@@ -11,9 +11,14 @@
         <p class="imp-sub">Seguimiento de embarques · Elite Bike</p>
       </div>
     </div>
-    <button class="btn-nuevo" (click)="mostrarNuevo = true">
-      <i class="fas fa-plus"></i> Nuevo Embarque
-    </button>
+    <div class="header-actions">
+      <button class="btn-dash" routerLink="/importaciones/dashboard">
+        <i class="fas fa-chart-bar"></i> Dashboard
+      </button>
+      <button class="btn-nuevo" (click)="mostrarNuevo = true">
+        <i class="fas fa-plus"></i> Nuevo Embarque
+      </button>
+    </div>
   </div>
 
   <!-- ── Stats ── -->

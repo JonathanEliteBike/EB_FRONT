@@ -8,6 +8,7 @@ import {
   GarantiaFormulario,
   GarantiaComentario,
 } from '../../../../services/garantias.service';
+import { AuthService } from '../../../../services/auth.service';
 import { environment } from '../../../../../environments/environment';
 
 const ESTATUSES = ['Todos', 'Enviado', 'En revisión', 'Aprobado', 'Rechazado', 'Cerrado'];
@@ -32,21 +33,27 @@ const PIEZAS_REEMPLAZO = [
 
 const DOC_LABELS: Record<string, string> = {
   // Bicicletas (Scott / Megamo)
-  bici_doc1: 'Fotografía del Daño',
-  bici_doc2: 'Fotografía del Número de Serie',
-  bici_doc3: 'Fotografía del Producto Completo',
-  bici_doc4: 'Factura de Compra y Factura de Venta',
-  bici_doc5: 'Hojas del Historial de Servicio',
+  bici_doc1:  'Fotografía del Daño',
+  bici_doc2:  'Fotografía del Número de Serie',
+  bici_doc3:  'Fotografía del Producto Completo',
+  bici_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  bici_doc4a: 'Factura de Compra',
+  bici_doc4b: 'Factura de Venta',
+  bici_doc5:  'Hojas del Historial de Servicio',
   // Scott no-bicicletas (cascos, zapatos, protecciones, componentes)
-  scott_doc1: 'Fotografía del Daño',
-  scott_doc2: 'Fotografía del Año de Fabricación / Número de Serie',
-  scott_doc3: 'Fotografía del Producto',
-  scott_doc4: 'Factura de Compra y Factura de Venta',
+  scott_doc1:  'Fotografía del Daño',
+  scott_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  scott_doc3:  'Fotografía del Producto',
+  scott_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  scott_doc4a: 'Factura de Compra',
+  scott_doc4b: 'Factura de Venta',
   // Vittoria (llantas, zapatos, accesorios)
-  vittoria_doc1: 'Fotografía del Daño',
-  vittoria_doc2: 'Fotografía del Año de Fabricación / Número de Serie',
-  vittoria_doc3: 'Fotografía del Producto',
-  vittoria_doc4: 'Factura de Compra y Factura de Venta',
+  vittoria_doc1:  'Fotografía del Daño',
+  vittoria_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  vittoria_doc3:  'Fotografía del Producto',
+  vittoria_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  vittoria_doc4a: 'Factura de Compra',
+  vittoria_doc4b: 'Factura de Venta',
 };
 
 const COLOR_PIEZA: Record<string, string> = {
@@ -87,10 +94,16 @@ export class GarantiasTicketsComponent implements OnInit {
   comentarios: GarantiaComentario[] = [];
   cargandoComentarios = false;
 
-  // Nuevo comentario
+  // Comentario público
   nuevoComentario = '';
-  nuevoAutor = 'Administrador';
   enviandoComentario = false;
+
+  // Nota interna (solo admins)
+  notaInterna = '';
+  enviandoNota = false;
+
+  // Fecha retroactiva para validaciones de documentos
+  fechaValidacion = '';
 
   // Cambio de estatus / pieza
   cambiandoEstatus   = false;
@@ -102,7 +115,7 @@ export class GarantiasTicketsComponent implements OnInit {
   validacionDocs: Record<string, string> = {};
   validandoDoc: Record<string, boolean>  = {};
 
-  constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef) {}
+  constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef, private auth: AuthService) {}
 
   ngOnInit(): void { this.cargar(); }
 
@@ -167,6 +180,8 @@ export class GarantiasTicketsComponent implements OnInit {
     this.selected = t;
     this.comentarios = [];
     this.nuevoComentario = '';
+    this.notaInterna = '';
+    this.fechaValidacion = '';
     this.validacionDocs   = { ...(t.validacion_docs_json ?? {}) };
     this.validandoDoc     = {};
     this.piezaSeleccionada = t.pieza_reemplazo ?? '';
@@ -241,13 +256,27 @@ export class GarantiasTicketsComponent implements OnInit {
     if (!this.selected || !this.nuevoComentario.trim() || this.enviandoComentario) return;
     this.enviandoComentario = true;
     this.cdr.markForCheck();
-    this.svc.addComentario(this.selected.id, this.nuevoAutor, this.nuevoComentario.trim()).subscribe({
+    this.svc.addComentario(this.selected.id, 'Administrador', this.nuevoComentario.trim()).subscribe({
       next: () => {
         this.nuevoComentario = '';
         this.enviandoComentario = false;
         this.cargarComentarios(this.selected!.id);
       },
       error: () => { this.enviandoComentario = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  enviarNotaInterna(): void {
+    if (!this.selected || !this.notaInterna.trim() || this.enviandoNota) return;
+    this.enviandoNota = true;
+    this.cdr.markForCheck();
+    this.svc.addComentario(this.selected.id, '', this.notaInterna.trim(), 'nota_interna').subscribe({
+      next: () => {
+        this.notaInterna = '';
+        this.enviandoNota = false;
+        this.cargarComentarios(this.selected!.id);
+      },
+      error: () => { this.enviandoNota = false; this.cdr.markForCheck(); },
     });
   }
 
@@ -303,7 +332,7 @@ export class GarantiasTicketsComponent implements OnInit {
     this.validandoDoc[campo] = true;
     this.cdr.markForCheck();
 
-    this.svc.validarDocumento(this.selected.id, campo, estado, nombre).subscribe({
+    this.svc.validarDocumento(this.selected.id, campo, estado, nombre, this.fechaValidacion || undefined).subscribe({
       next: (res) => {
         this.validacionDocs = { ...(res.validacion_docs_json ?? {}) };
         if (this.selected) this.selected.validacion_docs_json = this.validacionDocs;
@@ -312,6 +341,12 @@ export class GarantiasTicketsComponent implements OnInit {
       },
       error: () => { this.validandoDoc[campo] = false; this.cdr.markForCheck(); },
     });
+  }
+
+  readonly today = new Date().toISOString().split('T')[0];
+
+  get notasInternas(): GarantiaComentario[] {
+    return this.comentarios.filter(c => c.tipo === 'nota_interna');
   }
 
   // ── Helpers de archivo ──────────────────────────────────────────────────
@@ -342,7 +377,7 @@ export class GarantiasTicketsComponent implements OnInit {
   get documentos(): Array<{ key: string; nombre: string; legible: string; label: string }> {
     if (!this.selected?.datos) return [];
     return Object.entries(this.selected.datos)
-      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc)\d+$/.test(k) && v)
+      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc)\d+[ab]?$/.test(k) && v)
       .map(([k, v]) => ({
         key:    k,
         nombre: String(v),

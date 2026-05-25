@@ -378,10 +378,11 @@
         <p class="section-intro">Adjunte los documentos de soporte para la garantía del producto.</p>
 
         <ng-container *ngFor="let doc of [
-          {key:'scott_doc1', label:'Fotografía del Daño',                              accept:'image/*,video/*,.pdf', req:true},
-          {key:'scott_doc2', label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',          req:true},
-          {key:'scott_doc3', label:'Fotografía del Producto',                           accept:'image/*',             req:true},
-          {key:'scott_doc4', label:'Factura de Compra y Factura de Venta',             accept:'image/*,.pdf',        req:true}
+          {key:'scott_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
+          {key:'scott_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
+          {key:'scott_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
+          {key:'scott_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
+          {key:'scott_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -501,11 +502,12 @@
         <p class="section-intro">Adjunte los documentos de soporte para la garantía de la bicicleta.</p>
 
         <ng-container *ngFor="let doc of [
-          {key:'bici_doc1', label:'Fotografía del Daño',                    hint:'Fotografía de la bicicleta del lado derecho del plato', accept:'image/*,video/*,.pdf', req:true},
-          {key:'bici_doc2', label:'Fotografía del Número de Serie',          hint:'',                                                      accept:'image/*',             req:true},
-          {key:'bici_doc3', label:'Fotografía del Producto Completo',        hint:'',                                                      accept:'image/*',             req:true},
-          {key:'bici_doc4', label:'Factura de Compra y Factura de Venta',   hint:'',                                                      accept:'image/*,.pdf',        req:true},
-          {key:'bici_doc5', label:'Hojas del Historial de Servicio',         hint:'',                                                      accept:'image/*,.pdf',        req:false}
+          {key:'bici_doc1',  label:'Fotografía del Daño',               hint:'Fotografía de la bicicleta del lado derecho del plato', accept:'image/*,video/*,.pdf', req:true},
+          {key:'bici_doc2',  label:'Fotografía del Número de Serie',    hint:'',                                                      accept:'image/*',             req:true},
+          {key:'bici_doc3',  label:'Fotografía del Producto Completo',  hint:'',                                                      accept:'image/*',             req:true},
+          {key:'bici_doc4a', label:'Factura de Compra',                 hint:'',                                                      accept:'image/*,.pdf',        req:true},
+          {key:'bici_doc4b', label:'Factura de Venta',                  hint:'',                                                      accept:'image/*,.pdf',        req:true},
+          {key:'bici_doc5',  label:'Hojas del Historial de Servicio',   hint:'',                                                      accept:'image/*,.pdf',        req:false}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -771,10 +773,11 @@
                     [(ngModel)]="formData.vittoria_dano_desc" name="vittoria_dano_desc"></textarea>
         </div>
         <ng-container *ngFor="let doc of [
-          {key:'vittoria_doc1', label:'Fotografía del Daño',                              accept:'image/*,video/*,.pdf', req:true},
-          {key:'vittoria_doc2', label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',          req:true},
-          {key:'vittoria_doc3', label:'Fotografía del Producto',                           accept:'image/*',             req:true},
-          {key:'vittoria_doc4', label:'Factura de Compra y Factura de Venta',             accept:'image/*,.pdf',        req:true}
+          {key:'vittoria_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
+          {key:'vittoria_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
+          {key:'vittoria_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
+          {key:'vittoria_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
+          {key:'vittoria_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -871,6 +874,15 @@
             Asignado a:
             <strong>{{ usuarioAsignado.usuario }}</strong>
             <span class="aui-confirm-nombre">— {{ usuarioAsignado.nombre }}</span>
+          </div>
+
+          <!-- Fecha de ingreso retroactivo -->
+          <div class="field-group" style="margin-top:20px;">
+            <label class="field-label">Fecha de ingreso del ticket</label>
+            <input type="date" class="field-input" [(ngModel)]="fechaIngreso" name="fechaIngreso" [max]="hoy">
+            <p class="field-hint" style="margin-top:6px; font-size:0.8rem; color:#888;">
+              Solo para tickets cargados con fecha retroactiva. Dejar vacío para usar la fecha actual.
+            </p>
           </div>
         </div>
 

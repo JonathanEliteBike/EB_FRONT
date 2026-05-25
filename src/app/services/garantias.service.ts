@@ -118,8 +118,8 @@ export class GarantiasService {
     return this.http.put(`${this.api}/garantias/formulario/${id}/validacion`, { docs_validados, serie_validada });
   }
 
-  validarDocumento(id: number, campo: string, estado: string | null, nombre_legible: string): Observable<any> {
-    return this.http.put(`${this.api}/garantias/formulario/${id}/validacion-doc`, { campo, estado, nombre_legible });
+  validarDocumento(id: number, campo: string, estado: string | null, nombre_legible: string, fecha_validacion?: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/formulario/${id}/validacion-doc`, { campo, estado, nombre_legible, fecha_validacion: fecha_validacion || null });
   }
 
   // ── Form structure (editor) ─────────────────────────────────────

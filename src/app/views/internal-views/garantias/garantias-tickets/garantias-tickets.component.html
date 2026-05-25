@@ -139,6 +139,21 @@
               <!-- Documentos adjuntos -->
               <div class="dp-section" *ngIf="documentos.length > 0 || serieCard">
                 <h4 class="dp-section-title"><i class="fas fa-paperclip"></i> Documentos y validación</h4>
+
+                <!-- Fecha retroactiva de validación -->
+                <div class="fecha-retro-band" [class.fecha-retro-activa]="!!fechaValidacion">
+                  <div class="fecha-retro-icon"><i class="fas fa-calendar-alt"></i></div>
+                  <div class="fecha-retro-body">
+                    <span class="fecha-retro-label">
+                      {{ fechaValidacion ? 'Validaciones con fecha retroactiva' : 'Registrar con fecha retroactiva' }}
+                    </span>
+                    <span class="fecha-retro-hint" *ngIf="!fechaValidacion">Opcional — deja vacío para usar la fecha de hoy</span>
+                  </div>
+                  <input type="date" class="fecha-retro-input" [(ngModel)]="fechaValidacion" [max]="today">
+                  <button *ngIf="fechaValidacion" class="fecha-retro-clear" (click)="fechaValidacion=''" title="Cancelar fecha retroactiva">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
                 <div class="docs-grid">
 
                   <div *ngIf="serieCard" class="doc-unit"
@@ -322,19 +337,21 @@
                   </div>
                   <div *ngFor="let c of comentarios" class="timeline-item"
                        [attr.data-tipo]="c.tipo"
-                       [class.tl-rechazado]="c.texto.toLowerCase().includes('rechazado')">
+                       [class.tl-rechazado]="c.texto.toLowerCase().includes('rechazado')"
+                       [class.tl-nota-interna]="c.tipo === 'nota_interna'">
                     <div class="tl-dot">
                       <i class="fas"
                          [class.fa-exchange-alt]="c.tipo === 'estatus'"
                          [class.fa-tools]="c.tipo === 'pieza'"
                          [class.fa-shield-alt]="c.tipo === 'validacion'"
+                         [class.fa-lock]="c.tipo === 'nota_interna'"
                          [class.fa-comment]="c.tipo === 'comentario'"></i>
                     </div>
                     <div class="tl-body">
                       <div class="tl-meta">
                         <span class="tl-autor">{{ c.autor }}</span>
                         <span class="tl-tipo-badge" [attr.data-tipo]="c.tipo">
-                          {{ c.tipo === 'estatus' ? 'Estatus' : c.tipo === 'pieza' ? 'Pieza' : c.tipo === 'validacion' ? 'Validación' : 'Nota' }}
+                          {{ c.tipo === 'estatus' ? 'Estatus' : c.tipo === 'pieza' ? 'Pieza' : c.tipo === 'validacion' ? 'Validación' : c.tipo === 'nota_interna' ? 'Nota interna' : 'Nota' }}
                         </span>
                         <span class="tl-fecha">{{ c.fecha }}</span>
                       </div>
@@ -343,17 +360,56 @@
                   </div>
                 </div>
 
-                <!-- Agregar comentario -->
+                <!-- Agregar comentario público -->
                 <div class="comment-form">
-                  <input type="text" class="comment-autor" [(ngModel)]="nuevoAutor" placeholder="Tu nombre">
                   <textarea class="comment-input" [(ngModel)]="nuevoComentario"
-                            placeholder="Escribe un comentario o nota interna…"
+                            placeholder="Escribe un comentario visible para el cliente…"
                             rows="3"></textarea>
                   <button class="btn btn-primary btn-sm" (click)="enviarComentario()"
                           [disabled]="!nuevoComentario.trim() || enviandoComentario">
                     <i class="fas" [class.fa-paper-plane]="!enviandoComentario" [class.fa-spinner]="enviandoComentario"
                        [class.fa-spin]="enviandoComentario"></i>
                     {{ enviandoComentario ? 'Enviando…' : 'Comentar' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notas Internas (solo administradores) -->
+              <div class="dp-section nota-interna-section">
+                <h4 class="dp-section-title nota-interna-title">
+                  <i class="fas fa-lock"></i> Notas Internas
+                  <span class="nota-interna-badge">Solo admins</span>
+                </h4>
+                <p class="nota-interna-hint">Estas notas no son visibles para el cliente.</p>
+
+                <div class="timeline nota-interna-timeline" *ngIf="!cargandoComentarios">
+                  <div class="timeline-empty" *ngIf="notasInternas.length === 0">
+                    <i class="fas fa-lock"></i> Sin notas internas aún.
+                  </div>
+                  <ng-container *ngFor="let c of notasInternas">
+                    <div class="timeline-item tl-nota-interna">
+                      <div class="tl-dot"><i class="fas fa-lock"></i></div>
+                      <div class="tl-body">
+                        <div class="tl-meta">
+                          <span class="tl-autor">{{ c.autor }}</span>
+                          <span class="tl-tipo-badge" data-tipo="nota_interna">Nota interna</span>
+                          <span class="tl-fecha">{{ c.fecha }}</span>
+                        </div>
+                        <div class="tl-texto">{{ c.texto }}</div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+
+                <div class="comment-form nota-interna-form">
+                  <textarea class="comment-input" [(ngModel)]="notaInterna"
+                            placeholder="Escribe una nota interna (solo visible para administradores)…"
+                            rows="3"></textarea>
+                  <button class="btn btn-nota-interna btn-sm" (click)="enviarNotaInterna()"
+                          [disabled]="!notaInterna.trim() || enviandoNota">
+                    <i class="fas" [class.fa-lock]="!enviandoNota" [class.fa-spinner]="enviandoNota"
+                       [class.fa-spin]="enviandoNota"></i>
+                    {{ enviandoNota ? 'Guardando…' : 'Guardar nota' }}
                   </button>
                 </div>
               </div>

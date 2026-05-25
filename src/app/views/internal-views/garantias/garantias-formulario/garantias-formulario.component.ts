@@ -262,6 +262,8 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   busquedaUsuario = '';
   mostrarListaUsuarios = false;
   usuarioAsignado: { id: number; nombre: string; correo: string; usuario: string } | null = null;
+  fechaIngreso = '';
+  readonly hoy = new Date().toISOString().split('T')[0];
 
   get usuariosFiltrados() {
     const q = this.busquedaUsuario.toLowerCase().trim();
@@ -443,6 +445,9 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
     const payload = { ...this.formData };
     if (this.esAdmin && this.emailAsignado) {
       payload['email_asignado'] = this.emailAsignado;
+    }
+    if (this.esAdmin && this.fechaIngreso) {
+      payload['fecha_ingreso'] = this.fechaIngreso;
     }
 
     this.svc.enviarFormulario(payload).subscribe({

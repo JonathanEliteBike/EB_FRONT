@@ -25,6 +25,15 @@
 .imp-title { font-size: 1.5rem; font-weight: 700; margin: 0; }
 .imp-title i { color: #3b82f6; margin-right: 8px; }
 .imp-sub { font-size: .8rem; color: #64748b; margin: 0; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.btn-dash {
+  display: flex; align-items: center; gap: 8px;
+  background: #1e3a5f; color: #60a5fa;
+  border: 1px solid #2d4a7a; border-radius: 8px;
+  padding: 9px 18px; font-size: .875rem; font-weight: 600;
+  cursor: pointer; transition: all .2s; text-decoration: none;
+}
+.btn-dash:hover { background: #243f6a; }
 .btn-nuevo {
   display: flex; align-items: center; gap: 8px;
   background: #3b82f6; color: #fff;
