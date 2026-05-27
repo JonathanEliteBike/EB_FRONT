@@ -34,6 +34,16 @@ interface UsuarioToken {
   };
 }
 
+interface Modulo {
+  icono: string;
+  titulo: string;
+  descripcion: string;
+  boton: string;
+  ruta: string | null;
+  accion: string | null;
+  pinned?: boolean;
+}
+
 type TipoToken = 'super' | 'eliminar' | 'meses';
 
 @Component({
@@ -49,6 +59,145 @@ export class HomeComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
   private timerInterval: any;
+
+  busquedaModulos = '';
+
+  modulos: Modulo[] = [
+    {
+      icono: 'fa-desktop',
+      titulo: 'Monitor MY26',
+      descripcion: 'Visualizacion y administracion de unidades, seguimiento de embarques y estatus de ordenes.',
+      boton: 'Ir a Monitor',
+      ruta: '/previo',
+      accion: null
+    },
+    {
+      icono: 'fa-exchange-alt',
+      titulo: 'Flujo de Efectivo',
+      descripcion: 'Visualiza movimientos financieros clave y el estado de tus cuentas en tiempo real.',
+      boton: 'Ir a Flujo',
+      ruta: '/flujo-dashboard',
+      accion: null
+    },
+    {
+      icono: 'fa-users',
+      titulo: 'Usuarios',
+      descripcion: 'Control de accesos y configuracion de roles para los usuarios del portal.',
+      boton: 'Ir a Usuarios',
+      ruta: '/usuarios',
+      accion: null
+    },
+    {
+      icono: 'fa-clipboard-list',
+      titulo: 'Monitor de Pedidos',
+      descripcion: 'Consulta el historial de ordenes de cualquier cliente o grupo integral.',
+      boton: 'Ir a Pedidos',
+      ruta: '/monitor-pedidos',
+      accion: null
+    },
+    {
+      icono: 'fa-shopping-cart',
+      titulo: 'Proyeccion de Compra MY26',
+      descripcion: 'Consulta o planifica tu compra estimada con base en tus necesidades.',
+      boton: 'Ir a Proyeccion',
+      ruta: '/proyeccion',
+      accion: null
+    },
+    {
+      icono: 'fa-undo',
+      titulo: 'Retroactivos',
+      descripcion: 'Consulta tu caratula de retroactivos para conocer el estado de tus bonificaciones.',
+      boton: 'Ir a Retroactivos',
+      ruta: '/dashboard-retroactivos',
+      accion: null
+    },
+    {
+      icono: 'fa-chart-bar',
+      titulo: 'Monitor de Ventas',
+      descripcion: 'Consulta el historial de facturacion por periodo, compara meses entre años y analiza los productos mas vendidos.',
+      boton: 'Ir a Ventas',
+      ruta: '/ventas-monitor',
+      accion: null
+    },
+    {
+      icono: 'fa-file-excel',
+      titulo: 'Cargar Productos para Proyecciones',
+      descripcion: 'Carga el catalogo de productos disponibles para proyecciones de compra. Solo los productos aqui cargados podran seleccionarse.',
+      boton: 'Cargar Catalogo',
+      ruta: null,
+      accion: 'catalogo'
+    },
+    {
+      icono: 'fa-key',
+      titulo: 'Tokens de Edicion',
+      descripcion: 'Genera codigos de acceso para que los distribuidores puedan editar sus proyecciones. Cada codigo dura 1 hora y es de un solo uso.',
+      boton: 'Gestionar Tokens',
+      ruta: null,
+      accion: 'tokens'
+    },
+    {
+      icono: 'fa-shield-alt',
+      titulo: 'Garantias',
+      descripcion: 'Dashboard de garantias con graficas de estatus, latencia de atencion, garantias por cliente y analisis de danos.',
+      boton: 'Ir a Garantias',
+      ruta: '/garantias',
+      accion: null
+    },
+    {
+      icono: 'fa-chart-line',
+      titulo: 'Proyecciones MY27',
+      descripcion: 'Vista consolidada de los 92 articulos MY27 con cantidades por mes sumadas de todos los distribuidores.',
+      boton: 'Ir a Proyecciones',
+      ruta: '/proyecciones-my27',
+      accion: null
+    },
+    {
+      icono: 'fa-ship',
+      titulo: 'Importaciones',
+      descripcion: 'Seguimiento completo del proceso de importacion: logistica, despacho aduanero, almacen y cierre de cuentas.',
+      boton: 'Ir a Importaciones',
+      ruta: '/importaciones',
+      accion: null
+    }
+  ];
+
+  private readonly PINS_KEY = 'eb_home_pinned';
+
+  get modulosFiltrados(): Modulo[] {
+    const q = this.busquedaModulos.trim().toLowerCase();
+    const lista = q
+      ? this.modulos.filter(m =>
+          m.titulo.toLowerCase().includes(q) || m.descripcion.toLowerCase().includes(q)
+        )
+      : this.modulos;
+    return [...lista.filter(m => m.pinned), ...lista.filter(m => !m.pinned)];
+  }
+
+  ejecutarAccion(accion: string | null): void {
+    if (accion === 'catalogo') this.abrirModalCatalogo();
+    if (accion === 'tokens') this.abrirModalTokens();
+  }
+
+  togglePin(modulo: Modulo, event: MouseEvent): void {
+    event.stopPropagation();
+    modulo.pinned = !modulo.pinned;
+    this.savePins();
+  }
+
+  private loadPins(): void {
+    try {
+      const stored = localStorage.getItem(this.PINS_KEY);
+      if (stored) {
+        const pinnedTitulos: string[] = JSON.parse(stored);
+        this.modulos.forEach(m => { m.pinned = pinnedTitulos.includes(m.titulo); });
+      }
+    } catch { }
+  }
+
+  private savePins(): void {
+    const pinned = this.modulos.filter(m => m.pinned).map(m => m.titulo);
+    localStorage.setItem(this.PINS_KEY, JSON.stringify(pinned));
+  }
 
   // ── Modal catálogo ────────────────────────────────────────────────────────
   modalCatalogoAbierto = false;
@@ -83,7 +232,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(private monitorService: MonitorOdooService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadPins();
+  }
 
   ngOnDestroy(): void {
     if (this.timerInterval) clearInterval(this.timerInterval);
@@ -204,7 +355,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   abrirModalTokens(): void {
     this.modalTokensAbierto = true;
     this.cargarTokens();
-    // Refresca el tiempo restante cada 30s
     this.timerInterval = setInterval(() => {
       if (this.modalTokensAbierto) this.usuariosTokens = [...this.usuariosTokens];
     }, 30000);

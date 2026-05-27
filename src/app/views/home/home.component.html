@@ -4,117 +4,58 @@
   <div class="home-bg"></div>
 
   <div class="home-container">
-    <h1>Inicio</h1>
-    <p class="subtexto">Bienvenido al portal. Selecciona la opcion que deseas consultar.</p>
 
-    <div class="tarjetas-acciones">
+    <div class="home-header">
+      <h1>Inicio</h1>
+      <p class="subtexto">Bienvenido al portal. Selecciona el modulo que deseas consultar.</p>
 
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-desktop"></i>
-        </div>
-        <h2>Monitor MY26</h2>
-        <p>Visualizacion y administracion de unidades, seguimiento de embarques y estatus de ordenes.</p>
-        <button [routerLink]="['/previo']">Ir a Monitor</button>
+      <div class="home-search-wrap">
+        <i class="fas fa-search home-search-icon"></i>
+        <input
+          class="home-search-input"
+          type="text"
+          placeholder="Buscar modulo..."
+          [(ngModel)]="busquedaModulos"
+          autocomplete="off"
+          aria-label="Buscar modulo" />
+        <button
+          *ngIf="busquedaModulos"
+          class="home-search-clear"
+          (click)="busquedaModulos = ''"
+          aria-label="Limpiar busqueda">×</button>
       </div>
+    </div>
 
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-exchange-alt"></i>
-        </div>
-        <h2>Flujo de Efectivo</h2>
-        <p>Visualiza movimientos financieros clave y el estado de tus cuentas en tiempo real.</p>
-        <button [routerLink]="['/flujo-dashboard']">Ir a Flujo</button>
-      </div>
+    <div class="tarjetas-grid">
 
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-users"></i>
+      <ng-container *ngFor="let m of modulosFiltrados">
+        <div class="tarjeta" [class.tarjeta-pinned]="m.pinned">
+          <button
+            class="pin-btn"
+            (click)="togglePin(m, $event)"
+            [title]="m.pinned ? 'Desfijar módulo' : 'Fijar arriba'">
+            <i class="fas fa-thumbtack" [class.pin-activo]="m.pinned"></i>
+          </button>
+          <div class="tarjeta-icono-wrap">
+            <i class="fas {{ m.icono }}"></i>
+          </div>
+          <h2>{{ m.titulo }}</h2>
+          <p>{{ m.descripcion }}</p>
+          <button
+            class="tarjeta-btn"
+            *ngIf="m.ruta"
+            [routerLink]="[m.ruta]">{{ m.boton }}</button>
+          <button
+            class="tarjeta-btn"
+            *ngIf="!m.ruta"
+            (click)="ejecutarAccion(m.accion)">{{ m.boton }}</button>
         </div>
-        <h2>Usuarios</h2>
-        <p>Control de accesos y configuracion de roles para los usuarios del portal.</p>
-        <button [routerLink]="['/usuarios']">Ir a Usuarios</button>
-      </div>
+      </ng-container>
 
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-clipboard-list"></i>
-        </div>
-        <h2>Monitor de Pedidos</h2>
-        <p>Consulta el historial de ordenes de cualquier cliente o grupo integral.</p>
-        <button [routerLink]="['/monitor-pedidos']">Ir a Pedidos</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-shopping-cart"></i>
-        </div>
-        <h2>Proyeccion de Compra MY26</h2>
-        <p>Consulta o planifica tu compra estimada con base en tus necesidades.</p>
-        <button [routerLink]="['/proyeccion']">Ir a Proyeccion</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-undo"></i>
-        </div>
-        <h2>Retroactivos</h2>
-        <p>Consulta tu caratula de retroactivos para conocer el estado de tus bonificaciones.</p>
-        <button [routerLink]="['/dashboard-retroactivos']">Ir a Retroactivos</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-chart-bar"></i>
-        </div>
-        <h2>Monitor de Ventas</h2>
-        <p>Consulta el historial de facturacion por periodo, compara meses entre años y analiza los productos mas vendidos.</p>
-        <button [routerLink]="['/ventas-monitor']">Ir a Ventas</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-file-excel"></i>
-        </div>
-        <h2>Cargar Productos para Proyecciones</h2>
-        <p>Carga el catalogo de productos disponibles para proyecciones de compra. Solo los productos aqui cargados podran seleccionarse.</p>
-        <button (click)="abrirModalCatalogo()">Cargar Catalogo</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-key"></i>
-        </div>
-        <h2>Tokens de Edicion</h2>
-        <p>Genera codigos de acceso para que los distribuidores puedan editar sus proyecciones. Cada codigo dura 1 hora y es de un solo uso.</p>
-        <button (click)="abrirModalTokens()">Gestionar Tokens</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-shield-alt"></i>
-        </div>
-        <h2>Garantías</h2>
-        <p>Dashboard de garantías con gráficas de estatus, latencia de atención, garantías por cliente y análisis de daños.</p>
-        <button [routerLink]="['/garantias']">Ir a Garantías</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-chart-line"></i>
-        </div>
-        <h2>Proyecciones MY27</h2>
-        <p>Vista consolidada de los 92 artículos MY27 con cantidades por mes sumadas de todos los distribuidores.</p>
-        <button [routerLink]="['/proyecciones-my27']">Ir a Proyecciones</button>
-      </div>
-
-      <div class="tarjeta">
-        <div class="tarjeta-icono-wrap">
-          <i class="fas fa-ship"></i>
-        </div>
-        <h2>Importaciones</h2>
-        <p>Seguimiento completo del proceso de importación: logística, despacho aduanero, almacén y cierre de cuentas.</p>
-        <button [routerLink]="['/importaciones']">Ir a Importaciones</button>
+      <div *ngIf="modulosFiltrados.length === 0" class="sin-resultados">
+        <i class="fas fa-search"></i>
+        <p>No se encontraron modulos para "<strong>{{ busquedaModulos }}</strong>"</p>
+        <button class="btn-limpiar-busqueda" (click)="busquedaModulos = ''">Limpiar busqueda</button>
       </div>
 
     </div>
@@ -151,7 +92,6 @@
         <button *ngIf="busquedaToken" class="hp-token-search-clear" (click)="busquedaToken = ''">×</button>
       </div>
 
-      <!-- Cabecera de columnas -->
       <div class="tok-table-header">
         <div class="tok-col-user">Distribuidor</div>
         <div class="tok-col-tipo">Super <span class="tok-col-hint">eliminar + meses</span></div>
@@ -167,7 +107,6 @@
 
         <div *ngFor="let u of usuariosTokensFiltrados" class="tok-row">
 
-          <!-- Nombre + clave -->
           <div class="tok-col-user">
             <span class="tok-nombre">{{ u.nombre }}</span>
             <span class="tok-meta">
@@ -177,7 +116,6 @@
             </span>
           </div>
 
-          <!-- SUPER -->
           <div class="tok-col-tipo">
             <ng-container *ngIf="u.tokens?.super; else sinSuper">
               <span class="tok-code tok-code-super">{{ u.tokens.super!.codigo }}</span>
@@ -198,7 +136,6 @@
             </ng-template>
           </div>
 
-          <!-- ELIMINAR -->
           <div class="tok-col-tipo">
             <ng-container *ngIf="u.tokens?.eliminar; else sinEliminar">
               <span class="tok-code tok-code-eliminar">{{ u.tokens.eliminar!.codigo }}</span>
@@ -219,7 +156,6 @@
             </ng-template>
           </div>
 
-          <!-- MESES -->
           <div class="tok-col-tipo">
             <ng-container *ngIf="u.tokens?.meses; else sinMeses">
               <span class="tok-code tok-code-meses">{{ u.tokens.meses!.codigo }}</span>

@@ -181,12 +181,64 @@
   border: 1px solid;
   text-transform: uppercase;
 }
+.dp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .close-btn {
   background: none; border: none; cursor: pointer;
   color: var(--t3); font-size: 1.1rem; padding: 4px;
   transition: color .2s;
 }
 .close-btn:hover { color: var(--t1); }
+
+/* ── Botón eliminar ── */
+.del-btn {
+  background: rgba(229,57,53,0.08);
+  border: 1px solid rgba(229,57,53,0.2);
+  border-radius: 8px;
+  color: #e57373;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.del-btn:hover { background: rgba(229,57,53,0.18); border-color: rgba(229,57,53,0.45); color: #e53935; }
+
+/* Confirmación inline */
+.del-confirm-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e57373;
+  white-space: nowrap;
+}
+.del-confirm-yes {
+  background: rgba(229,57,53,0.15);
+  border: 1px solid rgba(229,57,53,0.4);
+  border-radius: 7px;
+  color: #e53935;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.del-confirm-yes:hover:not(:disabled) { background: rgba(229,57,53,0.28); }
+.del-confirm-yes:disabled { opacity: .5; cursor: not-allowed; }
+.del-confirm-no {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  color: var(--t2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.del-confirm-no:hover:not(:disabled) { background: var(--surface3, #222); }
+.del-confirm-no:disabled { opacity: .5; cursor: not-allowed; }
 
 .dp-scroll {
   flex: 1;

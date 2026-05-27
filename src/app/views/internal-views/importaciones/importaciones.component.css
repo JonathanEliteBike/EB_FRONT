@@ -187,6 +187,16 @@ td { padding: 10px 12px; vertical-align: middle; }
 }
 .sin-resultados i { margin-right: 8px; }
 
+/* Columna eliminar */
+.col-del { width: 40px; text-align: center; }
+.btn-del {
+  background: none; border: none; color: #4b5563;
+  font-size: .85rem; cursor: pointer; padding: 4px 6px;
+  border-radius: 6px; transition: all .15s;
+}
+.btn-del:hover:not(:disabled) { background: #2d1a1a; color: #f87171; }
+.btn-del:disabled { opacity: .4; cursor: not-allowed; }
+
 /* ── Modal ── */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.7);

@@ -105,6 +105,10 @@ export class GarantiasTicketsComponent implements OnInit {
   // Fecha retroactiva para validaciones de documentos
   fechaValidacion = '';
 
+  // Eliminación con confirmación inline
+  confirmandoEliminacion = false;
+  eliminando = false;
+
   // Cambio de estatus / pieza
   cambiandoEstatus   = false;
   cambiandoPieza     = false;
@@ -116,6 +120,8 @@ export class GarantiasTicketsComponent implements OnInit {
   validandoDoc: Record<string, boolean>  = {};
 
   constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef, private auth: AuthService) {}
+
+  get esAdmin(): boolean { return this.auth.isAdmin(); }
 
   ngOnInit(): void { this.cargar(); }
 
@@ -182,6 +188,7 @@ export class GarantiasTicketsComponent implements OnInit {
     this.nuevoComentario = '';
     this.notaInterna = '';
     this.fechaValidacion = '';
+    this.confirmandoEliminacion = false;
     this.validacionDocs   = { ...(t.validacion_docs_json ?? {}) };
     this.validandoDoc     = {};
     this.piezaSeleccionada = t.pieza_reemplazo ?? '';
@@ -192,7 +199,28 @@ export class GarantiasTicketsComponent implements OnInit {
 
   cerrarDetalle(): void {
     this.selected = null;
+    this.confirmandoEliminacion = false;
     this.cdr.markForCheck();
+  }
+
+  eliminarTicket(): void {
+    if (!this.selected || this.eliminando) return;
+    this.eliminando = true;
+    this.cdr.markForCheck();
+    this.svc.eliminarFormulario(this.selected.id).subscribe({
+      next: () => {
+        this.tickets = this.tickets.filter(t => t.id !== this.selected!.id);
+        this.selected = null;
+        this.confirmandoEliminacion = false;
+        this.eliminando = false;
+        this.cargar();
+      },
+      error: () => {
+        this.eliminando = false;
+        this.confirmandoEliminacion = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   private cargarDetalle(id: number): void {

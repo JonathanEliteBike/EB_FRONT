@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpEventType, HttpRequest } from '@angular/common/http';
+import { Observable, map, filter } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface GarantiasKpis {
@@ -106,6 +106,10 @@ export class GarantiasService {
     return this.http.get<GarantiaFormulario>(`${this.api}/garantias/formulario/${id}`);
   }
 
+  eliminarFormulario(id: number): Observable<any> {
+    return this.http.delete(`${this.api}/garantias/formulario/${id}`);
+  }
+
   actualizarEstatus(id: number, estatus: string): Observable<any> {
     return this.http.put(`${this.api}/garantias/formulario/${id}/estatus`, { estatus });
   }
@@ -167,11 +171,32 @@ export class GarantiasService {
   }
 
   // ── File uploads ────────────────────────────────────────────────
-  subirArchivo(file: File): Observable<{ ok: boolean; nombre: string; original: string }> {
+  subirArchivo(
+    file: File,
+    onProgress?: (pct: number) => void
+  ): Observable<{ ok: boolean; nombre: string; original: string }> {
     const fd = new FormData();
     fd.append('archivo', file);
-    return this.http.post<{ ok: boolean; nombre: string; original: string }>(
-      `${this.api}/garantias/archivo/subir`, fd
+
+    if (!onProgress) {
+      return this.http.post<{ ok: boolean; nombre: string; original: string }>(
+        `${this.api}/garantias/archivo/subir`, fd
+      );
+    }
+
+    const req = new HttpRequest('POST', `${this.api}/garantias/archivo/subir`, fd, {
+      reportProgress: true,
+    });
+
+    return this.http.request(req).pipe(
+      map(event => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          onProgress(Math.round(100 * event.loaded / event.total));
+        }
+        return event;
+      }),
+      filter(event => event.type === HttpEventType.Response),
+      map(event => (event as any).body as { ok: boolean; nombre: string; original: string }),
     );
   }
 }

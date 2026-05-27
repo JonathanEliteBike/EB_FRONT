@@ -92,6 +92,7 @@
               {{ s.label }}
             </th>
             <th class="col-global">Global</th>
+            <th class="col-del"></th>
           </tr>
         </thead>
         <tbody>
@@ -149,10 +150,17 @@
               </div>
             </td>
 
+            <!-- Eliminar -->
+            <td class="col-del">
+              <button class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
+                <i class="fas" [ngClass]="eliminando === e.id ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+              </button>
+            </td>
+
           </tr>
 
           <tr *ngIf="embarquesFiltrados.length === 0">
-            <td [attr.colspan]="4 + secciones.length + 1" class="sin-resultados">
+            <td [attr.colspan]="4 + secciones.length + 2" class="sin-resultados">
               <i class="fas fa-inbox"></i> Sin embarques que coincidan con el filtro.
             </td>
           </tr>

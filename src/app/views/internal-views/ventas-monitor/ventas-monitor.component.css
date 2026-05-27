@@ -218,6 +218,146 @@
 
 .vm-btn-consultar i { flex-shrink: 0; }
 
+/* ── Date inputs y text inputs ──────────────────────────────────────────────── */
+.vm-date-input,
+.vm-text-input {
+  background: #1a1916;
+  color: #FFFCF2;
+  border: 1px solid #403d39;
+  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 150px;
+  font-family: inherit;
+}
+
+.vm-date-input:focus,
+.vm-text-input:focus { border-color: #EB5E28; }
+
+.vm-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
+.vm-text-input { min-width: 280px; }
+.vm-control-group--wide { flex: 1 1 280px; }
+
+/* ── Buscar cliente — layout controles ──────────────────────────────────────── */
+.vm-controles-cliente {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ── Search box con dropdown ────────────────────────────────────────────────── */
+.vm-search-wrap {
+  flex: 1 1 320px;
+  min-width: 280px;
+}
+
+.vm-search-box {
+  position: relative;
+  width: 100%;
+}
+
+.vm-search-box .vm-text-input {
+  width: 100%;
+  min-width: unset;
+  box-sizing: border-box;
+  padding-right: 2.4rem;
+}
+
+.vm-search-spinner {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #EB5E28;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.vm-sugerencias {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #252320;
+  border: 1px solid #403d39;
+  border-radius: 8px;
+  z-index: 999;
+  max-height: 320px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.vm-sugerencia-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.92rem;
+  color: #FFFCF2;
+  border-bottom: 1px solid #2e2b28;
+  transition: background 0.15s;
+}
+
+.vm-sugerencia-item:last-child {
+  border-bottom: none;
+}
+
+.vm-sugerencia-item:hover {
+  background: #2e2b28;
+  color: #EB5E28;
+}
+
+.vm-sugerencia-item i {
+  color: #EB5E28;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ── Encabezado resultado cliente ───────────────────────────────────────────── */
+.vm-cliente-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  background: #252422;
+  border: 1px solid #403d39;
+  border-radius: 12px;
+  padding: 1.2rem 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.vm-cliente-icon {
+  font-size: 3rem;
+  color: #EB5E28;
+  flex-shrink: 0;
+}
+
+.vm-cliente-nombre {
+  color: #FFFCF2;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 0.2rem;
+}
+
+.vm-cliente-periodo {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.vm-chip-info {
+  background: #2e2b28;
+  color: #aaa;
+  font-size: 0.75rem;
+  font-weight: 400;
+  border: 1px solid #403d39;
+}
+
 .vm-btn-consultar:hover:not(:disabled) {
   background: #d94e1a;
   transform: translateY(-2px);

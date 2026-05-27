@@ -109,6 +109,22 @@ export class ImportacionesComponent implements OnInit {
     return { total, completados, enProceso, pendientes: total - completados - enProceso, maritimo, aereo };
   }
 
+  eliminando: number | null = null;
+
+  eliminar(e: Importacion, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!confirm(`¿Eliminar el embarque "${e.referencia} - ${e.nombre || ''}"?\nEsta acción no se puede deshacer.`)) return;
+    this.eliminando = e.id;
+    this.svc.eliminar(e.id).subscribe({
+      next: () => {
+        this.embarques = this.embarques.filter((x) => x.id !== e.id);
+        this.filtrar();
+        this.eliminando = null;
+      },
+      error: () => { this.eliminando = null; },
+    });
+  }
+
   crearNuevo(): void {
     if (!this.nuevoEmbarque.referencia?.trim()) return;
     this.guardandoNuevo = true;

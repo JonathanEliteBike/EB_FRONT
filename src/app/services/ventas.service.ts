@@ -65,6 +65,15 @@ export interface MesComparado {
   delta_pct: number;
 }
 
+export interface ClienteResumen {
+  nombre_display: string;
+  total: number;
+  cantidad_facturas: number;
+  por_mes: PorMes[];
+  top_productos: TopProducto[];
+  todos_productos: TopProducto[];
+}
+
 export interface ComparacionAnual {
   anio1: number;
   anio2: number;
@@ -123,6 +132,19 @@ export class VentasService {
   compararAnual(anio1: number, anio2: number): Observable<ComparacionAnual> {
     return this.http.get<ComparacionAnual>(
       `${this.apiUrl}/ventas/comparar-anual?anio1=${anio1}&anio2=${anio2}`
+    );
+  }
+
+  listarClientes(q: string): Observable<{ clientes: { id: number; nombre: string }[] }> {
+    return this.http.get<{ clientes: { id: number; nombre: string }[] }>(
+      `${this.apiUrl}/ventas/listar-clientes?q=${encodeURIComponent(q)}`
+    );
+  }
+
+  buscarCliente(nombre: string, fechaInicio: string, fechaFin: string, vista: 'facturas' | 'cobranza' = 'cobranza'): Observable<ClienteResumen> {
+    const n = encodeURIComponent(nombre);
+    return this.http.get<ClienteResumen>(
+      `${this.apiUrl}/ventas/buscar-cliente?nombre=${n}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&vista=${vista}`
     );
   }
 

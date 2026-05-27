@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { FacturasClienteComponent } from '../../../components/facturas-cliente/facturas-cliente.component';
 import {
   VentasService,
   ResumenVentas,
@@ -16,7 +18,7 @@ import {
   DesglosePorEstado,
 } from '../../../services/ventas.service';
 
-type Modo = 'anual' | 'mensual' | 'comparar' | 'comparar-anual' | 'comparar-integrales';
+type Modo = 'anual' | 'comparar' | 'comparar-anual' | 'comparar-integrales' | 'cliente';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round1 = (n: number) => Math.round(n * 10)  / 10;
@@ -39,12 +41,13 @@ const MESES = [
 @Component({
   selector: 'app-ventas-monitor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent, FacturasClienteComponent],
   templateUrl: './ventas-monitor.component.html',
   styleUrl: './ventas-monitor.component.css',
 })
-export class VentasMonitorComponent implements OnInit {
+export class VentasMonitorComponent implements OnInit, OnDestroy {
   private ventasService = inject(VentasService);
+  private busquedaSubject = new Subject<string>();
 
   // ── Estado general ──────────────────────────────────────────────────────────
   modo: Modo = 'anual';
@@ -55,9 +58,10 @@ export class VentasMonitorComponent implements OnInit {
   cargando = false;
   error: string | null = null;
 
-  // ── Modo anual / mensual ────────────────────────────────────────────────────
-  anioSeleccionado: number = new Date().getFullYear();
-  mesSeleccionado: number = new Date().getMonth() + 1;
+  // ── Modo Por Período (date range) ───────────────────────────────────────────
+  readonly hoy: string = new Date().toISOString().split('T')[0];
+  fechaInicioStr: string = `${new Date().getFullYear()}-01-01`;
+  fechaFinStr: string    = new Date().toISOString().split('T')[0];
   resumen: ResumenVentas | null = null;
 
   // ── Modo comparar meses ─────────────────────────────────────────────────────
@@ -82,6 +86,14 @@ export class VentasMonitorComponent implements OnInit {
 
   // ── Vista facturas / cobranza ───────────────────────────────────────────────
   vista: 'facturas' | 'cobranza' = 'cobranza';
+
+  // ── Buscar cliente ──────────────────────────────────────────────────────────
+  clienteBusqueda: string = '';
+  clientesSugeridos: { id: number; nombre: string }[] = [];
+  clientesBuscando = false;
+  mostrarSugerencias = false;
+  modalClienteAbierto = false;
+  modalClienteClave: string | null = null;
 
   // ── Modal desglose por estado ───────────────────────────────────────────────
   estadoDesglose: DesglosePorEstado | null = null;
@@ -187,7 +199,6 @@ export class VentasMonitorComponent implements OnInit {
         this.grupos = grupos;
         if (anios.anios.length > 0) {
           const ultimo = anios.anios[anios.anios.length - 1];
-          this.anioSeleccionado = ultimo;
           this.cmpAnio2  = ultimo;
           this.cmpAAnio2 = ultimo;
           if (anios.anios.length > 1) {
@@ -199,13 +210,41 @@ export class VentasMonitorComponent implements OnInit {
       },
       error: () => { this.error = 'No se pudieron cargar los datos iniciales.'; },
     });
+
+    this.busquedaSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(q => {
+        if (q.length < 2) {
+          this.clientesSugeridos = [];
+          this.mostrarSugerencias = false;
+          this.clientesBuscando = false;
+          return of({ clientes: [] });
+        }
+        this.clientesBuscando = true;
+        return this.ventasService.listarClientes(q).pipe(
+          catchError(() => {
+            this.clientesBuscando = false;
+            return of({ clientes: [] });
+          })
+        );
+      })
+    ).subscribe(res => {
+      this.clientesSugeridos = res.clientes;
+      this.mostrarSugerencias = this.clientesSugeridos.length > 0;
+      this.clientesBuscando = false;
+    });
   }
 
-  // ── Navegación entre modos y vistas ────────────────────────────────────────
+  ngOnDestroy(): void {
+    this.busquedaSubject.complete();
+  }
+
+  // ── Navegación ──────────────────────────────────────────────────────────────
   cambiarModo(nuevo: Modo): void {
     this.modo = nuevo;
     this.resumen = null; this.resumen1 = null; this.resumen2 = null;
-    this.comparacionAnual = null; this.error = null;
+    this.comparacionAnual = null; this.modalClienteAbierto = false; this.error = null;
   }
 
   cambiarVista(v: 'facturas' | 'cobranza'): void {
@@ -226,14 +265,45 @@ export class VentasMonitorComponent implements OnInit {
     this.comparacionAnual = null;
   }
 
+  // ── Búsqueda de cliente en tiempo real ─────────────────────────────────────
+  onClienteInput(): void {
+    this.mostrarSugerencias = false;
+    this.busquedaSubject.next(this.clienteBusqueda);
+  }
+
+  seleccionarCliente(c: { id: number; nombre: string }): void {
+    this.clienteBusqueda = c.nombre;
+    this.mostrarSugerencias = false;
+    this.clientesSugeridos = [];
+    this.modalClienteClave = c.nombre;
+    this.modalClienteAbierto = true;
+  }
+
+  ocultarSugerencias(): void {
+    setTimeout(() => { this.mostrarSugerencias = false; }, 200);
+  }
+
   // ── Consultar datos ─────────────────────────────────────────────────────────
   consultar(): void {
     this.error = null; this.cargando = true;
-    if (this.modo === 'comparar-integrales') {
+    if (this.modo === 'cliente') {
+      this._buscarCliente();
+    } else if (this.modo === 'comparar-integrales') {
       this._consultarComparacionIntegrales();
     } else {
       this.grupoSeleccionado ? this._consultarIntegral() : this._consultarOdoo();
     }
+  }
+
+  private _buscarCliente(): void {
+    if (!this.clienteBusqueda.trim()) {
+      this.error = 'Escribe el nombre del cliente para buscar.';
+      this.cargando = false;
+      return;
+    }
+    this.modalClienteClave = this.clienteBusqueda.trim();
+    this.modalClienteAbierto = true;
+    this.cargando = false;
   }
 
   private _consultarComparacionIntegrales(): void {
@@ -266,15 +336,7 @@ export class VentasMonitorComponent implements OnInit {
 
   private _consultarOdoo(): void {
     if (this.modo === 'anual') {
-      const inicio = `${this.anioSeleccionado}-01-01`;
-      const fin    = `${this.anioSeleccionado}-12-31`;
-      this.ventasService.getResumen(inicio, fin, this.vista).subscribe({
-        next: (d) => { this.resumen = d; this.cargando = false; },
-        error: (e) => { this.error = e?.error?.error || 'Error al cargar datos.'; this.cargando = false; },
-      });
-    } else if (this.modo === 'mensual') {
-      const { inicio, fin } = this.rangoMes(this.anioSeleccionado, this.mesSeleccionado);
-      this.ventasService.getResumen(inicio, fin, this.vista).subscribe({
+      this.ventasService.getResumen(this.fechaInicioStr, this.fechaFinStr, this.vista).subscribe({
         next: (d) => { this.resumen = d; this.cargando = false; },
         error: (e) => { this.error = e?.error?.error || 'Error al cargar datos.'; this.cargando = false; },
       });
@@ -303,15 +365,7 @@ export class VentasMonitorComponent implements OnInit {
   private _consultarIntegral(): void {
     const gid = this.grupoSeleccionado;
     if (this.modo === 'anual') {
-      const inicio = `${this.anioSeleccionado}-01-01`;
-      const fin    = `${this.anioSeleccionado}-12-31`;
-      this.ventasService.getResumenIntegral(inicio, fin, gid, this.vista).subscribe({
-        next: (d) => { this.resumen = d; this.cargando = false; },
-        error: (e) => { this.error = e?.error?.error || 'Error al cargar datos.'; this.cargando = false; },
-      });
-    } else if (this.modo === 'mensual') {
-      const { inicio, fin } = this.rangoMes(this.anioSeleccionado, this.mesSeleccionado);
-      this.ventasService.getResumenIntegral(inicio, fin, gid, this.vista).subscribe({
+      this.ventasService.getResumenIntegral(this.fechaInicioStr, this.fechaFinStr, gid, this.vista).subscribe({
         next: (d) => { this.resumen = d; this.cargando = false; },
         error: (e) => { this.error = e?.error?.error || 'Error al cargar datos.'; this.cargando = false; },
       });
@@ -429,8 +483,7 @@ export class VentasMonitorComponent implements OnInit {
   }
 
   private _labelPeriodo(): string {
-    if (this.modo === 'anual')   return String(this.anioSeleccionado);
-    if (this.modo === 'mensual') return `${this.anioSeleccionado}_${String(this.mesSeleccionado).padStart(2, '0')}`;
+    if (this.modo === 'anual') return `${this.fechaInicioStr}_al_${this.fechaFinStr}`;
     return 'periodo';
   }
 
@@ -441,14 +494,9 @@ export class VentasMonitorComponent implements OnInit {
     this.estadoDesglosesCargando = true;
     this.estadoDesgloseAbierto = true;
 
-    const inicio = this.modo === 'anual'
-      ? `${this.anioSeleccionado}-01-01`
-      : this.rangoMes(this.anioSeleccionado, this.mesSeleccionado).inicio;
-    const fin = this.modo === 'anual'
-      ? `${this.anioSeleccionado}-12-31`
-      : this.rangoMes(this.anioSeleccionado, this.mesSeleccionado).fin;
-
-    this.ventasService.getProductosPorEstado(inicio, fin, e.estado, this.vista).subscribe({
+    this.ventasService.getProductosPorEstado(
+      this.fechaInicioStr, this.fechaFinStr, e.estado, this.vista
+    ).subscribe({
       next: (d) => { this.estadoDesglose = d; this.estadoDesglosesCargando = false; },
       error: () => { this.estadoDesglosError = 'Error al cargar los productos.'; this.estadoDesglosesCargando = false; },
     });

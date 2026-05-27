@@ -13,25 +13,30 @@
 
   <!-- SELECTOR DE MODO -->
   <div class="vm-modo-tabs">
-    <button class="vm-tab" [class.activo]="modo === 'anual'"                 (click)="cambiarModo('anual')">
-      <i class="fas fa-calendar-alt"></i> Por Año
+    <button class="vm-tab" [class.activo]="modo === 'anual'"
+      (click)="cambiarModo('anual')">
+      <i class="fas fa-calendar-alt"></i> Por Período
     </button>
-    <button class="vm-tab" [class.activo]="modo === 'mensual'"               (click)="cambiarModo('mensual')">
-      <i class="fas fa-calendar-day"></i> Por Mes
-    </button>
-    <button class="vm-tab" [class.activo]="modo === 'comparar'"              (click)="cambiarModo('comparar')">
+    <button class="vm-tab" [class.activo]="modo === 'comparar'"
+      (click)="cambiarModo('comparar')">
       <i class="fas fa-exchange-alt"></i> Comparar Meses
     </button>
-    <button class="vm-tab" [class.activo]="modo === 'comparar-anual'"        (click)="cambiarModo('comparar-anual')">
+    <button class="vm-tab" [class.activo]="modo === 'comparar-anual'"
+      (click)="cambiarModo('comparar-anual')">
       <i class="fas fa-chart-line"></i> Comparar Años
     </button>
-    <button class="vm-tab" [class.activo]="modo === 'comparar-integrales'" (click)="cambiarModo('comparar-integrales')">
+    <button class="vm-tab" [class.activo]="modo === 'comparar-integrales'"
+      (click)="cambiarModo('comparar-integrales')">
       <i class="fas fa-layer-group"></i> Comparar Integrales
+    </button>
+    <button class="vm-tab" [class.activo]="modo === 'cliente'"
+      (click)="cambiarModo('cliente')">
+      <i class="fas fa-user-tag"></i> Buscar Cliente
     </button>
   </div>
 
   <!-- FILTRO INTEGRAL -->
-  <div class="vm-integral-bar" *ngIf="grupos.length > 0 && modo !== 'comparar-integrales'">
+  <div class="vm-integral-bar" *ngIf="grupos.length > 0 && modo !== 'comparar-integrales' && modo !== 'cliente'">
     <span class="vm-integral-label"><i class="fas fa-layer-group"></i> Integral:</span>
     <button
       class="vm-integral-chip"
@@ -48,46 +53,55 @@
     </button>
   </div>
 
-  <!-- ── CONTROLES ► ANUAL ── -->
+  <!-- ── CONTROLES ► POR PERÍODO ── -->
   <div class="vm-controles" *ngIf="modo === 'anual'">
     <div class="vm-control-group">
-      <label>Año</label>
-      <select [(ngModel)]="anioSeleccionado">
-        <option *ngFor="let a of aniosDisponibles" [value]="a">{{ a }}</option>
-      </select>
+      <label>Fecha Inicio</label>
+      <input type="date" class="vm-date-input" [(ngModel)]="fechaInicioStr" [max]="fechaFinStr">
     </div>
-    <button class="vm-btn-consultar" (click)="consultar()" [disabled]="cargando">
+    <div class="vm-control-group">
+      <label>Fecha Fin</label>
+      <input type="date" class="vm-date-input" [(ngModel)]="fechaFinStr" [min]="fechaInicioStr" [max]="hoy">
+    </div>
+    <button class="vm-btn-consultar" (click)="consultar()"
+      [disabled]="cargando || !fechaInicioStr || !fechaFinStr">
       <i class="fas fa-search"></i> {{ cargando ? 'Cargando...' : 'Consultar' }}
     </button>
   </div>
 
-  <!-- ── CONTROLES ► MENSUAL ── -->
-  <div class="vm-controles" *ngIf="modo === 'mensual'">
-    <div class="vm-control-group">
-      <label>Año</label>
-      <select [(ngModel)]="anioSeleccionado">
-        <option *ngFor="let a of aniosDisponibles" [value]="a">{{ a }}</option>
-      </select>
+  <!-- ── CONTROLES ► BUSCAR CLIENTE ── -->
+  <div class="vm-controles vm-controles-cliente" *ngIf="modo === 'cliente'">
+    <div class="vm-control-group vm-control-group--wide vm-search-wrap">
+      <label><i class="fas fa-user-tag"></i> Nombre del Cliente</label>
+      <div class="vm-search-box">
+        <input
+          type="text"
+          class="vm-text-input"
+          [(ngModel)]="clienteBusqueda"
+          placeholder="Escribe al menos 2 letras para buscar..."
+          (input)="onClienteInput()"
+          (blur)="ocultarSugerencias()"
+          autocomplete="off">
+        <i class="fas fa-circle-notch fa-spin vm-search-spinner" *ngIf="clientesBuscando"></i>
+        <!-- Dropdown de sugerencias -->
+        <div class="vm-sugerencias" *ngIf="mostrarSugerencias">
+          <div
+            class="vm-sugerencia-item"
+            *ngFor="let c of clientesSugeridos"
+            (mousedown)="seleccionarCliente(c)">
+            <i class="fas fa-user"></i> {{ c.nombre }}
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="vm-control-group">
-      <label>Mes</label>
-      <select [(ngModel)]="mesSeleccionado">
-        <option *ngFor="let m of meses" [value]="m.num">{{ m.nombre }}</option>
-      </select>
-    </div>
-    <button class="vm-btn-consultar" (click)="consultar()" [disabled]="cargando">
-      <i class="fas fa-search"></i> {{ cargando ? 'Cargando...' : 'Consultar' }}
-    </button>
   </div>
 
   <!-- ── CONTROLES ► COMPARAR MESES ── -->
   <div class="vm-controles vm-comparar-controles" *ngIf="modo === 'comparar'">
-    <!-- Fila 1: etiquetas -->
     <span class="vm-periodo-label">Periodo 1</span>
     <span></span>
     <span class="vm-periodo-label">Periodo 2</span>
     <span></span>
-    <!-- Fila 2: inputs | VS | inputs | boton -->
     <div class="vm-periodo-inputs">
       <div class="vm-control-group">
         <label>Año</label>
@@ -124,12 +138,10 @@
 
   <!-- ── CONTROLES ► COMPARAR AÑOS ── -->
   <div class="vm-controles vm-comparar-controles" *ngIf="modo === 'comparar-anual'">
-    <!-- Fila 1: etiquetas -->
     <span class="vm-periodo-label">Año base</span>
     <span></span>
     <span class="vm-periodo-label">Año comparado</span>
     <span></span>
-    <!-- Fila 2: inputs | VS | inputs | boton -->
     <div class="vm-periodo-inputs">
       <div class="vm-control-group">
         <label>Año</label>
@@ -154,8 +166,6 @@
 
   <!-- ── CONTROLES ► COMPARAR INTEGRALES ── -->
   <div class="vm-controles vm-controles-integrales" *ngIf="modo === 'comparar-integrales'">
-
-    <!-- Fila de integrales -->
     <div class="vm-int-row">
       <div class="vm-control-group vm-int-select">
         <label><i class="fas fa-layer-group"></i> Integral A</label>
@@ -173,8 +183,6 @@
         </select>
       </div>
     </div>
-
-    <!-- Fila de período -->
     <div class="vm-int-row vm-int-row-periodo">
       <div class="vm-control-group">
         <label>Tipo</label>
@@ -195,11 +203,11 @@
           <option *ngFor="let m of meses" [value]="m.num">{{ m.nombre }}</option>
         </select>
       </div>
-      <button class="vm-btn-consultar" (click)="consultar()" [disabled]="cargando || !cmpIntGrupo1 || !cmpIntGrupo2">
+      <button class="vm-btn-consultar" (click)="consultar()"
+        [disabled]="cargando || !cmpIntGrupo1 || !cmpIntGrupo2">
         <i class="fas fa-layer-group"></i> {{ cargando ? 'Cargando...' : 'Comparar' }}
       </button>
     </div>
-
   </div>
 
   <!-- ── SELECTOR VISTA: FACTURAS vs COBRANZA ── -->
@@ -233,9 +241,9 @@
   </div>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!--  RESULTADOS ► ANUAL / MENSUAL              -->
+  <!--  RESULTADOS ► POR PERÍODO                  -->
   <!-- ═══════════════════════════════════════════ -->
-  <ng-container *ngIf="!cargando && (modo === 'anual' || modo === 'mensual') && resumen">
+  <ng-container *ngIf="!cargando && modo === 'anual' && resumen">
 
     <!-- Tarjetas KPI -->
     <div class="vm-cards-row">
@@ -264,9 +272,11 @@
       </div>
     </div>
 
-    <!-- Desglose mensual (sólo modo anual) con mini barras -->
-    <div class="vm-seccion" *ngIf="modo === 'anual' && resumen.por_mes.length">
-      <h2>Desglose Mensual {{ anioSeleccionado }}</h2>
+    <!-- Desglose mensual con mini barras -->
+    <div class="vm-seccion" *ngIf="resumen.por_mes.length">
+      <h2>Desglose por Mes
+        <span class="vm-periodo-chip">{{ fechaInicioStr }} — {{ fechaFinStr }}</span>
+      </h2>
       <div class="vm-table-wrapper">
         <table class="vm-tabla">
           <thead>
@@ -279,7 +289,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let fila of resumen.por_mes">
-              <td>{{ fila.mes_nombre }}</td>
+              <td>{{ fila.mes_nombre }} {{ fila.anio }}</td>
               <td class="num">{{ formatCurrency(fila.total) }}</td>
               <td class="barra-td">
                 <div class="mini-barra-wrap">
@@ -294,7 +304,7 @@
           </tbody>
           <tfoot>
             <tr class="fila-total">
-              <td>Total {{ anioSeleccionado }}</td>
+              <td>Total</td>
               <td class="num">{{ formatCurrency(totalAnual) }}</td>
               <td></td>
               <td class="num">{{ resumen.cantidad_facturas }}</td>
@@ -309,8 +319,6 @@
       <div class="vm-seccion-header">
         <h2>
           <i class="fas fa-trophy"></i> Top 10 Clientes
-          <span class="vm-periodo-chip" *ngIf="modo === 'anual'">{{ anioSeleccionado }}</span>
-          <span class="vm-periodo-chip" *ngIf="modo === 'mensual'">{{ nombreMes(mesSeleccionado) }} {{ anioSeleccionado }}</span>
           <span class="vm-integral-badge" *ngIf="grupoSeleccionado"><i class="fas fa-layer-group"></i> {{ nombreGrupoSeleccionado }}</span>
         </h2>
         <div class="vm-seccion-actions">
@@ -362,8 +370,6 @@
       <div class="vm-seccion-header">
         <h2>
           <i class="fas fa-bicycle"></i> Top 10 Productos
-          <span class="vm-periodo-chip" *ngIf="modo === 'anual'">{{ anioSeleccionado }}</span>
-          <span class="vm-periodo-chip" *ngIf="modo === 'mensual'">{{ nombreMes(mesSeleccionado) }} {{ anioSeleccionado }}</span>
         </h2>
         <div class="vm-seccion-actions">
           <div class="vm-sort-toggle">
@@ -410,8 +416,6 @@
     <div class="vm-seccion" *ngIf="resumen.por_estado?.length">
       <h2>
         <i class="fas fa-map-marker-alt"></i> Ventas por Estado
-        <span class="vm-periodo-chip" *ngIf="modo === 'anual'">{{ anioSeleccionado }}</span>
-        <span class="vm-periodo-chip" *ngIf="modo === 'mensual'">{{ nombreMes(mesSeleccionado) }} {{ anioSeleccionado }}</span>
       </h2>
       <div class="vm-table-wrapper">
         <table class="vm-tabla">
@@ -451,11 +455,19 @@
   </ng-container>
 
   <!-- ═══════════════════════════════════════════ -->
+  <!--  MODAL ► BUSCAR CLIENTE (FacturasCliente) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <app-facturas-cliente
+    [isOpen]="modalClienteAbierto"
+    [clienteClave]="modalClienteClave"
+    (onClose)="modalClienteAbierto = false">
+  </app-facturas-cliente>
+
+  <!-- ═══════════════════════════════════════════ -->
   <!--  RESULTADOS ► COMPARAR MESES              -->
   <!-- ═══════════════════════════════════════════ -->
   <ng-container *ngIf="!cargando && modo === 'comparar' && (resumen1 || resumen2)">
 
-    <!-- 1. Diferencia entre periodos ─────────────────────────────────────── -->
     <div class="vm-diff-panel" *ngIf="resumen1 && resumen2">
       <h2 class="vm-diff-titulo"><i class="fas fa-exchange-alt"></i> Diferencia entre periodos</h2>
       <div class="vm-cards-row">
@@ -478,14 +490,9 @@
       </div>
     </div>
 
-    <!-- 2 & 3. Top Clientes + Top Productos (side-by-side) ──────────────── -->
     <div class="vm-comparar-grid">
-
-      <!-- Periodo 1 -->
       <div class="vm-comparar-col" *ngIf="resumen1">
         <h2 class="vm-comparar-titulo">{{ etiquetaPeriodo1 }}</h2>
-
-        <!-- KPIs simétricos -->
         <div class="vm-cards-row vm-kpi-row">
           <div class="vm-card">
             <span class="vm-card-label"><i class="fas fa-dollar-sign"></i> Total (con IVA)</span>
@@ -496,8 +503,6 @@
             <span class="vm-card-value">{{ resumen1.cantidad_facturas }}</span>
           </div>
         </div>
-
-        <!-- Top 10 Clientes -->
         <div class="vm-table-wrapper" *ngIf="resumen1.top_clientes.length">
           <h3><i class="fas fa-trophy"></i> Top 10 Clientes</h3>
           <table class="vm-tabla">
@@ -511,19 +516,17 @@
                 <td class="num">{{ p.facturas }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track">
+                      <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                    </div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <!-- Top 10 Productos -->
         <div class="vm-table-wrapper vm-table-mt" *ngIf="resumen1.top_productos?.length">
           <h3><i class="fas fa-bicycle"></i> Top 10 Productos</h3>
           <table class="vm-tabla">
@@ -537,13 +540,13 @@
                 <td class="num">{{ p.cantidad | number:'1.0-0' }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track">
+                      <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                    </div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -552,11 +555,8 @@
 
       <div class="vm-comparar-sep"></div>
 
-      <!-- Periodo 2 -->
       <div class="vm-comparar-col" *ngIf="resumen2">
         <h2 class="vm-comparar-titulo">{{ etiquetaPeriodo2 }}</h2>
-
-        <!-- KPIs simétricos -->
         <div class="vm-cards-row vm-kpi-row">
           <div class="vm-card">
             <span class="vm-card-label"><i class="fas fa-dollar-sign"></i> Total (con IVA)</span>
@@ -567,8 +567,6 @@
             <span class="vm-card-value">{{ resumen2.cantidad_facturas }}</span>
           </div>
         </div>
-
-        <!-- Top 10 Clientes -->
         <div class="vm-table-wrapper" *ngIf="resumen2.top_clientes.length">
           <h3><i class="fas fa-trophy"></i> Top 10 Clientes</h3>
           <table class="vm-tabla">
@@ -582,19 +580,17 @@
                 <td class="num">{{ p.facturas }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track">
+                      <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                    </div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <!-- Top 10 Productos -->
         <div class="vm-table-wrapper vm-table-mt" *ngIf="resumen2.top_productos?.length">
           <h3><i class="fas fa-bicycle"></i> Top 10 Productos</h3>
           <table class="vm-tabla">
@@ -608,19 +604,18 @@
                 <td class="num">{{ p.cantidad | number:'1.0-0' }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track">
+                      <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                    </div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
 
   </ng-container>
@@ -630,7 +625,6 @@
   <!-- ═══════════════════════════════════════════ -->
   <ng-container *ngIf="!cargando && modo === 'comparar-anual' && comparacionAnual">
 
-    <!-- KPIs globales -->
     <div class="vm-cards-row">
       <div class="vm-card">
         <span class="vm-card-label"><i class="fas fa-calendar-alt"></i> Total {{ comparacionAnual.anio1 }}</span>
@@ -652,7 +646,6 @@
       </div>
     </div>
 
-    <!-- Tabla mes a mes con barras duales -->
     <div class="vm-seccion">
       <h2>Comparación Mes a Mes — {{ comparacionAnual.anio1 }} vs {{ comparacionAnual.anio2 }}</h2>
       <div class="vm-table-wrapper">
@@ -705,7 +698,6 @@
           </tfoot>
         </table>
       </div>
-      <!-- Leyenda barras -->
       <div class="vm-leyenda">
         <span class="leyenda-item"><span class="leyenda-dot anio1"></span> {{ comparacionAnual.anio1 }}</span>
         <span class="leyenda-item"><span class="leyenda-dot anio2"></span> {{ comparacionAnual.anio2 }}</span>
@@ -719,13 +711,11 @@
   <!-- ═══════════════════════════════════════════════════════ -->
   <ng-container *ngIf="!cargando && modo === 'comparar-integrales' && (resumen1 || resumen2)">
 
-    <!-- Chip de período -->
     <div class="vm-int-periodo-label">
       <i class="fas fa-calendar-alt"></i>
       Período: <strong>{{ etiquetaIntegralPeriodo }}</strong>
     </div>
 
-    <!-- KPI cards -->
     <div class="vm-cards-row">
       <div class="vm-card">
         <span class="vm-card-label"><i class="fas fa-layer-group"></i> {{ nombreGrupo1 }}</span>
@@ -752,7 +742,6 @@
       </div>
     </div>
 
-    <!-- Tabla mes a mes (solo modo anual) -->
     <div class="vm-seccion" *ngIf="cmpIntTipo === 'anual'">
       <h2>Comparación Mes a Mes — {{ nombreGrupo1 }} vs {{ nombreGrupo2 }}</h2>
       <div class="vm-table-wrapper">
@@ -818,7 +807,6 @@
       </div>
     </div>
 
-    <!-- Top clientes side-by-side -->
     <div class="vm-comparar-grid" *ngIf="resumen1 || resumen2">
 
       <div class="vm-comparar-col" *ngIf="resumen1">
@@ -848,13 +836,11 @@
                 <td class="num">{{ p.facturas }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track"><div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div></div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -870,13 +856,11 @@
                 <td class="num">{{ p.cantidad | number:'1.0-0' }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track"><div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div></div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -912,13 +896,11 @@
                 <td class="num">{{ p.facturas }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track"><div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div></div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -934,13 +916,11 @@
                 <td class="num">{{ p.cantidad | number:'1.0-0' }}</td>
                 <td class="num">{{ formatCurrency(p.total) }}</td>
                 <td class="barra-td">
-                <div class="mini-barra-wrap">
-                  <div class="mini-barra-track">
-                    <div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div>
+                  <div class="mini-barra-wrap">
+                    <div class="mini-barra-track"><div class="mini-barra" [style.width.%]="p.participacion_pct ?? 0"></div></div>
+                    <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
                   </div>
-                  <span class="mini-barra-pct">{{ (p.participacion_pct ?? 0) | number:'1.1-1' }}%</span>
-                </div>
-              </td>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -953,12 +933,13 @@
 
   <!-- ── Estado vacío ── -->
   <div class="vm-empty" *ngIf="!cargando && !error
-    && modo === 'anual'         && !resumen
-    || !cargando && !error && modo === 'mensual'       && !resumen
-    || !cargando && !error && modo === 'comparar'      && !resumen1 && !resumen2
-    || !cargando && !error && modo === 'comparar-anual'&& !comparacionAnual">
+    && (modo === 'anual' && !resumen
+    || modo === 'cliente'
+    || modo === 'comparar' && !resumen1 && !resumen2
+    || modo === 'comparar-anual' && !comparacionAnual)">
     <i class="fas fa-chart-bar vm-empty-icon"></i>
-    <p>Selecciona el periodo y presiona <strong>Consultar</strong> para ver los datos.</p>
+    <p *ngIf="modo !== 'cliente'">Selecciona el periodo y presiona <strong>Consultar</strong> para ver los datos.</p>
+    <p *ngIf="modo === 'cliente'">Escribe al menos 2 letras del nombre del cliente para ver sugerencias.</p>
   </div>
 
 </div>
@@ -967,7 +948,6 @@
 <div class="vm-modal-overlay" *ngIf="estadoDesgloseAbierto" (click)="cerrarModalEstado()">
   <div class="vm-modal-panel" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
     <div class="vm-modal-hdr">
       <div class="vm-modal-hdr-left">
         <div class="vm-modal-icon"><i class="fas fa-map-marker-alt"></i></div>
@@ -988,7 +968,6 @@
       </button>
     </div>
 
-    <!-- Cargando -->
     <div class="vm-modal-body" *ngIf="estadoDesglosesCargando">
       <div class="vm-modal-state">
         <div class="vm-spinner"></div>
@@ -996,7 +975,6 @@
       </div>
     </div>
 
-    <!-- Error -->
     <div class="vm-modal-body" *ngIf="!estadoDesglosesCargando && estadoDesglosError">
       <div class="vm-modal-state vm-modal-state-error">
         <i class="fas fa-exclamation-triangle"></i>
@@ -1004,7 +982,6 @@
       </div>
     </div>
 
-    <!-- Tabla productos -->
     <div class="vm-modal-body" *ngIf="!estadoDesglosesCargando && estadoDesglose">
       <div *ngIf="estadoDesglose.productos.length === 0" class="vm-modal-state">
         <i class="fas fa-inbox"></i>

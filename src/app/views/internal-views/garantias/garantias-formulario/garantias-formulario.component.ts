@@ -248,6 +248,7 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   formData: any = {};
   uploadedFiles: { [campo: string]: string } = {};
   uploadingFields: { [campo: string]: boolean } = {};
+  uploadProgress: { [campo: string]: number } = {};
 
   currentStepIdx = 0;
   enviando = false;
@@ -417,18 +418,24 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
     if (!input.files?.length) return;
     const file = input.files[0];
     this.uploadingFields[campo] = true;
+    this.uploadProgress[campo] = 0;
     this.cdr.detectChanges();
 
-    this.svc.subirArchivo(file).subscribe({
+    this.svc.subirArchivo(file, (pct) => {
+      this.uploadProgress[campo] = pct;
+      this.cdr.detectChanges();
+    }).subscribe({
       next: (res) => {
         this.uploadedFiles[campo] = res.nombre;
         this.formData[campo] = res.nombre;
         this.formData[campo + '_original'] = res.original;
         this.uploadingFields[campo] = false;
+        this.uploadProgress[campo] = 0;
         this.cdr.detectChanges();
       },
       error: () => {
         this.uploadingFields[campo] = false;
+        this.uploadProgress[campo] = 0;
         this.cdr.detectChanges();
       },
     });
