@@ -63,8 +63,8 @@ export class UsuariosService {
   }
 
   /** Sincroniza partners de Odoo a la tabla local clientes. */
-  syncClientesOdoo(): Observable<{ agregados: number; ya_existian: number; total_odoo: number }> {
-    return this.http.post<{ agregados: number; ya_existian: number; total_odoo: number }>(
+  syncClientesOdoo(): Observable<{ agregados: number; ya_existian: number; total_odoo: number; total_monitor: number; enlazados: number; sin_match: number }> {
+    return this.http.post<{ agregados: number; ya_existian: number; total_odoo: number; total_monitor: number; enlazados: number; sin_match: number }>(
       `${this.apiUrl}/usuarios/sync-odoo`, {}
     );
   }

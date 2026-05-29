@@ -64,6 +64,8 @@ export interface GarantiaFormulario {
   validacion_docs_json?: Record<string, string>;
   fecha_creacion: string;
   fecha_actualizacion?: string;
+  fecha_estatus?: string;
+  fecha_pieza?: string;
   datos?: any;
 }
 
@@ -110,12 +112,20 @@ export class GarantiasService {
     return this.http.delete(`${this.api}/garantias/formulario/${id}`);
   }
 
-  actualizarEstatus(id: number, estatus: string): Observable<any> {
-    return this.http.put(`${this.api}/garantias/formulario/${id}/estatus`, { estatus });
+  actualizarEstatus(id: number, estatus: string, fecha?: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/formulario/${id}/estatus`, { estatus, fecha });
   }
 
-  actualizarPieza(id: number, estatus_pieza: string): Observable<any> {
-    return this.http.put(`${this.api}/garantias/formulario/${id}/pieza`, { estatus_pieza });
+  actualizarFechaEstatus(id: number, fecha: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/formulario/${id}/fecha-estatus`, { fecha });
+  }
+
+  actualizarPieza(id: number, estatus_pieza: string, fecha?: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/formulario/${id}/pieza`, { estatus_pieza, fecha });
+  }
+
+  actualizarFechaPieza(id: number, fecha: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/formulario/${id}/fecha-pieza`, { fecha });
   }
 
   actualizarValidacion(id: number, docs_validados: boolean, serie_validada: boolean): Observable<any> {

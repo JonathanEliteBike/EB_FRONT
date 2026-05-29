@@ -77,10 +77,12 @@ export class MonitorPedidosComponent implements OnInit {
     this.usuariosService.syncClientesOdoo().subscribe({
       next: (res) => {
         this.sincronizando = false;
-        this.syncMensaje = res.agregados > 0
-          ? `${res.agregados} cliente(s) nuevos agregados desde Odoo.`
-          : `Sin cambios — todos los clientes ya estaban registrados (${res.ya_existian}).`;
-        if (res.agregados > 0) this.cargarDatos();
+        const total = res.total_monitor ?? 0;
+        const enlazados = res.enlazados ?? 0;
+        const sinMatch = res.sin_match ?? 0;
+        this.syncMensaje = sinMatch > 0
+          ? `${enlazados} de ${total} clientes enlazados con Odoo. ${sinMatch} sin clave en Odoo.`
+          : `${enlazados} de ${total} clientes verificados — todos enlazados con Odoo.`;
       },
       error: () => {
         this.sincronizando = false;

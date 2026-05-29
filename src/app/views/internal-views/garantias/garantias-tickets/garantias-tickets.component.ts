@@ -26,7 +26,7 @@ const ESTATUSES_PIEZA = ['Sin pieza', 'Solicitada', 'En tránsito', 'En almacén
 const PIEZAS_REEMPLAZO = [
   'N/A',
   'ASIENTO', 'BATERIA', 'CUADRO', 'DROPPER', 'DROPPER POST',
-  'FRENOS', 'GUANTES', 'HANGER', 'LLANTA', 'MANDO E-BIKE',
+  'FRENOS', 'GOOGLES', 'GUANTES', 'HANGER', 'LLANTA', 'MANDO E-BIKE',
   'MAUBRIO', 'POTENCIA', 'RINES', 'SUSPENSION', 'TRANSMISION',
   'TWINLOCK', 'UNIDAD MOTRIZ', 'ZAPATOS',
 ];
@@ -54,6 +54,30 @@ const DOC_LABELS: Record<string, string> = {
   vittoria_doc4:  'Factura de Compra y Factura de Venta',  // legacy
   vittoria_doc4a: 'Factura de Compra',
   vittoria_doc4b: 'Factura de Venta',
+  // Syncros Manubrios
+  manubrio_doc1:  'Fotografía del Daño',
+  manubrio_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  manubrio_doc3:  'Fotografía del Producto',
+  manubrio_doc4a: 'Factura de Compra',
+  manubrio_doc4b: 'Factura de Venta',
+  // Syncros Asientos
+  asiento_doc1:  'Fotografía del Daño',
+  asiento_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  asiento_doc3:  'Fotografía del Producto',
+  asiento_doc4a: 'Factura de Compra',
+  asiento_doc4b: 'Factura de Venta',
+  // Syncros Poste
+  poste_doc1:  'Fotografía del Daño',
+  poste_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  poste_doc3:  'Fotografía del Producto',
+  poste_doc4a: 'Factura de Compra',
+  poste_doc4b: 'Factura de Venta',
+  // Syncros Ruedos/Rines
+  rin_doc1:  'Fotografía del Daño',
+  rin_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  rin_doc3:  'Fotografía del Producto',
+  rin_doc4a: 'Factura de Compra',
+  rin_doc4b: 'Factura de Venta',
 };
 
 const COLOR_PIEZA: Record<string, string> = {
@@ -114,6 +138,22 @@ export class GarantiasTicketsComponent implements OnInit {
   cambiandoPieza     = false;
   cambiandoPiezaReem = false;
   piezaSeleccionada  = '';
+
+  // Selector de fecha al cambiar estatus
+  pendienteEstatus   = '';
+  pendientePieza     = '';
+  fechaNuevoEstatus  = '';
+  fechaNuevaPieza    = '';
+
+  // Edición inline de fechas existentes
+  editandoFechaEstatus = false;
+  editandoFechaPieza   = false;
+  editFechaEstatus     = '';
+  editFechaPieza       = '';
+
+  get hoy(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
 
   // Validación por campo (docs + serie): campo → 'valido' | 'rechazado'
   validacionDocs: Record<string, string> = {};
@@ -192,6 +232,10 @@ export class GarantiasTicketsComponent implements OnInit {
     this.validacionDocs   = { ...(t.validacion_docs_json ?? {}) };
     this.validandoDoc     = {};
     this.piezaSeleccionada = t.pieza_reemplazo ?? '';
+    this.pendienteEstatus   = '';
+    this.pendientePieza     = '';
+    this.editandoFechaEstatus = false;
+    this.editandoFechaPieza   = false;
     this.cdr.markForCheck();
     this.cargarDetalle(t.id);
     this.cargarComentarios(t.id);
@@ -254,29 +298,59 @@ export class GarantiasTicketsComponent implements OnInit {
 
   cambiarEstatus(nuevoEstatus: string): void {
     if (!this.selected || this.cambiandoEstatus) return;
-    const prev = this.selected.estatus;
-    if (prev === nuevoEstatus) return;
-    this.cambiandoEstatus = true;
+    if (this.selected.estatus === nuevoEstatus) return;
+    this.pendienteEstatus  = nuevoEstatus;
+    this.fechaNuevoEstatus = this.hoy;
+    this.editandoFechaEstatus = false;
     this.cdr.markForCheck();
-    this.svc.actualizarEstatus(this.selected.id, nuevoEstatus).subscribe({
+  }
+
+  cancelarCambioEstatus(): void {
+    this.pendienteEstatus = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmarCambioEstatus(): void {
+    if (!this.selected || !this.pendienteEstatus || this.cambiandoEstatus) return;
+    const prev = this.selected.estatus;
+    const nuevoEstatus = this.pendienteEstatus;
+    const fecha = this.fechaNuevoEstatus || this.hoy;
+    this.cambiandoEstatus = true;
+    this.pendienteEstatus = '';
+    this.cdr.markForCheck();
+    this.svc.actualizarEstatus(this.selected.id, nuevoEstatus, fecha).subscribe({
       next: () => {
-        const texto = `Estatus cambiado de "${prev}" a "${nuevoEstatus}"`;
-        this.svc.addComentario(this.selected!.id, 'Sistema', texto, 'estatus').subscribe({
-          next: () => {
-            this.selected!.estatus = nuevoEstatus;
-            const idx = this.tickets.findIndex(t => t.id === this.selected!.id);
-            if (idx >= 0) this.tickets[idx].estatus = nuevoEstatus;
-            this.cambiandoEstatus = false;
-            this.cargarComentarios(this.selected!.id);
-          },
-          error: () => {
-            this.selected!.estatus = nuevoEstatus;
-            this.cambiandoEstatus = false;
-            this.cdr.markForCheck();
-          },
-        });
+        this.selected!.estatus        = nuevoEstatus;
+        this.selected!.fecha_estatus  = fecha;
+        const idx = this.tickets.findIndex(t => t.id === this.selected!.id);
+        if (idx >= 0) {
+          this.tickets[idx].estatus       = nuevoEstatus;
+          this.tickets[idx].fecha_estatus = fecha;
+        }
+        this.cambiandoEstatus = false;
+        this.cargarComentarios(this.selected!.id);
       },
       error: () => { this.cambiandoEstatus = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  iniciarEditFechaEstatus(): void {
+    this.editFechaEstatus     = this.selected?.fecha_estatus || this.hoy;
+    this.editandoFechaEstatus = true;
+    this.cdr.markForCheck();
+  }
+
+  guardarFechaEstatus(): void {
+    if (!this.selected || !this.editFechaEstatus) return;
+    const fecha = this.editFechaEstatus;
+    this.svc.actualizarFechaEstatus(this.selected.id, fecha).subscribe({
+      next: () => {
+        this.selected!.fecha_estatus  = fecha;
+        this.editandoFechaEstatus     = false;
+        this.cdr.markForCheck();
+        this.cargarComentarios(this.selected!.id);
+      },
+      error: () => { this.editandoFechaEstatus = false; this.cdr.markForCheck(); },
     });
   }
 
@@ -335,19 +409,58 @@ export class GarantiasTicketsComponent implements OnInit {
 
   cambiarPieza(nuevoEstatus: string): void {
     if (!this.selected || this.cambiandoPieza) return;
-    const prev = this.selected.estatus_pieza;
-    if (prev === nuevoEstatus) return;
-    this.cambiandoPieza = true;
+    if (this.selected.estatus_pieza === nuevoEstatus) return;
+    this.pendientePieza  = nuevoEstatus;
+    this.fechaNuevaPieza = this.hoy;
+    this.editandoFechaPieza = false;
     this.cdr.markForCheck();
-    this.svc.actualizarPieza(this.selected.id, nuevoEstatus).subscribe({
+  }
+
+  cancelarCambioPieza(): void {
+    this.pendientePieza = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmarCambioPieza(): void {
+    if (!this.selected || !this.pendientePieza || this.cambiandoPieza) return;
+    const nuevoEstatus = this.pendientePieza;
+    const fecha = this.fechaNuevaPieza || this.hoy;
+    this.cambiandoPieza = true;
+    this.pendientePieza = '';
+    this.cdr.markForCheck();
+    this.svc.actualizarPieza(this.selected.id, nuevoEstatus, fecha).subscribe({
       next: () => {
         this.selected!.estatus_pieza = nuevoEstatus;
+        this.selected!.fecha_pieza   = fecha;
         const idx = this.tickets.findIndex(t => t.id === this.selected!.id);
-        if (idx >= 0) this.tickets[idx].estatus_pieza = nuevoEstatus;
+        if (idx >= 0) {
+          this.tickets[idx].estatus_pieza = nuevoEstatus;
+          this.tickets[idx].fecha_pieza   = fecha;
+        }
         this.cambiandoPieza = false;
         this.cargarComentarios(this.selected!.id);
       },
       error: () => { this.cambiandoPieza = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  iniciarEditFechaPieza(): void {
+    this.editFechaPieza     = this.selected?.fecha_pieza || this.hoy;
+    this.editandoFechaPieza = true;
+    this.cdr.markForCheck();
+  }
+
+  guardarFechaPieza(): void {
+    if (!this.selected || !this.editFechaPieza) return;
+    const fecha = this.editFechaPieza;
+    this.svc.actualizarFechaPieza(this.selected.id, fecha).subscribe({
+      next: () => {
+        this.selected!.fecha_pieza  = fecha;
+        this.editandoFechaPieza     = false;
+        this.cdr.markForCheck();
+        this.cargarComentarios(this.selected!.id);
+      },
+      error: () => { this.editandoFechaPieza = false; this.cdr.markForCheck(); },
     });
   }
 
@@ -405,7 +518,7 @@ export class GarantiasTicketsComponent implements OnInit {
   get documentos(): Array<{ key: string; nombre: string; legible: string; label: string }> {
     if (!this.selected?.datos) return [];
     return Object.entries(this.selected.datos)
-      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc)\d+[ab]?$/.test(k) && v)
+      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc|rin_doc|manubrio_doc|asiento_doc|poste_doc)\d+[ab]?$/.test(k) && v)
       .map(([k, v]) => ({
         key:    k,
         nombre: String(v),

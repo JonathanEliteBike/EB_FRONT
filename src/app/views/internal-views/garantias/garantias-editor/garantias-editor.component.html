@@ -110,14 +110,15 @@
                     <input type="text" class="campo-label-input" [(ngModel)]="campo.label"
                            placeholder="Etiqueta del campo">
                     <select class="campo-tipo-select" [(ngModel)]="campo.tipo">
-                      <option value="text">Texto</option>
+                      <option value="text">Texto corto</option>
                       <option value="email">Email</option>
                       <option value="number">Número</option>
-                      <option value="textarea">Área de texto</option>
-                      <option value="select">Selección</option>
+                      <option value="textarea">Texto largo</option>
+                      <option value="select">Menú desplegable</option>
                       <option value="radio">Opción única</option>
                       <option value="file">Archivo</option>
                       <option value="checkbox">Casilla</option>
+                      <option value="scale">Escala / Rango</option>
                     </select>
                     <label class="required-toggle">
                       <input type="checkbox" [(ngModel)]="campo.requerido">
@@ -155,23 +156,58 @@
             </div>
           </div>
 
-          <!-- Add new field -->
-          <div class="add-campo-row">
-            <ng-container *ngIf="nuevoCampoSecId === sec.id; else addBtn">
-              <input type="text" class="field-input-sm" [(ngModel)]="nuevoLabel"
-                     placeholder="Nombre del nuevo campo" (keyup.enter)="agregarCampo(sec)">
-              <button class="btn btn-sm btn-primary" (click)="agregarCampo(sec)">
-                <i class="fas fa-plus"></i> Agregar
-              </button>
-              <button class="btn btn-sm btn-outline" (click)="nuevoCampoSecId = null; nuevoLabel = ''">
-                Cancelar
-              </button>
-            </ng-container>
-            <ng-template #addBtn>
-              <button class="btn btn-sm btn-ghost" (click)="nuevoCampoSecId = sec.id; nuevoLabel = ''">
-                <i class="fas fa-plus-circle"></i> Agregar campo
-              </button>
-            </ng-template>
+          <!-- Add new field — Google Forms style -->
+          <div class="add-campo-panel" *ngIf="nuevoCampoSecId === sec.id">
+            <div class="new-field-header">
+              <i class="fas fa-plus-circle"></i>
+              <span>Nuevo campo</span>
+            </div>
+            <div class="new-field-body">
+              <!-- Label -->
+              <div class="new-field-row">
+                <label class="new-field-label">Etiqueta / Pregunta</label>
+                <input type="text" class="field-input-sm full-w"
+                       [(ngModel)]="nuevoLabel"
+                       placeholder="Ej. Número de Serie"
+                       (keyup.enter)="agregarCampo(sec)">
+              </div>
+              <!-- Type -->
+              <div class="new-field-row">
+                <label class="new-field-label">Tipo de campo</label>
+                <div class="tipo-grid">
+                  <label *ngFor="let t of ['text','email','number','textarea','select','radio','file','checkbox','scale']"
+                         class="tipo-chip" [class.selected]="nuevoTipo === t"
+                         (click)="nuevoTipo = $any(t)">
+                    <i class="fas" [ngClass]="'fas ' + tipoIcono[t]"></i>
+                    <span>{{ tipoLabels[t] }}</span>
+                  </label>
+                </div>
+              </div>
+              <!-- Options (only for radio/select) -->
+              <div class="new-field-row" *ngIf="nuevoTipo === 'radio' || nuevoTipo === 'select'">
+                <label class="new-field-label">Opciones <span class="hint">(una por línea)</span></label>
+                <textarea class="field-input-sm full-w opciones-ta"
+                          [(ngModel)]="nuevasOpciones"
+                          placeholder="Opción 1&#10;Opción 2&#10;Opción 3"
+                          rows="4"></textarea>
+              </div>
+              <!-- Actions -->
+              <div class="new-field-actions">
+                <button class="btn btn-sm btn-primary" (click)="agregarCampo(sec)"
+                        [disabled]="!nuevoLabel.trim()">
+                  <i class="fas fa-plus"></i> Agregar campo
+                </button>
+                <button class="btn btn-sm btn-outline" (click)="cancelarNuevoCampo()">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="add-campo-row" *ngIf="nuevoCampoSecId !== sec.id">
+            <button class="btn btn-sm btn-ghost" (click)="nuevoCampoSecId = sec.id; nuevoLabel = ''">
+              <i class="fas fa-plus-circle"></i> Agregar campo
+            </button>
           </div>
         </div>
 

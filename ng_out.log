@@ -1,0 +1,442 @@
+[1m[33mPrebundling has been configured but will not be used because caching has been disabled.[39m[22m
+[1m[33mComponent HMR has been enabled, see https://angular.dev/hmr for more info.[39m[22m
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m [36m7.76 MB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m    [2m | [22m[36m89.77 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m       [2m | [22m[36m12.76 kB[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m [1m7.86 MB[22m
+
+Application bundle generation complete. [37.723 seconds]
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/garantias/garantias.component.html:116:13:
+[37m      116 │           {{ [32mdashboard.por_estatus[pair.key] ?? 0[37m }}
+          ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component GarantiasComponent.
+
+    src/app/views/internal-views/garantias/garantias.component.ts:59:15:
+[37m      59 │   templateUrl: [32m'./garantias.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:37:
+[37m      731 │ ...[class.positivo]="(resumen2?.[32mtotal[37m ?? 0) >= (resumen1?.total ?...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:63:
+[37m      731 │ ...lass.positivo]="(resumen2?.total ?? 0) >= (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:37:
+[37m      732 │ ...[class.negativo]="(resumen2?.[32mtotal[37m ?? 0) < (resumen1?.total ??...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:62:
+[37m      732 │ ...class.negativo]="(resumen2?.total ?? 0) < (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.html:192:64:
+[37m      192 │ ...-filename">{{ ticketSeleccionado?.[32mdatos[37m?.['bici_serie'] }}</span>
+          ╵                                      [32m~~~~~[0m
+
+  Error occurs in the template of component GarantiasUsuarioComponent.
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.ts:46:15:
+[37m      46 │   templateUrl: [32m'./garantias-usuario.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m [36m7.76 MB[39m[2m | [22m
+
+Application bundle generation complete. [36.682 seconds]
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/garantias/garantias.component.html:116:13:
+[37m      116 │           {{ [32mdashboard.por_estatus[pair.key] ?? 0[37m }}
+          ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component GarantiasComponent.
+
+    src/app/views/internal-views/garantias/garantias.component.ts:59:15:
+[37m      59 │   templateUrl: [32m'./garantias.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:37:
+[37m      731 │ ...[class.positivo]="(resumen2?.[32mtotal[37m ?? 0) >= (resumen1?.total ?...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:63:
+[37m      731 │ ...lass.positivo]="(resumen2?.total ?? 0) >= (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:37:
+[37m      732 │ ...[class.negativo]="(resumen2?.[32mtotal[37m ?? 0) < (resumen1?.total ??...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:62:
+[37m      732 │ ...class.negativo]="(resumen2?.total ?? 0) < (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.html:192:64:
+[37m      192 │ ...-filename">{{ ticketSeleccionado?.[32mdatos[37m?.['bici_serie'] }}</span>
+          ╵                                      [32m~~~~~[0m
+
+  Error occurs in the template of component GarantiasUsuarioComponent.
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.ts:46:15:
+[37m      46 │   templateUrl: [32m'./garantias-usuario.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m [36m7.76 MB[39m[2m | [22m
+
+Application bundle generation complete. [21.632 seconds]
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/garantias/garantias.component.html:116:13:
+[37m      116 │           {{ [32mdashboard.por_estatus[pair.key] ?? 0[37m }}
+          ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component GarantiasComponent.
+
+    src/app/views/internal-views/garantias/garantias.component.ts:59:15:
+[37m      59 │   templateUrl: [32m'./garantias.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:37:
+[37m      731 │ ...[class.positivo]="(resumen2?.[32mtotal[37m ?? 0) >= (resumen1?.total ?...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:63:
+[37m      731 │ ...lass.positivo]="(resumen2?.total ?? 0) >= (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:37:
+[37m      732 │ ...[class.negativo]="(resumen2?.[32mtotal[37m ?? 0) < (resumen1?.total ??...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:62:
+[37m      732 │ ...class.negativo]="(resumen2?.total ?? 0) < (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.html:192:64:
+[37m      192 │ ...-filename">{{ ticketSeleccionado?.[32mdatos[37m?.['bici_serie'] }}</span>
+          ╵                                      [32m~~~~~[0m
+
+  Error occurs in the template of component GarantiasUsuarioComponent.
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.ts:46:15:
+[37m      46 │   templateUrl: [32m'./garantias-usuario.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m [36m7.76 MB[39m[2m | [22m
+
+Application bundle generation complete. [25.987 seconds]
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/garantias/garantias.component.html:116:13:
+[37m      116 │           {{ [32mdashboard.por_estatus[pair.key] ?? 0[37m }}
+          ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component GarantiasComponent.
+
+    src/app/views/internal-views/garantias/garantias.component.ts:59:15:
+[37m      59 │   templateUrl: [32m'./garantias.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:37:
+[37m      731 │ ...[class.positivo]="(resumen2?.[32mtotal[37m ?? 0) >= (resumen1?.total ?...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:63:
+[37m      731 │ ...lass.positivo]="(resumen2?.total ?? 0) >= (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:37:
+[37m      732 │ ...[class.negativo]="(resumen2?.[32mtotal[37m ?? 0) < (resumen1?.total ??...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:62:
+[37m      732 │ ...class.negativo]="(resumen2?.total ?? 0) < (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.html:192:64:
+[37m      192 │ ...-filename">{{ ticketSeleccionado?.[32mdatos[37m?.['bici_serie'] }}</span>
+          ╵                                      [32m~~~~~[0m
+
+  Error occurs in the template of component GarantiasUsuarioComponent.
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.ts:46:15:
+[37m      46 │   templateUrl: [32m'./garantias-usuario.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m [36m7.76 MB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m    [2m | [22m[36m89.77 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m       [2m | [22m[36m12.76 kB[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m [1m7.86 MB[22m
+
+Application bundle generation complete. [14.259 seconds]
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/garantias/garantias.component.html:116:13:
+[37m      116 │           {{ [32mdashboard.por_estatus[pair.key] ?? 0[37m }}
+          ╵              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component GarantiasComponent.
+
+    src/app/views/internal-views/garantias/garantias.component.ts:59:15:
+[37m      59 │   templateUrl: [32m'./garantias.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:37:
+[37m      731 │ ...[class.positivo]="(resumen2?.[32mtotal[37m ?? 0) >= (resumen1?.total ?...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:731:63:
+[37m      731 │ ...lass.positivo]="(resumen2?.total ?? 0) >= (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:37:
+[37m      732 │ ...[class.negativo]="(resumen2?.[32mtotal[37m ?? 0) < (resumen1?.total ??...
+          ╵                                 [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.html:732:62:
+[37m      732 │ ...class.negativo]="(resumen2?.total ?? 0) < (resumen1?.[32mtotal[37m ?? 0)"
+          ╵                                                         [32m~~~~~[0m
+
+  Error occurs in the template of component VentasMonitorComponent.
+
+    src/app/views/internal-views/ventas-monitor/ventas-monitor.component.ts:45:15:
+[37m      45 │   templateUrl: [32m'./ventas-monitor.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.html:192:64:
+[37m      192 │ ...-filename">{{ ticketSeleccionado?.[32mdatos[37m?.['bici_serie'] }}</span>
+          ╵                                      [32m~~~~~[0m
+
+  Error occurs in the template of component GarantiasUsuarioComponent.
+
+    src/app/views/usuarios/garantias-usuario/garantias-usuario.component.ts:46:15:
+[37m      46 │   templateUrl: [32m'./garantias-usuario.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
