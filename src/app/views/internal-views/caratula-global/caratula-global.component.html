@@ -13,7 +13,7 @@
 
         <div class="fecha-header-mejorada">
             <div class="fecha-principal">
-                <span class="fecha-label">Fecha de consulta</span>
+                <span class="fecha-label">Fecha de consulta: </span>
                 <span class="fecha-value">{{ obtenerFechaHoy() }}</span>
             </div>
 
@@ -187,7 +187,8 @@
                                     'status-positive': (porcentajeScott_2 ?? 0) > 0,
                                     'status-negative': (porcentajeScott_2 ?? 0) <= 0
                                 }">
-                                    {{ porcentajeScott_2 !== null ? (porcentajeScott_2 / 100 | percent:'1.0-0') : 'N/A' }}
+                                    {{ porcentajeScott_2 !== null ? (porcentajeScott_2 / 100 | percent:'1.0-0') : 'N/A'
+                                    }}
                                 </span>
                             </td>
                         </tr>
@@ -220,7 +221,8 @@
                                     'status-positive': (porcentajeApparel ?? 0) > 0,
                                     'status-negative': (porcentajeApparel ?? 0) <= 0
                                 }">
-                                    {{ porcentajeApparel !== null ? (porcentajeApparel / 100 | percent:'1.0-0') : 'N/A' }}
+                                    {{ porcentajeApparel !== null ? (porcentajeApparel / 100 | percent:'1.0-0') : 'N/A'
+                                    }}
                                 </span>
                             </td>
 
@@ -229,7 +231,8 @@
                                     'status-positive': (porcentajeApparel_2 ?? 0) > 0,
                                     'status-negative': (porcentajeApparel_2 ?? 0) <= 0
                                 }">
-                                    {{ porcentajeApparel_2 !== null ? (porcentajeApparel_2 / 100 | percent:'1.0-0') : 'N/A' }}
+                                    {{ porcentajeApparel_2 !== null ? (porcentajeApparel_2 / 100 | percent:'1.0-0') :
+                                    'N/A' }}
                                 </span>
                             </td>
                         </tr>
@@ -238,22 +241,44 @@
                     <tfoot>
                         <tr class="fila-total">
                             <td class="font-bold">
-                                Diferencia
-                            </td>
-
-                            <td></td>
-
-                            <td class="text-right font-bold">
-                                {{ (acumuladoScott + acumuladoApparel) | currency:'USD':'$':'1.2-2' }}
+                                Total categorías principales
                             </td>
 
                             <td class="text-right font-bold">
-                                {{ ((acumuladoScott + acumuladoApparel) - acumuladoGeneral) | currency:'USD':'$':'1.2-2' }}
+                                {{ (metaScott + metaApparel) | currency:'USD':'$':'1.2-2' }}
+                            </td>
+
+                            <td class="text-right font-bold">
+                                {{ totalAcumuladoCategorias | currency:'USD':'$':'1.2-2' }}
+                            </td>
+
+                            <td class="text-right font-bold">
+                                {{ totalProyectadoCategorias | currency:'USD':'$':'1.2-2' }}
                             </td>
 
                             <td></td>
                             <td></td>
                             <td></td>
+                        </tr>
+
+                        <tr class="fila-total fila-otros-productos" *ngIf="otrosProductos !== 0">
+                            <td class="otros-productos-label">
+                                Otros productos
+                            </td>
+
+                            <td></td>
+
+                            <td class="text-right otros-productos-monto">
+                                {{ otrosProductos | currency:'USD':'$':'1.2-2' }}
+                            </td>
+
+                            <td></td>
+
+                            <td colspan="3" class="otros-productos-nota">
+                                Monto que sí forma parte del acumulado general, pero no corresponde a las categorías
+                                principales
+                                SCOTT ni APPAREL / SYNCROS / VITTORIA.
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
