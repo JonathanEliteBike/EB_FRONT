@@ -357,19 +357,20 @@ export class CaratulaGlobalComponent implements OnInit {
       next: ([datosPrevio, multimarcas]) => {
         try {
           const sumPrevio = datosPrevio.reduce((total: number, item: any) => {
-            return total + (Number(item.avance_global_scott) || 0);
+            return total
+              + (Number(item.avance_global_scott) || 0)
+              + (Number(item.acumulado_bold) || 0);
           }, 0);
 
           const sumMultimarcas = multimarcas.reduce((total: number, item: any) => {
             return total + (Number(item.avance_global_scott) || 0);
           }, 0);
 
-          this.acumuladoScott = sumPrevio + sumMultimarcas; // Asignación a acumuladoScott
+          this.acumuladoScott = sumPrevio + sumMultimarcas;
 
-          this.calcularPorcentajeMonto1(); // Si aún necesitas esta función
-          this.calcularPorcentajeScott();  // Y esta también
+          this.calcularPorcentajeMonto1();
+          this.calcularPorcentajeScott();
           this.calcularPorcentajeScott_2();
-
           this.calcularDiferencia1();
 
         } catch (e) {
