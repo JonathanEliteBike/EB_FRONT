@@ -280,7 +280,54 @@ textarea.field-input-sm { min-height: 60px; resize: vertical; font-family: inher
 .detail-key { font-size: 0.75rem; color: var(--t3); text-transform: uppercase; letter-spacing: .4px; }
 .detail-val { font-size: 0.88rem; color: var(--t1); word-break: break-word; }
 
+/* ── Google Forms-style add panel ── */
+.add-campo-panel {
+  margin-top: 12px;
+  border: 1.5px solid var(--orange-gl);
+  border-radius: 10px;
+  background: rgba(235,94,40,0.04);
+  overflow: hidden;
+}
+.new-field-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  background: var(--orange-g);
+  border-bottom: 1px solid var(--orange-gl);
+  font-size: 0.85rem; font-weight: 600; color: var(--orange);
+}
+.new-field-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.new-field-row { display: flex; flex-direction: column; gap: 6px; }
+.new-field-label { font-size: 0.78rem; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .4px; }
+.new-field-label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.full-w { width: 100%; box-sizing: border-box; }
+.opciones-ta { resize: vertical; }
+
+.tipo-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.tipo-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 20px; cursor: pointer;
+  border: 1.5px solid var(--border2);
+  background: var(--card2);
+  font-size: 0.8rem; color: var(--t2);
+  transition: border-color .15s, background .15s, color .15s;
+  user-select: none;
+}
+.tipo-chip:hover { border-color: var(--orange); color: var(--orange); }
+.tipo-chip.selected {
+  border-color: var(--orange);
+  background: var(--orange-g);
+  color: var(--orange);
+  font-weight: 600;
+}
+.tipo-chip i { font-size: 0.85rem; }
+
+.new-field-actions { display: flex; gap: 8px; padding-top: 4px; border-top: 1px solid var(--border); }
+
 @media (max-width: 640px) {
   .editor-page { padding: 16px 12px 60px; }
   .detail-grid { grid-template-columns: 1fr; }
+  .tipo-grid { gap: 6px; }
+  .tipo-chip { font-size: 0.75rem; padding: 5px 10px; }
 }

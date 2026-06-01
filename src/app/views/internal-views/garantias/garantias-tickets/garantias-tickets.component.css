@@ -847,3 +847,54 @@
 }
 .btn-nota-interna:hover:not(:disabled) { background: rgba(245, 158, 11, 0.22); border-color: rgba(245, 158, 11, 0.5); }
 .btn-nota-interna:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Panel de confirmación de cambio de estatus con fecha */
+.fecha-confirm-panel {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(255,152,0,0.07);
+  border: 1px solid rgba(255,152,0,0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fecha-confirm-info { font-size: 0.87rem; color: #ccc; }
+.fecha-confirm-info strong { color: #ff9800; }
+.fecha-confirm-label { font-size: 0.78rem; color: #aaa; margin-bottom: -4px; }
+.fecha-confirm-input {
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,152,0,0.35);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 0.85rem;
+  width: fit-content;
+}
+.fecha-confirm-actions { display: flex; gap: 8px; margin-top: 2px; }
+
+/* Botones pequeños de confirmación/cancelación */
+.btn-confirm-sm {
+  padding: 5px 14px; border-radius: 6px;
+  background: rgba(76,175,80,0.15);
+  border: 1px solid rgba(76,175,80,0.4);
+  color: #4caf50; font-size: 0.8rem; font-weight: 700;
+  cursor: pointer; transition: background .15s;
+}
+.btn-confirm-sm:hover:not(:disabled) { background: rgba(76,175,80,0.28); }
+.btn-confirm-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel-sm {
+  padding: 5px 12px; border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #aaa; font-size: 0.8rem;
+  cursor: pointer; transition: background .15s;
+}
+.btn-cancel-sm:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-icon-sm {
+  background: none; border: none;
+  color: #666; font-size: 11px;
+  cursor: pointer; padding: 2px 5px;
+  border-radius: 4px; transition: color .15s;
+}
+.btn-icon-sm:hover { color: #ff9800; }

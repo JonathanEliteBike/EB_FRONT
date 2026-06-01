@@ -1446,7 +1446,17 @@ export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
           esProductoValido = !nombreProducto.includes('BICICLETA');
         }
       } else if (tipoFiltro === 'BOLD') {
-        esProductoValido = marca === 'BOLD';
+        const subcategoria = String(factura?.subcategoria || '').trim().toUpperCase();
+        const categoriaProducto = String(factura?.categoria_producto || '').trim().toUpperCase();
+        const nombreProducto = String(factura?.nombre_producto || '').trim().toUpperCase();
+
+        esProductoValido =
+          marca === 'BOLD' &&
+          (
+            subcategoria === 'BICICLETA' ||
+            categoriaProducto.includes('BOLD / BICICLETA') ||
+            nombreProducto.includes('BICICLETA')
+          );
       }
 
       return enRango && esProductoValido;

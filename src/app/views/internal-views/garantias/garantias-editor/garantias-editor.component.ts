@@ -18,10 +18,25 @@ export interface EditorSeccion {
 export interface EditorCampo {
   id: string;
   label: string;
-  tipo: 'text' | 'email' | 'number' | 'textarea' | 'select' | 'radio' | 'file' | 'checkbox';
+  tipo: 'text' | 'email' | 'number' | 'textarea' | 'select' | 'radio' | 'file' | 'checkbox' | 'scale';
   requerido: boolean;
   opciones?: string[];
   editando?: boolean;
+}
+
+const TIPOS_MARCO   = ['Doble suspensión', 'Rígida', 'Plasma', 'Foil', 'Ruta', 'Gravel', 'E-Ride'];
+const TIPOS_MARCO_B = ['Doble suspensión'];
+const TIPOS_MARCO_M = ['Doble suspensión', 'Rígida', 'Ruta', 'Gravel', 'E-Ride'];
+const SYNCROS_TIPOS_DANO = ['Raspado', 'Roto', 'Color de la Capa Base Defectuoso', 'Asimétrico', 'Otros'];
+
+function marcoDanoFields(n: number): EditorCampo[] {
+  return [
+    { id: `marco_localizacion_${n}`, label: 'Localización del Daño', tipo: 'select', requerido: true },
+    { id: `marco_tipo_dano_${n}`, label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+      opciones: ['Grieta', 'Fractura', 'Abolladura', 'Decoloración', 'Deformación', 'Otros'] },
+    { id: `marco_tipo_dano_otros_${n}`, label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+    { id: `marco_comentarios_${n}`, label: 'Comentarios', tipo: 'textarea', requerido: true },
+  ];
 }
 
 function buildEstructura(): EditorSeccion[] {
@@ -32,19 +47,16 @@ function buildEstructura(): EditorSeccion[] {
     2:  [
           { id: 'distribuidor', label: 'Razón Social del Distribuidor', tipo: 'select', requerido: true },
           { id: 'contacto', label: 'Nombre del Contacto', tipo: 'text', requerido: true },
-          { id: 'puesto', label: 'Puesto o Cargo', tipo: 'text', requerido: true },
+          { id: 'puesto', label: 'Rol dentro de la compañía', tipo: 'text', requerido: true },
           { id: 'marca', label: 'Marca del Producto', tipo: 'radio', requerido: true,
             opciones: ['SCOTT', 'SYNCROS', 'VITTORIA', 'BOLD', 'MEGAMO'] },
         ],
     3:  [
-          { id: 'megamo_grupo', label: 'Grupo de Productos (MEGAMO/BOLD)', tipo: 'radio', requerido: true,
-            opciones: ['Bicicletas', 'Componentes'] },
-          { id: 'megamo_modelo', label: 'Modelo', tipo: 'text', requerido: true },
-          { id: 'megamo_anio', label: 'Año del Producto', tipo: 'number', requerido: false },
-          { id: 'megamo_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
-          { id: 'megamo_dano', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
-          { id: 'megamo_archivo1', label: 'Fotografía / Video del Daño 1', tipo: 'file', requerido: false },
-          { id: 'megamo_archivo2', label: 'Fotografía / Video del Daño 2', tipo: 'file', requerido: false },
+          { id: 'bici_modelo', label: 'Modelo de la Bicicleta', tipo: 'text', requerido: true },
+          { id: 'bici_anio', label: 'Año del Modelo', tipo: 'number', requerido: true },
+          { id: 'bici_serie', label: 'Número de Serie del Marco', tipo: 'text', requerido: true },
+          { id: 'scott_tipo_marco', label: 'Tipo de Marco', tipo: 'radio', requerido: true,
+            opciones: TIPOS_MARCO_B },
         ],
     4:  [
           { id: 'scott_grupo', label: 'Grupo de Productos SCOTT', tipo: 'radio', requerido: true,
@@ -52,31 +64,52 @@ function buildEstructura(): EditorSeccion[] {
         ],
     5:  [
           { id: 'casco_modelo', label: 'Modelo del Casco', tipo: 'text', requerido: true },
-          { id: 'casco_anio', label: 'Año', tipo: 'number', requerido: true },
+          { id: 'casco_anio', label: 'Año de Fabricación', tipo: 'number', requerido: true },
+          { id: 'casco_color', label: 'Color', tipo: 'text', requerido: false },
+          { id: 'casco_talla', label: 'Talla', tipo: 'select', requerido: true,
+            opciones: ['XS', 'S', 'M', 'L', 'XL', 'Unitalla'] },
           { id: 'casco_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
-          { id: 'casco_tipo', label: 'Tipo de Casco', tipo: 'text', requerido: false },
         ],
     6:  [
-          { id: 'casco_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
-          { id: 'casco_dano_ubic', label: 'Ubicación del Daño', tipo: 'text', requerido: false },
+          { id: 'casco_localizacion', label: 'Localización del Daño', tipo: 'select', requerido: true,
+            opciones: ['Casco', 'Visor', 'Correa', 'Hebilla de correa', 'Forro', 'Sistema de ajuste',
+                       'Capa baja fricción MIPS', 'Canasta de ajuste MIPS', 'Pin de ajuste MIPS', 'Fijación de gama MIPS'] },
+          { id: 'casco_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: ['Roto', 'Descolorido', 'Defecto en Costura', 'Rasgado', 'Malfunción', 'Otros'] },
+          { id: 'casco_tipo_dano_otro', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'casco_comentarios', label: 'Comentarios adicionales', tipo: 'textarea', requerido: false },
         ],
     7:  [
           { id: 'prot_modelo', label: 'Modelo', tipo: 'text', requerido: true },
           { id: 'prot_anio', label: 'Año', tipo: 'number', requerido: false },
+          { id: 'prot_talla', label: 'Talla', tipo: 'select', requerido: false,
+            opciones: ['XS', 'S', 'M', 'L', 'XL', 'Unitalla'] },
           { id: 'prot_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
         ],
     8:  [
-          { id: 'prot_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
-          { id: 'prot_dano_tipo', label: 'Tipo de Daño', tipo: 'text', requerido: false },
+          { id: 'prot_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
+            opciones: ['Cascarón de Plástico', 'D30 Insert', 'Relleno / Espuma', 'Correa / Velcro',
+                       'Cierre / Cremallera', 'Hebilla', 'Tejido', 'Decoloración', 'Otros'] },
+          { id: 'prot_localizacion_otro', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
+          { id: 'prot_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: ['Roto', 'Defecto en Costura', 'Defecto de Armado', 'Rasgado', 'Descolorido', 'Malfunción', 'Otros'] },
+          { id: 'prot_tipo_dano_otro', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'prot_comentarios', label: 'Comentarios adicionales', tipo: 'textarea', requerido: false },
         ],
     9:  [
           { id: 'zapato_modelo', label: 'Modelo', tipo: 'text', requerido: true },
-          { id: 'zapato_anio', label: 'Año', tipo: 'number', requerido: false },
+          { id: 'zapato_color', label: 'Color', tipo: 'text', requerido: false },
           { id: 'zapato_talla', label: 'Talla', tipo: 'text', requerido: true },
+          { id: 'zapato_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
         ],
     10: [
-          { id: 'zapato_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
-          { id: 'zapato_dano_ubic', label: 'Ubicación del Daño en el Zapato', tipo: 'text', requerido: false },
+          { id: 'zapato_localizacion', label: 'Localización del Daño', tipo: 'select', requerido: true,
+            opciones: ['Suela', 'Media Suela', 'Suela Interior', 'Empeine', 'Lengua', 'Forro',
+                       'Contra dedos', 'Contra talon', 'Cordones Ojal', 'Correa de Velcro', 'Hebilla', 'Sistema de Cordones BOA'] },
+          { id: 'zapato_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: ['Costura', 'Delaminación', 'Desgastado', 'Marca de Pegamento', 'Marca de Impresión', 'Roto', 'Otros'] },
+          { id: 'zapato_tipo_dano_otro', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'zapato_comentarios', label: 'Comentarios adicionales', tipo: 'textarea', requerido: false },
         ],
     11: [
           { id: 'comp_tipo', label: 'Tipo de Componente', tipo: 'radio', requerido: true,
@@ -99,28 +132,21 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'bici_anio', label: 'Año del Modelo', tipo: 'number', requerido: true },
           { id: 'bici_serie', label: 'Número de Serie del Marco', tipo: 'text', requerido: true },
           { id: 'scott_tipo_marco', label: 'Tipo de Marco', tipo: 'radio', requerido: true,
-            opciones: ['Doble suspensión', 'Rígida', 'Plasma', 'Foil', 'Ruta', 'Gravel', 'E-Ride'] },
+            opciones: TIPOS_MARCO },
         ],
-    15: [{ id: 'marco_dano_15', label: 'Descripción del Daño (Doble Suspensión)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_15', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
-    16: [{ id: 'marco_dano_16', label: 'Descripción del Daño (Rígida)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_16', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
-    17: [{ id: 'marco_dano_17', label: 'Descripción del Daño (Plasma)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_17', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
-    18: [{ id: 'marco_dano_18', label: 'Descripción del Daño (Foil)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_18', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
-    19: [{ id: 'marco_dano_19', label: 'Descripción del Daño (Ruta)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_19', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
-    20: [{ id: 'marco_dano_20', label: 'Descripción del Daño (Gravel)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_20', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
-    21: [{ id: 'marco_dano_21', label: 'Descripción del Daño (E-Ride)', tipo: 'textarea', requerido: true },
-         { id: 'marco_zona_21', label: 'Zona afectada del marco', tipo: 'text', requerido: false }],
+    15: marcoDanoFields(15),
+    16: marcoDanoFields(16),
+    17: marcoDanoFields(17),
+    18: marcoDanoFields(18),
+    19: marcoDanoFields(19),
+    20: marcoDanoFields(20),
+    21: marcoDanoFields(21),
     22: [
-          { id: 'bici_doc1', label: 'Fotografía / Documento 1', tipo: 'file', requerido: false },
-          { id: 'bici_doc2', label: 'Fotografía / Documento 2', tipo: 'file', requerido: false },
-          { id: 'bici_doc3', label: 'Fotografía / Documento 3', tipo: 'file', requerido: false },
-          { id: 'bici_doc4', label: 'Fotografía / Documento 4', tipo: 'file', requerido: false },
-          { id: 'bici_doc5', label: 'Fotografía / Documento 5', tipo: 'file', requerido: false },
+          { id: 'bici_doc1', label: 'Fotografía del Daño', tipo: 'file', requerido: true },
+          { id: 'bici_doc2', label: 'Fotografía del Número de Serie', tipo: 'file', requerido: true },
+          { id: 'bici_doc3', label: 'Fotografía del Producto', tipo: 'file', requerido: true },
+          { id: 'bici_doc4a', label: 'Factura de Compra', tipo: 'file', requerido: true },
+          { id: 'bici_doc4b', label: 'Factura de Venta', tipo: 'file', requerido: true },
         ],
     23: [
           { id: 'syncros_tipo', label: 'Tipo de Producto SYNCROS', tipo: 'radio', requerido: true,
@@ -130,40 +156,62 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'manubrio_modelo', label: 'Modelo del Manubrio', tipo: 'text', requerido: true },
           { id: 'manubrio_anio', label: 'Año', tipo: 'number', requerido: false },
           { id: 'manubrio_serie', label: 'Número de Serie / Código', tipo: 'text', requerido: false },
-          { id: 'manubrio_medidas', label: 'Medidas (ancho/rise)', tipo: 'text', requerido: false },
+          { id: 'manubrio_color', label: 'Color', tipo: 'text', requerido: false },
         ],
     25: [
-          { id: 'manubrio_dano_desc', label: 'Descripción del Daño — Manubrios', tipo: 'textarea', requerido: true },
-          { id: 'manubrio_archivo', label: 'Fotografía del Daño', tipo: 'file', requerido: false },
+          { id: 'manubrio_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
+            opciones: ['Potencia', 'Barra de la base', 'Extension', 'Manubrio',
+                       'Abrazadera del Manubrio', 'Hardware de la Potencia', 'Otros'] },
+          { id: 'manubrio_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
+          { id: 'manubrio_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: SYNCROS_TIPOS_DANO },
+          { id: 'manubrio_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'manubrio_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
         ],
     26: [
           { id: 'asiento_modelo', label: 'Modelo del Asiento', tipo: 'text', requerido: true },
           { id: 'asiento_anio', label: 'Año', tipo: 'number', requerido: false },
           { id: 'asiento_serie', label: 'Número de Serie / Código', tipo: 'text', requerido: false },
+          { id: 'asiento_color', label: 'Color', tipo: 'text', requerido: false },
         ],
     27: [
-          { id: 'asiento_dano_desc', label: 'Descripción del Daño — Asiento', tipo: 'textarea', requerido: true },
-          { id: 'asiento_archivo', label: 'Fotografía del Daño', tipo: 'file', requerido: false },
+          { id: 'asiento_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
+            opciones: ['Base', 'Almohadilla', 'Riel', 'Otros'] },
+          { id: 'asiento_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
+          { id: 'asiento_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: SYNCROS_TIPOS_DANO },
+          { id: 'asiento_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'asiento_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
         ],
     28: [
           { id: 'poste_modelo', label: 'Modelo del Poste', tipo: 'text', requerido: true },
           { id: 'poste_anio', label: 'Año', tipo: 'number', requerido: false },
           { id: 'poste_serie', label: 'Número de Serie / Código', tipo: 'text', requerido: false },
-          { id: 'poste_medidas', label: 'Diámetro / Longitud', tipo: 'text', requerido: false },
+          { id: 'poste_color', label: 'Color', tipo: 'text', requerido: false },
         ],
     29: [
-          { id: 'poste_dano_desc', label: 'Descripción del Daño — Poste', tipo: 'textarea', requerido: true },
-          { id: 'poste_archivo', label: 'Fotografía del Daño', tipo: 'file', requerido: false },
+          { id: 'poste_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
+            opciones: ['Poste de Asiento', 'Abrazadera del asiento', 'Cartucho', 'Base', 'Dropper Seatpost', 'Otros'] },
+          { id: 'poste_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
+          { id: 'poste_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: SYNCROS_TIPOS_DANO },
+          { id: 'poste_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'poste_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
         ],
     30: [
           { id: 'rin_modelo', label: 'Modelo del Rin', tipo: 'text', requerido: true },
           { id: 'rin_anio', label: 'Año', tipo: 'number', requerido: false },
           { id: 'rin_serie', label: 'Número de Serie / Código', tipo: 'text', requerido: false },
-          { id: 'rin_medida', label: 'Medida / Diámetro', tipo: 'text', requerido: false },
+          { id: 'rin_color', label: 'Color', tipo: 'text', requerido: false },
         ],
     31: [
-          { id: 'rin_dano_desc', label: 'Descripción del Daño — Ruedos/Rines', tipo: 'textarea', requerido: true },
-          { id: 'rin_archivo', label: 'Fotografía del Daño', tipo: 'file', requerido: false },
+          { id: 'rin_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
+            opciones: ['Base del Rin', 'Banda del Rin', 'Rayo de Carbon', 'Nucleo del cascarón', 'Nucleo interno', 'Otros'] },
+          { id: 'rin_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
+          { id: 'rin_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+            opciones: ['Roto', 'Asimétrico', 'Delaminación', 'Color de la Capa Base Defectuoso', 'Otros'] },
+          { id: 'rin_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
+          { id: 'rin_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
         ],
     32: [
           { id: 'vittoria_modelo', label: 'Modelo del Producto', tipo: 'text', requerido: true },
@@ -179,6 +227,13 @@ function buildEstructura(): EditorSeccion[] {
         ],
     34: [
           { id: 'terminos_aceptados', label: 'Aceptación de Términos y Condiciones', tipo: 'checkbox', requerido: true },
+        ],
+    35: [
+          { id: 'bici_modelo', label: 'Modelo de la Bicicleta', tipo: 'text', requerido: true },
+          { id: 'bici_anio', label: 'Año del Modelo', tipo: 'number', requerido: true },
+          { id: 'bici_serie', label: 'Número de Serie del Marco', tipo: 'text', requerido: true },
+          { id: 'scott_tipo_marco', label: 'Tipo de Marco', tipo: 'radio', requerido: true,
+            opciones: TIPOS_MARCO_M },
         ],
   };
 
@@ -214,6 +269,8 @@ export class GarantiasEditorComponent implements OnInit {
   cargandoDetalle = false;
 
   nuevoLabel = '';
+  nuevoTipo: EditorCampo['tipo'] = 'text';
+  nuevasOpciones = '';
   nuevoCampoSecId: number | null = null;
 
   readonly tipoIcono: Record<string, string> = {
@@ -225,6 +282,19 @@ export class GarantiasEditorComponent implements OnInit {
     radio:    'fa-dot-circle',
     file:     'fa-paperclip',
     checkbox: 'fa-check-square',
+    scale:    'fa-sliders-h',
+  };
+
+  readonly tipoLabels: Record<string, string> = {
+    text:     'Texto corto',
+    email:    'Email',
+    number:   'Número',
+    textarea: 'Texto largo',
+    select:   'Menú desplegable',
+    radio:    'Opción única',
+    file:     'Archivo',
+    checkbox: 'Casilla',
+    scale:    'Escala / Rango',
   };
 
   constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef) {}
@@ -270,14 +340,27 @@ export class GarantiasEditorComponent implements OnInit {
 
   agregarCampo(sec: EditorSeccion): void {
     if (!this.nuevoLabel.trim()) return;
+    const opciones = (this.nuevoTipo === 'radio' || this.nuevoTipo === 'select')
+      ? this.nuevasOpciones.split('\n').map(s => s.trim()).filter(s => !!s)
+      : undefined;
     sec.campos.push({
       id: `campo_${Date.now()}`,
       label: this.nuevoLabel.trim(),
-      tipo: 'text',
+      tipo: this.nuevoTipo,
       requerido: false,
+      opciones,
     });
     this.nuevoLabel = '';
+    this.nuevoTipo = 'text';
+    this.nuevasOpciones = '';
     this.nuevoCampoSecId = null;
+  }
+
+  cancelarNuevoCampo(): void {
+    this.nuevoCampoSecId = null;
+    this.nuevoLabel = '';
+    this.nuevoTipo = 'text';
+    this.nuevasOpciones = '';
   }
 
   eliminarCampo(sec: EditorSeccion, idx: number): void {

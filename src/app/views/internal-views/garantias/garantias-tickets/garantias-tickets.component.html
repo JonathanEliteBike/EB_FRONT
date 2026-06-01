@@ -318,11 +318,40 @@
                   <button *ngFor="let p of estatusesPieza" class="estatus-btn"
                           [class.active]="selected.estatus_pieza === p"
                           [style.--accent]="colorPieza(p)"
-                          [disabled]="cambiandoPieza || piezaEsNA"
+                          [disabled]="cambiandoPieza || piezaEsNA || !!pendientePieza"
                           (click)="cambiarPieza(p)">
                     <span class="estatus-dot" [style.background]="colorPieza(p)"></span>
                     {{ p }}
                   </button>
+                </div>
+                <!-- Fecha del estatus de pieza actual -->
+                <div *ngIf="selected.estatus_pieza && selected.estatus_pieza !== 'Sin pieza' && !pendientePieza" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-secondary,#aaa);">
+                  <i class="fas fa-calendar-alt"></i>
+                  <ng-container *ngIf="!editandoFechaPieza">
+                    <span *ngIf="selected.fecha_pieza">{{ selected.fecha_pieza }}</span>
+                    <span *ngIf="!selected.fecha_pieza" style="font-style:italic;opacity:0.55">Sin fecha registrada</span>
+                    <button class="btn-icon-sm" [title]="selected.fecha_pieza ? 'Editar fecha' : 'Asignar fecha'" (click)="iniciarEditFechaPieza()"><i class="fas fa-pen"></i></button>
+                  </ng-container>
+                  <ng-container *ngIf="editandoFechaPieza">
+                    <input type="date" [(ngModel)]="editFechaPieza" [max]="hoy" style="font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid #555;background:#1a1a2e;color:#fff;">
+                    <button class="btn-confirm-sm" (click)="guardarFechaPieza()">Guardar</button>
+                    <button class="btn-cancel-sm" (click)="editandoFechaPieza=false">✕</button>
+                  </ng-container>
+                </div>
+                <!-- Panel confirmación cambio de pieza -->
+                <div *ngIf="pendientePieza" class="fecha-confirm-panel">
+                  <div class="fecha-confirm-info">
+                    Cambiar a <strong>{{ pendientePieza }}</strong>
+                  </div>
+                  <label class="fecha-confirm-label">Fecha del cambio</label>
+                  <input type="date" class="fecha-confirm-input" [(ngModel)]="fechaNuevaPieza" [max]="hoy">
+                  <div class="fecha-confirm-actions">
+                    <button class="btn-cancel-sm" (click)="cancelarCambioPieza()">Cancelar</button>
+                    <button class="btn-confirm-sm" [disabled]="cambiandoPieza" (click)="confirmarCambioPieza()">
+                      <i *ngIf="cambiandoPieza" class="fas fa-spinner fa-spin"></i>
+                      <span *ngIf="!cambiandoPieza">Confirmar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -333,11 +362,40 @@
                   <button *ngFor="let e of estatuses.slice(1)" class="estatus-btn"
                           [class.active]="selected.estatus === e"
                           [style.--accent]="colorEstatus(e)"
-                          [disabled]="cambiandoEstatus"
+                          [disabled]="cambiandoEstatus || !!pendienteEstatus"
                           (click)="cambiarEstatus(e)">
                     <span class="estatus-dot" [style.background]="colorEstatus(e)"></span>
                     {{ e }}
                   </button>
+                </div>
+                <!-- Fecha del estatus actual del ticket -->
+                <div *ngIf="selected.estatus && !pendienteEstatus" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-secondary,#aaa);">
+                  <i class="fas fa-calendar-alt"></i>
+                  <ng-container *ngIf="!editandoFechaEstatus">
+                    <span *ngIf="selected.fecha_estatus">{{ selected.fecha_estatus }}</span>
+                    <span *ngIf="!selected.fecha_estatus" style="font-style:italic;opacity:0.55">Sin fecha registrada</span>
+                    <button class="btn-icon-sm" [title]="selected.fecha_estatus ? 'Editar fecha' : 'Asignar fecha'" (click)="iniciarEditFechaEstatus()"><i class="fas fa-pen"></i></button>
+                  </ng-container>
+                  <ng-container *ngIf="editandoFechaEstatus">
+                    <input type="date" [(ngModel)]="editFechaEstatus" [max]="hoy" style="font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid #555;background:#1a1a2e;color:#fff;">
+                    <button class="btn-confirm-sm" (click)="guardarFechaEstatus()">Guardar</button>
+                    <button class="btn-cancel-sm" (click)="editandoFechaEstatus=false">✕</button>
+                  </ng-container>
+                </div>
+                <!-- Panel confirmación cambio de estatus -->
+                <div *ngIf="pendienteEstatus" class="fecha-confirm-panel">
+                  <div class="fecha-confirm-info">
+                    Cambiar a <strong>{{ pendienteEstatus }}</strong>
+                  </div>
+                  <label class="fecha-confirm-label">Fecha del cambio</label>
+                  <input type="date" class="fecha-confirm-input" [(ngModel)]="fechaNuevoEstatus" [max]="hoy">
+                  <div class="fecha-confirm-actions">
+                    <button class="btn-cancel-sm" (click)="cancelarCambioEstatus()">Cancelar</button>
+                    <button class="btn-confirm-sm" [disabled]="cambiandoEstatus" (click)="confirmarCambioEstatus()">
+                      <i *ngIf="cambiandoEstatus" class="fas fa-spinner fa-spin"></i>
+                      <span *ngIf="!cambiandoEstatus">Confirmar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

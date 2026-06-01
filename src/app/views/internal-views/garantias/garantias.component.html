@@ -113,7 +113,7 @@
         <span class="sc-dot" [style.background]="colorEstatus(pair.key)"></span>
         <span class="sc-label">{{ pair.label }}</span>
         <span class="sc-count" [style.color]="colorEstatus(pair.key)">
-          {{ dashboard.por_estatus[pair.key] ?? 0 }}
+          {{ dashboard.por_estatus[pair.key] }}
         </span>
       </div>
     </div>
