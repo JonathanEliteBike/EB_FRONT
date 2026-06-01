@@ -4,7 +4,8 @@ import { RouterModule } from '@angular/router';
 import { RetroactivosService } from '../../../services/retroactivos.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 // 1. IMPORTAR EL COMPONENTE DE FILTROS
-import { FiltroComponent } from '../../../components/filtro/filtro.component'; 
+import { FiltroComponent } from '../../../components/filtro/filtro.component';
+import { switchMap } from 'rxjs/operators';
 
 interface FiltroOption {
   value: string;
@@ -14,7 +15,7 @@ interface FiltroOption {
 @Component({
   selector: 'app-dashboard-retroactivos',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent, FiltroComponent], 
+  imports: [CommonModule, RouterModule, HomeBarComponent, FiltroComponent],
   templateUrl: './dashboard-retroactivos.component.html',
   styleUrl: './dashboard-retroactivos.component.css'
 })
@@ -75,17 +76,36 @@ export class DashboardRetroactivosComponent implements OnInit {
 
   actualizarDatos(): void {
     if (this.cargando) return;
-    this.cargando = true; 
 
-    this.retroactivosService.sincronizarNotasOdoo().subscribe({
-      next: (res) => {
-        console.log('Sincronización exitosa:', res);
-        this.cargarDatos();
+    this.cargando = true;
+
+    this.retroactivosService.syncMonitorOdooConPrevio().pipe(
+      switchMap((resMonitor) => {
+        console.log('Monitor Odoo sincronizado y previo recalculado:', resMonitor);
+
+        // Después de actualizar monitor + previo, ahora sí recalculamos retroactivos
+        return this.retroactivosService.sincronizarNotasOdoo();
+      }),
+      switchMap((resRetro) => {
+        console.log('Retroactivos sincronizados:', resRetro);
+
+        // Al final recargamos la tabla
+        return this.retroactivosService.getRetroactivos();
+      })
+    ).subscribe({
+      next: (data) => {
+        this.retroactivosOriginales = data;
+        this.retroactivos = [...data];
+
+        this.extraerOpcionesFiltros();
+        this.calcularTotales();
+
+        this.cargando = false;
       },
       error: (err) => {
-        console.error('Error al sincronizar con Odoo:', err);
-        this.cargando = false; 
-        alert('Error al conectar con Odoo. Revisa la consola del servidor.');
+        console.error('Error actualizando datos:', err);
+        this.cargando = false;
+        alert('Error al actualizar datos. Revisa la consola del servidor.');
       }
     });
   }
@@ -96,7 +116,7 @@ export class DashboardRetroactivosComponent implements OnInit {
       next: (data) => {
         this.retroactivosOriginales = data;
         this.retroactivos = [...data]; // Inicialmente mostrar todo
-        
+
         this.extraerOpcionesFiltros();
         this.calcularTotales();
         this.cargando = false;
@@ -111,7 +131,7 @@ export class DashboardRetroactivosComponent implements OnInit {
   // ==========================================
   // LÓGICA DE FILTROS
   // ==========================================
-  
+
   extraerOpcionesFiltros() {
     // Usamos Set para evitar duplicados, limpiamos y ordenamos alfabéticamente
     const claves = Array.from(new Set(this.retroactivosOriginales.map(r => r.CLAVE).filter(Boolean))).sort();

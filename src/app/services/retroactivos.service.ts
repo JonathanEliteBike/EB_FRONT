@@ -22,4 +22,10 @@ export class RetroactivosService {
   getRetroactivoCliente(identificador: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/retroactivo_cliente/${encodeURIComponent(identificador)}`);
   }
+
+  syncMonitorOdooConPrevio() {
+    return this.http.post<any>(`${this.apiUrl}/sync-monitor-odoo`, {
+      recalcular_previo: true
+    });
+  }
 }
