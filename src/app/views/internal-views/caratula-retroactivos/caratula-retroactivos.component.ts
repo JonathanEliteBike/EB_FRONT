@@ -366,18 +366,6 @@ export class CaratulaRetroactivosComponent implements OnInit {
   }
 
   getImporteFinalBase(): number {
-    if (!this.datosCliente) return 0;
-    const d: any = this.datosCliente;
-
-    const importeBackend = this.n(
-      d.importe_final,
-      d.IMPORTE_FINAL
-    );
-
-    if (importeBackend !== 0) {
-      return importeBackend;
-    }
-
     return (
       this.getAcumuladoGlobalCalculado() -
       this.getProductosOfertados() -
@@ -386,18 +374,6 @@ export class CaratulaRetroactivosComponent implements OnInit {
   }
 
   getCompraAdicionalCalculada(): number {
-    if (!this.datosCliente) return 0;
-    const d: any = this.datosCliente;
-
-    const compraAdicionalBackend = this.n(
-      d.compra_adicional,
-      d.COMPRA_ADICIONAL
-    );
-
-    if (compraAdicionalBackend !== 0) {
-      return compraAdicionalBackend;
-    }
-
     return (
       this.getAcumuladoGlobalCalculado() -
       this.getCompraMinimaAnual()
@@ -429,18 +405,6 @@ export class CaratulaRetroactivosComponent implements OnInit {
   }
 
   getImportePagar(): number {
-    if (!this.datosCliente) return 0;
-    const d: any = this.datosCliente;
-
-    const importeBackend = this.n(
-      d.importe,
-      d.IMPORTE
-    );
-
-    if (importeBackend !== 0) {
-      return importeBackend;
-    }
-
     return this.getImporteFinalBase() * this.getRetroactivoTotal();
   }
 }
