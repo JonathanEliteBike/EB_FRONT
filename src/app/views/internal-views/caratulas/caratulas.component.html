@@ -246,12 +246,12 @@
                     <div class="compra-item">
                         <div class="compra-label">Avance</div>
                         <div class="compra-value">
-                            {{ datosCliente.avance_global | currency:'USD':'$':'1.2-2' }}
+                            {{ getAvanceGlobalMarcas() | currency:'USD':'$':'1.2-2' }}
                         </div>
                     </div>
                     <div class="compra-item">
                         <div class="compra-label">Porcentaje</div>
-                        <div class="compra-porcentaje">{{ datosCliente.porcentaje_global }}%</div>
+                        <div class="compra-porcentaje">{{ getPorcentajeGlobalMarcas() }}%</div>
                     </div>
                 </div>
             </div>
@@ -268,12 +268,12 @@
                     <div class="compra-item">
                         <div class="compra-label">Avance</div>
                         <div class="compra-value">
-                            {{ datosCliente.avance_global | currency:'USD':'$':'1.2-2' }}
+                            {{ getAvanceGlobalMarcas() | currency:'USD':'$':'1.2-2' }}
                         </div>
                     </div>
                     <div class="compra-item">
                         <div class="compra-label">Porcentaje</div>
-                        <div class="compra-porcentaje">{{ datosCliente.porcentaje_anual }}%</div>
+                        <div class="compra-porcentaje">{{ getPorcentajeAnualMarcas() }}%</div>
                     </div>
                 </div>
             </div>

@@ -266,6 +266,8 @@ export class CaratulaRetroactivosComponent implements OnInit {
     const d: any = this.datosCliente;
 
     const totalAcumulado = this.n(
+      d.COMPRAS_TOTALES_CRUDO,
+      d.compras_totales_crudo,
       d.TOTAL_ACUMULADO,
       d.total_acumulado,
       d.avance_global

@@ -72,6 +72,9 @@ interface DatosCliente {
   porcentaje_may_jun_app: number;
   compra_minima_inicial: number;
   avance_global: number;
+  acumulado_bold?: number;
+  acumulado_megamo?: number;
+  avance_global_total_marcas: number;
   porcentaje_global: number;
   acumulado_anticipado: number;
   porcentaje_anual: number;
@@ -181,10 +184,17 @@ export class CaratulasComponent implements OnInit {
       evac: this.datosCliente.evac,
       nombre_cliente: this.datosCliente.nombre_cliente,
       nivel: this.datosCliente.nivel,
+
       compra_minima_anual: this.datosCliente.compra_minima_anual,
       compra_minima_inicial: this.datosCliente.compra_minima_inicial,
+
       avance_global: this.datosCliente.avance_global,
+      avance_global_total_marcas: this.datosCliente.avance_global_total_marcas,
+
       acumulado_anticipado: this.datosCliente.acumulado_anticipado,
+      acumulado_bold: this.datosCliente.acumulado_bold,
+      acumulado_megamo: this.datosCliente.acumulado_megamo,
+
       porcentaje_global: this.datosCliente.porcentaje_global,
       porcentaje_anual: this.datosCliente.porcentaje_anual,
 
@@ -578,8 +588,19 @@ export class CaratulasComponent implements OnInit {
     const metaAnual = this.parseNumber(datos.compra_minima_anual || '0');
     const avanceGlobal = this.parseNumber(datos.avance_global ?? '0');
     const acumuladoAnticipado = this.parseNumber(datos.acumulado_anticipado ?? '0');
-    const porcentajeGlobal = this.parseNumber(datos.porcentaje_global || '0');
-    const porcentajeAnual = this.parseNumber(datos.porcentaje_anual || '0');
+
+    const acumuladoBold = this.parseNumber(datos.acumulado_bold ?? '0');
+    const acumuladoMegamo = this.parseNumber(datos.acumulado_megamo ?? '0');
+
+    const avanceGlobalTotalMarcas = avanceGlobal;
+
+    const porcentajeGlobal = metaInicial > 0
+      ? Math.round((avanceGlobalTotalMarcas / metaInicial) * 100)
+      : 0;
+
+    const porcentajeAnual = metaAnual > 0
+      ? Math.round((avanceGlobalTotalMarcas / metaAnual) * 100)
+      : 0;
 
     // Determinar estatus del compromiso
     const totalMeta = metaScott + metaCombined;
@@ -639,9 +660,12 @@ export class CaratulasComponent implements OnInit {
       porcentaje_may_jun_app: this.parseNumber(datos.porcentaje_may_jun_app || '0'),
       compra_minima_inicial: this.parseNumber(datos.compra_minima_inicial || metaInicial || '0'),
       avance_global: avanceGlobal,
+      avance_global_total_marcas: avanceGlobalTotalMarcas,
       acumulado_anticipado: acumuladoAnticipado,
-      porcentaje_global: metaInicial > 0 ? Math.round((avanceGlobal / metaInicial) * 100) : 0,
-      porcentaje_anual: metaAnual > 0 ? Math.round((avanceGlobal / metaAnual) * 100) : 0,
+      acumulado_bold: acumuladoBold,
+      acumulado_megamo: acumuladoMegamo,
+      porcentaje_global: porcentajeGlobal,
+      porcentaje_anual: porcentajeAnual,
       periodoJulAgo: datos.periodoJulAgo || 'Julio - Agosto',
       periodoSepOct: datos.periodoSepOct || 'Septiembre - Octubre',
       periodoNovDic: datos.periodoNovDic || 'Noviembre - Diciembre',
@@ -832,6 +856,32 @@ export class CaratulasComponent implements OnInit {
         this.exportandoPDF = false; // Finaliza el estado de carga en caso de error
       }
     });
+  }
+
+  getAvanceGlobalMarcas(): number {
+    if (!this.datosCliente) return 0;
+
+    return this.parseNumber(this.datosCliente.avance_global_total_marcas || 0);
+  }
+
+  getPorcentajeGlobalMarcas(): number {
+    if (!this.datosCliente) return 0;
+
+    const meta = this.parseNumber(this.datosCliente.compra_minima_inicial || 0);
+
+    if (meta <= 0) return 0;
+
+    return Math.round((this.getAvanceGlobalMarcas() / meta) * 100);
+  }
+
+  getPorcentajeAnualMarcas(): number {
+    if (!this.datosCliente) return 0;
+
+    const meta = this.parseNumber(this.datosCliente.compra_minima_anual || 0);
+
+    if (meta <= 0) return 0;
+
+    return Math.round((this.getAvanceGlobalMarcas() / meta) * 100);
   }
 
   // Función para determinar si debe mostrar el período Sep-Oct

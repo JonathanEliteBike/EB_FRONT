@@ -206,7 +206,11 @@ export class DashboardRetroactivosComponent implements OnInit {
       this.totales.compra_global_scott += item.COMPRA_GLOBAL_SCOTT || 0;
       this.totales.compra_global_apparel += item.COMPRA_GLOBAL_APPAREL || 0;
       this.totales.compra_global_bold += item.COMPRA_GLOBAL_BOLD || 0;
-      this.totales.total_acumulado += item.TOTAL_ACUMULADO || 0;
+      this.totales.total_acumulado += (
+        (item.COMPRA_GLOBAL_SCOTT || 0) +
+        (item.COMPRA_GLOBAL_APPAREL || 0) +
+        (item.COMPRA_GLOBAL_BOLD || 0)
+      );
       this.totales.notas_credito += item.notas_credito || 0;
       this.totales.garantias += item.garantias || 0;
       this.totales.productos_ofertados += item.productos_ofertados || 0;

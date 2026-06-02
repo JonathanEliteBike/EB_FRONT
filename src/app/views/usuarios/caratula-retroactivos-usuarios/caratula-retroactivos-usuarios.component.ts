@@ -144,6 +144,8 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
     const d: any = this.datosCliente;
 
     const totalBackend = this.n(
+      d?.COMPRAS_TOTALES_CRUDO,
+      d?.compras_totales_crudo,
       d?.TOTAL_ACUMULADO,
       d?.total_acumulado,
       d?.avance_global
@@ -153,7 +155,11 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
       return totalBackend;
     }
 
-    return this.getCompraGlobalScott() + this.getCompraGlobalApparel();
+    return (
+      this.getCompraGlobalScott() +
+      this.getCompraGlobalApparel() +
+      this.getCompraGlobalBold()
+    );
   }
 
   getNotasCredito(): number {
