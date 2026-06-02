@@ -71,7 +71,6 @@ export class DashboardRetroactivosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarDatos();
-    this.actualizarDatos();
   }
 
   actualizarDatos(): void {

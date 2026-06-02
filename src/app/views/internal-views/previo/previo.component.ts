@@ -300,7 +300,7 @@ export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.cargando = true;
 
-    this.cargarDatosPrevio();
+    this.cargarDatosPrevioConRecalculo();
 
     this.filtroService.filtroAbierto$.subscribe(filtroId => {
       this.filtroActivo = filtroId;
@@ -309,6 +309,26 @@ export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.sincronizarRenderTabla();
+  }
+
+  private cargarDatosPrevioConRecalculo(): void {
+    this.cargando = true;
+    this.tablaLista = false;
+
+    this.previoService.recalcularPrevio().subscribe({
+      next: (res) => {
+        console.log('Previo recalculado desde monitor:', res);
+
+        this.previoService.limpiarCachePrevio();
+        this.cargarDatosPrevio();
+      },
+      error: (err) => {
+        console.error('Error recalculando previo, cargando datos existentes:', err);
+
+        // Para no dejar la pantalla trabada si falla el recálculo
+        this.cargarDatosPrevio();
+      }
+    });
   }
 
   private sincronizarRenderTabla(): void {
