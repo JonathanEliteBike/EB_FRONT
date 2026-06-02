@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { RetroactivosService } from '../../../services/retroactivos.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
-// 1. IMPORTAR EL COMPONENTE DE FILTROS
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
 import { switchMap } from 'rxjs/operators';
 
