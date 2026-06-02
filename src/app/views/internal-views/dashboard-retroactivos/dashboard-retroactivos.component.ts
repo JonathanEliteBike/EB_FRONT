@@ -78,17 +78,9 @@ export class DashboardRetroactivosComponent implements OnInit {
 
     this.cargando = true;
 
-    this.retroactivosService.syncMonitorOdooConPrevio().pipe(
-      switchMap((resMonitor) => {
-        console.log('Monitor Odoo sincronizado y previo recalculado:', resMonitor);
-
-        // Después de actualizar monitor + previo, ahora sí recalculamos retroactivos
-        return this.retroactivosService.sincronizarNotasOdoo();
-      }),
+    this.retroactivosService.sincronizarNotasOdoo().pipe(
       switchMap((resRetro) => {
         console.log('Retroactivos sincronizados:', resRetro);
-
-        // Al final recargamos la tabla
         return this.retroactivosService.getRetroactivos();
       })
     ).subscribe({
@@ -102,9 +94,9 @@ export class DashboardRetroactivosComponent implements OnInit {
         this.cargando = false;
       },
       error: (err) => {
-        console.error('Error actualizando datos:', err);
+        console.error('Error actualizando retroactivos:', err);
         this.cargando = false;
-        alert('Error al actualizar datos. Revisa la consola del servidor.');
+        alert('Error al actualizar retroactivos. Revisa la consola del servidor.');
       }
     });
   }
