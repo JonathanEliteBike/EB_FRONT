@@ -43,7 +43,9 @@
                     <th colspan="2" class="th-dark text-center">CATEGORÍA DE CIERRE DE TEMPORADA</th>
                 </tr>
                 <tr>
-                    <td colspan="2" class="text-center fw-bold fs-xl text-dark">{{ datosCliente.CATEGORIA }}</td>
+                    <td colspan="2" class="text-center fw-bold fs-xl text-dark">
+                        {{ datosCliente.CATEGORIA }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -64,21 +66,32 @@
                         GENERAL - CATEGORÍA
                         <span class="formula-text-dark">* Meta anual pactada según contrato MY26.</span>
                     </td>
-                    <td class="text-center">{{ datosCliente.COMPRA_MINIMA_ANUAL | currency:'USD':'$':'1.2-2' }}</td>
-                    <td class="text-center">{{ datosCliente.COMPRAS_TOTALES_CRUDO | currency:'USD':'$':'1.2-2' }}</td>
-                    <td class="text-center fw-bold fs-large" [style.color]="datosCliente.porcentaje_avance_general >= 1 ? '#2e7d32' : '#dc3545'">
-                        {{ datosCliente.porcentaje_avance_general | percent:'1.1-1' }}
+                    <td class="text-center">
+                        {{ datosCliente.COMPRA_MINIMA_ANUAL | currency:'USD':'$':'1.2-2' }}
+                    </td>
+                    <td class="text-center">
+                        {{ getTotalAcumulado() | currency:'USD':'$':'1.2-2' }}
+                    </td>
+                    <td class="text-center fw-bold fs-large"
+                        [style.color]="getPorcentajeAvanceGeneral() >= 1 ? '#2e7d32' : '#dc3545'">
+                        {{ getPorcentajeAvanceGeneral() | percent:'1.1-1' }}
                     </td>
                 </tr>
+
                 <tr>
                     <td class="fw-bold text-dark text-left ps-4">
                         APPAREL / SYNCROS / VITTORIA
                         <span class="formula-text-dark">* Incluye Accesorios, Componentes y Llantas.</span>
                     </td>
-                    <td class="text-center">{{ datosCliente.COMPRA_MINIMA_APPAREL | currency:'USD':'$':'1.2-2' }}</td>
-                    <td class="text-center">{{ datosCliente.COMPRA_GLOBAL_APPAREL | currency:'USD':'$':'1.2-2' }}</td>
-                    <td class="text-center fw-bold fs-large" [style.color]="datosCliente.porcentaje_avance_apparel >= 1 ? '#2e7d32' : '#dc3545'">
-                        {{ datosCliente.porcentaje_avance_apparel | percent:'1.1-1' }}
+                    <td class="text-center">
+                        {{ datosCliente.COMPRA_MINIMA_APPAREL | currency:'USD':'$':'1.2-2' }}
+                    </td>
+                    <td class="text-center">
+                        {{ getCompraGlobalApparel() | currency:'USD':'$':'1.2-2' }}
+                    </td>
+                    <td class="text-center fw-bold fs-large"
+                        [style.color]="getPorcentajeAvanceApparel() >= 1 ? '#2e7d32' : '#dc3545'">
+                        {{ getPorcentajeAvanceApparel() | percent:'1.1-1' }}
                     </td>
                 </tr>
             </tbody>
@@ -88,52 +101,83 @@
         <div class="escalera-calculo">
 
             <div class="row-calc row-gold">
-                <div class="calc-label">COMPRAS TOTALES (BRUTO)</div>
-                <div class="calc-value">{{ datosCliente.COMPRAS_TOTALES_CRUDO | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-label">
+                    ACUMULADO POR CATEGORÍAS
+                    <span class="formula-text-light">(SCOTT + APPAREL/SYNCROS/VITTORIA)</span>
+                </div>
+                <div class="calc-value">
+                    {{ getTotalAcumulado() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
 
-            <div class="division-text text-danger fw-bold">MENOS (-) DEDUCCIONES ODOO</div>
+            <div class="division-text text-danger fw-bold">
+                MENOS (-) DEDUCCIONES ODOO
+            </div>
 
             <div class="row-calc row-dark">
                 <div class="calc-label">NOTAS DE CRÉDITO</div>
-                <div class="calc-value">{{ datosCliente.notas_credito | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-value">
+                    {{ getNotasCredito() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
+
             <div class="row-calc row-dark mt-n1">
                 <div class="calc-label">GARANTÍAS</div>
-                <div class="calc-value">{{ datosCliente.garantias | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-value">
+                    {{ getGarantias() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
 
             <div class="row-calc row-dark-gold mt-2 shadow-sm">
                 <div class="calc-label fs-large">
                     ACUMULADO GLOBAL
-                    <span class="formula-text-light">(MENOS NC + GARANTÍAS)</span>
+                    <span class="formula-text-light">
+                        (ACUMULADO POR CATEGORÍAS MENOS NC + GARANTÍAS)
+                    </span>
                 </div>
-                <div class="calc-value fw-bold fs-large">{{ datosCliente.acumulado_global_calculado | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-value fw-bold fs-large">
+                    {{ getAcumuladoGlobalCalculado() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
 
-            <div class="division-text text-danger fw-bold mt-4">MENOS (-) DESCUENTOS ADICIONALES</div>
+            <div class="division-text text-danger fw-bold mt-4">
+                MENOS (-) DESCUENTOS ADICIONALES
+            </div>
 
             <div class="row-calc row-dark">
                 <div class="calc-label">
                     PRODUCTOS OFERTADOS
-                    <span class="formula-text-light">(ARTÍCULOS CON PROMOCIONES O ESPECIALES)</span>
+                    <span class="formula-text-light">
+                        (ARTÍCULOS CON PROMOCIONES O ESPECIALES)
+                    </span>
                 </div>
-                <div class="calc-value">{{ datosCliente.productos_ofertados | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-value">
+                    {{ getProductosOfertados() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
+
             <div class="row-calc row-dark mt-n1">
                 <div class="calc-label">
                     BICICLETAS DEMO / BOLD
-                    <span class="formula-text-light">(UNIDADES CON SOPORTE DE DESCUENTO APLICADO EN FACTURA)</span>
+                    <span class="formula-text-light">
+                        (UNIDADES CON SOPORTE DE DESCUENTO APLICADO EN FACTURA)
+                    </span>
                 </div>
-                <div class="calc-value">{{ datosCliente.total_bicis_deduccion | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-value">
+                    {{ getTotalBicisDeduccion() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
 
             <div class="row-calc row-primary mt-3 shadow-sm">
                 <div class="calc-label fs-large">
                     IMPORTE FINAL BASE
-                    <span class="formula-text-light">(ACUMULADO GLOBAL MENOS PRODUCTOS OFERTADOS Y BICICLETAS BOLD)</span>
+                    <span class="formula-text-light">
+                        (ACUMULADO GLOBAL MENOS PRODUCTOS OFERTADOS Y BICICLETAS BOLD)
+                    </span>
                 </div>
-                <div class="calc-value fw-bold fs-large text-primary">{{ datosCliente.importe_final | currency:'USD':'$':'1.2-2' }}</div>
+                <div class="calc-value fw-bold fs-large text-primary">
+                    {{ getImporteFinalBase() | currency:'USD':'$':'1.2-2' }}
+                </div>
             </div>
 
         </div>
@@ -149,53 +193,70 @@
                 <tr>
                     <td class="fw-bold text-dark text-right pe-4 col-50">
                         RETROACTIVO (Por Compra Adicional)
-                        <span class="formula-text-dark text-right">* Basado en excedente de meta anual.</span>
+                        <span class="formula-text-dark text-right">
+                            * Basado en excedente de meta anual.
+                        </span>
                     </td>
-                    <td class="text-center fw-bold fs-large bg-grey text-dark">{{ datosCliente.porcentaje_retroactivo | percent:'1.1-2' }}</td>
+                    <td class="text-center fw-bold fs-large bg-grey text-dark">
+                        {{ getPorcentajeRetroactivo() | percent:'1.1-2' }}
+                    </td>
                 </tr>
+
                 <tr>
                     <td class="fw-bold text-dark text-right pe-4">
                         RETROACTIVO APPAREL
-                        <span class="formula-text-dark text-right">* Bonificación por cumplimiento de meta en accesorios.</span>
+                        <span class="formula-text-dark text-right">
+                            * Bonificación por cumplimiento de meta en accesorios.
+                        </span>
                     </td>
-                    <td class="text-center fw-bold fs-large bg-grey text-dark">{{ datosCliente.porcentaje_retroactivo_apparel | percent:'1.1-2' }}</td>
+                    <td class="text-center fw-bold fs-large bg-grey text-dark">
+                        {{ getPorcentajeRetroactivoApparel() | percent:'1.1-2' }}
+                    </td>
                 </tr>
             </tbody>
         </table>
 
         <div class="escalera-calculo mt-4">
+
             <div class="row-calc row-dark">
                 <div class="calc-label">
                     MONTO ADICIONAL A CUMPLIMIENTO
-                    <span class="formula-text-light">COMPRAS TOTALES (MENOS NOTAS DE CRÉDITO Y PRODUCTOS OFERTADOS) - META MÍNIMA ANUAL</span>
+                    <span class="formula-text-light">
+                        ACUMULADO GLOBAL - META MÍNIMA ANUAL
+                    </span>
                 </div>
-                <div class="calc-value fw-bold fs-large" [style.color]="datosCliente.compra_adicional < 0 ? '#dc3545' : '#2e7d32'">
-                    {{ datosCliente.compra_adicional | currency:'USD':'$':'1.2-2' }}
+                <div class="calc-value fw-bold fs-large"
+                    [style.color]="getCompraAdicionalCalculada() < 0 ? '#dc3545' : '#2e7d32'">
+                    {{ getCompraAdicionalCalculada() | currency:'USD':'$':'1.2-2' }}
                 </div>
             </div>
 
             <div class="row-calc row-dark-gold mt-2">
                 <div class="calc-label fs-large">RETROACTIVO TOTAL</div>
                 <div class="calc-value fw-bold fs-large text-dark">
-                    {{ datosCliente.retroactivo_total | percent:'1.1-2' }}
+                    {{ getRetroactivoTotal() | percent:'1.1-2' }}
                 </div>
             </div>
 
             <div class="row-calc row-blue mt-4 shadow-lg">
                 <div class="calc-label fs-xl">
                     IMPORTE FINAL A PAGAR
-                    <span class="formula-text-light">IMPORTE FINAL BASE X RETROACTIVO TOTAL</span>
+                    <span class="formula-text-light">
+                        IMPORTE FINAL BASE X RETROACTIVO TOTAL
+                    </span>
                 </div>
                 <div class="calc-value fw-bold fs-xl text-white bg-blue">
-                    {{ datosCliente.importe | currency:'USD':'$':'1.2-2' }}
+                    {{ getImportePagar() | currency:'USD':'$':'1.2-2' }}
                 </div>
             </div>
+
         </div>
 
         <div class="nota-footer">
-            <strong>Nota de transparencia:</strong> Los datos presentados son sincronizados directamente desde Odoo ERP. 
-            Las deducciones corresponden a documentos registrados en el periodo fiscal MY26. 
-            El <strong>Importe Final Base</strong> es el monto neto tras descontar artículos que ya cuentan con promociones de liquidación o apoyos especiales.
+            <strong>Nota de transparencia:</strong> Los datos presentados son sincronizados directamente desde Odoo ERP.
+            Las deducciones corresponden a documentos registrados en el periodo fiscal MY26.
+            El <strong>Importe Final Base</strong> es el monto neto tras descontar artículos que ya cuentan con
+            promociones de liquidación o apoyos especiales.
         </div>
 
     </div>

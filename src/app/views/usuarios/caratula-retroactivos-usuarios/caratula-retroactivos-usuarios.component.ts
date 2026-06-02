@@ -9,13 +9,18 @@ interface DatosRetroactivo {
   ZONA: string;
   CLIENTE: string;
   CATEGORIA: string;
+
   COMPRA_MINIMA_ANUAL: number;
   COMPRA_GLOBAL_SCOTT: number;
+  COMPRA_GLOBAL_APPAREL: number;
+  COMPRA_GLOBAL_BOLD?: number;
+  TOTAL_ACUMULADO?: number;
+
   porcentaje_avance_scott: number;
   COMPRA_MINIMA_APPAREL: number;
-  COMPRA_GLOBAL_APPAREL: number;
   porcentaje_avance_apparel: number;
   COMPRAS_TOTALES_CRUDO: number;
+
   notas_credito: number;
   garantias: number;
   acumulado_global_calculado: number;
@@ -30,6 +35,8 @@ interface DatosRetroactivo {
   importe: number;
   porcentaje_avance_general: number;
   total_bicis_deduccion: number;
+
+  [key: string]: any;
 }
 
 @Component({
@@ -37,7 +44,7 @@ interface DatosRetroactivo {
   standalone: true,
   imports: [CommonModule, RouterModule, HomeBarComponent],
   templateUrl: './caratula-retroactivos-usuarios.component.html',
-  styleUrl: './caratula-retroactivos-usuarios.component.css' 
+  styleUrl: './caratula-retroactivos-usuarios.component.css'
 })
 export class CaratulaRetroactivosUsuarioComponent implements OnInit {
 
@@ -47,32 +54,36 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
 
   constructor(private retroactivosService: RetroactivosService) { }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.cargarDatosUsuarioActual();
   }
 
-  cargarDatosUsuarioActual() {
+  cargarDatosUsuarioActual(): void {
     this.isLoading = true;
     this.error = null;
 
     try {
-      // 1. Obtenemos el token del localStorage (igual que en tu otro componente)
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         this.error = 'No se encontró sesión activa. Por favor inicie sesión nuevamente.';
         this.isLoading = false;
         return;
       }
 
-      // 2. Decodificamos el payload del token
       const payload = token.split('.')[1];
+
+      if (!payload) {
+        this.error = 'Token inválido. Por favor inicie sesión nuevamente.';
+        this.isLoading = false;
+        return;
+      }
+
       const decodedPayload = atob(payload);
       const tokenData = JSON.parse(decodedPayload);
 
-      // 3. Determinamos la clave a buscar (Soporta clientes normales e Integrales)
       let claveParaBuscar = tokenData.clave;
-      
+
       if (tokenData.id_grupo) {
         claveParaBuscar = `Integral ${tokenData.id_grupo}`;
       }
@@ -83,16 +94,15 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
         return;
       }
 
-      // 4. Hacemos la petición al backend con la clave correcta
       this.retroactivosService.getRetroactivoCliente(claveParaBuscar).subscribe({
         next: (data) => {
           this.datosCliente = data;
           this.isLoading = false;
         },
         error: (err) => {
+          console.error(err);
           this.error = 'No se encontró información de retroactivos para tu cuenta en este momento.';
           this.isLoading = false;
-          console.error(err);
         }
       });
 
@@ -101,5 +111,150 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
       this.error = 'Error al obtener la información de tu usuario.';
       this.isLoading = false;
     }
+  }
+
+  private n(...values: any[]): number {
+    for (const value of values) {
+      const num = Number(value);
+
+      if (!isNaN(num) && isFinite(num)) {
+        return num;
+      }
+    }
+
+    return 0;
+  }
+
+  getCompraGlobalScott(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.COMPRA_GLOBAL_SCOTT);
+  }
+
+  getCompraGlobalApparel(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.COMPRA_GLOBAL_APPAREL);
+  }
+
+  getCompraGlobalBold(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.COMPRA_GLOBAL_BOLD);
+  }
+
+  getTotalAcumulado(): number {
+    const d: any = this.datosCliente;
+
+    const totalBackend = this.n(
+      d?.TOTAL_ACUMULADO,
+      d?.total_acumulado,
+      d?.avance_global
+    );
+
+    if (totalBackend > 0) {
+      return totalBackend;
+    }
+
+    return this.getCompraGlobalScott() + this.getCompraGlobalApparel();
+  }
+
+  getNotasCredito(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.notas_credito);
+  }
+
+  getGarantias(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.garantias);
+  }
+
+  getProductosOfertados(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.productos_ofertados);
+  }
+
+  getBicicletaDemo(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.bicicleta_demo);
+  }
+
+  getBicicletasBold(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.bicicletas_bold);
+  }
+
+  getTotalBicisDeduccion(): number {
+    const d: any = this.datosCliente;
+
+    const totalBackend = this.n(d?.total_bicis_deduccion);
+
+    if (totalBackend > 0) {
+      return totalBackend;
+    }
+
+    return this.getBicicletaDemo() + this.getBicicletasBold();
+  }
+
+  getAcumuladoGlobalCalculado(): number {
+    return this.getTotalAcumulado() - this.getNotasCredito() - this.getGarantias();
+  }
+
+  getImporteFinalBase(): number {
+    return (
+      this.getAcumuladoGlobalCalculado() -
+      this.getProductosOfertados() -
+      this.getTotalBicisDeduccion()
+    );
+  }
+
+  getCompraAdicionalCalculada(): number {
+    const d: any = this.datosCliente;
+    return this.getAcumuladoGlobalCalculado() - this.n(d?.COMPRA_MINIMA_ANUAL);
+  }
+
+  getPorcentajeRetroactivo(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.porcentaje_retroactivo);
+  }
+
+  getPorcentajeRetroactivoApparel(): number {
+    const d: any = this.datosCliente;
+    return this.n(d?.porcentaje_retroactivo_apparel);
+  }
+
+  getRetroactivoTotal(): number {
+    const d: any = this.datosCliente;
+
+    const totalBackend = this.n(d?.retroactivo_total);
+
+    if (totalBackend > 0) {
+      return totalBackend;
+    }
+
+    return this.getPorcentajeRetroactivo() + this.getPorcentajeRetroactivoApparel();
+  }
+
+  getImportePagar(): number {
+    return this.getImporteFinalBase() * this.getRetroactivoTotal();
+  }
+
+  getPorcentajeAvanceGeneral(): number {
+    const d: any = this.datosCliente;
+    const meta = this.n(d?.COMPRA_MINIMA_ANUAL);
+
+    if (meta <= 0) {
+      return 0;
+    }
+
+    return this.getTotalAcumulado() / meta;
+  }
+
+  getPorcentajeAvanceApparel(): number {
+    const d: any = this.datosCliente;
+    const meta = this.n(d?.COMPRA_MINIMA_APPAREL);
+
+    if (meta <= 0) {
+      return 0;
+    }
+
+    return this.getCompraGlobalApparel() / meta;
   }
 }
