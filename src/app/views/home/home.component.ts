@@ -65,7 +65,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   modulos: Modulo[] = [
     {
       icono: 'fa-desktop',
-      titulo: 'Monitor MY26',
+      titulo: 'Monitor MY26 (Año - Modelo)',
       descripcion: 'Visualizacion y administracion de unidades, seguimiento de embarques y estatus de ordenes.',
       boton: 'Ir a Monitor',
       ruta: '/previo',
