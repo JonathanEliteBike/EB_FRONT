@@ -15,6 +15,10 @@ export class RetroactivosService {
     return this.http.get<any[]>(`${this.apiUrl}/retroactivos`);
   }
 
+  getTodasLasClaves(): Observable<{ CLAVE: string; CLIENTE: string }[]> {
+    return this.http.get<{ CLAVE: string; CLIENTE: string }[]>(`${this.apiUrl}/retroactivos/claves`);
+  }
+
   sincronizarNotasOdoo(): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/sincronizar_notas`, {});
   }

@@ -86,7 +86,7 @@ export class CaratulaRetroactivosComponent implements OnInit {
   private cargarCacheClientes() {
     this.cacheClientesCargado = false;
 
-    this.retroactivosService.getRetroactivos().subscribe({
+    this.retroactivosService.getTodasLasClaves().subscribe({
       next: (data) => {
         this.allClientes = data.map(item => ({
           CLAVE: item.CLAVE,
