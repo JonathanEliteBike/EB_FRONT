@@ -446,25 +446,26 @@
 }
 
 .proy-tabla-scroll {
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: auto;
-  /* max-height ajustado al modal (90vh) menos: header modal (72px) +
-     padding modal-body (40px) + tabs (52px) + toolbar (71px) +
-     filtros (60px) + acciones (50px) + top-scrollbar (14px) + margen (15px) = 374px */
   max-height: calc(90vh - 374px);
   min-height: 200px;
   width: 100%;
-  /* Ocultar scrollbar horizontal nativo — el top bar lo reemplaza */
+  /* Firefox: scrollbar solo vertical (thin), horizontal none mediante wrapper clip */
   scrollbar-width: thin;
   scrollbar-color: #4a4744 #1a1917;
 }
 
-/* Webkit scrollbar — solo VERTICAL (horizontal se maneja por el top scroll bar) */
-.proy-tabla-scroll::-webkit-scrollbar        { width: 5px; height: 0; }
-.proy-tabla-scroll::-webkit-scrollbar-track  { background: #1a1917; }
-.proy-tabla-scroll::-webkit-scrollbar-thumb  { background: #4a4744; border-radius: 4px; }
-.proy-tabla-scroll::-webkit-scrollbar-thumb:hover { background: #EB5E28; }
-.proy-tabla-scroll::-webkit-scrollbar-corner { background: #1a1917; }
+/* Webkit: scrollbar VERTICAL (5px) + HORIZONTAL invisible */
+.proy-tabla-scroll::-webkit-scrollbar               { width: 5px; height: 0; }
+.proy-tabla-scroll::-webkit-scrollbar:horizontal    { display: none; height: 0; }
+.proy-tabla-scroll::-webkit-scrollbar-track         { background: #1a1917; }
+.proy-tabla-scroll::-webkit-scrollbar-thumb         { background: #4a4744; border-radius: 4px; }
+.proy-tabla-scroll::-webkit-scrollbar-thumb:hover   { background: #EB5E28; }
+.proy-tabla-scroll::-webkit-scrollbar-corner        { background: #1a1917; }
+/* Webkit: hacer el track y thumb horizontal completamente invisibles */
+.proy-tabla-scroll::-webkit-scrollbar-track:horizontal { display: none; background: transparent; }
+.proy-tabla-scroll::-webkit-scrollbar-thumb:horizontal { display: none; background: transparent; }
 
 /* Scrollbar horizontal en la parte SUPERIOR — naranja, siempre visible */
 .proy-scroll-sticky {
@@ -694,72 +695,86 @@
 .td-total-foot      { text-align: center; font-weight: 700; color: #FFFCF2; }
 .td-precio-foot     { background: transparent; }
 
-/* Fila azul: precio por mes */
-.proy-fila-precio-mes {
-  background: #0d2a4a;
-  border-top: 1px solid #1B5E9C;
-}
-.proy-fila-precio-mes td {
-  padding: 0.5rem 0.75rem;
-  color: #90CAF9;
-  font-size: 0.80rem;
-}
-.td-precio-mes-lbl  { text-align: right; color: #90CAF9 !important; font-weight: 700; letter-spacing: 0.03em; }
-.td-precio-mes      { text-align: center; font-weight: 700; white-space: nowrap; }
+/* ── FOOTER ROWS — diseño limpio, fondo neutro, accent por marca ── */
 
-/* Filas de precio por mes por marca */
-.proy-fila-precio-marca td {
-  padding: 0.45rem 0.75rem;
-  font-size: 0.78rem;
+/* Shared base for all brand footer rows */
+.proy-fila-precio-marca td,
+.proy-fila-precio-mes td,
+.proy-fila-cuentas td {
+  padding: 0.32rem 0.6rem;
+  font-size: 0.74rem;
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
 }
-.proy-fila-precio-megamo {
-  background: #2a1808;
-  border-top: 1px solid #5C3009;
-}
-.proy-fila-precio-megamo td { color: #F0B47A; }
-.proy-fila-precio-scott {
-  background: #071828;
-  border-top: 1px solid #1B4A7A;
-}
-.proy-fila-precio-scott td { color: #90CAF9; }
-.td-precio-marca-lbl {
-  text-align: right !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.03em;
-  font-size: 0.75rem !important;
-}
-.td-precio-marca { text-align: center; }
-.td-precio-marca-megamo { color: #F0B47A; }
-.td-precio-marca-scott  { color: #90CAF9; }
 
-/* Filas de cuentas por mes por marca */
-.proy-fila-cuentas td {
-  padding: 0.45rem 0.75rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-align: center;
+/* ─ PRECIO MEGAMO ─ */
+.proy-fila-precio-megamo {
+  background: #1c1a18;
+  border-top: 1px solid #2a2725;
 }
-.proy-fila-cuentas-megamo {
-  background: #2a1a08;
-  border-top: 1px solid #5C3009;
+.proy-fila-precio-megamo td               { color: #b07840; }
+.proy-fila-precio-megamo .td-precio-marca-lbl { border-left: 3px solid #e88c2e; color: #e88c2e; }
+.td-precio-marca-megamo { color: #c98845; }
+
+/* ─ PRECIO SCOTT ─ */
+.proy-fila-precio-scott {
+  background: #191a1c;
+  border-top: 1px solid #252729;
 }
-.proy-fila-cuentas-megamo td { color: #E8A060; }
-.proy-fila-cuentas-scott {
-  background: #0c1e30;
-  border-top: 1px solid #1B4A7A;
+.proy-fila-precio-scott td               { color: #5585a2; }
+.proy-fila-precio-scott .td-precio-marca-lbl { border-left: 3px solid #4a9edd; color: #5fa8e0; }
+.td-precio-marca-scott { color: #5a95c0; }
+
+/* ─ PRECIO GLOBAL ─ */
+.proy-fila-precio-mes {
+  background: #1f1d1b;
+  border-top: 1px solid #2e2c29;
 }
-.proy-fila-cuentas-scott td { color: #7BB8E8; }
-.td-cuentas-lbl {
-  text-align: right !important;
+.proy-fila-precio-mes td               { color: #8a9aa5; }
+.proy-fila-precio-mes .td-precio-mes-lbl { border-left: 3px solid #EB5E28; color: #EB5E28; }
+
+/* Label cells — LEFT aligned, indented, no padding gap */
+.td-precio-marca-lbl,
+.td-precio-mes-lbl {
+  text-align: left !important;
   font-weight: 700 !important;
-  letter-spacing: 0.03em;
+  font-size: 0.72rem !important;
+  padding-left: 10px !important;
+  letter-spacing: 0.02em;
 }
+
+.td-precio-marca { text-align: center; }
+.td-precio-mes   { text-align: center; font-weight: 700; }
+
+/* ─ Separador antes de sección BICIS ─ */
+.proy-fila-cuentas-megamo {
+  background: #1c1a18;
+  border-top: 2px solid #3a3630;
+}
+.proy-fila-cuentas-megamo td               { color: #b07840; }
+.proy-fila-cuentas-megamo .td-cuentas-lbl  { border-left: 3px solid #e88c2e; color: #e88c2e; }
+
+/* ─ BICIS SCOTT ─ */
+.proy-fila-cuentas-scott {
+  background: #191a1c;
+  border-top: 1px solid #252729;
+}
+.proy-fila-cuentas-scott td              { color: #5585a2; }
+.proy-fila-cuentas-scott .td-cuentas-lbl { border-left: 3px solid #4a9edd; color: #5fa8e0; }
+
+/* Label cells de cuentas — LEFT aligned */
+.td-cuentas-lbl {
+  text-align: left !important;
+  font-weight: 700 !important;
+  font-size: 0.72rem !important;
+  padding-left: 10px !important;
+  letter-spacing: 0.02em;
+}
+
 .td-cuentas-lock {
   font-size: 0.65rem;
-  opacity: 0.4;
+  opacity: 0.35;
   display: inline-block;
 }
 
