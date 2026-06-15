@@ -142,7 +142,13 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   // Avance vs Pedidos
-  avanceRows: AvanceRow[] = [];
+  private _avanceMapCache = new Map<string, AvanceRow>();
+  private _avanceRows: AvanceRow[] = [];
+  get avanceRows(): AvanceRow[] { return this._avanceRows; }
+  set avanceRows(rows: AvanceRow[]) {
+    this._avanceRows = rows;
+    this._avanceMapCache = new Map(rows.map(r => [r.sku, r]));
+  }
   avanceCargando = false;
   avanceError: string | null = null;
 
@@ -244,16 +250,9 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     return this.rowsFiltrados.reduce((s, r) => s + this.calcTotal(r), 0);
   }
 
-  /** Mapa sku → AvanceRow para acceso O(1) desde la plantilla */
-  get avanceMap(): Map<string, AvanceRow> {
-    const m = new Map<string, AvanceRow>();
-    for (const r of this.avanceRows) { m.set(r.sku, r); }
-    return m;
-  }
-
   /** Devuelve el restante (forecast − pedido) si ya se cargó avance, o el total bruto. */
   getRestante(row: ForecastRow): number {
-    const av = this.avanceMap.get(row.sku);
+    const av = this._avanceMapCache.get(row.sku);
     return av != null ? av.restante : this.calcTotal(row);
   }
 
@@ -285,6 +284,33 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       const precio = Number(r['precio']) || 0;
       return s + total * precio;
     }, 0);
+  }
+
+  // ── Totales por marca ──────────────────────────────────
+  private _totalMarcaUnidades(marca: string): number {
+    return this.rowsFiltrados
+      .filter(r => !r._nuevo && (r.marca || '').toUpperCase() === marca)
+      .reduce((s, r) => s + this.calcTotal(r), 0);
+  }
+  private _totalMarcaCosto(marca: string): number {
+    return this.rowsFiltrados
+      .filter(r => !r._nuevo && (r.marca || '').toUpperCase() === marca)
+      .reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
+  }
+
+  get totalMegamoUnidades(): number  { return this._totalMarcaUnidades('MEGAMO'); }
+  get totalMegamoCosto(): number     { return this._totalMarcaCosto('MEGAMO'); }
+  get totalScottUnidades(): number   { return this._totalMarcaUnidades('SCOTT'); }
+  get totalScottCosto(): number      { return this._totalMarcaCosto('SCOTT'); }
+  get totalGlobalUnidades(): number  {
+    return this.rowsFiltrados
+      .filter(r => !r._nuevo)
+      .reduce((s, r) => s + this.calcTotal(r), 0);
+  }
+  get totalGlobalCosto(): number {
+    return this.rowsFiltrados
+      .filter(r => !r._nuevo)
+      .reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
   }
 
   constructor(private http: HttpClient, protected cdr: ChangeDetectorRef) {}
@@ -323,11 +349,15 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   private _updateStickyInnerWidth(): void {
-    const ts = this.tableScroll?.nativeElement;
-    const si = this.stickyInner?.nativeElement;
-    if (ts && si) {
-      si.style.width  = ts.scrollWidth + 'px';
-      si.style.height = '1px';
+    try {
+      const ts = this.tableScroll?.nativeElement;
+      const si = this.stickyInner?.nativeElement;
+      if (ts?.scrollWidth && si) {
+        si.style.width  = ts.scrollWidth + 'px';
+        si.style.height = '1px';
+      }
+    } catch (e) {
+      console.warn('Error in _updateStickyInnerWidth:', e);
     }
   }
 
@@ -560,8 +590,15 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
 
   toggleMeses(): void {
     this.modoExpandido = !this.modoExpandido;
+    this.cdr.markForCheck();
     // Recalcular el ancho después de que la tabla se renderice con los meses expandidos
-    setTimeout(() => this._updateStickyInnerWidth(), 100);
+    setTimeout(() => {
+      try {
+        this._updateStickyInnerWidth();
+      } catch (e) {
+        console.warn('Error updating sticky width:', e);
+      }
+    }, 100);
   }
 
   // ─────────────────────────────────────────
@@ -977,6 +1014,10 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
 
   trackById(_: number, row: ForecastRow): any {
     return row.id ?? row.sku;
+  }
+
+  trackByBrand(_: number, section: { brand: string }): string {
+    return section.brand;
   }
 
   /** Type-safe getter for month value on a row */

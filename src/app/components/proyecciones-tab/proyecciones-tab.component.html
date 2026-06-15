@@ -136,6 +136,43 @@
     <p class="proy-error-neutral-sub">Importa una plantilla o agrega productos manualmente para comenzar.</p>
   </div>
 
+  <!-- ── Totales por marca ── -->
+  <div *ngIf="!cargando && rowsFiltrados.length > 0" class="proy-resumen-marcas">
+    <div class="proy-resumen-card proy-resumen-megamo">
+      <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> MEGAMO</div>
+      <div class="proy-resumen-stat">
+        <span class="proy-resumen-num">{{ totalMegamoUnidades | number:'1.0-0' }}</span>
+        <span class="proy-resumen-lbl">unidades</span>
+      </div>
+      <div class="proy-resumen-stat">
+        <span class="proy-resumen-num">{{ totalMegamoCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="proy-resumen-lbl">costo total</span>
+      </div>
+    </div>
+    <div class="proy-resumen-card proy-resumen-scott">
+      <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> SCOTT</div>
+      <div class="proy-resumen-stat">
+        <span class="proy-resumen-num">{{ totalScottUnidades | number:'1.0-0' }}</span>
+        <span class="proy-resumen-lbl">unidades</span>
+      </div>
+      <div class="proy-resumen-stat">
+        <span class="proy-resumen-num">{{ totalScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="proy-resumen-lbl">costo total</span>
+      </div>
+    </div>
+    <div class="proy-resumen-card proy-resumen-global">
+      <div class="proy-resumen-logo"><i class="fas fa-globe"></i> GLOBAL</div>
+      <div class="proy-resumen-stat">
+        <span class="proy-resumen-num">{{ totalGlobalUnidades | number:'1.0-0' }}</span>
+        <span class="proy-resumen-lbl">unidades totales</span>
+      </div>
+      <div class="proy-resumen-stat">
+        <span class="proy-resumen-num">{{ totalGlobalCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="proy-resumen-lbl">costo global</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Botón Agregar producto (siempre visible cuando hay periodo) ── -->
   <div *ngIf="!cargando && periodoSeleccionado" class="proy-tabla-acciones proy-acciones-standalone">
     <button class="proy-btn proy-btn-outline-sm proy-btn-add"
@@ -182,7 +219,7 @@
         </thead>
 
         <tbody>
-          <ng-container *ngFor="let section of rowsAgrupados">
+          <ng-container *ngFor="let section of rowsAgrupados; trackBy: trackByBrand">
             <!-- Encabezado de sección (Megamo / Scott / Otros) — clickable para colapsar -->
             <tr *ngIf="section.label" class="proy-seccion-header proy-seccion-toggle"
                 (click)="toggleSeccion(section.brand)">
@@ -260,19 +297,17 @@
               <span *ngIf="!row.precio" class="td-precio-nd">—</span>
             </td>
 
-            <!-- Meses (solo en modo expandido) -->
-            <ng-container *ngIf="modoExpandido">
-              <td *ngFor="let mes of mesesKeys" class="td-qty">
-                <span *ngIf="!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo)">{{ getMes(row, mes) | number:'1.0-0' }}</span>
-                <input *ngIf="modoEdicion && !row._eliminar && (puedeEditarMeses || row._nuevo)"
-                       class="proy-input-num"
-                       type="number"
-                       min="0"
-                       step="1"
-                       [ngModel]="getMes(row, mes)"
-                       (ngModelChange)="setMes(row, mes, $event); markEdited(row)" />
-              </td>
-            </ng-container>
+            <!-- Meses (visibles en modo expandido, siempre en DOM para evitar spike de creación) -->
+            <td *ngFor="let mes of mesesKeys" class="td-qty" [style.display]="modoExpandido ? '' : 'none'">
+              <span *ngIf="!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo)">{{ getMes(row, mes) | number:'1.0-0' }}</span>
+              <input *ngIf="modoEdicion && !row._eliminar && (puedeEditarMeses || row._nuevo)"
+                     class="proy-input-num"
+                     type="number"
+                     min="0"
+                     step="1"
+                     [ngModel]="getMes(row, mes)"
+                     (ngModelChange)="setMes(row, mes, $event); markEdited(row)" />
+            </td>
 
             <!-- Total uds. -->
             <td class="td-total">{{ getRestante(row) | number:'1.0-0' }}</td>

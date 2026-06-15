@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { FacturasClienteComponent } from '../../../components/facturas-cliente/facturas-cliente.component';
 import { UsuariosService } from '../../../services/usuarios.service';
+import { ClientesService } from '../../../services/clientes.service';
 
 interface UsuarioMonitor {
   id: number | null;
@@ -32,7 +33,9 @@ interface GrupoIntegral {
   styleUrls: ['./monitor-pedidos.component.css']
 })
 export class MonitorPedidosComponent implements OnInit {
-  private usuariosService = inject(UsuariosService);
+  private usuariosService  = inject(UsuariosService);
+  private clientesService  = inject(ClientesService);
+  private _prefetchTimer: any = null;
 
   // ── Modo de búsqueda ─────────────────────────────────────────────────────
   modo: 'usuario' | 'integral' = 'usuario';
@@ -150,6 +153,30 @@ export class MonitorPedidosComponent implements OnInit {
     this.modalClaveExacta = false;
     this.modalEtiqueta = g.nombre_grupo;
     this.modalAbierto = true;
+  }
+
+  /** Inicia prefetch al hover — 150 ms de debounce para no disparar en movimientos rápidos */
+  prefetchUsuario(u: UsuarioMonitor): void {
+    clearTimeout(this._prefetchTimer);
+    if (!u.clave) return;
+    this._prefetchTimer = setTimeout(() => {
+      this.clientesService
+        .getDetalleComprasCliente(undefined, undefined, undefined, u.clave!, true)
+        .subscribe({ next: () => {}, error: () => {} });
+    }, 150);
+  }
+
+  prefetchGrupo(g: GrupoIntegral): void {
+    clearTimeout(this._prefetchTimer);
+    this._prefetchTimer = setTimeout(() => {
+      this.clientesService
+        .getDetalleComprasCliente(undefined, undefined, undefined, undefined, false, g.id)
+        .subscribe({ next: () => {}, error: () => {} });
+    }, 150);
+  }
+
+  cancelarPrefetch(): void {
+    clearTimeout(this._prefetchTimer);
   }
 
   cerrarModal(): void {

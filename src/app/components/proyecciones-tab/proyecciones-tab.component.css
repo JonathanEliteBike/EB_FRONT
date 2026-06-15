@@ -1073,3 +1073,54 @@
 .sbm-estado-icono-sm { font-size: 0.85rem; color: #555; }
 .sbm-estado-txt-sm { font-size: 0.8rem; color: #555; font-style: italic; }
 
+
+/* ── Totales por marca ── */
+.proy-resumen-marcas {
+  display: flex;
+  gap: 12px;
+  margin: 0 0 14px 0;
+  flex-wrap: wrap;
+}
+.proy-resumen-card {
+  flex: 1;
+  min-width: 180px;
+  background: #1c1b19;
+  border: 1px solid #2e2b28;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.proy-resumen-megamo { border-left: 3px solid #e88c2e; }
+.proy-resumen-scott  { border-left: 3px solid #4a9edd; }
+.proy-resumen-global { border-left: 3px solid #EB5E28; background: #1f1d1a; }
+.proy-resumen-logo {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+.proy-resumen-megamo .proy-resumen-logo { color: #e88c2e; }
+.proy-resumen-scott  .proy-resumen-logo { color: #4a9edd; }
+.proy-resumen-global .proy-resumen-logo { color: #EB5E28; }
+.proy-resumen-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.proy-resumen-num {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f0ede8;
+}
+.proy-resumen-lbl {
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
