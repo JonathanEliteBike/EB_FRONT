@@ -200,6 +200,11 @@
   <!-- ── Tabla principal ── -->
   <div *ngIf="!cargando && rows.length > 0" class="proy-tabla-wrap" [class.expandido]="modoExpandido">
 
+    <!-- Scrollbar horizontal en la parte SUPERIOR (siempre accesible) -->
+    <div class="proy-scroll-sticky" #stickyScroll (scroll)="_onStickyScroll()">
+      <div class="proy-scroll-inner" #stickyInner></div>
+    </div>
+
     <div class="proy-tabla-scroll" #tableScroll>
       <table class="proy-tabla">
         <thead>
@@ -380,9 +385,9 @@
           </tr>
           <!-- Precio MEGAMO por mes -->
           <tr class="proy-fila-precio-marca proy-fila-precio-megamo" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-marca-lbl">🟠 PRECIO MEGAMO</td>
+            <td colspan="5" class="td-precio-marca-lbl">🟠 MEGAMO</td>
             <td *ngFor="let mes of mesesKeys" class="td-precio-marca td-precio-marca-megamo">
-              <ng-container *ngIf="!esMesBloqueadoMegamo(mes)">{{ totalPrecioMarcaMes('MEGAMO', mes) | currency:'MXN':'symbol':'1.0-0' }}</ng-container>
+              <ng-container *ngIf="!esMesBloqueadoMegamo(mes)">{{ formatPrecioCorto(totalPrecioMarcaMes('MEGAMO', mes)) }}</ng-container>
               <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-cuentas-lock"><i class="fas fa-lock"></i></span>
             </td>
             <td class="td-precio-marca"></td><td class="td-precio-marca"></td>
@@ -390,18 +395,18 @@
           </tr>
           <!-- Precio SCOTT por mes -->
           <tr class="proy-fila-precio-marca proy-fila-precio-scott" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-marca-lbl">🔵 PRECIO SCOTT</td>
+            <td colspan="5" class="td-precio-marca-lbl">🔵 SCOTT</td>
             <td *ngFor="let mes of mesesKeys" class="td-precio-marca td-precio-marca-scott">
-              {{ totalPrecioMarcaMes('SCOTT', mes) | currency:'MXN':'symbol':'1.0-0' }}
+              {{ formatPrecioCorto(totalPrecioMarcaMes('SCOTT', mes)) }}
             </td>
             <td class="td-precio-marca"></td><td class="td-precio-marca"></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
           <!-- Precio GLOBAL por mes -->
           <tr class="proy-fila-precio-mes" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-mes-lbl">🌐 PRECIO GLOBAL</td>
+            <td colspan="5" class="td-precio-mes-lbl">🌐 GLOBAL</td>
             <td *ngFor="let mes of mesesKeys" class="td-precio-mes">
-              <strong>{{ totalPrecioMes(mes) | currency:'MXN':'symbol':'1.0-0' }}</strong>
+              <strong>{{ formatPrecioCorto(totalPrecioMes(mes)) }}</strong>
             </td>
             <td class="td-precio-mes"></td>
             <td class="td-precio-mes"></td>
@@ -431,11 +436,6 @@
         </tfoot>
       </table>
     </div><!-- /scroll -->
-
-    <!-- Barra scrollbar sticky — siempre visible en la parte inferior -->
-    <div class="proy-scroll-sticky" #stickyScroll (scroll)="_onStickyScroll()">
-      <div class="proy-scroll-inner" #stickyInner></div>
-    </div>
 
   </div><!-- /tabla wrap -->
 

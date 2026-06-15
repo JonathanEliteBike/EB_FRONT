@@ -442,31 +442,49 @@
   border: 1px solid #2e2c29;
   display: flex;
   flex-direction: column;
+  /* La barra de scroll naranja va arriba, luego el área de tabla */
 }
 
 .proy-tabla-scroll {
-  overflow-x: scroll;
+  overflow-x: auto;
   overflow-y: auto;
   /* max-height ajustado al modal (90vh) menos: header modal (72px) +
      padding modal-body (40px) + tabs (52px) + toolbar (71px) +
-     filtros (60px) + acciones (50px) + margen de seguridad (15px) = 360px */
-  max-height: calc(90vh - 360px);
+     filtros (60px) + acciones (50px) + top-scrollbar (14px) + margen (15px) = 374px */
+  max-height: calc(90vh - 374px);
   min-height: 200px;
   width: 100%;
+  /* Ocultar scrollbar horizontal nativo — el top bar lo reemplaza */
   scrollbar-width: thin;
   scrollbar-color: #4a4744 #1a1917;
 }
 
-/* Webkit scrollbar — vertical + horizontal */
-.proy-tabla-scroll::-webkit-scrollbar { width: 7px; height: 7px; }
-.proy-tabla-scroll::-webkit-scrollbar-track { background: #1a1917; }
-.proy-tabla-scroll::-webkit-scrollbar-thumb { background: #4a4744; border-radius: 4px; }
+/* Webkit scrollbar — solo VERTICAL (horizontal se maneja por el top scroll bar) */
+.proy-tabla-scroll::-webkit-scrollbar        { width: 5px; height: 0; }
+.proy-tabla-scroll::-webkit-scrollbar-track  { background: #1a1917; }
+.proy-tabla-scroll::-webkit-scrollbar-thumb  { background: #4a4744; border-radius: 4px; }
 .proy-tabla-scroll::-webkit-scrollbar-thumb:hover { background: #EB5E28; }
 .proy-tabla-scroll::-webkit-scrollbar-corner { background: #1a1917; }
 
-/* Sticky bar desactivado — la barra horizontal va directa en .proy-tabla-scroll */
-.proy-scroll-sticky { display: none; }
-.proy-scroll-inner  { display: none; }
+/* Scrollbar horizontal en la parte SUPERIOR — naranja, siempre visible */
+.proy-scroll-sticky {
+  display: block;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  height: 14px;
+  width: 100%;
+  background: #181715;
+  border-bottom: 1px solid #2e2c29;
+  flex-shrink: 0;
+}
+.proy-scroll-sticky::-webkit-scrollbar        { height: 6px; }
+.proy-scroll-sticky::-webkit-scrollbar-track  { background: #252320; }
+.proy-scroll-sticky::-webkit-scrollbar-thumb  { background: #EB5E28; border-radius: 3px; }
+.proy-scroll-sticky::-webkit-scrollbar-thumb:hover { background: #ff7a4b; }
+/* Firefox */
+.proy-scroll-sticky { scrollbar-width: thin; scrollbar-color: #EB5E28 #252320; }
+
+.proy-scroll-inner { height: 1px; }
 
 .proy-tabla {
   width: 100%;
@@ -624,7 +642,7 @@
 }
 
 .th-total, .td-total { text-align: center; font-weight: 700; color: #FFFCF2; white-space: nowrap; }
-.th-mes             { min-width: 52px; text-align: center; }
+.th-mes             { min-width: 68px; text-align: center; }
 .td-qty             { text-align: center; }
 .th-acciones, .td-acciones { width: 48px; text-align: center; }
 .th-center, .td-center { text-align: center; }

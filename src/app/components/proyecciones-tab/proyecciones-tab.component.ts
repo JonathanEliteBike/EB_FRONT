@@ -278,6 +278,13 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     }, 0);
   }
 
+  formatPrecioCorto(v: number): string {
+    if (!v) return '$0';
+    if (Math.abs(v) >= 1_000_000) return '$' + (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (Math.abs(v) >= 1_000)     return '$' + Math.round(v / 1_000) + 'K';
+    return '$' + Math.round(v);
+  }
+
   totalPrecioMarcaMes(marca: string, mes: keyof ForecastRow): number {
     return this.rowsFiltrados
       .filter(r => (r.marca || '').toUpperCase() === marca)
