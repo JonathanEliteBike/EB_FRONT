@@ -729,6 +729,9 @@
 /* Label cells — LEFT aligned, indented, no padding gap */
 .td-precio-marca-lbl,
 .td-precio-mes-lbl {
+  position: sticky;
+  left: 0;
+  z-index: 4;
   text-align: left !important;
   font-weight: 700 !important;
   font-size: 0.72rem !important;
@@ -757,6 +760,9 @@
 
 /* Label cells de cuentas — LEFT aligned */
 .td-cuentas-lbl {
+  position: sticky;
+  left: 0;
+  z-index: 4;
   text-align: left !important;
   font-weight: 700 !important;
   font-size: 0.72rem !important;
