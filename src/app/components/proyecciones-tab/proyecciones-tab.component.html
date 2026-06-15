@@ -148,6 +148,10 @@
         <span class="proy-resumen-num">{{ totalMegamoCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
         <span class="proy-resumen-lbl">costo total</span>
       </div>
+      <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+        <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasMegamo }}</span>
+        <span class="proy-resumen-lbl">cuentas pedidas</span>
+      </div>
     </div>
     <div class="proy-resumen-card proy-resumen-scott">
       <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> SCOTT</div>
@@ -159,6 +163,10 @@
         <span class="proy-resumen-num">{{ totalScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
         <span class="proy-resumen-lbl">costo total</span>
       </div>
+      <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+        <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasScott }}</span>
+        <span class="proy-resumen-lbl">cuentas pedidas</span>
+      </div>
     </div>
     <div class="proy-resumen-card proy-resumen-global">
       <div class="proy-resumen-logo"><i class="fas fa-globe"></i> GLOBAL</div>
@@ -169,6 +177,10 @@
       <div class="proy-resumen-stat">
         <span class="proy-resumen-num">{{ totalGlobalCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
         <span class="proy-resumen-lbl">costo global</span>
+      </div>
+      <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+        <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasGlobal }}</span>
+        <span class="proy-resumen-lbl">cuentas pedidas</span>
       </div>
     </div>
   </div>
@@ -224,11 +236,13 @@
             <tr *ngIf="section.label" class="proy-seccion-header proy-seccion-toggle"
                 (click)="toggleSeccion(section.brand)">
               <td colspan="99">
-                <i class="fas fa-chevron-down proy-seccion-chevron"
-                   [class.proy-seccion-chevron--collapsed]="isColapsada(section.brand)"></i>
-                <i class="fas fa-bicycle"></i>
-                {{ section.label }}
-                <span class="proy-seccion-count">({{ section.rows.length }})</span>
+                <span class="proy-seccion-label">
+                  <i class="fas fa-chevron-down proy-seccion-chevron"
+                     [class.proy-seccion-chevron--collapsed]="isColapsada(section.brand)"></i>
+                  <i class="fas fa-bicycle"></i>
+                  {{ section.label }}
+                  <span class="proy-seccion-count">({{ section.rows.length }})</span>
+                </span>
               </td>
             </tr>
           <ng-container *ngIf="!isColapsada(section.brand)">
@@ -298,9 +312,17 @@
             </td>
 
             <!-- Meses (visibles en modo expandido, siempre en DOM para evitar spike de creación) -->
-            <td *ngFor="let mes of mesesKeys" class="td-qty" [style.display]="modoExpandido ? '' : 'none'">
-              <span *ngIf="!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo)">{{ getMes(row, mes) | number:'1.0-0' }}</span>
-              <input *ngIf="modoEdicion && !row._eliminar && (puedeEditarMeses || row._nuevo)"
+            <td *ngFor="let mes of mesesKeys" class="td-qty"
+                [style.display]="modoExpandido ? '' : 'none'"
+                [class.td-qty-bloqueado]="isBloqueadoMegamo(row, mes)">
+              <!-- Celda bloqueada: MEGAMO antes de Julio -->
+              <span *ngIf="isBloqueadoMegamo(row, mes)" class="td-qty-lock" title="MEGAMO solo disponible a partir de Julio">
+                <i class="fas fa-lock"></i>
+              </span>
+              <!-- Vista normal (lectura) -->
+              <span *ngIf="!isBloqueadoMegamo(row, mes) && (!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo))">{{ getMes(row, mes) | number:'1.0-0' }}</span>
+              <!-- Edición -->
+              <input *ngIf="!isBloqueadoMegamo(row, mes) && modoEdicion && !row._eliminar && (puedeEditarMeses || row._nuevo)"
                      class="proy-input-num"
                      type="number"
                      min="0"
@@ -364,6 +386,27 @@
             </td>
             <td class="td-precio-mes"></td>
             <td class="td-precio-mes"></td>
+            <td *ngIf="modoEdicion"></td>
+          </tr>
+          <!-- Fila naranja oscuro: cuentas por mes MEGAMO -->
+          <tr class="proy-fila-cuentas proy-fila-cuentas-megamo" *ngIf="modoExpandido">
+            <td colspan="5" class="td-cuentas-lbl"><i class="fas fa-bicycle"></i> CTAS. MEGAMO</td>
+            <td *ngFor="let mes of mesesKeys" class="td-cuentas">
+              <span *ngIf="!esMesBloqueadoMegamo(mes)">{{ cuentasMarcaMes('MEGAMO', mes) }}</span>
+              <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-qty-lock td-cuentas-lock"><i class="fas fa-lock"></i></span>
+            </td>
+            <td class="td-cuentas"></td>
+            <td class="td-cuentas"></td>
+            <td *ngIf="modoEdicion"></td>
+          </tr>
+          <!-- Fila azul oscuro: cuentas por mes SCOTT -->
+          <tr class="proy-fila-cuentas proy-fila-cuentas-scott" *ngIf="modoExpandido">
+            <td colspan="5" class="td-cuentas-lbl"><i class="fas fa-bicycle"></i> CTAS. SCOTT</td>
+            <td *ngFor="let mes of mesesKeys" class="td-cuentas">
+              {{ cuentasMarcaMes('SCOTT', mes) }}
+            </td>
+            <td class="td-cuentas"></td>
+            <td class="td-cuentas"></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
         </tfoot>

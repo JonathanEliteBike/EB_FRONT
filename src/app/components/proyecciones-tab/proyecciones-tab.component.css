@@ -562,22 +562,31 @@
 /* Section separator header */
 .proy-seccion-header td {
   background: #1e1b14;
+  padding: 0;
+  border-top: 2px solid #EB5E28;
+  border-bottom: 1px solid #3a3630;
+}
+/* El label queda pegado al borde izquierdo aunque la tabla scrollee horizontalmente */
+.proy-seccion-label {
+  position: sticky;
+  left: 0;
+  display: block;
+  padding: 8px 14px;
+  background: #1e1b14;
   color: #EB5E28;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 8px 14px;
-  border-top: 2px solid #EB5E28;
-  border-bottom: 1px solid #3a3630;
-  position: sticky;
-  left: 0;
+  white-space: nowrap;
+  z-index: 2;
 }
-.proy-seccion-header td i { margin-right: 6px; opacity: 0.8; }
+.proy-seccion-label i { margin-right: 6px; opacity: 0.8; }
+.proy-seccion-toggle:hover td { background: #26211a; }
+.proy-seccion-toggle:hover .proy-seccion-label { background: #26211a; }
 
 /* Collapsible section */
 .proy-seccion-toggle { cursor: pointer; user-select: none; }
-.proy-seccion-toggle:hover td { background: #26211a; }
 .proy-seccion-chevron {
   margin-right: 8px !important;
   font-size: 0.68rem;
@@ -629,7 +638,12 @@
 }
 .proy-input-num:focus { border-color: #EB5E28; }
 
-/* TFOOT */
+/* TFOOT — sticky al fondo del área visible de la tabla */
+.proy-tabla tfoot {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+}
 .proy-fila-totales {
   background: #1e1d1b;
   border-top: 2px solid #403D39;
@@ -654,6 +668,34 @@
 }
 .td-precio-mes-lbl  { text-align: right; color: #90CAF9 !important; font-weight: 700; letter-spacing: 0.03em; }
 .td-precio-mes      { text-align: center; font-weight: 700; white-space: nowrap; }
+
+/* Filas de cuentas por mes por marca */
+.proy-fila-cuentas td {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+.proy-fila-cuentas-megamo {
+  background: #2a1a08;
+  border-top: 1px solid #5C3009;
+}
+.proy-fila-cuentas-megamo td { color: #E8A060; }
+.proy-fila-cuentas-scott {
+  background: #0c1e30;
+  border-top: 1px solid #1B4A7A;
+}
+.proy-fila-cuentas-scott td { color: #7BB8E8; }
+.td-cuentas-lbl {
+  text-align: right !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em;
+}
+.td-cuentas-lock {
+  font-size: 0.65rem;
+  opacity: 0.4;
+  display: inline-block;
+}
 
 /* ══════════════════════════════════════════
    MODAL BACKDROP (OTP)
@@ -1123,4 +1165,28 @@
   color: #666;
   text-transform: uppercase;
   letter-spacing: .05em;
+}
+.td-qty-bloqueado {
+  background: rgba(255, 255, 255, 0.03);
+  cursor: not-allowed;
+}
+.td-qty-lock {
+  color: #444;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.proy-resumen-stat-cuentas {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+.proy-resumen-num-sm {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #aaa;
 }

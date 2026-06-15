@@ -313,6 +313,45 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       .reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
   }
 
+  // ── Regla: MEGAMO solo se puede pedir a partir de Julio ───────────────────
+  private static readonly _MESES_BLOQUEADOS_MEGAMO = new Set<string>(['mayo', 'junio']);
+
+  isBloqueadoMegamo(row: ForecastRow, mes: keyof ForecastRow): boolean {
+    return (row.marca || '').toUpperCase() === 'MEGAMO'
+      && ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string);
+  }
+
+  /** True si el mes está bloqueado para MEGAMO (usado en footer sin una row concreta) */
+  esMesBloqueadoMegamo(mes: keyof ForecastRow): boolean {
+    return ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string);
+  }
+
+  /** Cuántos SKUs de una marca tienen qty > 0 en ese mes */
+  cuentasMarcaMes(marca: string, mes: keyof ForecastRow): number {
+    return this.rowsFiltrados.filter(
+      r => !r._nuevo && (r.marca || '').toUpperCase() === marca && (Number(r[mes]) || 0) > 0
+    ).length;
+  }
+
+  /** Cuántos SKUs en total (ambas marcas) tienen qty > 0 en ese mes */
+  cuentasGlobalMes(mes: keyof ForecastRow): number {
+    return this.rowsFiltrados.filter(
+      r => !r._nuevo && (Number(r[mes]) || 0) > 0
+    ).length;
+  }
+
+  // ── Cuentas (SKUs con al menos 1 unidad proyectada) por marca ──────────────
+  private _cuentasMarca(marca: string): number {
+    return this.rowsFiltrados
+      .filter(r => !r._nuevo && (r.marca || '').toUpperCase() === marca && this.calcTotal(r) > 0)
+      .length;
+  }
+  get cuentasMegamo(): number { return this._cuentasMarca('MEGAMO'); }
+  get cuentasScott(): number  { return this._cuentasMarca('SCOTT');  }
+  get cuentasGlobal(): number {
+    return this.rowsFiltrados.filter(r => !r._nuevo && this.calcTotal(r) > 0).length;
+  }
+
   constructor(private http: HttpClient, protected cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
