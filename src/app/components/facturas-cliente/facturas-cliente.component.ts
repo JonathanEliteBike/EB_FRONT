@@ -215,6 +215,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     this.textoBusqueda = '';
     this.fechaInicioTemporada = null;
     this.avancePrevio = null;
+    this.proyeccionesCount = 0;
 
     // ── RUTA 0: Vista Global integral ← prioridad más alta ───────────────────────
     if (this.idGrupoOdoo) {

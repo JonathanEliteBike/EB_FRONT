@@ -519,6 +519,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       error: err => {
         this.error    = err?.error?.error || 'Error al cargar proyecciones';
         this.cargando = false;
+        this.rowCountChange.emit(0);
         this.cdr.markForCheck();
       }
     });
