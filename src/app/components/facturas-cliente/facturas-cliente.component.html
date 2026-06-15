@@ -11,6 +11,10 @@
                 <button (click)="exportarExcel()">
                     <i class="fas fa-file-export"></i> Exportar Excel
                 </button>
+                <button (click)="refrescar()" [disabled]="cargando" title="Forzar recarga desde Odoo (ignora caché)">
+                    <i class="fas" [class.fa-sync-alt]="!refrescando" [class.fa-spinner]="refrescando" [class.fa-spin]="refrescando"></i>
+                    {{ refrescando ? 'Actualizando...' : 'Refrescar' }}
+                </button>
             </div>
 
             <!-- Pestañas por estado de orden (solo si hay más de una) -->
@@ -92,11 +96,13 @@
                 <p>{{ error }}</p>
             </div>
 
-            <!-- Proyecciones tab (embebido) -->
+            <!-- Proyecciones tab (embebido) — se crea al abrir el modal para pre-cargar datos -->
             <app-proyecciones-tab
-                *ngIf="tabActiva === 'Proyecciones'"
+                *ngIf="(clienteClave && clienteClave !== '__sin_clave__') || idGrupoOdoo"
+                [hidden]="tabActiva !== 'Proyecciones'"
                 [clienteClave]="clienteClave"
                 [idCliente]="idClienteNum"
+                [idGrupoOdoo]="idGrupoOdoo"
                 (rowCountChange)="proyeccionesCount = $event">
             </app-proyecciones-tab>
 

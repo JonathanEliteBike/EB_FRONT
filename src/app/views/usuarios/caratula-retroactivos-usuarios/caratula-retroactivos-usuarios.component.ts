@@ -9,6 +9,8 @@ interface DatosRetroactivo {
   ZONA: string;
   CLIENTE: string;
   CATEGORIA: string;
+  temporada_cerrada?: boolean;
+  fecha_cierre_temporada?: string | null;
 
   COMPRA_MINIMA_ANUAL: number;
   COMPRA_GLOBAL_SCOTT: number;
@@ -240,6 +242,17 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
 
   getImportePagar(): number {
     return this.getImporteFinalBase() * this.getRetroactivoTotal();
+  }
+
+  get temporadaCerrada(): boolean {
+    return !!this.datosCliente?.temporada_cerrada;
+  }
+
+  get fechaCierreFormateada(): string {
+    const f = this.datosCliente?.fecha_cierre_temporada;
+    if (!f) return '';
+    const [year, month, day] = f.split('-');
+    return `${day}/${month}/${year}`;
   }
 
   getPorcentajeAvanceGeneral(): number {

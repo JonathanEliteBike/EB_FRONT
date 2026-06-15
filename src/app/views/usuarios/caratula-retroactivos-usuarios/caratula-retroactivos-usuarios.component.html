@@ -18,6 +18,12 @@
 
     <div class="caratula-wrapper" *ngIf="datosCliente && !isLoading">
 
+        <!-- BANNER: Temporada cerrada -->
+        <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada">
+            <i class="fas fa-lock"></i>
+            TEMPORADA CERRADA EL {{ fechaCierreFormateada }}
+        </div>
+
         <div class="caratula-header">
             <div class="logo-box">
                 <img src="assets/logo_elite_2.png" alt="Logo Elite" class="logo-img">

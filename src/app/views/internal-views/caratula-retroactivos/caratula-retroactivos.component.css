@@ -1,3 +1,115 @@
+/* ================= BANNER TEMPORADA CERRADA ================= */
+.banner-temporada-cerrada {
+    width: 100%;
+    background-color: #7f1d1d;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 16px 25px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 6px solid #dc2626;
+}
+
+/* ================= SECCIÓN CERRAR TEMPORADA (admin) ================= */
+/* Diseño tipo "row-calc" — nativo de la caratula */
+.seccion-cerrar-temporada {
+    width: 100%;
+    margin-bottom: 28px;
+    border: 1px solid #dcdcdc;
+    display: flex;
+}
+
+.cerrar-label-side {
+    width: 55%;
+    background-color: #252525;
+    color: #ffffff;
+    padding: 18px 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+}
+
+.cerrar-label-titulo {
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cerrar-label-desc {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.3;
+}
+
+.cerrar-action-side {
+    width: 45%;
+    background-color: #ffffff;
+    border-left: 1px solid #dcdcdc;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cerrar-controles {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.input-fecha-cierre {
+    flex: 1;
+    min-width: 130px;
+    padding: 9px 12px;
+    border: 1px solid #cccccc;
+    background-color: #f9f9f9;
+    color: #222222;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.input-fecha-cierre:focus { border-color: #EB5E28; background-color: #fff; }
+.input-fecha-cierre:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-cerrar-temporada {
+    padding: 9px 18px;
+    border: none;
+    background-color: #EB5E28;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+.btn-cerrar-temporada:hover:not(:disabled) { background-color: #d15020; }
+.btn-cerrar-temporada:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.cerrar-error {
+    color: #dc2626;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 /* ================= FONDO GENERAL DE PANTALLA ================= */
 .monitor-container {
     padding: 2rem;

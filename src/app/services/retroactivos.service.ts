@@ -32,4 +32,11 @@ export class RetroactivosService {
       recalcular_previo: true
     });
   }
+
+  cerrarTemporada(clave: string, fechaCierre: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/cerrar-temporada`, {
+      clave,
+      fecha_cierre: fechaCierre
+    });
+  }
 }

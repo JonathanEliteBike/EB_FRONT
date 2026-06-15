@@ -277,13 +277,42 @@
 .card-garantias {
   background: linear-gradient(160deg, #0a110c 0%, #080e0a 100%);
 }
-.card-garantias .card-glow {
-  background: radial-gradient(ellipse at 40% 60%, rgba(76,175,80,0.18) 0%, transparent 65%);
-}
-.card-garantias:hover { border-color: rgba(76,175,80,0.4); box-shadow: 0 20px 60px rgba(76,175,80,0.12); }
 .card-garantias .card-tag { background: rgba(76,175,80,0.10); color: #4caf50; }
 .card-garantias .card-icon-wrap { background: rgba(76,175,80,0.10); border: 1px solid rgba(76,175,80,0.2); color: #4caf50; }
-.card-garantias .card-link { color: #4caf50; }
+
+/* — Estado deshabilitado — */
+.card-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+.card-disabled:hover {
+  transform: none;
+  border-color: #1c1c1c;
+  box-shadow: none;
+}
+
+/* — Badge "Próximamente" — */
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-header-row .card-tag {
+  margin-bottom: 0;
+}
+.badge-pronto {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {

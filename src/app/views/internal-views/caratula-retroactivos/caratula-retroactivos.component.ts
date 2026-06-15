@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { RetroactivosService } from '../../../services/retroactivos.service';
+import { AuthService } from '../../../services/auth.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 
 // Interfaz para el buscador
@@ -19,6 +20,8 @@ interface DatosRetroactivo {
   ZONA: string;
   CLIENTE: string;
   CATEGORIA: string;
+  temporada_cerrada?: boolean;
+  fecha_cierre_temporada?: string | null;
 
   COMPRA_MINIMA_ANUAL: number;
   COMPRA_GLOBAL_SCOTT: number;
@@ -76,9 +79,19 @@ export class CaratulaRetroactivosComponent implements OnInit {
   private cacheClientesCargado = false;
   private isSearchingDirectly = false;
 
-  constructor(private retroactivosService: RetroactivosService) { }
+  isAdmin = false;
+  fechaCierreInput: string = '';
+  cerrando = false;
+  mensajeCierre: string | null = null;
+  errorCierre: string | null = null;
+
+  constructor(
+    private retroactivosService: RetroactivosService,
+    private authService: AuthService
+  ) { }
 
   ngOnInit() {
+    this.isAdmin = this.authService.isAdmin();
     this.cargarCacheClientes();
     this.configurarBuscador();
   }
@@ -408,5 +421,45 @@ export class CaratulaRetroactivosComponent implements OnInit {
 
   getImportePagar(): number {
     return this.getImporteFinalBase() * this.getRetroactivoTotal();
+  }
+
+  get temporadaCerrada(): boolean {
+    return !!this.datosCliente?.temporada_cerrada;
+  }
+
+  get fechaCierreFormateada(): string {
+    const f = this.datosCliente?.fecha_cierre_temporada;
+    if (!f) return '';
+    const [year, month, day] = f.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  confirmarCierreTemporada(): void {
+    if (!this.datosCliente || !this.fechaCierreInput) return;
+    const clave = this.datosCliente.CLAVE;
+    const nombre = this.datosCliente.CLIENTE;
+    const [year, month, day] = this.fechaCierreInput.split('-');
+    const fechaFormateada = `${day}/${month}/${year}`;
+
+    const confirmar = window.confirm(
+      `¿Confirmas el cierre de temporada para:\n\n${clave} - ${nombre}\nFecha de cierre: ${fechaFormateada}\n\nEsta acción es IRREVERSIBLE. ¿Continuar?`
+    );
+    if (!confirmar) return;
+
+    this.cerrando = true;
+    this.mensajeCierre = null;
+    this.errorCierre = null;
+
+    this.retroactivosService.cerrarTemporada(clave, this.fechaCierreInput).subscribe({
+      next: (res) => {
+        this.cerrando = false;
+        this.mensajeCierre = `Temporada cerrada el ${fechaFormateada}`;
+        this.buscarCliente(clave);
+      },
+      error: (err) => {
+        this.cerrando = false;
+        this.errorCierre = err.error?.error || 'Error al cerrar la temporada.';
+      }
+    });
   }
 }

@@ -71,8 +71,9 @@ export class ClientesService {
     return this.http.get<any>(`${this.apiUrl}/facturas-cliente`, { headers });
   }
 
-  getDetalleComprasCliente(limit?: number, offset?: number, estado?: string, cliente?: string, refExacta?: boolean, idGrupoOdoo?: number): Observable<any> {
+  getDetalleComprasCliente(limit?: number, offset?: number, estado?: string, cliente?: string, refExacta?: boolean, idGrupoOdoo?: number, forceRefresh = false): Observable<any> {
     const key = `detalle:${cliente ?? ''}:${refExacta ? '1' : '0'}:${idGrupoOdoo ?? ''}`;
+    if (forceRefresh) this._pedidosCache.delete(key);
     if (!this._pedidosCache.has(key)) {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -83,6 +84,7 @@ export class ClientesService {
       if (cliente) params = params.set('cliente', cliente);
       if (refExacta) params = params.set('ref_exacta', '1');
       if (idGrupoOdoo != null) params = params.set('grupo', String(idGrupoOdoo));
+      if (forceRefresh) params = params.set('force_refresh', '1');
       this._pedidosCache.set(key, this.http.get<any>(`${this.apiUrl}/detalle-compras-odoo`, { headers, params }).pipe(shareReplay(1)));
     }
     return this._pedidosCache.get(key)!;

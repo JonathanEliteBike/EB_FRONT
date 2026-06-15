@@ -46,6 +46,14 @@
         <i class="fas fa-shield-alt"></i>
         {{ permisoEdicion === 'super' ? 'Super' : permisoEdicion === 'eliminar' ? 'Solo eliminar' : 'Solo meses' }}
       </span>
+      <button *ngIf="permisoEdicion === 'super'"
+              class="proy-btn proy-btn-outline"
+              [disabled]="sincronizando"
+              (click)="sincronizarCatalogo()"
+              title="Sincronizar catálogo de productos desde Odoo (actualiza nombres, colores, tallas)">
+        <i class="fas" [class.fa-sync-alt]="!sincronizando" [class.fa-spinner]="sincronizando" [class.fa-spin]="sincronizando"></i>
+        {{ sincronizando ? 'Sincronizando...' : 'Sync catálogo Odoo' }}
+      </button>
       <button class="proy-btn proy-btn-success" (click)="guardarCambios()">
         <i class="fas fa-save"></i> Guardar cambios
       </button>
@@ -174,7 +182,20 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let row of rowsFiltrados; trackBy: trackById"
+          <ng-container *ngFor="let section of rowsAgrupados">
+            <!-- Encabezado de sección (Megamo / Scott / Otros) — clickable para colapsar -->
+            <tr *ngIf="section.label" class="proy-seccion-header proy-seccion-toggle"
+                (click)="toggleSeccion(section.brand)">
+              <td colspan="99">
+                <i class="fas fa-chevron-down proy-seccion-chevron"
+                   [class.proy-seccion-chevron--collapsed]="isColapsada(section.brand)"></i>
+                <i class="fas fa-bicycle"></i>
+                {{ section.label }}
+                <span class="proy-seccion-count">({{ section.rows.length }})</span>
+              </td>
+            </tr>
+          <ng-container *ngIf="!isColapsada(section.brand)">
+          <tr *ngFor="let row of section.rows; trackBy: trackById"
               [class.proy-fila-nueva]="row._nuevo"
               [class.proy-fila-eliminar]="row._eliminar"
               [class.proy-fila-editada]="row._editado && !row._nuevo">
@@ -195,8 +216,9 @@
                 <!-- Not yet selected: open modal -->
                 <button *ngIf="!row._searchSeleccionado"
                         class="proy-btn-buscar"
+                        title="Seleccionar producto del catálogo"
                         (click)="abrirModalBusqueda(row)">
-                  <i class="fas fa-search"></i> Seleccionar producto...
+                  <i class="fas fa-search"></i> Seleccionar
                 </button>
               </ng-container>
             </td>
@@ -241,8 +263,8 @@
             <!-- Meses (solo en modo expandido) -->
             <ng-container *ngIf="modoExpandido">
               <td *ngFor="let mes of mesesKeys" class="td-qty">
-                <span *ngIf="!modoEdicion || row._eliminar || !puedeEditarMeses">{{ getMes(row, mes) | number:'1.0-0' }}</span>
-                <input *ngIf="modoEdicion && !row._eliminar && puedeEditarMeses"
+                <span *ngIf="!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo)">{{ getMes(row, mes) | number:'1.0-0' }}</span>
+                <input *ngIf="modoEdicion && !row._eliminar && (puedeEditarMeses || row._nuevo)"
                        class="proy-input-num"
                        type="number"
                        min="0"
@@ -279,6 +301,8 @@
             </td>
 
           </tr>
+          </ng-container><!-- /collapse -->
+          </ng-container><!-- /section -->
         </tbody>
 
         <!-- Totales footer -->
@@ -346,6 +370,12 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
+    </div>
+
+    <!-- ── Error de duplicado (visible en cualquier paso) ── -->
+    <div *ngIf="searchModal.error" class="sbm-error-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      {{ searchModal.error }}
     </div>
 
     <!-- ── PASO 1: Búsqueda ── -->

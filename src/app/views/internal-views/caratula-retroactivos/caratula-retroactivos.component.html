@@ -39,6 +39,48 @@
 
     <div class="caratula-wrapper" *ngIf="datosCliente && !isLoading">
 
+        <!-- BANNER: Temporada cerrada (visible para todos) -->
+        <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada">
+            <i class="fas fa-lock"></i>
+            TEMPORADA CERRADA EL {{ fechaCierreFormateada }}
+        </div>
+
+        <!-- SECCIÓN ADMIN: Cerrar temporada (solo si no está cerrada) -->
+        <div class="seccion-cerrar-temporada" *ngIf="isAdmin && !temporadaCerrada">
+            <div class="cerrar-label-side">
+                <div class="cerrar-label-titulo">
+                    <i class="fas fa-calendar-times"></i> Cerrar Temporada
+                </div>
+                <span class="cerrar-label-desc">
+                    Selecciona la fecha de corte. Las compras posteriores a esa fecha
+                    <strong style="color:#EB5E28">no contarán para MY26.</strong>
+                    Esta acción es irreversible.
+                </span>
+            </div>
+            <div class="cerrar-action-side">
+                <div class="cerrar-controles">
+                    <input
+                        type="date"
+                        [(ngModel)]="fechaCierreInput"
+                        class="input-fecha-cierre"
+                        min="2025-06-01"
+                        max="2026-06-30"
+                        [disabled]="cerrando">
+                    <button
+                        class="btn-cerrar-temporada"
+                        (click)="confirmarCierreTemporada()"
+                        [disabled]="!fechaCierreInput || cerrando">
+                        <i class="fas fa-lock" *ngIf="!cerrando"></i>
+                        <i class="fas fa-spinner fa-spin" *ngIf="cerrando"></i>
+                        {{ cerrando ? 'Cerrando...' : 'Cerrar' }}
+                    </button>
+                </div>
+                <div class="cerrar-error" *ngIf="errorCierre">
+                    <i class="fas fa-exclamation-triangle"></i> {{ errorCierre }}
+                </div>
+            </div>
+        </div>
+
         <div class="caratula-header">
             <div class="logo-box">
                 <img src="assets/logo_elite_2.png" alt="Logo Elite" class="logo-img">

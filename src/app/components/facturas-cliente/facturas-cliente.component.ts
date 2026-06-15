@@ -99,6 +99,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
   infoCliente: any = null;
   /** Referencia al timeout de aviso de carga lenta. */
   loadingTimer: any = null;
+  /** true cuando el usuario pidió forzar recarga desde Odoo (ignora caché) */
+  refrescando = false;
 
   // ── Paginación ────────────────────────────────────────────────────────────
   paginaActual = 1;
@@ -196,7 +198,12 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     return this.ESTADO_FACTURA_LABELS[raw] ?? raw;
   }
 
-  obtenerFacturas() {
+  refrescar(): void {
+    this.refrescando = true;
+    this.obtenerFacturas(true);
+  }
+
+  obtenerFacturas(forceRefresh = false) {
     this.cargando = true;
     this.error = null;
     this.facturas = [];
@@ -212,7 +219,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     // ── RUTA 0: Vista Global integral ← prioridad más alta ───────────────────────
     if (this.idGrupoOdoo) {
       this.clientesService.getDetalleComprasCliente(
-        undefined, undefined, undefined, undefined, false, this.idGrupoOdoo
+        undefined, undefined, undefined, undefined, false, this.idGrupoOdoo, forceRefresh
       ).subscribe({
         next: (response: any) => {
           if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
@@ -307,7 +314,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
       if (clienteParam) {
         this.infoCliente = { nombre_cliente: clienteParam };
         // Sin límite: traer todos los registros; la paginación local se encarga de mostrarlos por páginas
-        this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam, this.claveExacta).subscribe({
+        this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam, this.claveExacta, undefined, forceRefresh).subscribe({
             next: (response: any) => {
             if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.fechaInicioTemporada = response.meta?.fecha_inicio_temporada ?? null;
@@ -344,6 +351,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
               }));
               if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.error = null;
+              this.refrescando = false;
               if (this.facturas.length > 0) {
                 this.filtrarFacturas();
               }
@@ -472,7 +480,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     // Pestañas fijas en orden definido — siempre visibles aunque tengan 0 productos
     const PESTANAS_DATOS = ['En tránsito', 'Almacén EB', 'Entregado', 'Cancelado'];
     const tabsBase = ['Total'];
-    if (this.clienteClave && this.clienteClave !== '__sin_clave__') tabsBase.push('Proyecciones');
+    if ((this.clienteClave && this.clienteClave !== '__sin_clave__') || this.idGrupoOdoo) tabsBase.push('Proyecciones');
     this.tabsDisponibles = [...tabsBase, ...PESTANAS_DATOS];
 
     // Aplicar filtro de pestaña activa
