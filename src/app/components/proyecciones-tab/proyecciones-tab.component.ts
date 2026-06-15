@@ -278,6 +278,16 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     }, 0);
   }
 
+  totalPrecioMarcaMes(marca: string, mes: keyof ForecastRow): number {
+    return this.rowsFiltrados
+      .filter(r => (r.marca || '').toUpperCase() === marca)
+      .reduce((s, r) => {
+        const qty    = Number(r[mes]) || 0;
+        const precio = Number(r['precio']) || 0;
+        return s + qty * precio;
+      }, 0);
+  }
+
   get totalPrecioGeneral(): number {
     return this.rowsFiltrados.reduce((s, r) => {
       const total  = MESES.reduce((t, m) => t + (Number(r[m]) || 0), 0);

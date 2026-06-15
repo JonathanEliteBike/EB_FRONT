@@ -559,14 +559,34 @@
 .proy-tabla tbody .proy-fila-editada .td-sku,
 .proy-tabla tbody .proy-fila-editada .td-producto  { background: #1c1b10; }
 
-/* Section separator header */
-.proy-seccion-header td {
+/* Section separator header — two-td approach for horizontal sticky */
+.td-seccion-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 380px;
   background: #1e1b14;
-  padding: 0;
+  color: #EB5E28;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 8px 14px;
   border-top: 2px solid #EB5E28;
   border-bottom: 1px solid #3a3630;
 }
-/* El label queda pegado al borde izquierdo aunque la tabla scrollee horizontalmente */
+.td-seccion-sticky i { margin-right: 6px; opacity: 0.8; }
+.td-seccion-filler {
+  background: #1e1b14;
+  border-top: 2px solid #EB5E28;
+  border-bottom: 1px solid #3a3630;
+  padding: 0;
+}
+.proy-seccion-toggle:hover .td-seccion-sticky,
+.proy-seccion-toggle:hover .td-seccion-filler { background: #26211a; }
+
+/* Legacy label approach (kept for safety, not used) */
 .proy-seccion-label {
   position: sticky;
   left: 0;
@@ -668,6 +688,34 @@
 }
 .td-precio-mes-lbl  { text-align: right; color: #90CAF9 !important; font-weight: 700; letter-spacing: 0.03em; }
 .td-precio-mes      { text-align: center; font-weight: 700; white-space: nowrap; }
+
+/* Filas de precio por mes por marca */
+.proy-fila-precio-marca td {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+.proy-fila-precio-megamo {
+  background: #2a1808;
+  border-top: 1px solid #5C3009;
+}
+.proy-fila-precio-megamo td { color: #F0B47A; }
+.proy-fila-precio-scott {
+  background: #071828;
+  border-top: 1px solid #1B4A7A;
+}
+.proy-fila-precio-scott td { color: #90CAF9; }
+.td-precio-marca-lbl {
+  text-align: right !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em;
+  font-size: 0.75rem !important;
+}
+.td-precio-marca { text-align: center; }
+.td-precio-marca-megamo { color: #F0B47A; }
+.td-precio-marca-scott  { color: #90CAF9; }
 
 /* Filas de cuentas por mes por marca */
 .proy-fila-cuentas td {

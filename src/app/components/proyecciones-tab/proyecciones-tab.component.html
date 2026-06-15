@@ -233,17 +233,17 @@
         <tbody>
           <ng-container *ngFor="let section of rowsAgrupados; trackBy: trackByBrand">
             <!-- Encabezado de sección (Megamo / Scott / Otros) — clickable para colapsar -->
+            <!-- Dos tds: el label sticky al left, el filler transparente para cubrir el resto -->
             <tr *ngIf="section.label" class="proy-seccion-header proy-seccion-toggle"
                 (click)="toggleSeccion(section.brand)">
-              <td colspan="99">
-                <span class="proy-seccion-label">
-                  <i class="fas fa-chevron-down proy-seccion-chevron"
-                     [class.proy-seccion-chevron--collapsed]="isColapsada(section.brand)"></i>
-                  <i class="fas fa-bicycle"></i>
-                  {{ section.label }}
-                  <span class="proy-seccion-count">({{ section.rows.length }})</span>
-                </span>
+              <td class="td-seccion-sticky" colspan="2">
+                <i class="fas fa-chevron-down proy-seccion-chevron"
+                   [class.proy-seccion-chevron--collapsed]="isColapsada(section.brand)"></i>
+                <i class="fas fa-bicycle"></i>
+                {{ section.label }}
+                <span class="proy-seccion-count">({{ section.rows.length }})</span>
               </td>
+              <td class="td-seccion-filler" colspan="97"></td>
             </tr>
           <ng-container *ngIf="!isColapsada(section.brand)">
           <tr *ngFor="let row of section.rows; trackBy: trackById"
@@ -378,9 +378,28 @@
             <td class="td-total-precio"><strong>{{ totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
-          <!-- Fila azul: total en precio por mes -->
+          <!-- Precio MEGAMO por mes -->
+          <tr class="proy-fila-precio-marca proy-fila-precio-megamo" *ngIf="modoExpandido">
+            <td colspan="5" class="td-precio-marca-lbl">🟠 PRECIO MEGAMO</td>
+            <td *ngFor="let mes of mesesKeys" class="td-precio-marca td-precio-marca-megamo">
+              <ng-container *ngIf="!esMesBloqueadoMegamo(mes)">{{ totalPrecioMarcaMes('MEGAMO', mes) | currency:'MXN':'symbol':'1.0-0' }}</ng-container>
+              <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-cuentas-lock"><i class="fas fa-lock"></i></span>
+            </td>
+            <td class="td-precio-marca"></td><td class="td-precio-marca"></td>
+            <td *ngIf="modoEdicion"></td>
+          </tr>
+          <!-- Precio SCOTT por mes -->
+          <tr class="proy-fila-precio-marca proy-fila-precio-scott" *ngIf="modoExpandido">
+            <td colspan="5" class="td-precio-marca-lbl">🔵 PRECIO SCOTT</td>
+            <td *ngFor="let mes of mesesKeys" class="td-precio-marca td-precio-marca-scott">
+              {{ totalPrecioMarcaMes('SCOTT', mes) | currency:'MXN':'symbol':'1.0-0' }}
+            </td>
+            <td class="td-precio-marca"></td><td class="td-precio-marca"></td>
+            <td *ngIf="modoEdicion"></td>
+          </tr>
+          <!-- Precio GLOBAL por mes -->
           <tr class="proy-fila-precio-mes" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-mes-lbl"><strong>PRECIO POR MES</strong></td>
+            <td colspan="5" class="td-precio-mes-lbl">🌐 PRECIO GLOBAL</td>
             <td *ngFor="let mes of mesesKeys" class="td-precio-mes">
               <strong>{{ totalPrecioMes(mes) | currency:'MXN':'symbol':'1.0-0' }}</strong>
             </td>
@@ -388,20 +407,20 @@
             <td class="td-precio-mes"></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
-          <!-- Fila naranja oscuro: cuentas por mes MEGAMO -->
+          <!-- Bicis MEGAMO por mes -->
           <tr class="proy-fila-cuentas proy-fila-cuentas-megamo" *ngIf="modoExpandido">
-            <td colspan="5" class="td-cuentas-lbl"><i class="fas fa-bicycle"></i> CTAS. MEGAMO</td>
+            <td colspan="5" class="td-cuentas-lbl">🟠 BICIS MEGAMO</td>
             <td *ngFor="let mes of mesesKeys" class="td-cuentas">
               <span *ngIf="!esMesBloqueadoMegamo(mes)">{{ cuentasMarcaMes('MEGAMO', mes) }}</span>
-              <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-qty-lock td-cuentas-lock"><i class="fas fa-lock"></i></span>
+              <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-cuentas-lock"><i class="fas fa-lock"></i></span>
             </td>
             <td class="td-cuentas"></td>
             <td class="td-cuentas"></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
-          <!-- Fila azul oscuro: cuentas por mes SCOTT -->
+          <!-- Bicis SCOTT por mes -->
           <tr class="proy-fila-cuentas proy-fila-cuentas-scott" *ngIf="modoExpandido">
-            <td colspan="5" class="td-cuentas-lbl"><i class="fas fa-bicycle"></i> CTAS. SCOTT</td>
+            <td colspan="5" class="td-cuentas-lbl">🔵 BICIS SCOTT</td>
             <td *ngFor="let mes of mesesKeys" class="td-cuentas">
               {{ cuentasMarcaMes('SCOTT', mes) }}
             </td>
