@@ -511,7 +511,7 @@ export class GarantiasTicketsComponent implements OnInit {
           this.tickets[idx].fecha_estatus = fecha;
         }
         this.cambiandoEstatus = false;
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.cambiandoEstatus = false; this.cdr.markForCheck(); },
     });
@@ -531,7 +531,7 @@ export class GarantiasTicketsComponent implements OnInit {
         this.selected!.fecha_estatus  = fecha;
         this.editandoFechaEstatus     = false;
         this.cdr.markForCheck();
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.editandoFechaEstatus = false; this.cdr.markForCheck(); },
     });
@@ -545,7 +545,7 @@ export class GarantiasTicketsComponent implements OnInit {
       next: () => {
         this.nuevoComentario = '';
         this.enviandoComentario = false;
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.enviandoComentario = false; this.cdr.markForCheck(); },
     });
@@ -559,7 +559,7 @@ export class GarantiasTicketsComponent implements OnInit {
       next: () => {
         this.notaInterna = '';
         this.enviandoNota = false;
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.enviandoNota = false; this.cdr.markForCheck(); },
     });
@@ -580,7 +580,7 @@ export class GarantiasTicketsComponent implements OnInit {
         const idx = this.tickets.findIndex(t => t.id === this.selected!.id);
         if (idx >= 0) this.tickets[idx].pieza_reemplazo = pieza;
         this.cambiandoPiezaReem = false;
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.cambiandoPiezaReem = false; this.cdr.markForCheck(); },
     });
@@ -621,7 +621,7 @@ export class GarantiasTicketsComponent implements OnInit {
           this.tickets[idx].fecha_pieza   = fecha;
         }
         this.cambiandoPieza = false;
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.cambiandoPieza = false; this.cdr.markForCheck(); },
     });
@@ -641,7 +641,7 @@ export class GarantiasTicketsComponent implements OnInit {
         this.selected!.fecha_pieza  = fecha;
         this.editandoFechaPieza     = false;
         this.cdr.markForCheck();
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.editandoFechaPieza = false; this.cdr.markForCheck(); },
     });

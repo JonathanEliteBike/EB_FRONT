@@ -121,29 +121,29 @@ export class GarantiasService {
     return this.http.delete(`${this.api}/garantias/formulario/${id}`);
   }
 
-  actualizarEstatus(id: number, estatus: string, fecha_estatus?: string): Observable<any> {
+  actualizarEstatus(id: number, estatus: string, fecha?: string): Observable<any> {
     return this.http.put(`${this.api}/garantias/formulario/${id}/estatus`, {
       estatus,
-      fecha_estatus: fecha_estatus || null
+      fecha: fecha || null
     });
   }
 
-  actualizarPieza(id: number, estatus_pieza: string, fecha_pieza?: string): Observable<any> {
+  actualizarPieza(id: number, estatus_pieza: string, fecha?: string): Observable<any> {
     return this.http.put(`${this.api}/garantias/formulario/${id}/pieza`, {
       estatus_pieza,
-      fecha_pieza: fecha_pieza || null
+      fecha: fecha || null
     });
   }
 
-  actualizarFechaEstatus(id: number, fecha_estatus: string): Observable<any> {
+  actualizarFechaEstatus(id: number, fecha: string): Observable<any> {
     return this.http.put(`${this.api}/garantias/formulario/${id}/fecha-estatus`, {
-      fecha_estatus
+      fecha
     });
   }
 
-  actualizarFechaPieza(id: number, fecha_pieza: string): Observable<any> {
+  actualizarFechaPieza(id: number, fecha: string): Observable<any> {
     return this.http.put(`${this.api}/garantias/formulario/${id}/fecha-pieza`, {
-      fecha_pieza
+      fecha
     });
   }
 

@@ -235,7 +235,7 @@
                   <div class="dp-field"><span class="dp-key">Distribuidor</span><span class="dp-val">{{ selected.distribuidor }}</span></div>
                   <div class="dp-field"><span class="dp-key">Contacto</span><span class="dp-val">{{ selected.contacto }}</span></div>
                   <div class="dp-field"><span class="dp-key">Rol</span><span class="dp-val">{{ selected.puesto }}</span></div>
-                  <div class="dp-field"><span class="dp-key">Email</span><span class="dp-val">{{ selected.email }}</span></div>
+                  <div class="dp-field"><span class="dp-key">Email</span><span class="dp-val">{{ selected.datos?.['email'] || selected.email }}</span></div>
                   <div class="dp-field"><span class="dp-key">Marca</span><span class="dp-val">{{ selected.marca }}</span></div>
                   <div class="dp-field"><span class="dp-key">Fecha</span><span class="dp-val">{{ selected.fecha_creacion }}</span></div>
                 </div>
