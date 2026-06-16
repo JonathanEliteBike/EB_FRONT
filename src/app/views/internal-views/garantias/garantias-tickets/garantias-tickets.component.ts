@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -22,14 +22,6 @@ const COLOR_ESTATUS: Record<string, string> = {
 };
 
 const ESTATUSES_PIEZA = ['Sin pieza', 'Solicitada', 'En tránsito', 'En almacén', 'Enviada al cliente', 'Rechazada'];
-
-const PIEZAS_REEMPLAZO = [
-  'N/A',
-  'ASIENTO', 'BATERIA', 'CUADRO', 'DROPPER', 'DROPPER POST',
-  'FRENOS', 'GOOGLES', 'GUANTES', 'HANGER', 'LLANTA', 'MANDO E-BIKE',
-  'MAUBRIO', 'POTENCIA', 'RINES', 'SUSPENSION', 'TRANSMISION',
-  'TWINLOCK', 'UNIDAD MOTRIZ', 'ZAPATOS',
-];
 
 const DOC_LABELS: Record<string, string> = {
   // Bicicletas (Scott / Megamo)
@@ -98,19 +90,35 @@ const COLOR_PIEZA: Record<string, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GarantiasTicketsComponent implements OnInit {
-  readonly estatuses        = ESTATUSES;
-  readonly estatusesPieza   = ESTATUSES_PIEZA;
-  readonly piezasReemplazo  = PIEZAS_REEMPLAZO;
+  readonly estatuses      = ESTATUSES;
+  readonly estatusesPieza = ESTATUSES_PIEZA;
+
+  @ViewChild('dpScroll') dpScrollEl!: ElementRef<HTMLElement>;
+
+  piezasReemplazo: string[] = [];
 
   tickets: GarantiaFormulario[] = [];
   cargando = true;
   error = '';
 
   // Filtros
-  busqueda     = '';
+  busqueda      = '';
   filtroEstatus = 'Todos';
   filtroMarca   = 'Todas';
-  filtroMes     = '';
+  fechaDesde    = '';
+  fechaHasta    = '';
+
+  // Custom date picker
+  readonly NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  readonly DIAS_SEM = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
+  mostrarCalendario   = false;
+  calMes              = new Date().getMonth();
+  calAnio             = new Date().getFullYear();
+  calVista: 'dias' | 'meses' | 'anios' = 'dias';
+  calDecadaInicio     = Math.floor(new Date().getFullYear() / 12) * 12;
+  seleccionando: 'inicio' | 'fin' = 'inicio';
+
+  @ViewChild('drWrap') drWrapEl!: ElementRef<HTMLElement>;
 
   // Detalle
   selected: GarantiaFormulario | null = null;
@@ -139,6 +147,11 @@ export class GarantiasTicketsComponent implements OnInit {
   cambiandoPiezaReem = false;
   piezaSeleccionada  = '';
 
+  // Agregar nueva pieza al catálogo
+  mostrarFormPieza = false;
+  nuevaPieza       = '';
+  agregandoPieza   = false;
+
   // Selector de fecha al cambiar estatus
   pendienteEstatus   = '';
   pendientePieza     = '';
@@ -163,7 +176,10 @@ export class GarantiasTicketsComponent implements OnInit {
 
   get esAdmin(): boolean { return this.auth.isAdmin(); }
 
-  ngOnInit(): void { this.cargar(); }
+  ngOnInit(): void {
+    this.cargar();
+    this.cargarPiezas();
+  }
 
   cargar(): void {
     this.cargando = true;
@@ -188,31 +204,166 @@ export class GarantiasTicketsComponent implements OnInit {
     return ['Todas', ...Array.from(set).sort()];
   }
 
-  get mesesDisponibles(): string[] {
-    const set = new Set<string>();
-    this.tickets.forEach(t => {
-      const m = (t.fecha_creacion ?? '').slice(0, 7);
-      if (m) set.add(m);
-    });
-    return Array.from(set).sort((a, b) => b.localeCompare(a));
+  // ── Custom date picker ────────────────────────────────────────────────────
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(e: MouseEvent): void {
+    if (this.mostrarCalendario && !this.drWrapEl?.nativeElement.contains(e.target as Node)) {
+      this.mostrarCalendario = false;
+      this.cdr.markForCheck();
+    }
   }
 
-  formatMes(ym: string): string {
-    if (!ym) return '';
-    const [y, m] = ym.split('-');
+  toggleCalendario(e: MouseEvent): void {
+    e.stopPropagation();
+    if (!this.mostrarCalendario) this.calVista = 'dias';
+    this.mostrarCalendario = !this.mostrarCalendario;
+    this.cdr.markForCheck();
+  }
+
+  diasDelMes(): (number | null)[] {
+    const primerDia = new Date(this.calAnio, this.calMes, 1).getDay();
+    const totalDias = new Date(this.calAnio, this.calMes + 1, 0).getDate();
+    const dias: (number | null)[] = Array(primerDia).fill(null);
+    for (let i = 1; i <= totalDias; i++) dias.push(i);
+    return dias;
+  }
+
+  private diaAFecha(dia: number): string {
+    return `${this.calAnio}-${String(this.calMes + 1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+  }
+
+  seleccionarDia(dia: number): void {
+    const fecha = this.diaAFecha(dia);
+    if (this.seleccionando === 'inicio') {
+      this.fechaDesde    = fecha;
+      this.fechaHasta    = '';
+      this.seleccionando = 'fin';
+    } else {
+      if (fecha < this.fechaDesde) {
+        this.fechaHasta = this.fechaDesde;
+        this.fechaDesde = fecha;
+      } else {
+        this.fechaHasta = fecha;
+      }
+      this.seleccionando    = 'inicio';
+      this.mostrarCalendario = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  esInicio(dia: number | null): boolean {
+    return !!dia && !!this.fechaDesde && this.diaAFecha(dia) === this.fechaDesde;
+  }
+
+  esFin(dia: number | null): boolean {
+    return !!dia && !!this.fechaHasta && this.diaAFecha(dia) === this.fechaHasta;
+  }
+
+  enRango(dia: number | null): boolean {
+    if (!dia || !this.fechaDesde || !this.fechaHasta) return false;
+    const f = this.diaAFecha(dia);
+    return f > this.fechaDesde && f < this.fechaHasta;
+  }
+
+  esHoy(dia: number | null): boolean {
+    return !!dia && this.diaAFecha(dia) === new Date().toISOString().slice(0, 10);
+  }
+
+  mesAnterior(): void {
+    if (this.calVista === 'anios')       { this.calDecadaInicio -= 12; }
+    else if (this.calVista === 'meses')  { this.calAnio--; }
+    else {
+      if (this.calMes === 0) { this.calMes = 11; this.calAnio--; }
+      else this.calMes--;
+    }
+    this.cdr.markForCheck();
+  }
+
+  mesSiguiente(): void {
+    if (this.calVista === 'anios')       { this.calDecadaInicio += 12; }
+    else if (this.calVista === 'meses')  { this.calAnio++; }
+    else {
+      if (this.calMes === 11) { this.calMes = 0; this.calAnio++; }
+      else this.calMes++;
+    }
+    this.cdr.markForCheck();
+  }
+
+  abrirVistaMeses(): void {
+    this.calVista = 'meses';
+    this.cdr.markForCheck();
+  }
+
+  abrirVistaAnios(): void {
+    this.calDecadaInicio = Math.floor(this.calAnio / 12) * 12;
+    this.calVista = 'anios';
+    this.cdr.markForCheck();
+  }
+
+  seleccionarMes(mes: number): void {
+    this.calMes   = mes;
+    this.calVista = 'dias';
+    this.cdr.markForCheck();
+  }
+
+  seleccionarAnio(anio: number): void {
+    this.calAnio  = anio;
+    this.calVista = 'meses';
+    this.cdr.markForCheck();
+  }
+
+  aniosDecada(): number[] {
+    return Array.from({ length: 12 }, (_, i) => this.calDecadaInicio + i);
+  }
+
+  esMesActual(mes: number): boolean {
+    const h = new Date();
+    return this.calAnio === h.getFullYear() && mes === h.getMonth();
+  }
+
+  esAnioActual(anio: number): boolean {
+    return anio === new Date().getFullYear();
+  }
+
+  limpiarFechas(): void {
+    this.fechaDesde        = '';
+    this.fechaHasta        = '';
+    this.seleccionando     = 'inicio';
+    this.mostrarCalendario = false;
+    this.cdr.markForCheck();
+  }
+
+  formatDisplayDate(fecha: string): string {
+    if (!fecha) return '';
+    const [y, m, d] = fecha.split('-');
     const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return `${meses[parseInt(m, 10) - 1] ?? m} ${y}`;
+    return `${parseInt(d)} ${meses[parseInt(m) - 1]} ${y}`;
+  }
+
+  private parseFechaTicket(f: string): Date | null {
+    // Formato: dd/mm/yyyy HH:MM
+    const m = f?.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!m) return null;
+    return new Date(+m[3], +m[2] - 1, +m[1]);
   }
 
   get ticketsFiltrados(): GarantiaFormulario[] {
-    const q  = this.busqueda.toLowerCase().trim();
-    const es = this.filtroEstatus;
-    const ma = this.filtroMarca;
-    const me = this.filtroMes;
+    const q     = this.busqueda.toLowerCase().trim();
+    const es    = this.filtroEstatus;
+    const ma    = this.filtroMarca;
+    const desde = this.fechaDesde ? new Date(this.fechaDesde + 'T00:00:00') : null;
+    const hasta = this.fechaHasta ? new Date(this.fechaHasta + 'T23:59:59') : null;
+
     return this.tickets.filter(t => {
       if (es !== 'Todos' && t.estatus !== es) return false;
       if (ma !== 'Todas' && t.marca    !== ma) return false;
-      if (me && !(t.fecha_creacion ?? '').startsWith(me))   return false;
+      if (desde || hasta) {
+        const fecha = this.parseFechaTicket(t.fecha_creacion ?? '');
+        if (!fecha) return false;
+        if (desde && fecha < desde) return false;
+        if (hasta && fecha > hasta) return false;
+      }
       if (q && !(`${t.folio} ${t.distribuidor} ${t.contacto} ${t.marca}`).toLowerCase().includes(q)) return false;
       return true;
     });
@@ -283,16 +434,48 @@ export class GarantiasTicketsComponent implements OnInit {
     });
   }
 
-  private cargarComentarios(id: number): void {
-    this.cargandoComentarios = true;
-    this.cdr.markForCheck();
+  private cargarComentarios(id: number, silencioso = false): void {
+    const scrollEl = this.dpScrollEl?.nativeElement;
+    const savedScroll = silencioso ? (scrollEl?.scrollTop ?? 0) : null;
+
+    if (!silencioso) {
+      this.cargandoComentarios = true;
+      this.cdr.markForCheck();
+    }
+
     this.svc.getComentarios(id).subscribe({
       next: (c) => {
         this.comentarios = c;
         this.cargandoComentarios = false;
         this.cdr.markForCheck();
+        if (savedScroll !== null && scrollEl) {
+          setTimeout(() => { scrollEl.scrollTop = savedScroll; }, 0);
+        }
       },
       error: () => { this.cargandoComentarios = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  cargarPiezas(): void {
+    this.svc.getPiezas().subscribe({
+      next: (p) => { this.piezasReemplazo = p; this.cdr.markForCheck(); },
+      error: () => {},
+    });
+  }
+
+  agregarNuevaPieza(): void {
+    const nombre = this.nuevaPieza.trim().toUpperCase();
+    if (!nombre || this.agregandoPieza) return;
+    this.agregandoPieza = true;
+    this.cdr.markForCheck();
+    this.svc.agregarPieza(nombre).subscribe({
+      next: () => {
+        this.agregandoPieza   = false;
+        this.mostrarFormPieza = false;
+        this.nuevaPieza       = '';
+        this.cargarPiezas();
+      },
+      error: () => { this.agregandoPieza = false; this.cdr.markForCheck(); },
     });
   }
 
@@ -478,7 +661,7 @@ export class GarantiasTicketsComponent implements OnInit {
         this.validacionDocs = { ...(res.validacion_docs_json ?? {}) };
         if (this.selected) this.selected.validacion_docs_json = this.validacionDocs;
         this.validandoDoc[campo] = false;
-        this.cargarComentarios(this.selected!.id);
+        this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.validandoDoc[campo] = false; this.cdr.markForCheck(); },
     });

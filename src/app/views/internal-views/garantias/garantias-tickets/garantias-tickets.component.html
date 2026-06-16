@@ -39,10 +39,108 @@
             <option *ngFor="let m of marcas.slice(1)" [value]="m">{{ m }}</option>
           </select>
         </div>
-        <select class="filter-select filter-select-mes" [(ngModel)]="filtroMes">
-          <option value="">Todos los meses</option>
-          <option *ngFor="let mes of mesesDisponibles" [value]="mes">{{ formatMes(mes) }}</option>
-        </select>
+        <!-- ── Custom date-range picker ── -->
+        <div class="dr-wrap" #drWrap>
+          <button class="dr-trigger"
+                  [class.dr-active]="mostrarCalendario"
+                  [class.dr-filled]="fechaDesde || fechaHasta"
+                  (click)="toggleCalendario($event)">
+            <i class="fas fa-calendar-alt dr-cal-icon"></i>
+            <span class="dr-placeholder" *ngIf="!fechaDesde && !fechaHasta">Filtrar por fecha</span>
+            <ng-container *ngIf="fechaDesde || fechaHasta">
+              <span class="dr-fecha-chip" [class.dr-chip-sel]="seleccionando==='inicio'">
+                {{ fechaDesde ? formatDisplayDate(fechaDesde) : 'Inicio' }}
+              </span>
+              <i class="fas fa-long-arrow-alt-right dr-arrow-icon"></i>
+              <span class="dr-fecha-chip" [class.dr-chip-sel]="seleccionando==='fin'">
+                {{ fechaHasta ? formatDisplayDate(fechaHasta) : 'Fin' }}
+              </span>
+            </ng-container>
+            <button *ngIf="fechaDesde || fechaHasta" class="dr-clear-x"
+                    (click)="$event.stopPropagation(); limpiarFechas()">
+              <i class="fas fa-times"></i>
+            </button>
+          </button>
+
+          <!-- Popover calendar -->
+          <div class="dr-popover" *ngIf="mostrarCalendario" (click)="$event.stopPropagation()">
+            <div class="dr-step-hint">
+              <span class="dr-step" [class.dr-step-on]="seleccionando==='inicio'">
+                <i class="fas fa-circle"></i> Inicio
+              </span>
+              <div class="dr-step-line"></div>
+              <span class="dr-step" [class.dr-step-on]="seleccionando==='fin'">
+                <i class="fas fa-circle"></i> Fin
+              </span>
+            </div>
+
+            <div class="dr-nav">
+              <button class="dr-nav-btn" (click)="mesAnterior()"><i class="fas fa-chevron-left"></i></button>
+
+              <ng-container *ngIf="calVista === 'dias'">
+                <button class="dr-label-btn" (click)="abrirVistaMeses()">
+                  {{ NOMBRES_MESES[calMes] }} {{ calAnio }}
+                </button>
+              </ng-container>
+              <ng-container *ngIf="calVista === 'meses'">
+                <button class="dr-label-btn" (click)="abrirVistaAnios()">
+                  {{ calAnio }}
+                </button>
+              </ng-container>
+              <ng-container *ngIf="calVista === 'anios'">
+                <span class="dr-mes-label">{{ calDecadaInicio }} – {{ calDecadaInicio + 11 }}</span>
+              </ng-container>
+
+              <button class="dr-nav-btn" (click)="mesSiguiente()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+
+            <!-- Vista: días -->
+            <ng-container *ngIf="calVista === 'dias'">
+              <div class="dr-dias-header">
+                <span *ngFor="let d of DIAS_SEM">{{ d }}</span>
+              </div>
+              <div class="dr-dias-grid">
+                <div *ngFor="let dia of diasDelMes()" class="dr-dia"
+                     [class.dr-dia-vacio]="!dia"
+                     [class.dr-dia-inicio]="esInicio(dia)"
+                     [class.dr-dia-fin]="esFin(dia)"
+                     [class.dr-dia-rango]="enRango(dia)"
+                     [class.dr-dia-hoy]="esHoy(dia)"
+                     (click)="dia && seleccionarDia(dia)">
+                  {{ dia || '' }}
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Vista: meses -->
+            <div class="dr-meses-grid" *ngIf="calVista === 'meses'">
+              <button *ngFor="let m of NOMBRES_MESES; let i = index"
+                      class="dr-mes-item"
+                      [class.dr-item-actual]="esMesActual(i)"
+                      [class.dr-item-sel]="calMes === i && calVista === 'meses'"
+                      (click)="seleccionarMes(i)">
+                {{ m.slice(0, 3) }}
+              </button>
+            </div>
+
+            <!-- Vista: años -->
+            <div class="dr-anios-grid" *ngIf="calVista === 'anios'">
+              <button *ngFor="let a of aniosDecada()"
+                      class="dr-anio-item"
+                      [class.dr-item-actual]="esAnioActual(a)"
+                      [class.dr-item-sel]="calAnio === a"
+                      (click)="seleccionarAnio(a)">
+                {{ a }}
+              </button>
+            </div>
+
+            <div class="dr-footer" *ngIf="fechaDesde || fechaHasta">
+              <button class="dr-btn-borrar" (click)="limpiarFechas()">
+                <i class="fas fa-trash-alt"></i> Borrar
+              </button>
+            </div>
+          </div>
+        </div>
         <span class="result-count">{{ ticketsFiltrados.length }} resultado{{ ticketsFiltrados.length !== 1 ? 's' : '' }}</span>
       </div>
 
@@ -119,7 +217,7 @@
         </div>
       </div>
 
-      <div class="dp-scroll">
+      <div class="dp-scroll" #dpScroll>
         <div *ngIf="cargandoDetalle" class="dp-loading">
           <div class="spinner"></div>
         </div>
@@ -150,6 +248,41 @@
                   <div *ngFor="let f of datosBicicleta" class="dp-field">
                     <span class="dp-key">{{ f.label }}</span>
                     <span class="dp-val">{{ f.value }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información de marca -->
+              <div class="dp-section" *ngIf="datosMarca.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-tag"></i> Información de marca</h4>
+                <div class="dp-grid">
+                  <div *ngFor="let f of datosMarca" class="dp-field">
+                    <span class="dp-key">{{ f.label }}</span>
+                    <span class="dp-val">{{ f.value }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Daños en el marco -->
+              <div class="dp-section" *ngIf="danosMarco.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-exclamation-triangle"></i> Daños reportados en el marco</h4>
+                <div class="danos-list">
+                  <div *ngFor="let d of danosMarco; let i = index" class="dano-card">
+                    <div class="dano-num">{{ i + 1 }}</div>
+                    <div class="dano-body">
+                      <div class="dano-row" *ngIf="d.localizacion">
+                        <span class="dano-lbl">Localización</span>
+                        <span class="dano-val">{{ d.localizacion }}</span>
+                      </div>
+                      <div class="dano-row" *ngIf="d.tipo">
+                        <span class="dano-lbl">Tipo de daño</span>
+                        <span class="dano-badge">{{ d.tipo }}</span>
+                      </div>
+                      <div class="dano-row" *ngIf="d.comentarios">
+                        <span class="dano-lbl">Comentarios</span>
+                        <span class="dano-val dano-italic">{{ d.comentarios }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -248,41 +381,6 @@
                 </div>
               </div>
 
-              <!-- Información de marca -->
-              <div class="dp-section" *ngIf="datosMarca.length > 0">
-                <h4 class="dp-section-title"><i class="fas fa-tag"></i> Información de marca</h4>
-                <div class="dp-grid">
-                  <div *ngFor="let f of datosMarca" class="dp-field">
-                    <span class="dp-key">{{ f.label }}</span>
-                    <span class="dp-val">{{ f.value }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Daños en el marco -->
-              <div class="dp-section" *ngIf="danosMarco.length > 0">
-                <h4 class="dp-section-title"><i class="fas fa-exclamation-triangle"></i> Daños reportados en el marco</h4>
-                <div class="danos-list">
-                  <div *ngFor="let d of danosMarco; let i = index" class="dano-card">
-                    <div class="dano-num">{{ i + 1 }}</div>
-                    <div class="dano-body">
-                      <div class="dano-row" *ngIf="d.localizacion">
-                        <span class="dano-lbl">Localización</span>
-                        <span class="dano-val">{{ d.localizacion }}</span>
-                      </div>
-                      <div class="dano-row" *ngIf="d.tipo">
-                        <span class="dano-lbl">Tipo de daño</span>
-                        <span class="dano-badge">{{ d.tipo }}</span>
-                      </div>
-                      <div class="dano-row" *ngIf="d.comentarios">
-                        <span class="dano-lbl">Comentarios</span>
-                        <span class="dano-val dano-italic">{{ d.comentarios }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
             </div>
 
             <!-- ── COLUMNA DERECHA: acciones + comentarios ── -->
@@ -290,7 +388,27 @@
 
               <!-- Pieza de reemplazo -->
               <div class="dp-section">
-                <h4 class="dp-section-title"><i class="fas fa-wrench"></i> Pieza de reemplazo</h4>
+                <h4 class="dp-section-title">
+                  <i class="fas fa-wrench"></i> Pieza de reemplazo
+                  <button class="btn-agregar-pieza" (click)="mostrarFormPieza = !mostrarFormPieza" title="Agregar nueva pieza al catálogo">
+                    <i class="fas fa-plus"></i> Nueva pieza
+                  </button>
+                </h4>
+
+                <!-- Formulario agregar pieza -->
+                <div class="form-nueva-pieza" *ngIf="mostrarFormPieza">
+                  <input type="text" class="input-nueva-pieza" [(ngModel)]="nuevaPieza"
+                         placeholder="Nombre de la pieza (ej. HORQUILLA)"
+                         (keyup.enter)="agregarNuevaPieza()">
+                  <div class="form-nueva-pieza-actions">
+                    <button class="btn-cancel-sm" (click)="mostrarFormPieza = false; nuevaPieza = ''">Cancelar</button>
+                    <button class="btn-confirm-sm" [disabled]="!nuevaPieza.trim() || agregandoPieza" (click)="agregarNuevaPieza()">
+                      <i *ngIf="agregandoPieza" class="fas fa-spinner fa-spin"></i>
+                      <span *ngIf="!agregandoPieza">Agregar</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div class="pieza-reem-wrap">
                   <select class="pieza-select"
                           [(ngModel)]="piezaSeleccionada"

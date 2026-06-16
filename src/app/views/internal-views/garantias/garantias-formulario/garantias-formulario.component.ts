@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
+import { TitleCaseDirective } from '../../../../directives/title-case.directive';
 import { GarantiasService } from '../../../../services/garantias.service';
 import { AuthService } from '../../../../services/auth.service';
 
@@ -146,7 +147,7 @@ export const SECCIONES: SeccionDef[] = [
 @Component({
   selector: 'app-garantias-formulario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent, TitleCaseDirective],
   templateUrl: './garantias-formulario.component.html',
   styleUrl: './garantias-formulario.component.css',
 })
@@ -626,11 +627,77 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
 
   next(): void {
     if (!this.isLastStep) {
+      if (!this.esAdmin && !this.validarSeccionActual()) return;
       this.currentStepIdx++;
       this.errorMensaje = '';
       this.guardarBorrador();
       window.scrollTo({ top: (document.querySelector('app-home-bar') as HTMLElement | null)?.offsetHeight ?? 64, behavior: 'smooth' });
     }
+  }
+
+  private validarSeccionActual(): boolean {
+    const id = this.currentSection.id;
+    const fd = this.formData;
+    const uf = this.uploadedFiles;
+    const campos: string[] = [];
+    const archivos: string[] = [];
+
+    switch (id) {
+      case 1:   campos.push('email'); break;
+      case 2:   campos.push('distribuidor', 'contacto', 'puesto', 'marca'); break;
+      case 3:
+      case 35:
+      case 14:  campos.push('bici_modelo', 'bici_anio', 'bici_serie', 'scott_tipo_marco'); break;
+      case 4:   campos.push('scott_grupo'); break;
+      case 5:   campos.push('casco_modelo', 'casco_anio', 'casco_color', 'casco_talla', 'casco_serie'); break;
+      case 6:   campos.push('casco_localizacion', 'casco_tipo_dano', 'casco_comentarios'); break;
+      case 7:   campos.push('prot_modelo', 'prot_talla'); break;
+      case 8:   campos.push('prot_localizacion', 'prot_tipo_dano', 'prot_comentarios'); break;
+      case 9:   campos.push('zapato_modelo', 'zapato_color', 'zapato_talla', 'zapato_serie'); break;
+      case 10:  campos.push('zapato_localizacion', 'zapato_tipo_dano', 'zapato_comentarios'); break;
+      case 11:  campos.push('comp_tipo', 'comp_modelo'); break;
+      case 12:  campos.push('comp_dano_desc'); break;
+      case 13:  archivos.push('scott_doc1', 'scott_doc2', 'scott_doc3', 'scott_doc4a', 'scott_doc4b'); break;
+      case 22:  archivos.push('bici_doc1', 'bici_doc2', 'bici_doc3', 'bici_doc4a', 'bici_doc4b'); break;
+      case 23:  campos.push('syncros_tipo'); break;
+      case 24:  campos.push('manubrio_modelo'); break;
+      case 25:  campos.push('manubrio_localizacion', 'manubrio_tipo_dano', 'manubrio_dano_desc'); break;
+      case 252: archivos.push('manubrio_doc1', 'manubrio_doc2', 'manubrio_doc3', 'manubrio_doc4a', 'manubrio_doc4b'); break;
+      case 26:  campos.push('asiento_modelo'); break;
+      case 27:  campos.push('asiento_localizacion', 'asiento_tipo_dano', 'asiento_dano_desc'); break;
+      case 272: archivos.push('asiento_doc1', 'asiento_doc2', 'asiento_doc3', 'asiento_doc4a', 'asiento_doc4b'); break;
+      case 28:  campos.push('poste_modelo'); break;
+      case 29:  campos.push('poste_localizacion', 'poste_tipo_dano', 'poste_dano_desc'); break;
+      case 292: archivos.push('poste_doc1', 'poste_doc2', 'poste_doc3', 'poste_doc4a', 'poste_doc4b'); break;
+      case 30:  campos.push('rin_modelo'); break;
+      case 31:  campos.push('rin_localizacion', 'rin_tipo_dano', 'rin_dano_desc'); break;
+      case 315: archivos.push('rin_doc1', 'rin_doc2', 'rin_doc3', 'rin_doc4a', 'rin_doc4b'); break;
+      case 32:  campos.push('vittoria_modelo'); break;
+      case 33:
+        campos.push('vittoria_dano_desc');
+        archivos.push('vittoria_doc1', 'vittoria_doc2', 'vittoria_doc3', 'vittoria_doc4a', 'vittoria_doc4b');
+        break;
+      case 34:  campos.push('terminos_aceptados'); break;
+    }
+
+    if (id >= 15 && id <= 21) {
+      campos.push(`marco_localizacion_${id}`, `marco_tipo_dano_${id}`, `marco_comentarios_${id}`);
+    }
+
+    for (const c of campos) {
+      const v = fd[c];
+      if (v === undefined || v === null || v === '' || v === false) {
+        this.errorMensaje = 'Por favor completa todos los campos obligatorios antes de continuar.';
+        return false;
+      }
+    }
+    for (const a of archivos) {
+      if (!uf[a]) {
+        this.errorMensaje = 'Por favor adjunta todos los documentos requeridos antes de continuar.';
+        return false;
+      }
+    }
+    return true;
   }
 
   back(): void {

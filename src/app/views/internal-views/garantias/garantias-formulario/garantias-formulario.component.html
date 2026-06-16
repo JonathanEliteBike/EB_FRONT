@@ -137,7 +137,7 @@
         </div>
         <div class="field-group">
           <label class="field-label required">Número de Serie del Marco</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.bici_serie" name="bici_serie">
         </div>
         <div class="field-group">
@@ -168,7 +168,7 @@
         </div>
         <div class="field-group">
           <label class="field-label required">Número de Serie del Marco</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.bici_serie" name="bici_serie">
         </div>
         <div class="field-group">
@@ -232,7 +232,7 @@
         </div>
         <div class="field-group">
           <label class="field-label required">Número de Serie</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.casco_serie" name="casco_serie">
         </div>
       </div>
@@ -291,7 +291,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Serie</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.prot_serie" name="prot_serie">
         </div>
         <div class="field-group">
@@ -372,7 +372,7 @@
         </div>
         <div class="field-group">
           <label class="field-label required">Número de Serie</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.zapato_serie" name="zapato_serie">
         </div>
       </div>
@@ -440,7 +440,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Serie</label>
-          <input type="text" class="field-input" placeholder="Número de serie del componente"
+          <input type="text" class="field-input" placeholder="Número de serie del componente" appRaw
                  [(ngModel)]="formData.comp_serie" name="comp_serie">
         </div>
       </div>
@@ -456,7 +456,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Código de Error (si aplica)</label>
-          <input type="text" class="field-input" placeholder="Ej. E007"
+          <input type="text" class="field-input" placeholder="Ej. E007" appRaw
                  [(ngModel)]="formData.comp_error" name="comp_error">
         </div>
       </div>
@@ -511,7 +511,7 @@
         </div>
         <div class="field-group">
           <label class="field-label required">Número de Serie del Marco</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.bici_serie" name="bici_serie">
         </div>
         <div class="field-group">
@@ -660,7 +660,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Serie / Código</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.manubrio_serie" name="manubrio_serie">
         </div>
         <div class="field-group">
@@ -754,7 +754,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Serie / Código</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.asiento_serie" name="asiento_serie">
         </div>
         <div class="field-group">
@@ -848,7 +848,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Serie / Código</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.poste_serie" name="poste_serie">
         </div>
         <div class="field-group">
@@ -942,7 +942,7 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Serie / Código</label>
-          <input type="text" class="field-input" placeholder="Número de serie"
+          <input type="text" class="field-input" placeholder="Número de serie" appRaw
                  [(ngModel)]="formData.rin_serie" name="rin_serie">
         </div>
         <div class="field-group">
@@ -1047,12 +1047,12 @@
         </div>
         <div class="field-group">
           <label class="field-label">Número de Lote / Código</label>
-          <input type="text" class="field-input" placeholder="Código del producto"
+          <input type="text" class="field-input" placeholder="Código del producto" appRaw
                  [(ngModel)]="formData.vittoria_lote" name="vittoria_lote">
         </div>
         <div class="field-group">
           <label class="field-label">Medida</label>
-          <input type="text" class="field-input" placeholder="Ej. 700x25C / 29x2.1"
+          <input type="text" class="field-input" placeholder="Ej. 700x25C / 29x2.1" appRaw
                  [(ngModel)]="formData.vittoria_medida" name="vittoria_medida">
         </div>
       </div>
@@ -1143,6 +1143,7 @@
                 placeholder="Buscar por clave de sistema o nombre…"
                 [(ngModel)]="busquedaUsuario"
                 name="busquedaUsuario"
+                appRaw
                 (focus)="mostrarListaUsuarios = true"
                 (blur)="cerrarListaConDelay()"
                 autocomplete="off">

@@ -224,6 +224,18 @@ export class GarantiasService {
     return this.http.get<LatenciaTicket[]>(`${this.api}/garantias/latencias`);
   }
 
+  // ── Catálogo piezas ──────────────────────────────────────────────────────
+  getPiezas(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.api}/garantias/piezas`);
+  }
+
+  agregarPieza(nombre: string): Observable<{ ok: boolean; nombre: string }> {
+    return this.http.post<{ ok: boolean; nombre: string }>(
+      `${this.api}/garantias/piezas`,
+      { nombre }
+    );
+  }
+
   // ── Usuarios ─────────────────────────────────────────
   getUsuariosParaAsignar(): Observable<{ id: number; nombre: string; correo: string; rol: string }[]> {
     return this.http.get<{ id: number; nombre: string; correo: string; rol: string }[]>(
