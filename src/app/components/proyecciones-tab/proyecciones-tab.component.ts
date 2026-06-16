@@ -1088,7 +1088,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   guardarCambios(): void {
-    if (!this.clienteClave || !this.idCliente || !this.periodoSeleccionado) return;
+    if (!this.clienteClave || !this.periodoSeleccionado) return;
 
     const toDelete = this.rows.filter(r => r._eliminar && r.id);
     const toSave   = this.rows.filter(r => !r._eliminar && (r._editado || r._nuevo));
