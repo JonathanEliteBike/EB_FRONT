@@ -16,6 +16,12 @@
         <i class="fas fa-exclamation-triangle"></i> {{ error }}
     </div>
 
+    <div class="barra-acciones-pdf" *ngIf="datosCliente && !isLoading">
+        <button class="btn-descargar-pdf" (click)="descargarPDF()">
+            <i class="fas fa-file-pdf"></i> Descargar PDF
+        </button>
+    </div>
+
     <div class="caratula-wrapper" *ngIf="datosCliente && !isLoading">
 
         <!-- BANNER: Temporada cerrada -->

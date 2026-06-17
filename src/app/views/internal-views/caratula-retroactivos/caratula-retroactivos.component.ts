@@ -427,6 +427,10 @@ export class CaratulaRetroactivosComponent implements OnInit {
     return !!this.datosCliente?.temporada_cerrada;
   }
 
+  descargarPDF(): void {
+    window.print();
+  }
+
   get fechaCierreFormateada(): string {
     const f = this.datosCliente?.fecha_cierre_temporada;
     if (!f) return '';

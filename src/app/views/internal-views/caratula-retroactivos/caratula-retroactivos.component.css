@@ -457,7 +457,60 @@
     line-height: 1.5;
 }
 
-/* Responsive para pantallas pequeñas */
+/* ================= BOTÓN DESCARGAR PDF ================= */
+.barra-acciones-pdf {
+    width: 100%;
+    max-width: 950px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.btn-descargar-pdf {
+    background-color: #EB5E28;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.btn-descargar-pdf:hover { background-color: #d15020; }
+
+/* ================= PRINT / PDF ================= */
+@media print {
+    app-home-bar,
+    .search-card,
+    .error-message,
+    .barra-acciones-pdf,
+    .seccion-cerrar-temporada { display: none !important; }
+
+    body, .monitor-container {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .caratula-wrapper {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 20px 30px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .table-moderna, .escalera-calculo, .row-calc { page-break-inside: avoid; }
+
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
     .caratula-wrapper { padding: 30px 20px; }
     

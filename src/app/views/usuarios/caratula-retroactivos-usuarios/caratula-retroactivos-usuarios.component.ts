@@ -244,6 +244,10 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
     return this.getImporteFinalBase() * this.getRetroactivoTotal();
   }
 
+  descargarPDF(): void {
+    window.print();
+  }
+
   get temporadaCerrada(): boolean {
     return !!this.datosCliente?.temporada_cerrada;
   }
