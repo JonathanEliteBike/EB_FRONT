@@ -56,7 +56,14 @@
                     </select>
                     <button *ngIf="filtroMarca" class="buscador-limpiar" (click)="limpiarFiltroMarca()" title="Quitar filtro">×</button>
                 </div>
-                <span *ngIf="textoBusqueda || filtroMarca" class="buscador-resultado">
+                <!-- Filtro proyección -->
+                <button class="filtro-proy-btn"
+                        [class.filtro-proy-activo]="filtroProyeccion"
+                        (click)="filtroProyeccion = !filtroProyeccion; filtrarFacturas()"
+                        title="Mostrar solo pedidos de proyecciones">
+                    <i class="fas fa-chart-bar"></i> Solo PROY
+                </button>
+                <span *ngIf="textoBusqueda || filtroMarca || filtroProyeccion" class="buscador-resultado">
                     {{ facturasFiltradas.length }} resultado{{ facturasFiltradas.length !== 1 ? 's' : '' }}
                 </span>
             </div>
@@ -153,7 +160,10 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let factura of facturasPaginadas">
-                            <td>{{ factura.numero_factura }}</td>
+                            <td>
+                                {{ factura.numero_factura }}
+                                <span *ngIf="factura.de_proyeccion" class="badge-proyeccion" title="Pedido de proyecciones">PROY</span>
+                            </td>
                             <td>{{ factura.referencia_interna }}</td>
                             <td>{{ factura.nombre_producto }}</td>
                             <td>{{ formatearFecha(factura.fecha_factura) }}</td>

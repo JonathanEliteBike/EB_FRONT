@@ -44,6 +44,8 @@ interface Factura {
   fecha_esperada: string | null;
   /** Número de la Orden de Compra relacionada (informativo). */
   po_name: string | null;
+  /** Verdadero cuando el SKU de esta línea existe en forecast_proyecciones para este cliente. */
+  de_proyeccion: boolean;
 }
 
 /**
@@ -125,8 +127,11 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
 
   // ── Buscador ───────────────────────────────────────────────────────────────
   /** Cadena de texto ingresada por el usuario para filtrar resultados. */
-  textoBusqueda = '';  /** Marca seleccionada en el filtro desplegable. Vacío = todas. */
+  textoBusqueda = '';
+  /** Marca seleccionada en el filtro desplegable. Vacío = todas. */
   filtroMarca = '';
+  /** Cuando es true, muestra solo líneas marcadas como de proyección. */
+  filtroProyeccion = false;
   /** Filtros activos por columna (estilo Excel). Clave = campo de Factura, valor = lista seleccionada. */
   columnFilters: Record<string, string[]> = {};
   /** Columna cuyo popover de filtro está abierto. */
@@ -213,6 +218,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     this.tabActiva = 'Total';
     this.indiceTabActiva = 0;
     this.textoBusqueda = '';
+    this.filtroMarca = '';
+    this.filtroProyeccion = false;
     this.fechaInicioTemporada = null;
     this.avancePrevio = null;
     this.proyeccionesCount = 0;
@@ -249,7 +256,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
             estado_orden: r.estado_orden ?? '',
             cantidad_entregada: Number(r.cantidad_entregada ?? 0) || 0,
             fecha_esperada: r.fecha_esperada ?? null,
-            po_name: r.po_name ?? null
+            po_name: r.po_name ?? null,
+            de_proyeccion: r.de_proyeccion ?? false
           }));
           if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
           this.error = null;
@@ -283,7 +291,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
           if (response.success) {
             this.facturas = (response.data || []).map((r: any) => ({
               ...r,
-              estado_factura: this.mapEstadoFactura(r.estado_factura ?? '')
+              estado_factura: this.mapEstadoFactura(r.estado_factura ?? ''),
+              de_proyeccion: r.de_proyeccion ?? false
             }));
             this.infoCliente = response.cliente ?? null;
             if (this.facturas.length > 0) {
@@ -348,7 +357,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
                 estado_orden: r.estado_orden ?? '',
                 cantidad_entregada: Number(r.cantidad_entregada ?? 0) || 0,
                 fecha_esperada: r.fecha_esperada ?? null,
-                po_name: r.po_name ?? null
+                po_name: r.po_name ?? null,
+                de_proyeccion: r.de_proyeccion ?? false
               }));
               if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.error = null;
@@ -427,7 +437,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
                     estado_orden: r.estado_orden ?? '',
                     cantidad_entregada: Number(r.cantidad_entregada ?? 0) || 0,
                     fecha_esperada: r.fecha_esperada ?? null,
-                    po_name: r.po_name ?? null
+                    po_name: r.po_name ?? null,
+                    de_proyeccion: r.de_proyeccion ?? false
                   }));
 
                   if (this.facturas.length > 0) {
@@ -516,6 +527,11 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     // Aplicar filtro de marca
     if (this.filtroMarca) {
       base = base.filter(f => (f.marca ?? '').trim() === this.filtroMarca);
+    }
+
+    // Aplicar filtro de proyección
+    if (this.filtroProyeccion) {
+      base = base.filter(f => f.de_proyeccion);
     }
 
     // Filtros de columna estilo Excel
@@ -775,6 +791,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
       fila['Cliente / EVAC'] = factura.evac ?? '';
       fila['Marca'] = factura.marca ?? '';
       fila['Subcategoría'] = factura.subcategoria ?? '';
+      fila['Proyección'] = factura.de_proyeccion ? 'Sí' : 'No';
       return fila;
     });
 
@@ -793,6 +810,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     filaTotal['Cliente / EVAC'] = '';
     filaTotal['Marca'] = '';
     filaTotal['Subcategoría'] = '';
+    filaTotal['Proyección'] = '';
     datosExportar.push(filaTotal);
 
     const worksheet = XLSX.utils.json_to_sheet(datosExportar);
@@ -800,7 +818,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     const headers = [
       'Número Pedido', 'Clave Producto', 'Producto', 'Fecha',
       'Precio Unit.', 'Cantidad Pedida', 'Cantidad Entregada', 'Total',
-      'Estatus Entrega', 'Estado Orden', 'Cliente / EVAC', 'Marca', 'Subcategoría'
+      'Estatus Entrega', 'Estado Orden', 'Cliente / EVAC', 'Marca', 'Subcategoría', 'Proyección'
     ];
 
     const colWidths = headers.map(header => {
