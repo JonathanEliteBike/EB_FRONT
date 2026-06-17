@@ -61,6 +61,7 @@ export interface ForecastRow {
   talla: string;
   fuente?: string;
   actualizado_en?: string;
+  precio_publico?: number | null;
   mayo: number;
   junio: number;
   julio: number;

@@ -641,7 +641,9 @@
 
 /* Precio column */
 .th-precio          { min-width: 100px; text-align: right; }
+.th-precio-pub      { color: #aed6f1; }
 .td-precio          { text-align: right; font-size: 0.82rem; color: #FFFCF2; white-space: nowrap; }
+.td-precio-pub      { color: #aed6f1; }
 .td-precio-nd       { color: #555; }
 
 /* Total $ column */

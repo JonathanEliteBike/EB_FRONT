@@ -217,6 +217,7 @@
             <th class="th-center">Color</th>
             <th class="th-center">Talla</th>
             <th class="th-precio">Precio</th>
+            <th class="th-precio th-precio-pub">P. Público c/IVA</th>
             <th class="th-total">Total uds.</th>
             <th class="th-total-precio">Total $</th>
             <th *ngIf="modoEdicion" class="th-acciones">Acciones</th>
@@ -228,6 +229,7 @@
             <th class="th-center">Color</th>
             <th class="th-center">Talla</th>
             <th class="th-precio">Precio</th>
+            <th class="th-precio th-precio-pub">P. Público c/IVA</th>
             <th *ngFor="let label of mesesLabels" class="th-mes">{{ label }}</th>
             <th class="th-total">Total uds.</th>
             <th class="th-total-precio">Total $</th>
@@ -310,10 +312,16 @@
               <span *ngIf="modoEdicion && row._nuevo">{{ row._searchSeleccionado ? row.talla : '&mdash;' }}</span>
             </td>
 
-            <!-- Precio (siempre visible) -->
+            <!-- Precio distribuidor (siempre visible) -->
             <td class="td-precio">
               <span *ngIf="row.precio">{{ row.precio | currency:'MXN':'symbol':'1.2-2' }}</span>
               <span *ngIf="!row.precio" class="td-precio-nd">—</span>
+            </td>
+
+            <!-- Precio público sin IVA (solo bicis de whitelist) -->
+            <td class="td-precio td-precio-pub">
+              <span *ngIf="row.precio_publico">{{ row.precio_publico | currency:'MXN':'symbol':'1.2-2' }}</span>
+              <span *ngIf="!row.precio_publico" class="td-precio-nd">—</span>
             </td>
 
             <!-- Meses (visibles en modo expandido, siempre en DOM para evitar spike de creación) -->
@@ -372,7 +380,8 @@
           <!-- Fila naranja: totales de unidades -->
           <tr class="proy-fila-totales">
             <td [attr.colspan]="modoExpandido ? 4 : 6"><strong>TOTALES</strong></td>
-            <!-- columna Precio vacía -->
+            <!-- columnas Precio y Precio Público vacías -->
+            <td class="td-precio-foot"></td>
             <td class="td-precio-foot"></td>
             <ng-container *ngIf="modoExpandido">
               <td *ngFor="let mes of mesesKeys" class="td-total-foot">
