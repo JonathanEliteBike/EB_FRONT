@@ -148,9 +148,17 @@ export class GarantiasTicketsComponent implements OnInit {
   piezaSeleccionada  = '';
 
   // Agregar nueva pieza al catálogo
-  mostrarFormPieza = false;
-  nuevaPieza       = '';
-  agregandoPieza   = false;
+  mostrarFormPieza  = false;
+  nuevaPieza        = '';
+  agregandoPieza    = false;
+  piezasError       = false;
+
+  // Importación masiva histórica
+  modalImport           = false;
+  archivoImport: File | null = null;
+  importando            = false;
+  descargandoPlantilla  = false;
+  importResult: any     = null;
 
   // Selector de fecha al cambiar estatus
   pendienteEstatus   = '';
@@ -378,7 +386,7 @@ export class GarantiasTicketsComponent implements OnInit {
     this.comentarios = [];
     this.nuevoComentario = '';
     this.notaInterna = '';
-    this.fechaValidacion = '';
+    this.fechaValidacion = localStorage.getItem(`garantias_fecha_retro_${t.id}`) ?? '';
     this.confirmandoEliminacion = false;
     this.validacionDocs   = { ...(t.validacion_docs_json ?? {}) };
     this.validandoDoc     = {};
@@ -387,9 +395,29 @@ export class GarantiasTicketsComponent implements OnInit {
     this.pendientePieza     = '';
     this.editandoFechaEstatus = false;
     this.editandoFechaPieza   = false;
+    if (this.piezasReemplazo.length === 0) this.cargarPiezas();
     this.cdr.markForCheck();
     this.cargarDetalle(t.id);
     this.cargarComentarios(t.id);
+  }
+
+  guardarFechaRetro(fecha: string): void {
+    this.fechaValidacion = fecha;
+    if (this.selected) {
+      if (fecha) {
+        localStorage.setItem(`garantias_fecha_retro_${this.selected.id}`, fecha);
+      } else {
+        localStorage.removeItem(`garantias_fecha_retro_${this.selected.id}`);
+      }
+    }
+  }
+
+  limpiarFechaRetro(): void {
+    if (this.selected) {
+      localStorage.removeItem(`garantias_fecha_retro_${this.selected.id}`);
+    }
+    this.fechaValidacion = '';
+    this.cdr.markForCheck();
   }
 
   cerrarDetalle(): void {
@@ -456,10 +484,85 @@ export class GarantiasTicketsComponent implements OnInit {
     });
   }
 
+  // ── Importación masiva ────────────────────────────────────────────────────
+
+  abrirModalImport(): void {
+    this.modalImport   = true;
+    this.archivoImport = null;
+    this.importResult  = null;
+    this.cdr.markForCheck();
+  }
+
+  cerrarModalImport(): void {
+    if (this.importando) return;
+    this.modalImport = false;
+    this.cdr.markForCheck();
+  }
+
+  onArchivoImport(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.archivoImport = input.files?.[0] ?? null;
+    this.importResult  = null;
+    this.cdr.markForCheck();
+  }
+
+  descargarPlantilla(): void {
+    if (this.descargandoPlantilla) return;
+    this.descargandoPlantilla = true;
+    this.cdr.markForCheck();
+    this.svc.descargarPlantillaImport().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = 'plantilla_importacion_garantias.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+        this.descargandoPlantilla = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.descargandoPlantilla = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  ejecutarImport(): void {
+    if (!this.archivoImport || this.importando) return;
+    this.importando   = true;
+    this.importResult = null;
+    this.cdr.markForCheck();
+    this.svc.importarHistorico(this.archivoImport).subscribe({
+      next: (res) => {
+        this.importResult = res;
+        this.importando   = false;
+        if (res.insertados > 0) this.cargar();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.importResult = { error: err?.error?.error ?? 'Error al importar. Verifica el archivo.' };
+        this.importando   = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   cargarPiezas(): void {
+    this.piezasError = false;
     this.svc.getPiezas().subscribe({
-      next: (p) => { this.piezasReemplazo = p; this.cdr.markForCheck(); },
-      error: () => {},
+      next: (p) => {
+        this.piezasReemplazo = Array.isArray(p) ? p : [];
+        this.piezasError     = this.piezasReemplazo.length === 0;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar catálogo de piezas:', err);
+        this.piezasError = true;
+        this.cdr.markForCheck();
+      },
     });
   }
 

@@ -236,6 +236,19 @@ export class GarantiasService {
     );
   }
 
+  // ── Importación masiva histórica ─────────────────────────────────────────
+  descargarPlantillaImport(): Observable<Blob> {
+    return this.http.get(`${this.api}/garantias/importar/plantilla`, { responseType: 'blob' });
+  }
+
+  importarHistorico(archivo: File): Observable<{
+    ok: boolean; insertados: number; errores: { fila: number; errores: string[] }[]; mensaje: string;
+  }> {
+    const fd = new FormData();
+    fd.append('archivo', archivo);
+    return this.http.post<any>(`${this.api}/garantias/importar`, fd);
+  }
+
   // ── Usuarios ─────────────────────────────────────────
   getUsuariosParaAsignar(): Observable<{ id: number; nombre: string; correo: string; rol: string }[]> {
     return this.http.get<{ id: number; nombre: string; correo: string; rol: string }[]>(

@@ -11,9 +11,80 @@
         Seguimiento de Tickets
       </h1>
     </div>
-    <button class="btn btn-outline" (click)="cargar()">
-      <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i> Actualizar
-    </button>
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="cargar()">
+        <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i> Actualizar
+      </button>
+      <button *ngIf="esAdmin" class="btn btn-import" (click)="abrirModalImport()">
+        <i class="fas fa-file-upload"></i> Importar histórico
+      </button>
+    </div>
+  </div>
+
+  <!-- ── MODAL IMPORTACIÓN ── -->
+  <div class="import-overlay" *ngIf="modalImport" (click)="cerrarModalImport()">
+    <div class="import-modal" (click)="$event.stopPropagation()">
+      <div class="import-modal-header">
+        <h3><i class="fas fa-file-upload"></i> Importación masiva de garantías históricas</h3>
+        <button class="import-close" (click)="cerrarModalImport()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="import-modal-body">
+        <!-- Paso 1: descargar plantilla -->
+        <div class="import-step">
+          <div class="import-step-num">1</div>
+          <div class="import-step-body">
+            <strong>Descarga la plantilla</strong>
+            <p>Contiene las columnas necesarias, una fila de ejemplo, validaciones desplegables y la lista de usuarios del sistema.</p>
+            <button class="btn btn-outline-green" (click)="descargarPlantilla()" [disabled]="descargandoPlantilla">
+              <i class="fas fa-download" [class.fa-spin]="descargandoPlantilla"></i>
+              {{ descargandoPlantilla ? 'Generando…' : 'Descargar plantilla .xlsx' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Paso 2: llenar y subir -->
+        <div class="import-step">
+          <div class="import-step-num">2</div>
+          <div class="import-step-body">
+            <strong>Llena la plantilla y súbela</strong>
+            <p>Completa los datos históricos. Consulta la hoja "Usuarios disponibles" para los nombres exactos de asignación.</p>
+            <label class="import-file-label" [class.file-selected]="!!archivoImport">
+              <i class="fas fa-paperclip"></i>
+              {{ archivoImport ? archivoImport.name : 'Seleccionar archivo .xlsx' }}
+              <input type="file" accept=".xlsx" (change)="onArchivoImport($event)" style="display:none">
+            </label>
+          </div>
+        </div>
+
+        <!-- Resultado anterior -->
+        <div class="import-result" *ngIf="importResult">
+          <div class="import-result-ok" *ngIf="importResult.ok">
+            <i class="fas fa-check-circle"></i> {{ importResult.mensaje }}
+          </div>
+          <div class="import-errores" *ngIf="importResult.errores?.length">
+            <strong>Advertencias ({{ importResult.errores.length }}):</strong>
+            <div class="import-error-item" *ngFor="let e of importResult.errores">
+              <span class="import-fila">Fila {{ e.fila }}</span>
+              <span *ngFor="let msg of e.errores" class="import-msg">{{ msg }}</span>
+            </div>
+          </div>
+          <div class="import-result-fail" *ngIf="importResult.error">
+            <i class="fas fa-exclamation-triangle"></i> {{ importResult.error }}
+          </div>
+        </div>
+      </div>
+
+      <div class="import-modal-footer">
+        <button class="btn btn-outline" (click)="cerrarModalImport()">Cancelar</button>
+        <button class="btn btn-primary-import"
+                [disabled]="!archivoImport || importando"
+                (click)="ejecutarImport()">
+          <i class="fas fa-upload" [class.fa-spin]="importando"></i>
+          {{ importando ? 'Importando…' : 'Importar tickets' }}
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ── LAYOUT PRINCIPAL ── -->
@@ -300,8 +371,11 @@
                     </span>
                     <span class="fecha-retro-hint" *ngIf="!fechaValidacion">Opcional — deja vacío para usar la fecha de hoy</span>
                   </div>
-                  <input type="date" class="fecha-retro-input" [(ngModel)]="fechaValidacion" [max]="today">
-                  <button *ngIf="fechaValidacion" class="fecha-retro-clear" (click)="fechaValidacion=''" title="Cancelar fecha retroactiva">
+                  <input type="date" class="fecha-retro-input"
+                         [ngModel]="fechaValidacion"
+                         (ngModelChange)="guardarFechaRetro($event)"
+                         [max]="hoy">
+                  <button *ngIf="fechaValidacion" class="fecha-retro-clear" (click)="limpiarFechaRetro()" title="Cancelar fecha retroactiva">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
@@ -423,6 +497,9 @@
                   <span class="pieza-na-badge" *ngIf="piezaEsNA">
                     <i class="fas fa-ban"></i> No aplica
                   </span>
+                  <button *ngIf="piezasError" class="pieza-retry-btn" (click)="cargarPiezas()" title="Reintentar cargar piezas">
+                    <i class="fas fa-redo"></i> Reintentar
+                  </button>
                 </div>
               </div>
 
