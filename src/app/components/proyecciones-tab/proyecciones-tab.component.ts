@@ -547,7 +547,9 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
         this.rows         = forecast.map(r => ({ ...r, _editado: false, _nuevo: false, _eliminar: false }));
         this.rowsOriginal = JSON.parse(JSON.stringify(this.rows));
         this.cargando     = false;
-        this.rowCountChange.emit(this.rows.filter(r => !r._eliminar).length);
+        this.rowCountChange.emit(
+          this.rows.filter(r => !r._eliminar).reduce((s, r) => s + this.calcTotal(r), 0)
+        );
         this.cdr.markForCheck();
         setTimeout(() => this._updateStickyInnerWidth(), 200);
       },
