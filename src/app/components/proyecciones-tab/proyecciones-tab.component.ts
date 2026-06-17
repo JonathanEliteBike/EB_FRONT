@@ -172,6 +172,10 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     error: '' as string,
   };
 
+  // Price catalog cache: loaded once when the tab opens, used for instant lookups
+  private _preciosCatalogo = new Map<string, { precio?: number; precio_publico?: number }>();
+  private _nivelPrecioCatalogo = '';
+
   // Import state
   importando = false;
   importError: string | null = null;
@@ -562,6 +566,19 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
         this.rowCountChange.emit(0);
         this.cdr.markForCheck();
       }
+    });
+
+    // Catálogo de precios: se carga por separado para no bloquear el forecast
+    const claveParam  = this.clienteClave || '';
+    const preciosUrl  = `${this.apiUrl}/forecast/precios-catalogo`;
+    this.http.get<{ precios: Record<string, { precio?: number; precio_publico?: number }>; nivel_precio: string }>(
+      preciosUrl, { params: new HttpParams().set('clave', claveParam) }
+    ).subscribe({
+      next: res => {
+        this._preciosCatalogo     = new Map(Object.entries(res.precios || {}));
+        this._nivelPrecioCatalogo = res.nivel_precio || '';
+      },
+      error: () => {}
     });
   }
 
@@ -1095,6 +1112,13 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       if (np.includes('MEGAMO'))       row.marca = 'MEGAMO';
       else if (np.includes('SCOTT'))   row.marca = 'SCOTT';
       else if (np.includes('SYNCROS')) row.marca = 'SYNCROS';
+    }
+    // Lookup instantáneo desde el catálogo de precios pre-cargado
+    const p = this._preciosCatalogo.get(prod.sku);
+    if (p) {
+      if (p.precio != null)         row.precio         = p.precio;
+      if (p.precio_publico != null) row.precio_publico = p.precio_publico;
+      if (this._nivelPrecioCatalogo) row.nivel_precio  = this._nivelPrecioCatalogo;
     }
     row._searchSeleccionado = true;
     row._editado = true;
