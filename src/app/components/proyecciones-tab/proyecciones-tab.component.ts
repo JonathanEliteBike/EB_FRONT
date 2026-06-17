@@ -34,6 +34,7 @@ export interface ProductoBusqueda {
   color: string;
   talla: string;
   label: string;
+  fuente?: string;
 }
 
 export interface VarianteColor {
@@ -47,6 +48,7 @@ export interface ProductoGrupo {
   marca: string;
   colores: VarianteColor[];
   soloUna?: ProductoBusqueda;
+  fuente?: string;
 }
 
 export interface ForecastRow {
@@ -57,6 +59,7 @@ export interface ForecastRow {
   modelo: string;
   color: string;
   talla: string;
+  fuente?: string;
   mayo: number;
   junio: number;
   julio: number;
@@ -190,21 +193,37 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     });
   }
 
-  /** Filas agrupadas por marca: nuevas (sin marca aún) → Megamo → Scott → otros */
+  /** Filas agrupadas: nuevas → Bicicletas Megamo → Bicicletas Scott → Apparel [marca] → Otros */
   get rowsAgrupados(): { label: string; brand: string; rows: ForecastRow[] }[] {
     const all    = this.rowsFiltrados;
     const nuevas = all.filter(r => r._nuevo);
-    const megamo = all.filter(r => !r._nuevo && (r.marca || '').toUpperCase() === 'MEGAMO');
-    const scott  = all.filter(r => !r._nuevo && (r.marca || '').toUpperCase() === 'SCOTT');
-    const otros  = all.filter(r => {
-      const m = (r.marca || '').toUpperCase();
-      return !r._nuevo && m !== 'MEGAMO' && m !== 'SCOTT';
-    });
+
+    // Bicycles: fuente === 'whitelist', or legacy rows (no fuente) with known bike brands
+    const esBici = (r: ForecastRow) =>
+      !r._nuevo && (r.fuente === 'whitelist' ||
+        (!r.fuente && ['MEGAMO', 'SCOTT'].includes((r.marca || '').toUpperCase())));
+
+    const megamo = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'MEGAMO');
+    const scott  = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'SCOTT');
+
+    // Apparel/Excel: fuente === 'excel', or non-bicycle non-nueva rows
+    const apparel = all.filter(r => !r._nuevo && !esBici(r));
+
+    // Group apparel by brand, sort brand names
+    const marcasApparel = [...new Set(apparel.map(r => (r.marca || 'N/A').toUpperCase()))].sort();
+
     const sections: { label: string; brand: string; rows: ForecastRow[] }[] = [];
     if (nuevas.length) sections.push({ label: '',                              brand: 'nuevo',  rows: nuevas });
     if (megamo.length) sections.push({ label: 'Proyección Bicicletas Megamo', brand: 'MEGAMO', rows: megamo });
     if (scott.length)  sections.push({ label: 'Proyección Bicicletas Scott',  brand: 'SCOTT',  rows: scott  });
-    if (otros.length)  sections.push({ label: 'Otros',                        brand: 'OTROS',  rows: otros  });
+
+    for (const m of marcasApparel) {
+      const rows = apparel.filter(r => (r.marca || 'N/A').toUpperCase() === m);
+      if (!rows.length) continue;
+      const label = m === 'N/A' ? 'Otros' : `Apparel ${m.charAt(0) + m.slice(1).toLowerCase()}`;
+      sections.push({ label, brand: `APPAREL_${m}`, rows });
+    }
+
     return sections;
   }
 
@@ -938,15 +957,20 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       let marca = primer.marca;
       if (!marca || marca === 'ALL' || marca === 'N/A') {
         const np = primer.producto.toUpperCase();
-        if (np.includes('MEGAMO'))      marca = 'MEGAMO';
-        else if (np.includes('SCOTT'))  marca = 'SCOTT';
+        if (np.includes('MEGAMO'))       marca = 'MEGAMO';
+        else if (np.includes('SCOTT'))   marca = 'SCOTT';
+        else if (np.includes('SYNCROS')) marca = 'SYNCROS';
       }
+      const fuente = primer.fuente;
+      const totalVariantes = variantes.length;
       grupos.push({
         producto: primer.producto,
         modelo,
         marca,
         colores,
-        soloUna: variantes.length === 1 ? primer : undefined,
+        fuente,
+        // soloUna must use the inferred marca, not the raw primer.marca
+        soloUna: totalVariantes === 1 ? { ...primer, marca, fuente } : undefined,
       });
     }
     return grupos;
@@ -982,6 +1006,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
           producto: dest.colores[0].tallas[0].producto,
           marca: dest.marca, modelo: dest.modelo,
           color: dest.colores[0].color, talla: dest.colores[0].tallas[0].talla, label: '',
+          fuente: dest.fuente,
         } : undefined;
       } else {
         result.push(nuevo);
@@ -1020,6 +1045,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       modelo: grupo.modelo,
       color,
       talla,
+      fuente: grupo.fuente,
       label: v.sku,
     });
   }
@@ -1041,6 +1067,14 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     row.modelo   = prod.modelo;
     row.color    = prod.color;
     row.talla    = prod.talla;
+    row.fuente   = prod.fuente;
+    // Safety net: infer brand from product name when marca is generic
+    if (!row.marca || row.marca === 'N/A' || row.marca === 'ALL') {
+      const np = row.producto.toUpperCase();
+      if (np.includes('MEGAMO'))       row.marca = 'MEGAMO';
+      else if (np.includes('SCOTT'))   row.marca = 'SCOTT';
+      else if (np.includes('SYNCROS')) row.marca = 'SYNCROS';
+    }
     row._searchSeleccionado = true;
     row._editado = true;
     this.searchModal.error = '';
