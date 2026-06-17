@@ -60,6 +60,7 @@ export interface ForecastRow {
   color: string;
   talla: string;
   fuente?: string;
+  actualizado_en?: string;
   mayo: number;
   junio: number;
   julio: number;
@@ -217,17 +218,27 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     // Group apparel by brand, sort brand names
     const marcasApparel = [...new Set(apparel.map(r => (r.marca || 'N/A').toUpperCase()))].sort();
 
-    const sections: { label: string; brand: string; rows: ForecastRow[] }[] = [];
-    if (nuevas.length) sections.push({ label: '',                              brand: 'nuevo',  rows: nuevas });
-    if (megamo.length) sections.push({ label: 'Proyección Bicicletas Megamo', brand: 'MEGAMO', rows: megamo });
-    if (scott.length)  sections.push({ label: 'Proyección Bicicletas Scott',  brand: 'SCOTT',  rows: scott  });
+    const dated: { label: string; brand: string; rows: ForecastRow[] }[] = [];
+    if (megamo.length) dated.push({ label: 'Proyección Bicicletas Megamo', brand: 'MEGAMO', rows: megamo });
+    if (scott.length)  dated.push({ label: 'Proyección Bicicletas Scott',  brand: 'SCOTT',  rows: scott  });
 
     for (const m of marcasApparel) {
       const rows = apparel.filter(r => (r.marca || 'N/A').toUpperCase() === m);
       if (!rows.length) continue;
       const label = m === 'N/A' ? 'Otros' : `Apparel ${m.charAt(0) + m.slice(1).toLowerCase()}`;
-      sections.push({ label, brand: `APPAREL_${m}`, rows });
+      dated.push({ label, brand: `APPAREL_${m}`, rows });
     }
+
+    // Sort sections by most recently updated row (newest section on top)
+    dated.sort((a, b) => {
+      const aDate = a.rows[0]?.actualizado_en ?? '';
+      const bDate = b.rows[0]?.actualizado_en ?? '';
+      return bDate < aDate ? -1 : bDate > aDate ? 1 : 0;
+    });
+
+    const sections: { label: string; brand: string; rows: ForecastRow[] }[] = [];
+    if (nuevas.length) sections.push({ label: '', brand: 'nuevo', rows: nuevas });
+    sections.push(...dated);
 
     return sections;
   }
