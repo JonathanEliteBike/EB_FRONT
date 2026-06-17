@@ -190,6 +190,8 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       if (r._eliminar) return false;
       if (this.filtroMarca && r.marca !== this.filtroMarca) return false;
       if (this.filtroModelo && r.modelo !== this.filtroModelo) return false;
+      // Ocultar filas sin unidades salvo en modo edición o si es fila nueva
+      if (!this.modoEdicion && !r._nuevo && this.calcTotal(r) === 0) return false;
       return true;
     });
   }
