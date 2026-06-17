@@ -507,6 +507,18 @@
 
     .table-moderna, .escalera-calculo, .row-calc { page-break-inside: avoid; }
 
+    .nota-footer {
+        margin-top: 12px !important;
+        page-break-before: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Reducir márgenes verticales para que todo entre en una sola página */
+    .seccion-header { margin-bottom: 10px !important; }
+    .section-divider { margin: 10px 0 !important; }
+    .caratula-header { margin-bottom: 10px !important; padding-bottom: 10px !important; }
+    .importe-final-wrapper { margin-top: 10px !important; }
+
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 
