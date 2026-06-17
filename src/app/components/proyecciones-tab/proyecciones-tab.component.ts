@@ -199,9 +199,14 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     const nuevas = all.filter(r => r._nuevo);
 
     // Bicycles: fuente === 'whitelist', or legacy rows (no fuente) with known bike brands
+    // Exclude SKUs with '-APP-' pattern even on legacy path (apparel uses SC-APP-*, MG-APP-* etc.)
     const esBici = (r: ForecastRow) =>
-      !r._nuevo && (r.fuente === 'whitelist' ||
-        (!r.fuente && ['MEGAMO', 'SCOTT'].includes((r.marca || '').toUpperCase())));
+      !r._nuevo && (
+        r.fuente === 'whitelist' ||
+        (r.fuente !== 'excel' &&
+          !r.sku.toUpperCase().includes('-APP-') &&
+          ['MEGAMO', 'SCOTT'].includes((r.marca || '').toUpperCase()))
+      );
 
     const megamo = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'MEGAMO');
     const scott  = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'SCOTT');
