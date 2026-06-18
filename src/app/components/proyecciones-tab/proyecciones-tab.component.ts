@@ -1015,8 +1015,12 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   private static readonly _TALLA_ORDER: Record<string, number> = {
-    'XXS': 0, 'XS': 1, 'S': 2, 'SM': 3, 'M': 4, 'ML': 5, 'L': 6, 'XL': 7,
-    'XXL': 8, 'XXXL': 9, '3XL': 9, 'XXXXL': 10, '4XL': 10, 'UNI': 99, 'ONESIZE': 99, 'N/A': 100,
+    'XXS': 0,
+    'XS 27.5"': 1, 'XS': 2,
+    'S 27.5"': 3,  'S': 4,
+    'SM': 5, 'M': 6, 'ML': 7, 'L': 8, 'XL': 9,
+    'XXL': 10, 'XXXL': 11, '3XL': 11, 'XXXXL': 12, '4XL': 12,
+    'UNI': 99, 'ONESIZE': 99, 'N/A': 100,
   };
 
   private _sortTallas<T extends { talla: string }>(arr: T[]): T[] {
@@ -1149,6 +1153,10 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   limpiarBusqueda(row: ForecastRow): void {
     row.sku = ''; row.producto = ''; row.marca = '';
     row.modelo = ''; row.color = ''; row.talla = '';
+    row.precio = undefined; row.precio_publico = undefined; row.nivel_precio = undefined;
+    row.mayo = 0; row.junio = 0; row.julio = 0; row.agosto = 0;
+    row.septiembre = 0; row.octubre = 0; row.noviembre = 0; row.diciembre = 0;
+    row.enero = 0; row.febrero = 0; row.marzo = 0; row.abril = 0;
     row._searchSeleccionado = false;
     row._editado = false;
     this.cdr.markForCheck();
