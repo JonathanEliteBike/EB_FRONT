@@ -987,7 +987,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       }
       const colores: VarianteColor[] = [];
       for (const [color, tallas] of colorMap.entries()) {
-        colores.push({ color, tallas });
+        colores.push({ color, tallas: this._sortTallas(tallas) });
       }
       // Toma el primer modelo no vacío del grupo
       const modelo = variantes.find(v => v.modelo)?.modelo || primer.modelo;
@@ -1014,6 +1014,25 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     return grupos;
   }
 
+  private static readonly _TALLA_ORDER: Record<string, number> = {
+    'XXS': 0, 'XS': 1, 'S': 2, 'SM': 3, 'M': 4, 'ML': 5, 'L': 6, 'XL': 7,
+    'XXL': 8, 'XXXL': 9, '3XL': 9, 'XXXXL': 10, '4XL': 10, 'UNI': 99, 'ONESIZE': 99, 'N/A': 100,
+  };
+
+  private _sortTallas<T extends { talla: string }>(arr: T[]): T[] {
+    return [...arr].sort((a, b) => {
+      const ta = (a.talla || '').toUpperCase();
+      const tb = (b.talla || '').toUpperCase();
+      const na = parseFloat(ta);
+      const nb = parseFloat(tb);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      const oa = ProyeccionesTabComponent._TALLA_ORDER[ta] ?? 50;
+      const ob = ProyeccionesTabComponent._TALLA_ORDER[tb] ?? 50;
+      if (oa !== ob) return oa - ob;
+      return ta.localeCompare(tb);
+    });
+  }
+
   /** Fusiona grupos de páginas sucesivas: si un producto ya existe, añade sus colores/tallas en lugar de duplicarlo. */
   private _mergeGrupos(existing: ProductoGrupo[], nuevos: ProductoGrupo[]): ProductoGrupo[] {
     const idx = new Map<string, number>();
@@ -1034,6 +1053,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
                 colorDest.tallas.push(t);
               }
             }
+            colorDest.tallas = this._sortTallas(colorDest.tallas);
           } else {
             dest.colores.push(vc);
           }
