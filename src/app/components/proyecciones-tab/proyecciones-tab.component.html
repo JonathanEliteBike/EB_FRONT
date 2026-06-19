@@ -138,36 +138,80 @@
 
   <!-- ── Totales por marca ── -->
   <div *ngIf="!cargando && rowsFiltrados.length > 0" class="proy-resumen-marcas">
+
+    <!-- MEGAMO (bicis) + SYNCROS -->
     <div class="proy-resumen-card proy-resumen-megamo">
-      <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> MEGAMO</div>
-      <div class="proy-resumen-stat">
-        <span class="proy-resumen-num">{{ totalMegamoUnidades | number:'1.0-0' }}</span>
-        <span class="proy-resumen-lbl">unidades</span>
-      </div>
-      <div class="proy-resumen-stat">
-        <span class="proy-resumen-num">{{ totalMegamoCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
-        <span class="proy-resumen-lbl">costo total</span>
-      </div>
-      <div class="proy-resumen-stat proy-resumen-stat-cuentas">
-        <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasMegamo }}</span>
-        <span class="proy-resumen-lbl">modelos pedidos</span>
+      <div class="proy-resumen-split">
+        <div class="proy-resumen-half">
+          <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> MEGAMO</div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalMegamoUnidades | number:'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">unidades</span>
+          </div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalMegamoCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">costo total</span>
+          </div>
+          <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+            <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasMegamo }}</span>
+            <span class="proy-resumen-lbl">modelos pedidos</span>
+          </div>
+        </div>
+        <div class="proy-resumen-half proy-resumen-half-syncros">
+          <div class="proy-resumen-logo"><i class="fas fa-wrench"></i> SYNCROS</div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalSyncrosUnidades | number:'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">unidades</span>
+          </div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalSyncrosCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">costo total</span>
+          </div>
+          <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+            <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasSyncros }}</span>
+            <span class="proy-resumen-lbl">modelos pedidos</span>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- SCOTT (bicis) + APPAREL SCOTT -->
     <div class="proy-resumen-card proy-resumen-scott">
-      <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> SCOTT</div>
-      <div class="proy-resumen-stat">
-        <span class="proy-resumen-num">{{ totalScottUnidades | number:'1.0-0' }}</span>
-        <span class="proy-resumen-lbl">unidades</span>
-      </div>
-      <div class="proy-resumen-stat">
-        <span class="proy-resumen-num">{{ totalScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
-        <span class="proy-resumen-lbl">costo total</span>
-      </div>
-      <div class="proy-resumen-stat proy-resumen-stat-cuentas">
-        <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasScott }}</span>
-        <span class="proy-resumen-lbl">modelos pedidos</span>
+      <div class="proy-resumen-split">
+        <div class="proy-resumen-half">
+          <div class="proy-resumen-logo"><i class="fas fa-bicycle"></i> SCOTT</div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalScottUnidades | number:'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">unidades</span>
+          </div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">costo total</span>
+          </div>
+          <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+            <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasScott }}</span>
+            <span class="proy-resumen-lbl">modelos pedidos</span>
+          </div>
+        </div>
+        <div class="proy-resumen-half proy-resumen-half-apparel">
+          <div class="proy-resumen-logo"><i class="fas fa-tshirt"></i> APPAREL SCOTT</div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalApparelScottUnidades | number:'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">unidades</span>
+          </div>
+          <div class="proy-resumen-stat">
+            <span class="proy-resumen-num">{{ totalApparelScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
+            <span class="proy-resumen-lbl">costo total</span>
+          </div>
+          <div class="proy-resumen-stat proy-resumen-stat-cuentas">
+            <span class="proy-resumen-num proy-resumen-num-sm">{{ cuentasApparelScott }}</span>
+            <span class="proy-resumen-lbl">modelos pedidos</span>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- GLOBAL -->
     <div class="proy-resumen-card proy-resumen-global">
       <div class="proy-resumen-logo"><i class="fas fa-globe"></i> GLOBAL</div>
       <div class="proy-resumen-stat">
@@ -246,7 +290,7 @@
               <td class="td-seccion-sticky" colspan="2">
                 <i class="fas fa-chevron-down proy-seccion-chevron"
                    [class.proy-seccion-chevron--collapsed]="isColapsada(section.brand)"></i>
-                <i [class]="section.brand.startsWith('APPAREL_') ? 'fas fa-tshirt' : 'fas fa-bicycle'"></i>
+                <i [class]="section.brand === 'SYNCROS' ? 'fas fa-wrench' : section.brand.startsWith('APPAREL_') ? 'fas fa-tshirt' : 'fas fa-bicycle'"></i>
                 {{ section.label }}
                 <span class="proy-seccion-count">({{ section.rows.length }})</span>
               </td>
@@ -329,7 +373,7 @@
                 [style.display]="modoExpandido ? '' : 'none'"
                 [class.td-qty-bloqueado]="isBloqueadoMegamo(row, mes)">
               <!-- Celda bloqueada: MEGAMO antes de Julio -->
-              <span *ngIf="isBloqueadoMegamo(row, mes)" class="td-qty-lock" title="MEGAMO solo disponible a partir de Julio">
+              <span *ngIf="isBloqueadoMegamo(row, mes)" class="td-qty-lock" title="Solo disponible a partir de Julio">
                 <i class="fas fa-lock"></i>
               </span>
               <!-- Vista normal (lectura) -->
@@ -377,10 +421,10 @@
 
         <!-- Totales footer -->
         <tfoot *ngIf="rowsFiltrados.length > 0">
-          <!-- Fila naranja: totales de unidades -->
+
+          <!-- Fila 1: Totales de unidades por mes -->
           <tr class="proy-fila-totales">
             <td [attr.colspan]="modoExpandido ? 4 : 6"><strong>TOTALES</strong></td>
-            <!-- columnas Precio y Precio Público vacías -->
             <td class="td-precio-foot"></td>
             <td class="td-precio-foot"></td>
             <ng-container *ngIf="modoExpandido">
@@ -392,56 +436,36 @@
             <td class="td-total-precio"><strong>{{ totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
-          <!-- Precio MEGAMO por mes -->
-          <tr class="proy-fila-precio-marca proy-fila-precio-megamo" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-marca-lbl">🟠 MEGAMO</td>
-            <td *ngFor="let mes of mesesKeys" class="td-precio-marca td-precio-marca-megamo">
-              <ng-container *ngIf="!esMesBloqueadoMegamo(mes)">{{ formatPrecioCorto(totalPrecioMarcaMes('MEGAMO', mes)) }}</ng-container>
-              <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-cuentas-lock"><i class="fas fa-lock"></i></span>
-            </td>
-            <td class="td-precio-marca"></td><td class="td-precio-marca"></td>
-            <td *ngIf="modoEdicion"></td>
-          </tr>
-          <!-- Precio SCOTT por mes -->
-          <tr class="proy-fila-precio-marca proy-fila-precio-scott" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-marca-lbl">🔵 SCOTT</td>
-            <td *ngFor="let mes of mesesKeys" class="td-precio-marca td-precio-marca-scott">
-              {{ formatPrecioCorto(totalPrecioMarcaMes('SCOTT', mes)) }}
-            </td>
-            <td class="td-precio-marca"></td><td class="td-precio-marca"></td>
-            <td *ngIf="modoEdicion"></td>
-          </tr>
-          <!-- Precio GLOBAL por mes -->
-          <tr class="proy-fila-precio-mes" *ngIf="modoExpandido">
-            <td colspan="5" class="td-precio-mes-lbl">🌐 GLOBAL</td>
-            <td *ngFor="let mes of mesesKeys" class="td-precio-mes">
+
+          <!-- Filas 2-5: Una fila por sección (generadas desde desgloseData) -->
+          <ng-container *ngIf="modoExpandido">
+            <tr *ngFor="let sec of desgloseData; let last = last"
+                class="proy-fila-sec" [ngClass]="'proy-fila-sec--' + sec.cls"
+                [class.proy-fila-sec--last]="last">
+              <td colspan="5" class="td-sec-lbl">{{ sec.label | uppercase }}</td>
+              <td *ngFor="let mes of mesesKeys" class="td-sec-val">
+                <span *ngIf="sec.meses[mes].precio > 0" class="td-sec-num">{{ formatPrecioCorto(sec.meses[mes].precio) }}</span>
+                <span *ngIf="sec.meses[mes].precio === 0" class="td-sec-dash">—</span>
+              </td>
+              <td class="td-sec-trail"></td>
+              <td class="td-sec-trail"></td>
+              <td *ngIf="modoEdicion"></td>
+            </tr>
+          </ng-container>
+
+          <!-- Fila 3: Total $ por mes -->
+          <tr class="proy-fila-total-precio" *ngIf="modoExpandido">
+            <td colspan="5" class="td-total-precio-lbl">TOTAL INVERSIÓN</td>
+            <td *ngFor="let mes of mesesKeys" class="td-total-precio-mes">
               <strong>{{ formatPrecioCorto(totalPrecioMes(mes)) }}</strong>
             </td>
-            <td class="td-precio-mes"></td>
-            <td class="td-precio-mes"></td>
-            <td *ngIf="modoEdicion"></td>
-          </tr>
-          <!-- Bicis MEGAMO por mes -->
-          <tr class="proy-fila-cuentas proy-fila-cuentas-megamo" *ngIf="modoExpandido">
-            <td colspan="5" class="td-cuentas-lbl">🟠 BICIS MEGAMO</td>
-            <td *ngFor="let mes of mesesKeys" class="td-cuentas">
-              <span *ngIf="!esMesBloqueadoMegamo(mes)">{{ cuentasMarcaMes('MEGAMO', mes) }}</span>
-              <span *ngIf="esMesBloqueadoMegamo(mes)" class="td-cuentas-lock"><i class="fas fa-lock"></i></span>
+            <td class="td-total-precio-empty"></td>
+            <td class="td-total-precio-mes td-total-precio-global">
+              <strong>{{ totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0' }}</strong>
             </td>
-            <td class="td-cuentas"></td>
-            <td class="td-cuentas"></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
-          <!-- Bicis SCOTT por mes -->
-          <tr class="proy-fila-cuentas proy-fila-cuentas-scott" *ngIf="modoExpandido">
-            <td colspan="5" class="td-cuentas-lbl">🔵 BICIS SCOTT</td>
-            <td *ngFor="let mes of mesesKeys" class="td-cuentas">
-              {{ cuentasMarcaMes('SCOTT', mes) }}
-            </td>
-            <td class="td-cuentas"></td>
-            <td class="td-cuentas"></td>
-            <td *ngIf="modoEdicion"></td>
-          </tr>
+
         </tfoot>
       </table>
     </div><!-- /scroll -->

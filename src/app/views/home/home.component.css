@@ -1,4 +1,4 @@
-/* ── Página completa ─────────────────────────────────────────────────── */
+﻿/* ── Página completa ─────────────────────────────────────────────────── */
 .home-page {
   min-height: calc(100vh - var(--topbar-height, 64px));
   background:
@@ -808,4 +808,35 @@
   color: #555;
   font-size: 0.88rem;
   padding: 20px 0;
+}
+
+/* ── Tabs catalogo ─────────────────────────────────── */
+.hp-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: #252420;
+  border-radius: 8px;
+  padding: 4px;
+}
+.hp-tab {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #857F77;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.hp-tab:hover { color: #CCC5B9; }
+.hp-tab-active {
+  background: #EB5E28;
+  color: #fff;
 }

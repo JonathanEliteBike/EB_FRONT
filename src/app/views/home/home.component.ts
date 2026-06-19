@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -209,6 +209,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   arrastrando = false;
   mostrarConfirmLimpiar = false;
   limpiandoCatalogo = false;
+  tabCatalogo: 'excel' | 'csv' = 'excel';
+  subiendoCsv = false;
 
   // ── Modal tokens ──────────────────────────────────────────────────────────
   modalTokensAbierto = false;
@@ -266,6 +268,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.errorCarga = null;
     this.arrastrando = false;
     this.mostrarConfirmLimpiar = false;
+    this.tabCatalogo = 'excel';
+    this.subiendoCsv = false;
   }
 
   cargarConteo(): void {
@@ -293,11 +297,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   seleccionarArchivo(file: File): void {
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['xlsx', 'xls'].includes(ext || '')) {
-      this.errorCarga = 'Solo se aceptan archivos Excel (.xlsx o .xls)';
-      return;
+    if (this.tabCatalogo === 'csv') {
+      if (ext !== 'csv') { this.errorCarga = 'Solo se aceptan archivos CSV (.csv)'; return; }
+    } else {
+      if (!['xlsx', 'xls'].includes(ext || '')) { this.errorCarga = 'Solo se aceptan archivos Excel (.xlsx o .xls)'; return; }
     }
     this.archivoSeleccionado = file;
+    this.resultadoCarga = null;
+    this.errorCarga = null;
+  }
+
+  cambiarTab(tab: 'excel' | 'csv'): void {
+    this.tabCatalogo = tab;
+    this.archivoSeleccionado = null;
     this.resultadoCarga = null;
     this.errorCarga = null;
   }
@@ -327,6 +339,27 @@ export class HomeComponent implements OnInit, OnDestroy {
       error: err => {
         this.errorCarga = err.error?.error || 'Error al subir el archivo';
         this.subiendoCatalogo = false;
+      }
+    });
+  }
+
+  subirCsvApparel(): void {
+    if (!this.archivoSeleccionado) return;
+    this.subiendoCsv = true;
+    this.resultadoCarga = null;
+    this.errorCarga = null;
+    const fd = new FormData();
+    fd.append('file', this.archivoSeleccionado);
+    this.http.post<CargaResult>(`${this.apiUrl}/forecast/importar-csv-apparel`, fd).subscribe({
+      next: r => {
+        this.resultadoCarga = r;
+        this.subiendoCsv = false;
+        this.archivoSeleccionado = null;
+        this.cargarConteo();
+      },
+      error: err => {
+        this.errorCarga = err.error?.error || 'Error al importar el CSV';
+        this.subiendoCsv = false;
       }
     });
   }

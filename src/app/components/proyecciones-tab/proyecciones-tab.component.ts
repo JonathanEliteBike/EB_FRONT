@@ -190,44 +190,89 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     return [...new Set(this.rows.map(r => r.modelo).filter(Boolean))].sort();
   }
 
+  // Palabras clave para detectar ropa/accesorios de vestir
+  private static readonly _ROPA_KW = [
+    'JERSEY', 'SHORT', 'BIB', 'CULOTTE', 'JACKET', 'CHAQUETA', 'CHAMARRA',
+    'VEST', 'CHALECO', 'MAILLOT', 'GOGGLE', 'GLASSES', 'LENTES', 'GLOVE',
+    'GUANTE', 'TIGHTS', 'MALLAS', 'BALACLAVA', 'SOCKS', 'CALCETINES', 'CAP',
+    'GORRA', 'SHOE', 'ZAPATILLA', 'BUFF', 'SOFTSHELL', 'WINDBREAKER', 'THERMAL',
+    'POLO', 'CAMISETA', 'LEGWARMER', 'ARMWARMER', 'OVERSOCK', 'BEANIE',
+  ];
+
+  // Palabras clave para detectar refacciones/componentes → sección Syncros
+  private static readonly _PARTE_KW = [
+    'SYNCROS', 'MANUBRIO', 'HANDLEBAR', 'DIRECCION', 'HEADSET', 'JUEGO DE DIR',
+    'POTENCIA', 'STEM', 'TIJA', 'SEATPOST', 'SILLON', 'SILLIN', 'SADDLE',
+    'PEDAL', 'PUÑO', 'GRIP', 'TAPA', 'ALMOHADILLA', 'ADAPTADOR', 'DADO',
+    'ESPACIADOR', 'CANASTILLA', 'BOTTLE CAGE', 'BRIDA', 'ABRAZADERA', 'CLAMP',
+    'CASSETTE', 'CADENA', 'CHAIN', 'FRENO', 'BRAKE', 'ROTOR', 'PASTILLA',
+    'PLATO', 'CHAINRING', 'BIELA', 'CRANK', 'HORQUILLA', 'FORK', 'AMORTIGUADOR',
+    'SHOCK', 'CUADRO', 'FRAME', 'TORNILLO', 'BOLT', 'KIT DE TAPA', 'KIT SYN',
+    ' SYN ',   // sufijo Syncros al final del nombre (ej. "PLASMA 6 SYN")
+    'SYN ',
+  ];
+
   get rowsFiltrados(): ForecastRow[] {
     return this.rows.filter(r => {
       if (r._eliminar) return false;
       if (this.filtroMarca && r.marca !== this.filtroMarca) return false;
       if (this.filtroModelo && r.modelo !== this.filtroModelo) return false;
-      // Ocultar filas sin unidades salvo en modo edición o si es fila nueva
-      if (!this.modoEdicion && !r._nuevo && this.calcTotal(r) === 0) return false;
+      // Ocultar bicicletas con 0 unidades fuera del modo edición.
+      // Productos excel (apparel/Syncros) siempre se muestran para que el usuario pueda editarlos.
+      if (!this.modoEdicion && !r._nuevo && this.calcTotal(r) === 0 && r.fuente !== 'excel') return false;
       return true;
     });
   }
 
-  /** Filas agrupadas: nuevas → Bicicletas Megamo → Bicicletas Scott → Apparel [marca] → Otros */
+  /** Filas agrupadas: nuevas → secciones por tipo/marca */
   get rowsAgrupados(): { label: string; brand: string; rows: ForecastRow[] }[] {
     const all    = this.rowsFiltrados;
     const nuevas = all.filter(r => r._nuevo);
 
-    // Bicycles: fuente === 'whitelist', or legacy rows (no fuente) with known bike brands
-    // Exclude SKUs with '-APP-' pattern even on legacy path (apparel uses SC-APP-*, MG-APP-* etc.)
+    const esRopa = (r: ForecastRow): boolean => {
+      const n = (r.producto || '').toUpperCase();
+      return ProyeccionesTabComponent._ROPA_KW.some(kw => n.includes(kw));
+    };
+
+    // Refacciones/componentes: si la ropa tiene prioridad, no es Syncros
+    const esSyncros = (r: ForecastRow): boolean => {
+      if (esRopa(r)) return false;
+      const n = ' ' + (r.producto || '').toUpperCase() + ' ';
+      const m = (r.marca || '').toUpperCase();
+      return m === 'SYNCROS' ||
+             ProyeccionesTabComponent._PARTE_KW.some(kw => n.includes(kw));
+    };
+
+    // Bicicletas: whitelist de Odoo (asumidas bici a menos que sean ropa/refacción)
+    // o legado con marca conocida
+    const esBicicleta = (r: ForecastRow): boolean => {
+      // Productos de Odoo whitelist que no son ropa ni refacción → bicicleta
+      if (r.fuente === 'whitelist') return true;
+      // Filas legado: detectar por nombre
+      const n = (r.producto || '').toUpperCase();
+      return n.includes('BICICLET') || n.includes('E-BIKE') || n.includes('EBIKE');
+    };
+
     const esBici = (r: ForecastRow) =>
-      !r._nuevo && (
+      !r._nuevo && !esRopa(r) && !esSyncros(r) && esBicicleta(r) && (
         r.fuente === 'whitelist' ||
         (r.fuente !== 'excel' &&
           !r.sku.toUpperCase().includes('-APP-') &&
           ['MEGAMO', 'SCOTT'].includes((r.marca || '').toUpperCase()))
       );
 
-    const megamo = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'MEGAMO');
-    const scott  = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'SCOTT');
+    const megamo  = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'MEGAMO');
+    const scott   = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'SCOTT');
+    const syncros = all.filter(r => !r._nuevo && !esBici(r) && esSyncros(r));
 
-    // Apparel/Excel: fuente === 'excel', or non-bicycle non-nueva rows
-    const apparel = all.filter(r => !r._nuevo && !esBici(r));
-
-    // Group apparel by brand, sort brand names
+    // Ropa/accesorios de vestir agrupados por marca (todo lo que no es bici ni Syncros)
+    const apparel = all.filter(r => !r._nuevo && !esBici(r) && !esSyncros(r));
     const marcasApparel = [...new Set(apparel.map(r => (r.marca || 'N/A').toUpperCase()))].sort();
 
     const dated: { label: string; brand: string; rows: ForecastRow[] }[] = [];
-    if (megamo.length) dated.push({ label: 'Proyección Bicicletas Megamo', brand: 'MEGAMO', rows: megamo });
-    if (scott.length)  dated.push({ label: 'Proyección Bicicletas Scott',  brand: 'SCOTT',  rows: scott  });
+    if (megamo.length)  dated.push({ label: 'Proyección Bicicletas Megamo', brand: 'MEGAMO',  rows: megamo  });
+    if (scott.length)   dated.push({ label: 'Proyección Bicicletas Scott',  brand: 'SCOTT',   rows: scott   });
+    if (syncros.length) dated.push({ label: 'Syncros',                      brand: 'SYNCROS', rows: syncros });
 
     for (const m of marcasApparel) {
       const rows = apparel.filter(r => (r.marca || 'N/A').toUpperCase() === m);
@@ -337,6 +382,27 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       }, 0);
   }
 
+  /** Pre-calcula precios y unidades por sección × mes para el footer compacto */
+  get desgloseData(): { brand: string; cls: string; label: string; meses: Record<string, { precio: number; count: number }> }[] {
+    const configs = [
+      { brand: 'MEGAMO',        cls: 'megamo',  label: 'Megamo'  },
+      { brand: 'SCOTT',         cls: 'scott',   label: 'Scott'   },
+      { brand: 'APPAREL_SCOTT', cls: 'apparel', label: 'Apparel' },
+      { brand: 'SYNCROS',       cls: 'syncros', label: 'Syncros' },
+    ];
+    return configs.map(cfg => {
+      const rows = this._seccionRows(cfg.brand);
+      const meses: Record<string, { precio: number; count: number }> = {};
+      for (const mes of MESES) {
+        meses[mes] = {
+          precio: rows.reduce((s, r) => s + (Number(r[mes as keyof ForecastRow]) || 0) * (Number(r.precio) || 0), 0),
+          count:  rows.filter(r => (Number(r[mes as keyof ForecastRow]) || 0) > 0).length,
+        };
+      }
+      return { ...cfg, meses };
+    });
+  }
+
   get totalPrecioGeneral(): number {
     return this.rowsFiltrados.reduce((s, r) => {
       const total  = MESES.reduce((t, m) => t + (Number(r[m]) || 0), 0);
@@ -345,22 +411,34 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     }, 0);
   }
 
-  // ── Totales por marca ──────────────────────────────────
-  private _totalMarcaUnidades(marca: string): number {
-    return this.rowsFiltrados
-      .filter(r => !r._nuevo && (r.marca || '').toUpperCase() === marca)
-      .reduce((s, r) => s + this.calcTotal(r), 0);
+  // ── Totales por sección (bikes, apparel, syncros) ──────────────────────────
+  private _seccionRows(brand: string): ForecastRow[] {
+    const sec = this.rowsAgrupados.find(s => s.brand === brand);
+    return sec ? sec.rows : [];
   }
-  private _totalMarcaCosto(marca: string): number {
-    return this.rowsFiltrados
-      .filter(r => !r._nuevo && (r.marca || '').toUpperCase() === marca)
-      .reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
+  private _seccionUnidades(brand: string): number {
+    return this._seccionRows(brand).reduce((s, r) => s + this.calcTotal(r), 0);
+  }
+  private _seccionCosto(brand: string): number {
+    return this._seccionRows(brand).reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
+  }
+  private _seccionCuentas(brand: string): number {
+    return this._seccionRows(brand).filter(r => this.calcTotal(r) > 0).length;
   }
 
-  get totalMegamoUnidades(): number  { return this._totalMarcaUnidades('MEGAMO'); }
-  get totalMegamoCosto(): number     { return this._totalMarcaCosto('MEGAMO'); }
-  get totalScottUnidades(): number   { return this._totalMarcaUnidades('SCOTT'); }
-  get totalScottCosto(): number      { return this._totalMarcaCosto('SCOTT'); }
+  // Megamo bikes
+  get totalMegamoUnidades(): number  { return this._seccionUnidades('MEGAMO'); }
+  get totalMegamoCosto(): number     { return this._seccionCosto('MEGAMO'); }
+  // Scott bikes
+  get totalScottUnidades(): number   { return this._seccionUnidades('SCOTT'); }
+  get totalScottCosto(): number      { return this._seccionCosto('SCOTT'); }
+  // Apparel Scott
+  get totalApparelScottUnidades(): number { return this._seccionUnidades('APPAREL_SCOTT'); }
+  get totalApparelScottCosto(): number    { return this._seccionCosto('APPAREL_SCOTT'); }
+  // Syncros
+  get totalSyncrosUnidades(): number { return this._seccionUnidades('SYNCROS'); }
+  get totalSyncrosCosto(): number    { return this._seccionCosto('SYNCROS'); }
+
   get totalGlobalUnidades(): number  {
     return this.rowsFiltrados
       .filter(r => !r._nuevo)
@@ -372,15 +450,22 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       .reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
   }
 
-  // ── Regla: MEGAMO solo se puede pedir a partir de Julio ───────────────────
+  // ── Regla: todos los productos se piden a partir de Julio ─────────────────
   private static readonly _MESES_BLOQUEADOS_MEGAMO = new Set<string>(['mayo', 'junio']);
 
   isBloqueadoMegamo(row: ForecastRow, mes: keyof ForecastRow): boolean {
-    return (row.marca || '').toUpperCase() === 'MEGAMO'
-      && ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string);
+    if (!ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string)) return false;
+    // Bicis Scott (whitelist, sin keyword de ropa ni refacción) pueden editar mayo/junio
+    if ((row.marca || '').toUpperCase() === 'SCOTT' && row.fuente === 'whitelist') {
+      const n = ' ' + (row.producto || '').toUpperCase() + ' ';
+      const esRopa  = ProyeccionesTabComponent._ROPA_KW.some(kw => n.includes(kw));
+      const esParte = ProyeccionesTabComponent._PARTE_KW.some(kw => n.includes(kw));
+      if (!esRopa && !esParte) return false;
+    }
+    return true;
   }
 
-  /** True si el mes está bloqueado para MEGAMO (usado en footer sin una row concreta) */
+  /** True si el mes está bloqueado (mayo/junio — disponible solo a partir de Julio) */
   esMesBloqueadoMegamo(mes: keyof ForecastRow): boolean {
     return ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string);
   }
@@ -399,14 +484,11 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     ).length;
   }
 
-  // ── Cuentas (SKUs con al menos 1 unidad proyectada) por marca ──────────────
-  private _cuentasMarca(marca: string): number {
-    return this.rowsFiltrados
-      .filter(r => !r._nuevo && (r.marca || '').toUpperCase() === marca && this.calcTotal(r) > 0)
-      .length;
-  }
-  get cuentasMegamo(): number { return this._cuentasMarca('MEGAMO'); }
-  get cuentasScott(): number  { return this._cuentasMarca('SCOTT');  }
+  // ── Cuentas (SKUs con al menos 1 unidad proyectada) por sección ─────────────
+  get cuentasMegamo(): number        { return this._seccionCuentas('MEGAMO'); }
+  get cuentasScott(): number         { return this._seccionCuentas('SCOTT'); }
+  get cuentasApparelScott(): number  { return this._seccionCuentas('APPAREL_SCOTT'); }
+  get cuentasSyncros(): number       { return this._seccionCuentas('SYNCROS'); }
   get cuentasGlobal(): number {
     return this.rowsFiltrados.filter(r => !r._nuevo && this.calcTotal(r) > 0).length;
   }
@@ -1151,6 +1233,16 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   limpiarBusqueda(row: ForecastRow): void {
+    // Filas nuevas no guardadas: eliminar la fila en lugar de dejarla vacía
+    if (row._nuevo) {
+      this.rows = this.rows.filter(r => r !== row);
+      if (!this.permisoEdicion && !this.rows.some(r => r._nuevo)) {
+        this.modoEdicion = false;
+        this.rows = JSON.parse(JSON.stringify(this.rowsOriginal));
+      }
+      this.cdr.markForCheck();
+      return;
+    }
     row.sku = ''; row.producto = ''; row.marca = '';
     row.modelo = ''; row.color = ''; row.talla = '';
     row.precio = undefined; row.precio_publico = undefined; row.nivel_precio = undefined;

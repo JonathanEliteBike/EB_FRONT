@@ -1,4 +1,4 @@
-<app-home-bar></app-home-bar>
+﻿<app-home-bar></app-home-bar>
 
 <div class="home-page">
   <div class="home-bg"></div>
@@ -196,6 +196,12 @@
       <button class="hp-modal-close" (click)="cerrarModalCatalogo()"><i class="fas fa-times"></i></button>
     </div>
 
+    <!-- Tabs -->
+    <div class="hp-tabs">
+      <button class="hp-tab" [class.hp-tab-active]="tabCatalogo === 'excel'" (click)="cambiarTab('excel')"><i class="fas fa-file-excel"></i> Excel</button>
+      <button class="hp-tab" [class.hp-tab-active]="tabCatalogo === 'csv'" (click)="cambiarTab('csv')"><i class="fas fa-file-csv"></i> CSV Apparel</button>
+    </div>
+
     <div class="hp-stat-row">
       <i class="fas fa-box-open"></i>
       <span>
@@ -220,12 +226,13 @@
       (drop)="onDrop($event)"
       (click)="fileInputRef.click()">
 
-      <input #fileInputRef type="file" accept=".xlsx,.xls" class="hp-file-hidden" (change)="onFileInput($event)" />
+      <input #fileInputRef type="file" [attr.accept]="tabCatalogo === 'csv' ? '.csv' : '.xlsx,.xls'" class="hp-file-hidden" (change)="onFileInput($event)" />
 
       <ng-container *ngIf="!archivoSeleccionado">
         <i class="fas fa-cloud-upload-alt hp-drop-icon"></i>
-        <p class="hp-drop-text">Arrastra el Excel aqui o <span class="hp-drop-link">haz clic para seleccionar</span></p>
-        <p class="hp-drop-hint">Columnas: SKU, NOMBRE (opcionales: COLOR, TALLA)</p>
+        <p class="hp-drop-text">Arrastra el archivo aqui o <span class="hp-drop-link">haz clic para seleccionar</span></p>
+        <p class="hp-drop-hint" *ngIf="tabCatalogo === 'excel'">Columnas: SKU, NOMBRE (opcionales: COLOR, TALLA)</p>
+        <p class="hp-drop-hint" *ngIf="tabCatalogo === 'csv'">Columnas: SKU, DESCRIPCION, COLOR, TALLA, precios por nivel</p>
       </ng-container>
 
       <ng-container *ngIf="archivoSeleccionado">
@@ -236,14 +243,14 @@
     </div>
 
     <div class="hp-upload-actions" *ngIf="archivoSeleccionado || resultadoCarga">
-      <button *ngIf="archivoSeleccionado" class="hp-btn-primary" (click)="subirCatalogo()" [disabled]="subiendoCatalogo">
+      <button *ngIf="archivoSeleccionado" class="hp-btn-primary" (click)="tabCatalogo === 'excel' ? subirCatalogo() : subirCsvApparel()" [disabled]="subiendoCatalogo || subiendoCsv">
         <i class="fas"
           [class.fa-upload]="!subiendoCatalogo"
-          [class.fa-spinner]="subiendoCatalogo"
-          [class.fa-spin]="subiendoCatalogo"></i>
-        {{ subiendoCatalogo ? 'Subiendo...' : 'Cargar productos' }}
+          [class.fa-spinner]="subiendoCatalogo || subiendoCsv"
+          [class.fa-spin]="subiendoCatalogo || subiendoCsv"></i>
+        {{ (subiendoCatalogo || subiendoCsv) ? 'Subiendo...' : 'Cargar productos' }}
       </button>
-      <button *ngIf="archivoSeleccionado && !subiendoCatalogo" class="hp-btn-ghost" (click)="limpiarSeleccion()">
+      <button *ngIf="archivoSeleccionado && !subiendoCatalogo && !subiendoCsv" class="hp-btn-ghost" (click)="limpiarSeleccion()">
         Cancelar
       </button>
     </div>
