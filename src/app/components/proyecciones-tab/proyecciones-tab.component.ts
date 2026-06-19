@@ -1038,6 +1038,11 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
         this.searchModal.hasMore = resp.has_more;
         this.searchModal.cargando = false;
         this.cdr.markForCheck();
+        // Auto-cargar siguiente página si quedan resultados
+        if (resp.has_more) {
+          this.searchModal.offset += 500;
+          this._ejecutarBusqueda(true);
+        }
       },
       error: () => {
         if (!append) this.searchModal.grupos = [];
