@@ -233,7 +233,7 @@
   <div *ngIf="!cargando && periodoSeleccionado" class="proy-tabla-acciones proy-acciones-standalone">
     <button class="proy-btn proy-btn-outline-sm proy-btn-add"
             (click)="agregarProducto()">
-      <i class="fas fa-plus"></i> Agregar producto manualmente
+      <i class="fas fa-plus"></i> Agregar Producto
     </button>
     <button *ngIf="rows.length > 0" class="proy-btn proy-btn-outline-sm" (click)="toggleMeses()">
       <i class="fas" [class.fa-compress]="modoExpandido" [class.fa-expand]="!modoExpandido"></i>
@@ -306,22 +306,14 @@
             <td class="td-sku">
               <span *ngIf="!modoEdicion || !row._nuevo">{{ row.sku }}</span>
 
-              <!-- New row: select product button / chip -->
+              <!-- New row: chip con sku seleccionado + botón cambiar -->
               <ng-container *ngIf="modoEdicion && row._nuevo">
-                <!-- Already selected: chip with change button -->
                 <div *ngIf="row._searchSeleccionado" class="proy-search-selected">
                   <span class="proy-search-chip">{{ row.sku }}</span>
-                  <button class="proy-btn-text proy-search-change" (click)="limpiarBusqueda(row)" title="Cambiar producto">
-                    <i class="fas fa-times-circle"></i>
+                  <button class="proy-btn-text proy-search-change" (click)="abrirModalBusqueda(row)" title="Cambiar producto">
+                    <i class="fas fa-pencil-alt"></i>
                   </button>
                 </div>
-                <!-- Not yet selected: open modal -->
-                <button *ngIf="!row._searchSeleccionado"
-                        class="proy-btn-buscar"
-                        title="Seleccionar producto del catálogo"
-                        (click)="abrirModalBusqueda(row)">
-                  <i class="fas fa-search"></i> Seleccionar
-                </button>
               </ng-container>
             </td>
 

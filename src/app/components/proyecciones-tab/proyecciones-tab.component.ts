@@ -199,6 +199,21 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     'POLO', 'CAMISETA', 'LEGWARMER', 'ARMWARMER', 'OVERSOCK', 'BEANIE',
   ];
 
+  // Palabras clave para accesorios (cascos, zapatos, lentes, protecciones, mochilas) → solo diciembre
+  private static readonly _ACCESORIO_KW = [
+    // Cascos
+    'CASCO', 'HELMET',
+    // Zapatos
+    'SHOE', 'ZAPATILLA', 'OVERSHOE',
+    // Lentes / gafas
+    'GOGGLE', 'GLASSES', 'LENTES', 'SUNGLASSES', 'GAFA',
+    // Protecciones
+    'PROTECCION', 'PROTECTION', 'PROTECTOR', 'RODILLERA', 'CODDERA',
+    'KNEE', 'ELBOW', 'SHIN GUARD',
+    // Mochilas
+    'MOCHILA', 'BACKPACK', 'HYDRATION',
+  ];
+
   // Palabras clave para detectar refacciones/componentes → sección Syncros
   private static readonly _PARTE_KW = [
     'SYNCROS', 'MANUBRIO', 'HANDLEBAR', 'DIRECCION', 'HEADSET', 'JUEGO DE DIR',
@@ -450,22 +465,36 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       .reduce((s, r) => s + this.calcTotal(r) * (Number(r.precio) || 0), 0);
   }
 
-  // ── Regla: todos los productos se piden a partir de Julio ─────────────────
   private static readonly _MESES_BLOQUEADOS_MEGAMO = new Set<string>(['mayo', 'junio']);
 
   isBloqueadoMegamo(row: ForecastRow, mes: keyof ForecastRow): boolean {
-    if (!ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string)) return false;
-    // Bicis Scott (whitelist, sin keyword de ropa ni refacción) pueden editar mayo/junio
-    if ((row.marca || '').toUpperCase() === 'SCOTT' && row.fuente === 'whitelist') {
-      const n = ' ' + (row.producto || '').toUpperCase() + ' ';
-      const esRopa  = ProyeccionesTabComponent._ROPA_KW.some(kw => n.includes(kw));
-      const esParte = ProyeccionesTabComponent._PARTE_KW.some(kw => n.includes(kw));
-      if (!esRopa && !esParte) return false;
+    const mesStr = mes as string;
+    const n      = ' ' + (row.producto || '').toUpperCase() + ' ';
+    const marca  = (row.marca || '').toUpperCase();
+
+    const esAccesorio    = ProyeccionesTabComponent._ACCESORIO_KW.some(kw => n.includes(kw));
+    const esParte        = ProyeccionesTabComponent._PARTE_KW.some(kw => n.includes(kw));
+    const esSyncrosMarca = marca === 'SYNCROS';
+    const esRopa         = !esAccesorio && ProyeccionesTabComponent._ROPA_KW.some(kw => n.includes(kw));
+
+    // Bicis Scott (whitelist, no es ropa, accesorio ni refacción): sin restricción
+    if (marca === 'SCOTT' && row.fuente === 'whitelist' && !esRopa && !esAccesorio && !esParte && !esSyncrosMarca) {
+      return false;
     }
-    return true;
+
+    // Syncros / Refacciones → solo diciembre
+    if (esSyncrosMarca || esParte) return mesStr !== 'diciembre';
+
+    // Accesorios (cascos, zapatos, lentes, protecciones, mochilas) → solo diciembre
+    if (esAccesorio) return mesStr !== 'diciembre';
+
+    // Ropa (jerseys, shorts, bibs, etc.) → solo marzo
+    if (esRopa) return mesStr !== 'marzo';
+
+    // Bicicletas Megamo y otros → bloquear mayo y junio
+    return ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mesStr);
   }
 
-  /** True si el mes está bloqueado (mayo/junio — disponible solo a partir de Julio) */
   esMesBloqueadoMegamo(mes: keyof ForecastRow): boolean {
     return ProyeccionesTabComponent._MESES_BLOQUEADOS_MEGAMO.has(mes as string);
   }
@@ -970,6 +999,8 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     };
     this.rows = [nuevo, ...this.rows];
     this.cdr.markForCheck();
+    // Abrir modal directamente sin esperar que el usuario haga clic en "Seleccionar"
+    this.abrirModalBusqueda(nuevo);
   }
 
   // ─────────────────────────────────────────
@@ -992,8 +1023,17 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
 
   cerrarModalBusqueda(): void {
     clearTimeout(this.searchModal.timer);
+    const target = this.searchModal.rowTarget;
     this.searchModal.abierto = false;
     this.searchModal.rowTarget = null;
+    // Si se cerró sin seleccionar producto, eliminar la fila vacía pendiente
+    if (target && target._nuevo && !target._searchSeleccionado) {
+      this.rows = this.rows.filter(r => r !== target);
+      if (!this.permisoEdicion && !this.rows.some(r => r._nuevo)) {
+        this.modoEdicion = false;
+        this.rows = JSON.parse(JSON.stringify(this.rowsOriginal));
+      }
+    }
     this.cdr.markForCheck();
   }
 
