@@ -225,7 +225,8 @@ export class ImportacionesDetalleComponent implements OnInit {
   toggleNA(campo: string): void {
     if (this.camposNA.has(campo)) {
       this.camposNA.delete(campo);
-      // Restaurar valor del borrador si existe, si no dejar null
+      // When removing N/A, register a pending change so Save button enables
+      (this.cambiosPendientes as any)[campo] = (this.embarque as any)[campo] ?? null;
     } else {
       this.camposNA.add(campo);
       (this.embarque as any)[campo] = null;
