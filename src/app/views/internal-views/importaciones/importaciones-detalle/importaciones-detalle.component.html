@@ -629,7 +629,15 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'odoo'">
       <div class="fields-grid">
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_codificacion')"><label>1. Codificación de productos</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
+          <label>1. Recepción de documentos</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_recepcion_documentos || ''"
+              (dateChange)="marcarCambio('log_recepcion_documentos', $event || null)">
+            </app-date-picker>
+        </div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_codificacion')"><label>2. Codificación de productos</label>
           <select [value]="embarque.odoo_codificacion || ''" (change)="marcarCambio('odoo_codificacion', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select></div>
@@ -649,14 +657,6 @@
             </app-date-picker></div>
         <div class="field-row full" [class.campo-faltante]="esCampoFaltante('odoo_folio_orden')"><label>5. Folio(s) de orden de compra</label>
           <input type="text" [value]="embarque.odoo_folio_orden || ''" (change)="marcarCambio('odoo_folio_orden', $any($event.target).value || null)" placeholder="2083, 2084, 2085" /></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
-          <label>7. Recepción de documentos</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.log_recepcion_documentos || ''"
-              (dateChange)="marcarCambio('log_recepcion_documentos', $event || null)">
-            </app-date-picker>
-        </div>
       </div>
     </div>
 
