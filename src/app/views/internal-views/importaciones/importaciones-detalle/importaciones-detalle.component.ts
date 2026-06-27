@@ -117,7 +117,6 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'des_fecha_lavado',               label: 'Fecha de lavado de contenedor' },
       { campo: 'des_entrega_contenedor_naviera', label: 'Fecha entrega contenedor a naviera' },
       { campo: 'des_dias_sin_demoras',           label: 'Días sin demoras para devolver contenedor' },
-      { campo: 'des_fecha_limite_naviera',       label: 'Fecha límite entrega contenedor a naviera' },
       { campo: 'des_recepcion_eir',              label: 'Recepción de documento EIR' },
     ],
     odoo: [

@@ -583,12 +583,17 @@
             </app-date-picker></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_dias_sin_demoras')"><label>12. Días sin demoras para devolver contenedor</label>
           <input type="number" [value]="embarque.des_dias_sin_demoras || ''" (change)="marcarCambio('des_dias_sin_demoras', +$any($event.target).value || null)" /></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_limite_naviera')"><label>13. Fecha límite entrega contenedor a naviera</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.des_fecha_limite_naviera || ''"
-              (dateChange)="marcarCambio('des_fecha_limite_naviera', $event || null)">
-            </app-date-picker></div>
+        <div class="field-row"><label>13. Fecha límite entrega contenedor a naviera</label>
+          <div class="calc-display">
+            <span *ngIf="embarque.des_fecha_limite_naviera">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ embarque.des_fecha_limite_naviera | slice:0:10 }}
+            </span>
+            <span *ngIf="!embarque.des_fecha_limite_naviera" style="color:#475569;font-size:.8rem">
+              — (se calcula al guardar: ETA Puerto + días sin demoras)
+            </span>
+          </div>
+        </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')"><label>14. Recepción de documento EIR</label>
           <app-date-picker
               mode="single"
