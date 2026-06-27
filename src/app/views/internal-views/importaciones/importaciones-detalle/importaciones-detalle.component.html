@@ -112,8 +112,17 @@
           </div>
         </div>
 
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_importador')">
+          <label>1. Importador</label>
+          <select [value]="embarque.odoo_importador || ''" (change)="marcarCambio('odoo_importador', $any($event.target).value || null)">
+            <option value="">—</option>
+            <option>RBF</option>
+            <option>ROY MORAN</option>
+          </select>
+        </div>
+
         <div class="field-row" [class.campo-error]="esCampoError('log_fecha_notificacion')" [class.campo-faltante]="esCampoFaltante('log_fecha_notificacion')">
-          <label>1. Fecha notificación de entrega</label>
+          <label>2. Fecha notificación de entrega</label>
           <app-date-picker
               mode="single"
               [value]="embarque.log_fecha_notificacion || ''"
@@ -640,14 +649,6 @@
             </app-date-picker></div>
         <div class="field-row full" [class.campo-faltante]="esCampoFaltante('odoo_folio_orden')"><label>5. Folio(s) de orden de compra</label>
           <input type="text" [value]="embarque.odoo_folio_orden || ''" (change)="marcarCambio('odoo_folio_orden', $any($event.target).value || null)" placeholder="2083, 2084, 2085" /></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_importador')">
-          <label>6. Importador</label>
-          <select [value]="embarque.odoo_importador || ''" (change)="marcarCambio('odoo_importador', $any($event.target).value || null)">
-            <option value="">—</option>
-            <option>RBF</option>
-            <option>ROY MORAN</option>
-          </select>
-        </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
           <label>7. Recepción de documentos</label>
           <app-date-picker

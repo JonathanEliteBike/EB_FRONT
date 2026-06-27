@@ -43,6 +43,7 @@ export class ImportacionesDetalleComponent implements OnInit {
 
   private readonly CAMPOS_VALIDAR: Partial<Record<Seccion, CampoValidar[]>> = {
     logistica: [
+      { campo: 'odoo_importador',                  label: 'Importador' },
       { campo: 'log_fecha_notificacion',           label: 'Fecha notificación de entrega' },
       { campo: 'log_fecha_entrega',                label: 'Fecha de entrega' },
       { campo: 'log_titulo_correo_salida',         label: 'Título correo salida de contenedor' },
@@ -120,7 +121,6 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'des_recepcion_eir',              label: 'Recepción de documento EIR' },
     ],
     odoo: [
-      { campo: 'odoo_importador',       label: 'Importador' },
       { campo: 'odoo_codificacion',     label: 'Codificación de productos' },
       { campo: 'odoo_alta_catalogo',    label: 'Alta de catálogo en Odoo' },
       { campo: 'odoo_alta_precios',     label: 'Alta de precios en Odoo' },
