@@ -298,3 +298,17 @@
   padding: 2px 8px; background: rgba(100,116,139,0.1);
   border-radius: 4px; white-space: nowrap; display: block;
 }
+
+/* Sección Piezas por tipo de caja */
+.caja-header { margin-top: 20px; }
+.caja-header label {
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: #94a3b8;
+}
+.caja-row label { display: flex; flex-direction: column; gap: 2px; }
+.caja-modelo { font-weight: 600; color: #e2e8f0; font-size: 0.85rem; }
+.caja-tag {
+  font-size: 0.72rem; color: #64748b;
+  background: rgba(100,116,139,0.12); border-radius: 4px;
+  padding: 1px 6px; width: fit-content;
+}

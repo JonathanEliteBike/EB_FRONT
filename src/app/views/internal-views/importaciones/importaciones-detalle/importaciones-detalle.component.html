@@ -865,6 +865,98 @@
           <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_reconocimiento_aduanero) !== null">
             ≈ USD {{ usdEquiv(embarque.cos_reconocimiento_aduanero) | number:'1.2-2' }}
           </span></div>
+
+        <!-- ── Piezas por tipo de caja ── -->
+        <div class="field-row full caja-header"><label>Piezas por tipo de caja</label></div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_r24')">
+          <label><span class="caja-modelo">SCOTT R-24</span><span class="caja-tag">CAJA 1 · 0.16 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_scott_r24')">
+              <input type="number" min="0" [value]="embarque.cos_caja_scott_r24 ?? ''" (change)="marcarCambio('cos_caja_scott_r24', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_scott_r24')" class="na-badge" (click)="toggleNA('cos_caja_scott_r24')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_scott_r24')" (click)="toggleNA('cos_caja_scott_r24')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_r20')">
+          <label><span class="caja-modelo">SCOTT R-20</span><span class="caja-tag">CAJA 2 · 0.14 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_scott_r20')">
+              <input type="number" min="0" [value]="embarque.cos_caja_scott_r20 ?? ''" (change)="marcarCambio('cos_caja_scott_r20', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_scott_r20')" class="na-badge" (click)="toggleNA('cos_caja_scott_r20')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_scott_r20')" (click)="toggleNA('cos_caja_scott_r20')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_adulto')">
+          <label><span class="caja-modelo">SCOTT ADULTO</span><span class="caja-tag">CAJA 3 · 0.25 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_scott_adulto')">
+              <input type="number" min="0" [value]="embarque.cos_caja_scott_adulto ?? ''" (change)="marcarCambio('cos_caja_scott_adulto', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_scott_adulto')" class="na-badge" (click)="toggleNA('cos_caja_scott_adulto')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_scott_adulto')" (click)="toggleNA('cos_caja_scott_adulto')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_tw')">
+          <label><span class="caja-modelo">SCOTT TW</span><span class="caja-tag">CAJA 4 · 0.42 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_scott_tw')">
+              <input type="number" min="0" [value]="embarque.cos_caja_scott_tw ?? ''" (change)="marcarCambio('cos_caja_scott_tw', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_scott_tw')" class="na-badge" (click)="toggleNA('cos_caja_scott_tw')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_scott_tw')" (click)="toggleNA('cos_caja_scott_tw')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_tw_electrica')">
+          <label><span class="caja-modelo">SCOTT TW ELÉCTRICA</span><span class="caja-tag">CAJA 5 · 0.45 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_scott_tw_electrica')">
+              <input type="number" min="0" [value]="embarque.cos_caja_scott_tw_electrica ?? ''" (change)="marcarCambio('cos_caja_scott_tw_electrica', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_scott_tw_electrica')" class="na-badge" (click)="toggleNA('cos_caja_scott_tw_electrica')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_scott_tw_electrica')" (click)="toggleNA('cos_caja_scott_tw_electrica')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_megamo_track')">
+          <label><span class="caja-modelo">MEGAMO TRACK / PULSE</span><span class="caja-tag">CAJA 5 · 0.32 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_megamo_track')">
+              <input type="number" min="0" [value]="embarque.cos_caja_megamo_track ?? ''" (change)="marcarCambio('cos_caja_megamo_track', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_megamo_track')" class="na-badge" (click)="toggleNA('cos_caja_megamo_track')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_megamo_track')" (click)="toggleNA('cos_caja_megamo_track')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_megamo_reason')">
+          <label><span class="caja-modelo">MEGAMO REASON / FLAME / ALONG / RYAL</span><span class="caja-tag">CAJA 6 · 0.42 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_megamo_reason')">
+              <input type="number" min="0" [value]="embarque.cos_caja_megamo_reason ?? ''" (change)="marcarCambio('cos_caja_megamo_reason', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_megamo_reason')" class="na-badge" (click)="toggleNA('cos_caja_megamo_reason')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_megamo_reason')" (click)="toggleNA('cos_caja_megamo_reason')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_megamo_vitae')">
+          <label><span class="caja-modelo">MEGAMO VITAE MUSCULAR / NATURAL</span><span class="caja-tag">CAJA 7 · 0.46 m³</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_caja_megamo_vitae')">
+              <input type="number" min="0" [value]="embarque.cos_caja_megamo_vitae ?? ''" (change)="marcarCambio('cos_caja_megamo_vitae', +$any($event.target).value || null)" placeholder="Piezas" />
+            </ng-container>
+            <span *ngIf="esNA('cos_caja_megamo_vitae')" class="na-badge" (click)="toggleNA('cos_caja_megamo_vitae')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_caja_megamo_vitae')" (click)="toggleNA('cos_caja_megamo_vitae')">N/A</button>
+          </div>
+        </div>
+
       </div>
     </div>
 

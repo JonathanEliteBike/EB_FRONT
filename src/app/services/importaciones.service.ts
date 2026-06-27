@@ -170,6 +170,16 @@ export interface Importacion {
   cos_impuestos_pagados_pesos?: number;
   cos_reconocimiento_aduanero?: number;
 
+  // Piezas por tipo de caja
+  cos_caja_scott_r24?: number;
+  cos_caja_scott_r20?: number;
+  cos_caja_scott_adulto?: number;
+  cos_caja_scott_tw?: number;
+  cos_caja_scott_tw_electrica?: number;
+  cos_caja_megamo_track?: number;
+  cos_caja_megamo_reason?: number;
+  cos_caja_megamo_vitae?: number;
+
   // Conversiones USD calculadas (pesos / tipo_cambio_pedimento)
   cos_gastos_forwarder_usd?: number;
   cos_seguro_usd?: number;

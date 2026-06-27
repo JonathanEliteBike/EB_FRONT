@@ -177,6 +177,15 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'cos_monitoreo_pesos',          label: 'Monitoreo (pesos)'               },
       { campo: 'cos_impuestos_pagados_pesos',  label: 'Impuestos pagados (pesos)'       },
       { campo: 'cos_reconocimiento_aduanero',  label: 'Reconocimiento aduanero (pesos)' },
+      // Piezas por tipo de caja (opcional — N/A si no aplica)
+      { campo: 'cos_caja_scott_r24',          label: 'SCOTT R-24 — CAJA 1 (0.16 m³)',                       opcional: true },
+      { campo: 'cos_caja_scott_r20',          label: 'SCOTT R-20 — CAJA 2 (0.14 m³)',                       opcional: true },
+      { campo: 'cos_caja_scott_adulto',       label: 'SCOTT ADULTO — CAJA 3 (0.25 m³)',                     opcional: true },
+      { campo: 'cos_caja_scott_tw',           label: 'SCOTT TW — CAJA 4 (0.42 m³)',                         opcional: true },
+      { campo: 'cos_caja_scott_tw_electrica', label: 'SCOTT TW ELÉCTRICA — CAJA 5 (0.45 m³)',               opcional: true },
+      { campo: 'cos_caja_megamo_track',       label: 'MEGAMO TRACK / PULSE — CAJA 5 (0.32 m³)',             opcional: true },
+      { campo: 'cos_caja_megamo_reason',      label: 'MEGAMO REASON / FLAME / ALONG / RYAL — CAJA 6 (0.42 m³)', opcional: true },
+      { campo: 'cos_caja_megamo_vitae',       label: 'MEGAMO VITAE MUSCULAR / NATURAL — CAJA 7 (0.46 m³)', opcional: true },
     ],
   };
 
