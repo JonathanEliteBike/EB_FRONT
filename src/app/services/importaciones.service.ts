@@ -113,6 +113,7 @@ export interface Importacion {
   des_recepcion_eir?: string;
 
   // Odoo
+  odoo_importador?: string;
   odoo_codificacion?: string;
   odoo_alta_catalogo?: string;
   odoo_alta_precios?: string;

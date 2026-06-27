@@ -64,7 +64,7 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'log_confirmacion_bl_co',           label: 'Confirmación de BL y CO definitivos' },
       { campo: 'log_envio_certificado',            label: 'Envío de Certificado a México', opcional: true },
       { campo: 'log_certificado_seguro',           label: 'Certificado de Seguro (número)' },
-      { campo: 'log_recepcion_documentos',         label: 'Recepción de documentos' },
+      // log_recepcion_documentos moved to odoo
     ],
     importacion: [
       { campo: 'imp_fecha_traduccion',           label: 'Fecha entrega de traducción al RBF' },
@@ -121,11 +121,13 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'des_recepcion_eir',              label: 'Recepción de documento EIR' },
     ],
     odoo: [
+      { campo: 'odoo_importador',       label: 'Importador' },
       { campo: 'odoo_codificacion',     label: 'Codificación de productos' },
       { campo: 'odoo_alta_catalogo',    label: 'Alta de catálogo en Odoo' },
       { campo: 'odoo_alta_precios',     label: 'Alta de precios en Odoo' },
       { campo: 'odoo_alta_orden_compra', label: 'Alta de orden de compra' },
       { campo: 'odoo_folio_orden',      label: 'Folio(s) de orden de compra' },
+      { campo: 'log_recepcion_documentos', label: 'Recepción de documentos' },
     ],
     almacen: [
       { campo: 'alm_base_datos_etiquetas',    label: 'Base de datos para etiquetas' },
