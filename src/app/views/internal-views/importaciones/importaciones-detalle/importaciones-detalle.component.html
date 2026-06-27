@@ -795,24 +795,42 @@
       <div class="fields-grid">
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_tipo_cambio_pedimento')"><label>Tipo de cambio pedimento</label>
           <input type="number" step="0.0001" [value]="embarque.cos_tipo_cambio_pedimento || ''" (change)="marcarCambio('cos_tipo_cambio_pedimento', +$any($event.target).value || null)" /></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_valor_factura')"><label>Valor factura</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_valor_factura')"><label>Valor factura (del pedimento)</label>
           <input type="number" step="0.01" [value]="embarque.cos_valor_factura || ''" (change)="marcarCambio('cos_valor_factura', +$any($event.target).value || null)" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_cantidad_bicicletas')"><label>Cantidad de bicicletas</label>
           <input type="number" [value]="embarque.cos_cantidad_bicicletas || ''" (change)="marcarCambio('cos_cantidad_bicicletas', +$any($event.target).value || null)" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_flete_internacional_usd')"><label>Costo flete internacional (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_flete_internacional_usd || ''" (change)="marcarCambio('cos_flete_internacional_usd', +$any($event.target).value || null)" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_gastos_forwarder_pesos')"><label>Gastos forwarder en destino (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_gastos_forwarder_pesos || ''" (change)="marcarCambio('cos_gastos_forwarder_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_gastos_forwarder_pesos || ''" (change)="marcarCambio('cos_gastos_forwarder_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_gastos_forwarder_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_gastos_forwarder_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_seguro_pesos')"><label>Seguro (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_seguro_pesos || ''" (change)="marcarCambio('cos_seguro_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_seguro_pesos || ''" (change)="marcarCambio('cos_seguro_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_seguro_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_seguro_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_custodia_pesos')"><label>Custodia (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_custodia_pesos || ''" (change)="marcarCambio('cos_custodia_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_custodia_pesos || ''" (change)="marcarCambio('cos_custodia_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_custodia_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_custodia_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_maniobras_pesos')"><label>Maniobras (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_maniobras_pesos || ''" (change)="marcarCambio('cos_maniobras_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_maniobras_pesos || ''" (change)="marcarCambio('cos_maniobras_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_maniobras_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_maniobras_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_cargos_adicionales_pesos')"><label>Cargos adicionales / Multas (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_cargos_adicionales_pesos || ''" (change)="marcarCambio('cos_cargos_adicionales_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_cargos_adicionales_pesos || ''" (change)="marcarCambio('cos_cargos_adicionales_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_cargos_adicionales_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_cargos_adicionales_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_honorarios_pesos')"><label>Honorarios AA (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_honorarios_pesos || ''" (change)="marcarCambio('cos_honorarios_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_honorarios_pesos || ''" (change)="marcarCambio('cos_honorarios_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_honorarios_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_honorarios_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_flete_terrestre_usd')"><label>Flete terrestre (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_flete_terrestre_usd || ''" (change)="marcarCambio('cos_flete_terrestre_usd', +$any($event.target).value || null)" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_pernoctas_usd')"><label>Pernoctas flete terrestre (USD)</label>
@@ -822,15 +840,30 @@
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_demoras_usd')"><label>Demoras / Almacenaje (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_demoras_usd || ''" (change)="marcarCambio('cos_demoras_usd', +$any($event.target).value || null)" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_verificacion_pesos')"><label>Verificación (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_verificacion_pesos || ''" (change)="marcarCambio('cos_verificacion_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_verificacion_pesos || ''" (change)="marcarCambio('cos_verificacion_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_verificacion_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_verificacion_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_lavado_contenedor_pesos')"><label>Lavado de contenedor (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_lavado_contenedor_pesos || ''" (change)="marcarCambio('cos_lavado_contenedor_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_lavado_contenedor_pesos || ''" (change)="marcarCambio('cos_lavado_contenedor_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_lavado_contenedor_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_lavado_contenedor_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_monitoreo_pesos')"><label>Monitoreo (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_monitoreo_pesos || ''" (change)="marcarCambio('cos_monitoreo_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_monitoreo_pesos || ''" (change)="marcarCambio('cos_monitoreo_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_monitoreo_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_monitoreo_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_impuestos_pagados_pesos')"><label>Impuestos pagados (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_impuestos_pagados_pesos || ''" (change)="marcarCambio('cos_impuestos_pagados_pesos', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_impuestos_pagados_pesos || ''" (change)="marcarCambio('cos_impuestos_pagados_pesos', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_impuestos_pagados_pesos) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_impuestos_pagados_pesos) | number:'1.2-2' }}
+          </span></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_reconocimiento_aduanero')"><label>Reconocimiento aduanero (pesos)</label>
-          <input type="number" step="0.01" [value]="embarque.cos_reconocimiento_aduanero || ''" (change)="marcarCambio('cos_reconocimiento_aduanero', +$any($event.target).value || null)" /></div>
+          <input type="number" step="0.01" [value]="embarque.cos_reconocimiento_aduanero || ''" (change)="marcarCambio('cos_reconocimiento_aduanero', +$any($event.target).value || null)" />
+          <span class="usd-equiv" *ngIf="usdEquiv(embarque.cos_reconocimiento_aduanero) !== null">
+            ≈ USD {{ usdEquiv(embarque.cos_reconocimiento_aduanero) | number:'1.2-2' }}
+          </span></div>
       </div>
     </div>
 

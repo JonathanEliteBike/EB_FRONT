@@ -159,7 +159,7 @@ export class ImportacionesDetalleComponent implements OnInit {
     ],
     costos: [
       { campo: 'cos_tipo_cambio_pedimento',    label: 'Tipo de cambio pedimento'        },
-      { campo: 'cos_valor_factura',            label: 'Valor factura'                   },
+      { campo: 'cos_valor_factura',            label: 'Valor factura (del pedimento)'   },
       { campo: 'cos_cantidad_bicicletas',      label: 'Cantidad de bicicletas'          },
       { campo: 'cos_flete_internacional_usd',  label: 'Costo flete internacional (USD)' },
       { campo: 'cos_gastos_forwarder_pesos',   label: 'Gastos forwarder en destino'     },
@@ -243,6 +243,12 @@ export class ImportacionesDetalleComponent implements OnInit {
     const def = seccCampos.find(c => c.campo === campo);
     if (!def) return false;
     return !this.valorValido((this.embarque as any)[campo]);
+  }
+
+  usdEquiv(pesos: number | undefined | null): number | null {
+    const tc = this.embarque?.cos_tipo_cambio_pedimento;
+    if (!tc || !pesos) return null;
+    return pesos / tc;
   }
 
   marcarCambio(campo: keyof Importacion, valor: any): void {
