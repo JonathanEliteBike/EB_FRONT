@@ -129,12 +129,17 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'log_recepcion_documentos', label: 'Recepción de documentos' },
     ],
     almacen: [
-      { campo: 'alm_base_datos_etiquetas',    label: 'Base de datos para etiquetas' },
-      { campo: 'alm_base_datos_verificacion', label: 'Base de datos de artículos a verificación' },
-      { campo: 'alm_liberacion_etiquetado',   label: 'Liberación de etiquetado por almacén' },
-      { campo: 'alm_envio_info_uva',          label: 'Envío de información a la UVA' },
-      { campo: 'alm_liberacion_uva',          label: 'Liberación de etiquetado por la UVA' },
-      { campo: 'alm_fecha_limite_etiquetado', label: 'Fecha límite cumplimiento etiquetado' },
+      { campo: 'alm_base_datos_etiquetas',        label: 'Base de datos para etiquetas' },
+      { campo: 'alm_base_datos_verificacion',     label: 'Base de datos de artículos a verificación' },
+      { campo: 'alm_fecha_limite_etiquetado',     label: 'Fecha límite cumplimiento etiquetado (UVA)' },
+      { campo: 'alm_liberacion_etiquetado',       label: 'Liberación de etiquetado por almacén' },
+      { campo: 'alm_liberacion_etiquetado_uva',   label: 'Liberación de etiquetado por almacén (UVA)' },
+      { campo: 'alm_envio_info_uva',              label: 'Envío de información a la UVA' },
+      { campo: 'alm_liberacion_uva',              label: 'Liberación de etiquetado por la UVA' },
+      { campo: 'alm_proyectado_dias_etiquetado',  label: 'Proyectado de días estimado para el etiquetado' },
+      { campo: 'alm_inicio_etiquetado',           label: 'Fecha de inicio de etiquetado' },
+      { campo: 'alm_terminacion_etiquetado',      label: 'Fecha de terminación de etiquetado' },
+      // alm_real_dias_etiquetado is calculated — not in CAMPOS_VALIDAR (user can't fill it)
     ],
     recepcion: [
       { campo: 'rec_cedula_costeo',           label: 'Cédula de costeo de IGI' },

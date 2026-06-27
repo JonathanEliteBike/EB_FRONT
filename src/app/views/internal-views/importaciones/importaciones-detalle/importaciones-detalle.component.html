@@ -664,42 +664,65 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'almacen'">
       <div class="fields-grid">
+
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_etiquetas')"><label>1. Base de datos para etiquetas</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.alm_base_datos_etiquetas || ''"
-              (dateChange)="marcarCambio('alm_base_datos_etiquetas', $event || null)">
-            </app-date-picker></div>
+          <app-date-picker mode="single" [value]="embarque.alm_base_datos_etiquetas || ''" (dateChange)="marcarCambio('alm_base_datos_etiquetas', $event || null)"></app-date-picker></div>
+
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_verificacion')"><label>2. Base de datos de artículos a verificación</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.alm_base_datos_verificacion || ''"
-              (dateChange)="marcarCambio('alm_base_datos_verificacion', $event || null)">
-            </app-date-picker></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_etiquetado')"><label>3. Liberación de etiquetado por almacén</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.alm_liberacion_etiquetado || ''"
-              (dateChange)="marcarCambio('alm_liberacion_etiquetado', $event || null)">
-            </app-date-picker></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')"><label>4. Envío de información a la UVA</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.alm_envio_info_uva || ''"
-              (dateChange)="marcarCambio('alm_envio_info_uva', $event || null)">
-            </app-date-picker></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_uva')"><label>5. Liberación de etiquetado por la UVA</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.alm_liberacion_uva || ''"
-              (dateChange)="marcarCambio('alm_liberacion_uva', $event || null)">
-            </app-date-picker></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_fecha_limite_etiquetado')"><label>6. Fecha límite cumplimiento etiquetado (UVA)</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.alm_fecha_limite_etiquetado || ''"
-              (dateChange)="marcarCambio('alm_fecha_limite_etiquetado', $event || null)">
-            </app-date-picker></div>
+          <app-date-picker mode="single" [value]="embarque.alm_base_datos_verificacion || ''" (dateChange)="marcarCambio('alm_base_datos_verificacion', $event || null)"></app-date-picker></div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_fecha_limite_etiquetado')"><label>3. Fecha límite cumplimiento etiquetado (UVA)</label>
+          <app-date-picker mode="single" [value]="embarque.alm_fecha_limite_etiquetado || ''" (dateChange)="marcarCambio('alm_fecha_limite_etiquetado', $event || null)"></app-date-picker></div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_etiquetado')">
+          <label>4. Liberación de etiquetado por almacén</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_liberacion_etiquetado')">
+              <app-date-picker mode="single" [value]="embarque.alm_liberacion_etiquetado || ''" (dateChange)="marcarCambio('alm_liberacion_etiquetado', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_liberacion_etiquetado')" class="na-badge" (click)="toggleNA('alm_liberacion_etiquetado')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_liberacion_etiquetado')" (click)="toggleNA('alm_liberacion_etiquetado')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_etiquetado_uva')">
+          <label>5. Liberación de etiquetado por almacén (UVA)</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_liberacion_etiquetado_uva')">
+              <app-date-picker mode="single" [value]="embarque.alm_liberacion_etiquetado_uva || ''" (dateChange)="marcarCambio('alm_liberacion_etiquetado_uva', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_liberacion_etiquetado_uva')" class="na-badge" (click)="toggleNA('alm_liberacion_etiquetado_uva')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_liberacion_etiquetado_uva')" (click)="toggleNA('alm_liberacion_etiquetado_uva')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')"><label>6. Envío de información a la UVA</label>
+          <app-date-picker mode="single" [value]="embarque.alm_envio_info_uva || ''" (dateChange)="marcarCambio('alm_envio_info_uva', $event || null)"></app-date-picker></div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_uva')"><label>7. Liberación de etiquetado por la UVA</label>
+          <app-date-picker mode="single" [value]="embarque.alm_liberacion_uva || ''" (dateChange)="marcarCambio('alm_liberacion_uva', $event || null)"></app-date-picker></div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_proyectado_dias_etiquetado')"><label>8. Proyectado de días estimado para el etiquetado</label>
+          <input type="number" [value]="embarque.alm_proyectado_dias_etiquetado || ''" (change)="marcarCambio('alm_proyectado_dias_etiquetado', +$any($event.target).value || null)" placeholder="Ej: 5" /></div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_inicio_etiquetado')"><label>9. Fecha de inicio de etiquetado</label>
+          <app-date-picker mode="single" [value]="embarque.alm_inicio_etiquetado || ''" (dateChange)="marcarCambio('alm_inicio_etiquetado', $event || null)"></app-date-picker></div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_terminacion_etiquetado')"><label>10. Fecha de terminación de etiquetado</label>
+          <app-date-picker mode="single" [value]="embarque.alm_terminacion_etiquetado || ''" (dateChange)="marcarCambio('alm_terminacion_etiquetado', $event || null)"></app-date-picker></div>
+
+        <div class="field-row"><label>11. Real de días de etiquetado</label>
+          <div class="calc-display">
+            <span *ngIf="embarque.alm_real_dias_etiquetado !== null && embarque.alm_real_dias_etiquetado !== undefined">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ embarque.alm_real_dias_etiquetado }} días
+            </span>
+            <span *ngIf="embarque.alm_real_dias_etiquetado === null || embarque.alm_real_dias_etiquetado === undefined" style="color:#475569;font-size:.8rem">
+              — (fecha terminación − fecha inicio)
+            </span>
+          </div>
+        </div>
+
       </div>
     </div>
 

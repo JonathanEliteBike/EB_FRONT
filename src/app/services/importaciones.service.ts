@@ -123,10 +123,15 @@ export interface Importacion {
   // Almacén
   alm_base_datos_etiquetas?: string;
   alm_base_datos_verificacion?: string;
+  alm_fecha_limite_etiquetado?: string;
   alm_liberacion_etiquetado?: string;
+  alm_liberacion_etiquetado_uva?: string;
   alm_envio_info_uva?: string;
   alm_liberacion_uva?: string;
-  alm_fecha_limite_etiquetado?: string;
+  alm_proyectado_dias_etiquetado?: number;
+  alm_inicio_etiquetado?: string;
+  alm_terminacion_etiquetado?: string;
+  alm_real_dias_etiquetado?: number;
 
   // Recepción
   rec_cedula_costeo?: string;
