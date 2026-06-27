@@ -594,12 +594,24 @@
             </span>
           </div>
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')"><label>14. Recepción de documento EIR</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.des_recepcion_eir || ''"
-              (dateChange)="marcarCambio('des_recepcion_eir', $event || null)">
-            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')">
+          <label>14. Recepción de documento EIR</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('des_recepcion_eir')">
+              <app-date-picker
+                  mode="single"
+                  [value]="embarque.des_recepcion_eir || ''"
+                  (dateChange)="marcarCambio('des_recepcion_eir', $event || null)">
+                </app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('des_recepcion_eir')" class="na-badge" (click)="toggleNA('des_recepcion_eir')" title="Click para quitar N/A">
+              <i class="fas fa-check"></i> N/A
+            </span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('des_recepcion_eir')" (click)="toggleNA('des_recepcion_eir')" title="Marcar como No Aplica">
+              N/A
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
