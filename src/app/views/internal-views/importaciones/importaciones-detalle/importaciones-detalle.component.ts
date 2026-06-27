@@ -305,7 +305,7 @@ export class ImportacionesDetalleComponent implements OnInit {
     // Incluir cambios adicionales que no estén en CAMPOS_VALIDAR (campos en el HTML sin validación)
     for (const [campo, valor] of Object.entries(this.cambiosPendientes)) {
       if (!(campo in payload)) {
-        payload[campo] = valor === '__NA__' ? null : valor;
+        payload[campo] = this.camposNA.has(campo) ? '__NA__' : (valor === '__NA__' ? null : valor);
       }
     }
 
