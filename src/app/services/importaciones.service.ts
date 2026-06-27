@@ -170,6 +170,19 @@ export interface Importacion {
   cos_impuestos_pagados_pesos?: number;
   cos_reconocimiento_aduanero?: number;
 
+  // Conversiones USD calculadas (pesos / tipo_cambio_pedimento)
+  cos_gastos_forwarder_usd?: number;
+  cos_seguro_usd?: number;
+  cos_custodia_usd?: number;
+  cos_maniobras_usd?: number;
+  cos_cargos_adicionales_usd?: number;
+  cos_honorarios_usd?: number;
+  cos_verificacion_usd?: number;
+  cos_lavado_contenedor_usd?: number;
+  cos_monitoreo_usd?: number;
+  cos_impuestos_pagados_usd?: number;
+  cos_reconocimiento_aduanero_usd?: number;
+
   notas?: string;
   borradores?: Record<string, Record<string, any>>;
   campos_na?: string[];
