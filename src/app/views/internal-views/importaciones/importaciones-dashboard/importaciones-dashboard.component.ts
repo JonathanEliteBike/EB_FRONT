@@ -66,6 +66,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   error     = '';
   ordenTabla:    'llegada' | 'costo' | 'bici' = 'llegada';
   desgloseOrigen = false;
+  activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' = 'resumen';
 
   filtros = { via: '', estado: '', origen: '', anio: '' };
 
@@ -89,7 +90,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
         this.data     = d;
         this.cargando = false;
         this.cdr.detectChanges();
-        setTimeout(() => this.initCharts(), 80);
+        setTimeout(() => this.initChartsForTab(), 80);
       },
       error: () => {
         this.error    = 'Error al cargar el dashboard';
@@ -109,6 +110,14 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return !!(this.filtros.via || this.filtros.estado || this.filtros.origen || this.filtros.anio);
   }
 
+  switchTab(tab: 'resumen' | 'latencias' | 'costos' | 'embarques'): void {
+    if (tab === this.activeTab) return;
+    this.activeTab = tab;
+    this.destroyCharts();
+    this.desgloseOrigen = false;
+    setTimeout(() => this.initChartsForTab(), 50);
+  }
+
   // ── Charts ─────────────────────────────────────────────────────────────────
 
   private destroyCharts(): void {
@@ -116,7 +125,16 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     this.charts = [];
   }
 
-  private initCharts(): void {
+  private initChartsForTab(): void {
+    if (!this.data) return;
+    switch (this.activeTab) {
+      case 'resumen':   this.initChartsResumen();   break;
+      case 'latencias': this.initChartsLatencias(); break;
+      case 'costos':    this.initChartosCostos();   break;
+    }
+  }
+
+  private initChartsResumen(): void {
     if (!this.data) return;
     this.destroyCharts();
 
@@ -194,32 +212,14 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
       }));
     }
 
-    // 4. Bar — flete promedio por vía
-    if (this.chartFleteRef?.nativeElement) {
-      const fv = this.data.flete_por_via;
-      this.charts.push(new Chart(this.chartFleteRef.nativeElement, {
-        type: 'bar',
-        data: {
-          labels: ['Marítimo', 'Aéreo'],
-          datasets: [{
-            data: [fv.maritimo_avg, fv.aereo_avg],
-            backgroundColor: ['#3b82f6', '#8b5cf6'],
-            borderRadius: 6,
-            barThickness: 44,
-          }],
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: '#e2e8f0' }, grid: { display: false } },
-            y: {
-              ticks: { color: textColor, callback: v => `$${Number(v).toLocaleString('es-MX')}` },
-              grid: { color: gridColor }, border: { color: gridColor },
-            },
-          },
-        },
-      }));
-    }
+  }
+
+  private initChartsLatencias(): void {
+    if (!this.data) return;
+    this.destroyCharts();
+
+    const textColor = '#94a3b8';
+    const gridColor = '#1e2535';
 
     // 5. Latencia x origen (general o desglose según toggle)
     this.initChartLatOrigen();
@@ -275,6 +275,41 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           scales: {
             x: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } },
             y: { ticks: { color: textColor }, grid: { color: gridColor }, border: { color: gridColor } },
+          },
+        },
+      }));
+    }
+  }
+
+  private initChartosCostos(): void {
+    if (!this.data) return;
+    this.destroyCharts();
+
+    const textColor = '#94a3b8';
+    const gridColor = '#1e2535';
+
+    // 4. Bar — flete promedio por vía
+    if (this.chartFleteRef?.nativeElement) {
+      const fv = this.data.flete_por_via;
+      this.charts.push(new Chart(this.chartFleteRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: ['Marítimo', 'Aéreo'],
+          datasets: [{
+            data: [fv.maritimo_avg, fv.aereo_avg],
+            backgroundColor: ['#3b82f6', '#8b5cf6'],
+            borderRadius: 6,
+            barThickness: 44,
+          }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#e2e8f0' }, grid: { display: false } },
+            y: {
+              ticks: { color: textColor, callback: v => `$${Number(v).toLocaleString('es-MX')}` },
+              grid: { color: gridColor }, border: { color: gridColor },
+            },
           },
         },
       }));

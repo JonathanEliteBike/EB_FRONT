@@ -75,6 +75,34 @@
 .btn-limpiar:hover  { background: #2d1a1a; }
 .btn-limpiar:active { transform: scale(0.97); }
 
+/* ── Tabs ── */
+.dash-tabs {
+  display: flex; gap: 2px;
+  border-bottom: 1px solid #1e2535;
+  margin-bottom: 24px;
+  position: sticky; top: 64px; z-index: 10;
+  background: #0b0e14;
+  padding-bottom: 0;
+}
+.tab-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 11px 18px; font-size: .82rem; font-weight: 500;
+  color: #4b5563; cursor: pointer; white-space: nowrap;
+  border: none; border-bottom: 2px solid transparent;
+  background: transparent; margin-bottom: -1px;
+  transition: color 180ms ease, border-color 180ms ease, transform 120ms var(--ease-out);
+}
+.tab-btn i { font-size: .75rem; }
+.tab-btn:hover:not(.active) { color: #94a3b8; }
+.tab-btn:active { transform: scale(0.97); }
+.tab-btn.active { color: #e2e8f0; border-bottom-color: #3b82f6; }
+.tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #1e2535; color: #64748b; border-radius: 10px;
+  font-size: .65rem; font-weight: 700; padding: 1px 6px; min-width: 18px;
+}
+.tab-btn.active .tab-count { background: #1e3a5f; color: #60a5fa; }
+
 /* ── Spinner/Error ── */
 .dash-spinner {
   display: flex; flex-direction: column; align-items: center;
@@ -145,7 +173,7 @@
   display: grid; gap: 16px; margin-bottom: 16px;
 }
 .charts-row.r1 { grid-template-columns: 240px 1fr 240px; }
-.charts-row.r2 { grid-template-columns: 1fr 280px; }
+.charts-row.r2 { grid-template-columns: 1fr 1fr; }
 
 @media (max-width: 1100px) {
   .charts-row.r1 { grid-template-columns: 1fr 1fr; }
@@ -423,6 +451,27 @@ td { padding: 10px 14px; vertical-align: middle; }
 
 .costo-paq-sub {
   font-size: .68rem; color: #4b5563; margin-top: -6px;
+}
+
+/* ── Costo info card (tab Costos) ── */
+.costo-info {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 4px 0;
+}
+.costo-info-item {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.costo-info-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; background: rgba(255,255,255,.04);
+  font-size: .85rem;
+}
+.costo-info-label {
+  display: block; font-size: .82rem; font-weight: 600; color: #cbd5e1;
+}
+.costo-info-sub {
+  display: block; font-size: .71rem; color: #4b5563; margin-top: 1px;
 }
 
 /* ── prefers-reduced-motion ───────────────────────────────── */
