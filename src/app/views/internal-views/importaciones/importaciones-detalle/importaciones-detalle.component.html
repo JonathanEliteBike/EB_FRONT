@@ -957,6 +957,53 @@
           </div>
         </div>
 
+        <!-- ── Precio por bicicleta (calculado por distribución de volumen) ── -->
+        <ng-container *ngIf="embarque.cos_precio_bici_total">
+          <div class="field-row full caja-header" style="margin-top:20px">
+            <label>Precio por bicicleta <span class="precio-bici-calc-tag">calculado · USD</span></label>
+          </div>
+          <div class="field-row full">
+            <div class="precio-bici-grid">
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_r24">
+                <span class="precio-bici-modelo">SCOTT R-24 <span class="precio-bici-vol">0.16 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_r24 | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_r20">
+                <span class="precio-bici-modelo">SCOTT R-20 <span class="precio-bici-vol">0.14 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_r20 | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_adulto">
+                <span class="precio-bici-modelo">SCOTT Adulto <span class="precio-bici-vol">0.25 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_adulto | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_tw">
+                <span class="precio-bici-modelo">SCOTT TW <span class="precio-bici-vol">0.42 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_tw | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_tw_electrica">
+                <span class="precio-bici-modelo">SCOTT TW Eléctrica <span class="precio-bici-vol">0.45 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_tw_electrica | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_megamo_track">
+                <span class="precio-bici-modelo">Megamo Track/Pulse <span class="precio-bici-vol">0.32 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_megamo_track | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_megamo_reason">
+                <span class="precio-bici-modelo">Megamo Reason/Flame <span class="precio-bici-vol">0.42 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_megamo_reason | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_megamo_vitae">
+                <span class="precio-bici-modelo">Megamo Vitae <span class="precio-bici-vol">0.46 m³</span></span>
+                <span class="precio-bici-val">${{ embarque.cos_precio_bici_megamo_vitae | number:'1.2-2' }}</span>
+              </div>
+              <div class="precio-bici-total">
+                <span>Promedio total</span>
+                <span>${{ embarque.cos_precio_bici_total | number:'1.2-2' }} USD / bici</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
       </div>
     </div>
 

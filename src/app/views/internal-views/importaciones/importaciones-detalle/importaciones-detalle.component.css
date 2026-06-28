@@ -312,3 +312,39 @@
   background: rgba(100,116,139,0.12); border-radius: 4px;
   padding: 1px 6px; width: fit-content;
 }
+
+/* ── Precio por bicicleta calculado ── */
+.precio-bici-calc-tag {
+  font-size: .65rem; font-weight: 400; color: #3b82f6;
+  background: rgba(59,130,246,0.1); border-radius: 4px;
+  padding: 1px 7px; margin-left: 6px; font-style: normal;
+  letter-spacing: .03em;
+}
+.precio-bici-grid {
+  border: 1px solid #1e2535; border-radius: 8px; overflow: hidden;
+  font-size: .82rem;
+}
+.precio-bici-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; border-bottom: 1px solid #1e2535;
+}
+.precio-bici-row:last-child { border-bottom: none; }
+.precio-bici-modelo { color: #cbd5e1; }
+.precio-bici-vol {
+  font-size: .68rem; color: #4b5563;
+  background: rgba(100,116,139,0.1); border-radius: 3px;
+  padding: 1px 5px; margin-left: 5px;
+}
+.precio-bici-val {
+  font-family: monospace; font-size: .85rem;
+  color: #60a5fa; font-weight: 600; white-space: nowrap;
+}
+.precio-bici-total {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: #0f1523; border-top: 1px solid #2d3748;
+  font-weight: 700; color: #e2e8f0; font-size: .85rem;
+}
+.precio-bici-total span:last-child {
+  font-family: monospace; color: #34d399; font-size: .9rem;
+}

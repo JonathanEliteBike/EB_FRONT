@@ -193,6 +193,17 @@ export interface Importacion {
   cos_impuestos_pagados_usd?: number;
   cos_reconocimiento_aduanero_usd?: number;
 
+  // Precio por bicicleta por tipo de caja (distribución proporcional por volumen, en USD)
+  cos_precio_bici_scott_r24?: number;
+  cos_precio_bici_scott_r20?: number;
+  cos_precio_bici_scott_adulto?: number;
+  cos_precio_bici_scott_tw?: number;
+  cos_precio_bici_scott_tw_electrica?: number;
+  cos_precio_bici_megamo_track?: number;
+  cos_precio_bici_megamo_reason?: number;
+  cos_precio_bici_megamo_vitae?: number;
+  cos_precio_bici_total?: number;
+
   notas?: string;
   borradores?: Record<string, Record<string, any>>;
   campos_na?: string[];
