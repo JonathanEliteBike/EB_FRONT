@@ -477,7 +477,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return `hace ${Math.round(diff / 30)}m`;
   }
 
-  irDetalle(id: number): void { this.router.navigate(['/importaciones', id]); }
+  irDetalle(id: number): void { this.router.navigate(['/importaciones', id], { queryParams: { from: 'dashboard' } }); }
 
   get costoPaqConDatos(): CostoPaq[] {
     return this.data?.costo_paqueteria?.filter(e => e.total_usd > 0) ?? [];
