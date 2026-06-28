@@ -154,7 +154,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           labels: d.map(v => v.via === 'MARITIMO' ? 'Marítimo' : 'Aéreo'),
           datasets: [{
             data: d.map(v => v.count),
-            backgroundColor: ['#3b82f6', '#8b5cf6'],
+            backgroundColor: d.map(v => v.via === 'MARITIMO' ? '#3b82f6' : '#8b5cf6'),
             borderWidth: 0,
             hoverOffset: 8,
           }],

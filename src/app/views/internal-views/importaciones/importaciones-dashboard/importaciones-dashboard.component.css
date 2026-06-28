@@ -79,7 +79,7 @@
 .dash-tabs {
   display: flex; gap: 2px;
   border-bottom: 1px solid #1e2535;
-  margin-bottom: 24px;
+  margin-bottom: 0;
   position: sticky; top: 64px; z-index: 10;
   background: #0b0e14;
   padding-bottom: 0;
@@ -123,7 +123,7 @@
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px; margin-bottom: 20px;
+  gap: 12px; margin-bottom: 20px; padding-top: 20px;
 }
 .kpi-card {
   background: #111827; border: 1px solid #1e2535; border-radius: 12px;
