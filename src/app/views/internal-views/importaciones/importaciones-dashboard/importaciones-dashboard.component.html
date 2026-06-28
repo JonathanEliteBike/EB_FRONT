@@ -429,10 +429,10 @@
       <div class="costo-paq-sub">
         Maniobras + Cargos adicionales + Flete terrestre + Flete internacional + Pernoctas + Paquetexpress + Demoras + Lavado + Rec. aduanero
       </div>
-      <div *ngIf="data.costo_paqueteria.filter(e => e.total_usd > 0).length === 0" class="chart-empty">
+      <div *ngIf="costoPaqConDatos.length === 0" class="chart-empty">
         <i class="fas fa-inbox"></i> Sin datos de costos en USD
       </div>
-      <canvas #chartCostoPaq *ngIf="data.costo_paqueteria.filter(e => e.total_usd > 0).length > 0"></canvas>
+      <canvas #chartCostoPaq *ngIf="costoPaqConDatos.length > 0"></canvas>
     </div>
 
   </ng-container>

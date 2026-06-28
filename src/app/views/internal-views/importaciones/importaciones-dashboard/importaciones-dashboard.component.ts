@@ -282,7 +282,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
     // 8. Costo paquetería x importación
     if (this.chartCostoPaqRef?.nativeElement) {
-      const d = this.data.costo_paqueteria.filter(e => e.total_usd > 0).slice(0, 15);
+      const d = this.costoPaqConDatos.slice(0, 15);
       this.charts.push(new Chart(this.chartCostoPaqRef.nativeElement, {
         type: 'bar',
         data: {
@@ -407,6 +407,10 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   irDetalle(id: number): void { this.router.navigate(['/importaciones', id]); }
+
+  get costoPaqConDatos(): CostoPaq[] {
+    return this.data?.costo_paqueteria?.filter(e => e.total_usd > 0) ?? [];
+  }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
