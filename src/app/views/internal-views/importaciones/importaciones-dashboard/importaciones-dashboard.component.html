@@ -347,10 +347,10 @@
 
         <div class="chart-card chart-grow">
           <div class="chart-title"><i class="fas fa-bicycle"></i> Costo Logístico por Tipo de Bicicleta (USD prom.)</div>
-          <div *ngIf="data.precio_bici_x_caja.length === 0" class="chart-empty">
+          <div *ngIf="!data.precio_bici_x_caja?.length" class="chart-empty">
             <i class="fas fa-inbox"></i> Guarda una importación con cajas y costos para ver este análisis
           </div>
-          <canvas #chartPrecioBici *ngIf="data.precio_bici_x_caja.length > 0"></canvas>
+          <canvas #chartPrecioBici *ngIf="data.precio_bici_x_caja?.length > 0"></canvas>
         </div>
 
       </div>

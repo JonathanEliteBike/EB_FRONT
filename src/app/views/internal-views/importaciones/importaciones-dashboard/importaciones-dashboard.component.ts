@@ -119,6 +119,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     this.activeTab = tab;
     this.destroyCharts();
     this.desgloseOrigen = false;
+    this.cdr.detectChanges();
     setTimeout(() => this.initChartsForTab(), 50);
   }
 
