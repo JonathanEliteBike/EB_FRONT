@@ -16,6 +16,12 @@ interface Kpis {
   flete_total_usd: number; flete_promedio_usd: number;
   transito_maritimo_promedio_dias: number; pct_avance_promedio: number;
 }
+interface LatSingle  { dias_promedio: number | null; n: number; }
+interface LatOrigen  { origen: string; dias_promedio: number; n: number; }
+interface LatEmbarq  { id: number; referencia: string; nombre: string; log_origen: string; dias: number; }
+interface LatImp     { importador: string; dias_promedio: number; n: number; }
+interface CostoPaq   { id: number; referencia: string; nombre: string; log_origen: string; total_usd: number; }
+
 interface DashData {
   kpis: Kpis;
   por_via:     { via: string; count: number }[];
@@ -24,6 +30,16 @@ interface DashData {
   flete_por_via: { maritimo_avg: number; maritimo_count: number; aereo_avg: number; aereo_count: number };
   por_estado:  { estado: string; count: number }[];
   embarques:   any[];
+  latencias: {
+    total_dias:             number | null;
+    x_origen:               LatOrigen[];
+    x_embarque:             LatEmbarq[];
+    almacen:                LatSingle;
+    contabilidad:           LatSingle;
+    transito:               LatSingle;
+    transito_x_importador:  LatImp[];
+  };
+  costo_paqueteria: CostoPaq[];
   filtros:     { origenes: string[]; anios: string[] };
 }
 
@@ -36,15 +52,20 @@ interface DashData {
 })
 export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  @ViewChild('chartVia')    chartViaRef!:    ElementRef<HTMLCanvasElement>;
-  @ViewChild('chartOrigen') chartOrigenRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('chartMes')    chartMesRef!:    ElementRef<HTMLCanvasElement>;
-  @ViewChild('chartFlete')  chartFleteRef!:  ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartVia')        chartViaRef!:        ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartOrigen')     chartOrigenRef!:     ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartMes')        chartMesRef!:        ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartFlete')      chartFleteRef!:      ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartLatOrigen')  chartLatOrigenRef!:  ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartLatEmbarque')chartLatEmbarqueRef!:ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartLatImp')     chartLatImpRef!:     ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartCostoPaq')   chartCostoPaqRef!:   ElementRef<HTMLCanvasElement>;
 
   data:     DashData | null = null;
   cargando  = true;
   error     = '';
-  ordenTabla: 'pct' | 'flete' | 'costo' = 'pct';
+  ordenTabla:    'llegada' | 'costo' | 'bici' = 'llegada';
+  desgloseOrigen = false;
 
   filtros = { via: '', estado: '', origen: '', anio: '' };
 
@@ -199,6 +220,161 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
         },
       }));
     }
+
+    // 5. Latencia x origen (general o desglose según toggle)
+    this.initChartLatOrigen();
+
+    // 6. Latencia x embarque (horizontal bar)
+    if (this.chartLatEmbarqueRef?.nativeElement) {
+      const d = this.data.latencias.x_embarque.slice(0, 15);
+      this.charts.push(new Chart(this.chartLatEmbarqueRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: d.map(e => e.referencia),
+          datasets: [{
+            data: d.map(e => e.dias),
+            backgroundColor: d.map(e => e.dias > 60 ? '#ef4444' : e.dias > 40 ? '#f59e0b' : '#3b82f6'),
+            borderRadius: 4,
+            barThickness: 14,
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días · ${d[ctx.dataIndex].log_origen}` } },
+          },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { color: gridColor }, border: { color: gridColor } },
+            y: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
+          },
+        },
+      }));
+    }
+
+    // 7. Latencia tránsito x importador
+    if (this.chartLatImpRef?.nativeElement) {
+      const d = this.data.latencias.transito_x_importador;
+      const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+      this.charts.push(new Chart(this.chartLatImpRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: d.map(i => `${i.importador}\n(n=${i.n})`),
+          datasets: [{
+            data: d.map(i => i.dias_promedio),
+            backgroundColor: d.map((_, idx) => colors[idx % colors.length]),
+            borderRadius: 6,
+            barThickness: 50,
+          }],
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días promedio` } },
+          },
+          scales: {
+            x: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } },
+            y: { ticks: { color: textColor }, grid: { color: gridColor }, border: { color: gridColor } },
+          },
+        },
+      }));
+    }
+
+    // 8. Costo paquetería x importación
+    if (this.chartCostoPaqRef?.nativeElement) {
+      const d = this.data.costo_paqueteria.filter(e => e.total_usd > 0).slice(0, 15);
+      this.charts.push(new Chart(this.chartCostoPaqRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: d.map(e => e.referencia),
+          datasets: [{
+            data: d.map(e => e.total_usd),
+            backgroundColor: '#10b981',
+            borderRadius: 4,
+            barThickness: 14,
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` $${Number(ctx.raw).toLocaleString('es-MX', {maximumFractionDigits:0})} USD` } },
+          },
+          scales: {
+            x: {
+              ticks: { color: textColor, callback: v => `$${Number(v).toLocaleString('es-MX', {maximumFractionDigits:0})}` },
+              grid: { color: gridColor }, border: { color: gridColor },
+            },
+            y: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
+          },
+        },
+      }));
+    }
+  }
+
+  private initChartLatOrigen(): void {
+    if (!this.data || !this.chartLatOrigenRef?.nativeElement) return;
+    const textColor = '#94a3b8';
+    const gridColor = '#1e2535';
+    const lat = this.data.latencias;
+
+    if (this.desgloseOrigen) {
+      const d = lat.x_origen;
+      this.charts.push(new Chart(this.chartLatOrigenRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: d.map(o => `${o.origen} (n=${o.n})`),
+          datasets: [{
+            data: d.map(o => o.dias_promedio),
+            backgroundColor: d.map(o => o.dias_promedio > 60 ? '#ef4444' : o.dias_promedio > 40 ? '#f59e0b' : '#3b82f6'),
+            borderRadius: 4,
+            barThickness: 22,
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días promedio` } },
+          },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { color: gridColor }, border: { color: gridColor } },
+            y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } },
+          },
+        },
+      }));
+    } else {
+      this.charts.push(new Chart(this.chartLatOrigenRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: ['Promedio General'],
+          datasets: [{
+            data: [lat.total_dias],
+            backgroundColor: ['#3b82f6'],
+            borderRadius: 8,
+            barThickness: 70,
+          }],
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días promedio` } },
+          },
+          scales: {
+            x: { ticks: { color: '#e2e8f0' }, grid: { display: false } },
+            y: { ticks: { color: textColor, callback: v => `${v} d` }, grid: { color: gridColor }, border: { color: gridColor } },
+          },
+        },
+      }));
+    }
+  }
+
+  toggleDesglose(): void {
+    this.desgloseOrigen = !this.desgloseOrigen;
+    const canvas = this.chartLatOrigenRef?.nativeElement;
+    const idx = canvas ? this.charts.findIndex(c => c.canvas === canvas) : -1;
+    if (idx !== -1) { this.charts[idx].destroy(); this.charts.splice(idx, 1); }
+    setTimeout(() => this.initChartLatOrigen(), 0);
   }
 
   // ── Tabla ───────────────────────────────────────────────────────────────────
@@ -206,10 +382,28 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   get embarquesOrdenados(): any[] {
     if (!this.data) return [];
     return [...this.data.embarques].sort((a, b) => {
-      if (this.ordenTabla === 'flete') return (b.cos_flete_internacional_usd || 0) - (a.cos_flete_internacional_usd || 0);
-      if (this.ordenTabla === 'costo') return (b.costo_total_pesos || 0) - (a.costo_total_pesos || 0);
-      return b.pct_global - a.pct_global;
+      if (this.ordenTabla === 'llegada') {
+        const da = a.des_llegada_almacen ? new Date(a.des_llegada_almacen).getTime() : 0;
+        const db = b.des_llegada_almacen ? new Date(b.des_llegada_almacen).getTime() : 0;
+        return db - da;
+      }
+      if (this.ordenTabla === 'bici') return (b.costo_por_bicicleta || 0) - (a.costo_por_bicicleta || 0);
+      return (b.costo_total_pesos || 0) - (a.costo_total_pesos || 0);
     });
+  }
+
+  abrevContenido(s: string): string {
+    if (!s) return '—';
+    const first = s.split('/')[0].split(',')[0].trim();
+    return first.length > 18 ? first.slice(0, 18) + '…' : first;
+  }
+
+  llegadaRelativa(fecha: string): string {
+    const diff = Math.round((Date.now() - new Date(fecha).getTime()) / 86400000);
+    if (diff < 0)  return `en ${-diff}d`;
+    if (diff === 0) return 'hoy';
+    if (diff <= 60) return `hace ${diff}d`;
+    return `hace ${Math.round(diff / 30)}m`;
   }
 
   irDetalle(id: number): void { this.router.navigate(['/importaciones', id]); }
@@ -234,6 +428,13 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   formatUsd(n: number | null | undefined): string {
     if (!n) return '—';
     return '$' + n.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' USD';
+  }
+
+  abreviarUsd(n: number | null | undefined): string {
+    if (!n && n !== 0) return '—';
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
+    if (n >= 1_000)     return '$' + (n / 1_000).toFixed(1).replace('.0', '') + 'K';
+    return '$' + n.toFixed(0);
   }
 
   formatPesos(n: number | null | undefined): string {

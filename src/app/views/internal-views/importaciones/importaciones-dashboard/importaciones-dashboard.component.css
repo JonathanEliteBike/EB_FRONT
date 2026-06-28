@@ -266,3 +266,93 @@ td { padding: 10px 14px; vertical-align: middle; }
   font-size: .88rem;
 }
 .sin-datos i { margin-right: 8px; }
+
+/* ── Nuevas celdas resumen ─────────────────────────────────────────────────── */
+
+/* Col 1: ID */
+.td-ref { white-space: nowrap; }
+
+/* Col 3: Origen */
+.td-origen { font-size: .78rem; white-space: nowrap; }
+
+/* Col 4: Contenido */
+.contenido-chip {
+  display: inline-block;
+  background: #1a2030; border: 1px solid #2d3748; border-radius: 5px;
+  padding: 2px 8px; font-size: .7rem; color: #94a3b8;
+  white-space: nowrap; max-width: 130px;
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Col 5: Estatus */
+.estatus-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid; border-radius: 20px;
+  padding: 2px 9px; font-size: .7rem; font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Col 6: Llegada */
+.td-llegada { min-width: 90px; }
+.llegada-fecha { display: block; font-size: .8rem; color: #cbd5e1; white-space: nowrap; }
+.llegada-rel   { display: block; font-size: .65rem; color: #4b5563; margin-top: 1px; }
+
+/* Col 7: Costo proyectado / real */
+.td-costo { min-width: 150px; }
+.costo-stack { display: flex; flex-direction: column; gap: 3px; }
+.costo-line  { display: flex; align-items: center; gap: 6px; }
+.ctag {
+  font-size: .58rem; font-weight: 700; letter-spacing: .05em;
+  padding: 1px 5px; border-radius: 3px; flex-shrink: 0;
+}
+.ctag-flete { background: #1e3a5f44; color: #60a5fa; }
+.ctag-real  { background: #78350f33; color: #f59e0b; }
+.cval       { font-size: .78rem; color: #94a3b8; font-family: monospace; white-space: nowrap; }
+.cval-real  { color: #e2e8f0; font-weight: 600; }
+
+/* Col 8: Costo / Bici */
+.th-bici    { text-align: right; }
+.td-bici-val { text-align: right; white-space: nowrap; }
+.bici-num   { font-size: .82rem; color: #e2e8f0; font-family: monospace; }
+.bici-sub   { font-size: .65rem; color: #4b5563; margin-left: 2px; }
+
+/* Col 9: Notas */
+.td-notas {
+  font-size: .75rem; color: #64748b;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ══ Sección Latencias ════════════════════════════════════════════════════ */
+.section-title {
+  font-size: .75rem; font-weight: 700; color: #64748b; text-transform: uppercase;
+  letter-spacing: .07em; margin: 28px 0 12px; display: flex; align-items: center; gap: 8px;
+}
+.section-title i { color: #3b82f6; }
+
+.kpi-sub { font-size: .6rem; color: #4b5563; margin-top: 1px; }
+
+.kpi-orange { background: #78350f22; color: #f97316; }
+.kpi-red    { background: #7f1d1d22; color: #ef4444; }
+
+.chart-card.chart-full { margin-bottom: 16px; }
+
+.chart-title {
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.btn-desglose {
+  font-size: .72rem; padding: 4px 10px; border-radius: 6px;
+  background: #1a1f2e; border: 1px solid #2d3748; color: #94a3b8;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px;
+}
+.btn-desglose:hover { background: #243044; color: #e2e8f0; }
+
+.lat-legend {
+  display: flex; align-items: center; gap: 4px;
+  font-size: .68rem; color: #64748b;
+}
+.lat-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+
+.costo-paq-sub {
+  font-size: .68rem; color: #4b5563; margin-top: -6px;
+}
