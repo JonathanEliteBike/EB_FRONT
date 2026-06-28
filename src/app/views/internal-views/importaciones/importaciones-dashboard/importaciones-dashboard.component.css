@@ -78,18 +78,18 @@
 /* ── Tabs ── */
 .dash-tabs {
   display: flex; gap: 2px;
-  border-bottom: 1px solid #1e2535;
+  box-shadow: 0 1px 0 #1e2535;   /* separador fuera del box → queda BAJO el padding */
   margin-bottom: 0;
   position: sticky; top: 64px; z-index: 10;
   background: #0b0e14;
-  padding-bottom: 0;
+  padding-bottom: 16px;          /* espacio DENTRO del sticky — no crea hueco al scrollear */
 }
 .tab-btn {
   display: flex; align-items: center; gap: 7px;
   padding: 11px 18px; font-size: .82rem; font-weight: 500;
   color: #4b5563; cursor: pointer; white-space: nowrap;
   border: none; border-bottom: 2px solid transparent;
-  background: transparent; margin-bottom: -1px;
+  background: transparent; margin-bottom: 0;
   transition: color 180ms ease, border-color 180ms ease, transform 120ms var(--ease-out);
 }
 .tab-btn i { font-size: .75rem; }
@@ -123,7 +123,7 @@
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px; margin-bottom: 20px; padding-top: 20px;
+  gap: 12px; margin-bottom: 20px;
 }
 .kpi-card {
   background: #111827; border: 1px solid #1e2535; border-radius: 12px;
