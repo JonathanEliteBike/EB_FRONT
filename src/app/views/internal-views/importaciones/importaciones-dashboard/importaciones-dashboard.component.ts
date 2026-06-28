@@ -21,6 +21,7 @@ interface LatOrigen  { origen: string; dias_promedio: number; n: number; }
 interface LatEmbarq  { id: number; referencia: string; nombre: string; log_origen: string; dias: number; }
 interface LatImp     { importador: string; dias_promedio: number; n: number; }
 interface CostoPaq   { id: number; referencia: string; nombre: string; log_origen: string; total_usd: number; }
+interface PrecioBici { label: string; vol: string; promedio: number; n: number; }
 
 interface DashData {
   kpis: Kpis;
@@ -39,7 +40,9 @@ interface DashData {
     transito:               LatSingle;
     transito_x_importador:  LatImp[];
   };
-  costo_paqueteria: CostoPaq[];
+  costo_paqueteria:           CostoPaq[];
+  precio_bici_x_caja:         PrecioBici[];
+  precio_bici_total_promedio: number | null;
   filtros:     { origenes: string[]; anios: string[] };
 }
 
@@ -60,6 +63,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   @ViewChild('chartLatEmbarque')chartLatEmbarqueRef!:ElementRef<HTMLCanvasElement>;
   @ViewChild('chartLatImp')     chartLatImpRef!:     ElementRef<HTMLCanvasElement>;
   @ViewChild('chartCostoPaq')   chartCostoPaqRef!:   ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartPrecioBici') chartPrecioBiciRef!: ElementRef<HTMLCanvasElement>;
 
   data:     DashData | null = null;
   cargando  = true;
@@ -310,6 +314,37 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
               ticks: { color: textColor, callback: v => `$${Number(v).toLocaleString('es-MX')}` },
               grid: { color: gridColor }, border: { color: gridColor },
             },
+          },
+        },
+      }));
+    }
+
+    // 9. Precio por bicicleta x tipo de caja (horizontal bar)
+    if (this.chartPrecioBiciRef?.nativeElement) {
+      const d = this.data.precio_bici_x_caja;
+      this.charts.push(new Chart(this.chartPrecioBiciRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: d.map(c => `${c.label} (${c.vol})`),
+          datasets: [{
+            data: d.map(c => c.promedio),
+            backgroundColor: '#6366f1',
+            borderRadius: 4,
+            barThickness: 18,
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` $${Number(ctx.raw).toFixed(2)} USD/bici · n=${d[ctx.dataIndex].n}` } },
+          },
+          scales: {
+            x: {
+              ticks: { color: textColor, callback: v => `$${Number(v).toFixed(0)}` },
+              grid: { color: gridColor }, border: { color: gridColor },
+            },
+            y: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
           },
         },
       }));
