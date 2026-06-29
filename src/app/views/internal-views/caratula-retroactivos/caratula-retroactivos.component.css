@@ -457,6 +457,17 @@
     line-height: 1.5;
 }
 
+/* ================= BANNERS CIERRE SPLIT ================= */
+.banner-split-scott {
+    background-color: #1a1a2e !important;
+    border-left: 4px solid #EB5E28;
+}
+.banner-split-apparel {
+    background-color: #0f3460 !important;
+    border-left: 4px solid #4fc3f7;
+    margin-top: 6px;
+}
+
 /* ================= BOTÓN DESCARGAR PDF ================= */
 .barra-acciones-pdf {
     width: 100%;

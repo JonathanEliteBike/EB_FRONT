@@ -438,6 +438,13 @@ export class CaratulaRetroactivosComponent implements OnInit {
     return `${day}/${month}/${year}`;
   }
 
+  get fechaCierreApparel(): string | null {
+    const f = (this.datosCliente as any)?.fecha_cierre_apparel;
+    if (!f) return null;
+    const [year, month, day] = f.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
   confirmarCierreTemporada(): void {
     if (!this.datosCliente || !this.fechaCierreInput) return;
     const clave = this.datosCliente.CLAVE;
