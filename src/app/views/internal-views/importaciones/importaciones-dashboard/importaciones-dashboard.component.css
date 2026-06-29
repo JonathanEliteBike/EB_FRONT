@@ -80,9 +80,7 @@
   display: flex; gap: 2px;
   box-shadow: 0 1px 0 #1e2535;   /* separador fuera del box → queda BAJO el padding */
   margin-bottom: 0;
-  position: sticky; top: 64px; z-index: 10;
-  background: #0b0e14;
-  padding-bottom: 16px;          /* espacio DENTRO del sticky — no crea hueco al scrollear */
+  padding-bottom: 16px;
 }
 .tab-btn {
   display: flex; align-items: center; gap: 7px;
