@@ -1,0 +1,144 @@
+/* Bordes generales de la tabla y sus celdas */
+table {
+  width: 100%;
+  border-collapse: collapse; /* Evita bordes dobles desalineados */
+}
+
+th, td {
+  padding: 10px 12px;
+}
+
+.celda-doble {
+  display: flex;
+  justify-content: space-between; /* Separa los textos a los extremos */
+  align-items: center;
+  width: 100%;
+}
+
+/* Crea la línea divisoria exacta en medio */
+.celda-doble div:first-child {
+  flex: 1;
+  border-right: 1px solid #cbd5e1; /* Línea divisoria central */
+  padding-right: 8px;
+}
+
+.celda-doble div:last-child {
+  flex: 1;
+  padding-left: 8px;
+}
+
+.cabecera {
+  background-color: #2A2A28;
+}
+
+.cabecera th {
+  color: #EB5E28;
+  border: 1px solid #484848;
+}
+
+.cabecera th[rowspan="1"] {
+  border-bottom: none;
+}
+
+.cabecera th[rowspan="2"]{
+  border-top: none;
+}
+
+.tabla {
+  background-color: #1E1E1C;
+  color: #CCC5B9;
+  border: 1px solid #484848;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tabla td {
+  border: none;
+  border-bottom: 1px solid #484848;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    padding: 0rem 10rem 2rem;
+    border-radius: 12px;
+    font-size: 0.82rem;
+}
+
+.titulo {
+  color: #EB5E28;
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.dropdown {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #484848;
+  width: 350px;
+  padding: 5px 8px 8px 8px;
+  gap: 10px;
+  border-radius: 5px;
+  background: none;
+}
+
+.dropdown label{
+  font-size: .8rem;
+  font-weight: 500;
+}
+
+.dropdown span{
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.select-control, ::picker(select) {
+  appearance: base-select;
+  background-color: #484848;
+  color: #D9D9D9;
+  border: none;
+  border-radius: 4px;
+  scrollbar-color: #EB5E28 #343333;
+}
+
+.select-control {
+  background-color: #484848;
+  color: white;
+  padding: 4px;
+  border: none;
+  border-radius: 4px;
+}
+
+.select-control option {
+  padding: 6px;
+}
+
+.descripcion {
+  font-weight: 700;
+}
+
+.beneficios-descripcion p{
+  font-weight: 700;
+  margin: 0.3rem;
+}
+
+.titulo {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #EB5E28;
+  letter-spacing: .03rem;
+  text-align: start;
+}
+
+.alineacion-derecha{
+  text-align: end;
+}
+
+input[type="checkbox"]{
+  width: 18px;
+  height: 18px;
+  accent-color: #EB5E28;
+}

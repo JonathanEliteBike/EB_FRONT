@@ -1,0 +1,29 @@
+export interface ForecastRow {
+  id?: number;
+  sku: string;
+  producto: string;
+  marca: string;
+  modelo: string;
+  color: string;
+  talla: string;
+  mayo: number;
+  junio: number;
+  julio: number;
+  agosto: number;
+  septiembre: number;
+  octubre: number;
+  noviembre: number;
+  diciembre: number;
+  enero: number;
+  febrero: number;
+  marzo: number;
+  abril: number;
+  total?: number;
+  precio?: number;
+  nivel_precio?: string;
+  // UI-only
+  _editado?: boolean;
+  _nuevo?: boolean;
+  _eliminar?: boolean;
+  _searchSeleccionado?: boolean;
+}
