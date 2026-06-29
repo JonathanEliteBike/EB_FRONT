@@ -277,7 +277,7 @@ export class ImportacionesDetalleComponent implements OnInit {
   }
 
   private valorValido(v: any): boolean {
-    return v !== null && v !== undefined && v !== '' && v !== 'NO';
+    return v !== null && v !== undefined && v !== '';
   }
 
   esCampoError(campo: string): boolean {
