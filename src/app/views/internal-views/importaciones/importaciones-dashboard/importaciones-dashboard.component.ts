@@ -186,6 +186,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
         },
         options: {
           indexAxis: 'y',
+          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             x: { ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor }, border: { color: gridColor } },

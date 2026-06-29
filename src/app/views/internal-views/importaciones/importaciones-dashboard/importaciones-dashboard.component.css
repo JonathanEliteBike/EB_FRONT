@@ -198,7 +198,8 @@
 /* Table card aparece al final */
 .table-card { animation: card-in 340ms var(--ease-out) 300ms both; }
 
-.chart-grow { /* used by md/lg cards */ }
+.chart-grow { height: 280px; }
+.chart-grow canvas { height: 100% !important; }
 
 @media (hover: hover) and (pointer: fine) {
   .chart-card {
