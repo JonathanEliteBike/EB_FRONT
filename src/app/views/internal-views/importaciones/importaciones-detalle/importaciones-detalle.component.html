@@ -45,7 +45,7 @@
         </button>
         <!-- Guardar oficial -->
         <button class="btn-guardar" (click)="guardar()"
-          [disabled]="!hayCambios() || guardando"
+          [disabled]="guardando"
           [class.btn-ok]="guardadoOk">
           <i class="fas" [ngClass]="guardando ? 'fa-spinner fa-spin' : guardadoOk ? 'fa-check' : 'fa-save'"></i>
           {{ guardando ? 'Guardando...' : guardadoOk ? 'Guardado' : 'Guardar Cambios' }}

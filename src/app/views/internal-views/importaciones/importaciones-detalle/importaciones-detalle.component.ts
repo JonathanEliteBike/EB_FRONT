@@ -342,6 +342,7 @@ export class ImportacionesDetalleComponent implements OnInit {
       next: () => {
         this.guardando = false;
         this.guardadoOk = true;
+        this.error = '';
         this.cambiosPendientes = {};
         this.svc.obtener(this.embarque!.id).subscribe((d) => {
           this.embarque = d;
@@ -353,7 +354,12 @@ export class ImportacionesDetalleComponent implements OnInit {
         });
         setTimeout(() => { this.guardadoOk = false; }, 2500);
       },
-      error: () => { this.guardando = false; },
+      error: (e) => {
+        this.guardando = false;
+        const msg = e?.error?.error || 'Error al guardar. Intenta de nuevo.';
+        this.error = msg;
+        setTimeout(() => { this.error = ''; }, 5000);
+      },
     });
   }
 
