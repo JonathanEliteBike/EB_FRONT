@@ -221,15 +221,16 @@ export class ImportacionesDetalleComponent implements OnInit {
     for (const campos of Object.values(this.embarque.borradores)) {
       for (const [campo, valor] of Object.entries(campos as Record<string, any>)) {
         if (valor === '__NA__') {
-          // Only apply draft N/A if the DB value is empty AND not already in camposNA (from campos_na)
           const actual = (this.embarque as any)[campo];
           if (!this.camposNA.has(campo) && (actual === null || actual === undefined || actual === '')) {
             this.camposNA.add(campo);
+            (this.cambiosPendientes as any)[campo] = '__NA__'; // borrador pendiente → habilita Guardar
           }
         } else {
           const actual = (this.embarque as any)[campo];
           if (actual === null || actual === undefined || actual === '') {
             (this.embarque as any)[campo] = valor;
+            (this.cambiosPendientes as any)[campo] = valor; // borrador pendiente → habilita Guardar
           }
         }
       }
