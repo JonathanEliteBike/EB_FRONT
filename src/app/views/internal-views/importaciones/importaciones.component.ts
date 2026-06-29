@@ -1,18 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
 import { ImportacionesService, Importacion } from '../../../services/importaciones.service';
 
 @Component({
   selector: 'app-importaciones',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, DatePickerComponent],
   templateUrl: './importaciones.component.html',
   styleUrl: './importaciones.component.css',
 })
-export class ImportacionesComponent implements OnInit {
+export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy {
   embarques: Importacion[] = [];
   embarquesFiltrados: Importacion[] = [];
   cargando = true;
@@ -20,6 +21,9 @@ export class ImportacionesComponent implements OnInit {
   busqueda = '';
   filtroOrigen = '';
   filtroVia = '';
+  filtroEstado = '';
+  filtroFechaDesde = '';
+  filtroFechaHasta = '';
   mostrarNuevo = false;
   guardandoNuevo = false;
 
@@ -38,10 +42,13 @@ export class ImportacionesComponent implements OnInit {
     { key: 'odoo',        label: 'Odoo',         icon: 'fa-database',      color: '#10b981' },
     { key: 'almacen',     label: 'Almacén',      icon: 'fa-warehouse',     color: '#ec4899' },
     { key: 'recepcion',   label: 'Recepción',    icon: 'fa-box-open',      color: '#06b6d4' },
+    { key: 'costos',      label: 'Costos',       icon: 'fa-dollar-sign',   color: '#f97316' },
     { key: 'cierre',      label: 'Cierre',       icon: 'fa-check-circle',  color: '#84cc16' },
   ];
 
-  constructor(private svc: ImportacionesService, private router: Router) {}
+  private rowObserver?: IntersectionObserver;
+
+  constructor(private svc: ImportacionesService, private router: Router, private el: ElementRef) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -63,15 +70,44 @@ export class ImportacionesComponent implements OnInit {
   }
 
   filtrar(): void {
-    const q = this.busqueda.toLowerCase();
-    const o = this.filtroOrigen.toLowerCase();
-    const v = this.filtroVia;
-    this.embarquesFiltrados = this.embarques.filter((e) => {
+    const q     = this.busqueda.toLowerCase();
+    const o     = this.filtroOrigen.toLowerCase();
+    const v     = this.filtroVia;
+    const est   = this.filtroEstado;
+    const desde = this.filtroFechaDesde;
+    const hasta = this.filtroFechaHasta;
+    this.embarquesFiltrados = [...this.embarques].filter((e) => {
       const matchQ = !q || e.referencia.toLowerCase().includes(q) || (e.nombre || '').toLowerCase().includes(q);
       const matchO = !o || (e.log_origen || '').toLowerCase().includes(o);
       const matchV = !v || (e.via_transporte || 'MARITIMO') === v;
-      return matchQ && matchO && matchV;
+      const matchE = !est
+        || (est === 'cerrado'   && (e as any).estado === 'cerrado')
+        || (est === 'activo'    && (e as any).estado !== 'cerrado')
+        || (est === 'pendiente' && this.progresoPct(e) === 0);
+      const eta    = e.log_eta_puerto || '';
+      const matchF = (!desde && !hasta) || ((!desde || eta >= desde) && (!hasta || eta <= hasta));
+      return matchQ && matchO && matchV && matchE && matchF;
     });
+    // Dar un tick para que Angular renderice los nuevos <tr> antes de observar
+    setTimeout(() => this.observeRows(), 0);
+  }
+
+  toggleFiltroEstado(val: string): void {
+    this.filtroEstado = this.filtroEstado === val ? '' : val;
+    this.filtroVia    = '';   // limpiar filtro de vía al activar filtro de estado
+    this.filtrar();
+  }
+
+  toggleFiltroVia(val: string): void {
+    this.filtroVia    = this.filtroVia === val ? '' : val;
+    this.filtroEstado = '';   // limpiar filtro de estado al activar filtro de vía
+    this.filtrar();
+  }
+
+  onRangoFecha(rango: { desde: string; hasta: string }): void {
+    this.filtroFechaDesde = rango.desde;
+    this.filtroFechaHasta = rango.hasta;
+    this.filtrar();
   }
 
   progresoPct(imp: Importacion): number {
@@ -98,15 +134,13 @@ export class ImportacionesComponent implements OnInit {
   }
 
   get stats() {
-    const total = this.embarques.length;
-    const completados = this.embarques.filter((e) => this.progresoPct(e) === 100).length;
-    const enProceso = this.embarques.filter((e) => {
-      const p = this.progresoPct(e);
-      return p > 0 && p < 100;
-    }).length;
-    const maritimo = this.embarques.filter((e) => (e.via_transporte || 'MARITIMO') === 'MARITIMO').length;
-    const aereo = this.embarques.filter((e) => e.via_transporte === 'AEREO').length;
-    return { total, completados, enProceso, pendientes: total - completados - enProceso, maritimo, aereo };
+    const total      = this.embarques.length;
+    const cerrados   = this.embarques.filter((e) => (e as any).estado === 'cerrado').length;
+    const pendientes = this.embarques.filter((e) => this.progresoPct(e) === 0).length;
+    const enProceso  = total - cerrados - pendientes;
+    const maritimo   = this.embarques.filter((e) => (e.via_transporte || 'MARITIMO') === 'MARITIMO').length;
+    const aereo      = this.embarques.filter((e) => e.via_transporte === 'AEREO').length;
+    return { total, completados: cerrados, enProceso, pendientes, maritimo, aereo };
   }
 
   eliminando: number | null = null;
@@ -122,6 +156,31 @@ export class ImportacionesComponent implements OnInit {
         this.eliminando = null;
       },
       error: () => { this.eliminando = null; },
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.rowObserver = new IntersectionObserver(
+      (entries) => entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('row-visible');
+          this.rowObserver!.unobserve(entry.target);
+        }
+      }),
+      { threshold: 0.05 }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.rowObserver?.disconnect();
+  }
+
+  private observeRows(): void {
+    if (!this.rowObserver) return;
+    const rows = this.el.nativeElement.querySelectorAll('.macro-row:not(.row-observed)');
+    rows.forEach((row: Element) => {
+      row.classList.add('row-observed');
+      this.rowObserver!.observe(row);
     });
   }
 
