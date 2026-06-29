@@ -7,9 +7,13 @@
         <button class="btn btn-volver" [routerLink]="['/home']">
             <i class="fas fa-arrow-left"></i> Volver
         </button>
-
+        
         <button class="btn btn-caratula" [routerLink]="['/caratula-retroactivos']">
             <i class="fas fa-file-alt"></i> Ver Carátula
+        </button>
+
+         <button class="btn btn-actualizar" [routerLink]="['/calculadora-retroactivos']">
+            <i class="fas  fa-calculator"></i> Simular retroactivos
         </button>
 
         <button class="btn btn-actualizar" (click)="actualizarDatos()" [disabled]="cargando">

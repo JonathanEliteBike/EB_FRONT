@@ -1,7 +1,13 @@
 <app-home-bar></app-home-bar>
 
 <div class="container">
-  <p class="titulo">CALCULO DE MARGENES DE RETROACTIVOS</p>
+  <div class="principal">
+   <button class="btn btn-volver" [routerLink]="['/dashboard-retroactivos']">
+        <i class="fas fa-arrow-left"></i> Volver
+    </button>
+    <p>CALCULO DE MARGENES DE RETROACTIVOS</p> 
+  </div> 
+
   <table class="tabla" style="position: sticky; top: 0;">
       <tr class="cabecera">
         <th></th>
@@ -18,7 +24,7 @@
           <td class="alineacion-derecha">{{ item.margen_inicio_temporada.toFixed(2) }}%</td>
           <td class="alineacion-derecha">{{ item.nivel_elegido }} </td>
           <td class="alineacion-derecha">{{ item.suma_descuento_retroactivo.toFixed(2) }}%</td>
-          <td class="alineacion-derecha">{{ item.margen_con_descuento_retroactivo }}%</td>
+          <td class="alineacion-derecha">{{ item.margen_con_descuento_retroactivo.toFixed(2) }}%</td>
         </tr>
       </ng-container>
   </table>
@@ -28,7 +34,6 @@
   </p>
 
   <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-
     <div class="dropdown">
       <label>Poligono</label>
       <select class="select-control" required [(ngModel)]="poligonoSeleccionado" (ngModelChange)="obtenerClasificacionSugerida()">
@@ -46,16 +51,18 @@
 
     <div class="dropdown">
       <label>Nivel</label>
-    <select class="select-control" [(ngModel)]="clasificacionSeleccionada" (ngModelChange)="buscarPoligonoExclusivoPorNivel()">
+      <select class="select-control" required [(ngModel)]="clasificacionSeleccionada" (ngModelChange)="buscarPoligonoExclusivoPorNivel()">
+        <option value="" disabled selected>Selecciona una opción...</option>  
         <option *ngFor="let item of listaClasificaciones" [ngValue]="item">
-          {{ item.descripcion }}
+            {{ item.descripcion }}
         </option>
       </select>
     </div>
 
     <div class="dropdown">
       <label>Sucursales</label>
-      <select class="select-control" [(ngModel)]="sucursalSeleccionada" (ngModelChange)="calcularDetalleRetroActivo()">
+      <select class="select-control" required [(ngModel)]="sucursalSeleccionada" (ngModelChange)="calcularDetalleRetroActivo()">
+        <option value="" disabled selected>Selecciona una opción...</option>
         <option *ngFor="let item of listaSucursales" [ngValue]="item">
           {{ item.cantidad }}
         </option>
@@ -159,7 +166,7 @@
   </table>
   <ng-container *ngIf="clasificacionSeleccionada.id !== 4"> 
     <p class="titulo">COMPRAS ANUALES ADICIONALES AL IMPORTE MINIMO DE CADA NIVEL</p>
-    <div>
+    <div class="contenedor-compra-anual">
       <table class="tabla">
         <thead>
           <tr class="cabecera">
@@ -182,6 +189,7 @@
       <div class="dropdown">
         <label>Cantidad</label>
         <select class="select-control" [(ngModel)]="anualAdicionalPorNivel" (ngModelChange)="calcularDetalleRetroActivo()">
+          <option value="" disabled selected>Selecciona una opción...</option>
           <option *ngFor="let item of listaAnualAdicionalPorNivelCantidad" [ngValue]="item">
             {{ item.valor | currency:'MXN':'symbol':'1.0-0'}}
           </option>
@@ -256,7 +264,7 @@
       <ng-container *ngFor="let item of clasificacionSeleccionada.beneficios_dinamicos">
         <tr>
           <td>{{ item.descripcion }}</td>
-          <td colspan="4">{{ item.valor }}</td>
+          <td class="alineacion-derecha" colspan="4">{{ item.valor }}</td>
         </tr>
       </ng-container>
       <tr>
@@ -269,5 +277,40 @@
     <p>*Si llegase a existir un aumento sustancial en nuestros pagos a las paqueterias, se ajustarán los precios acorde a dicho incremento</p>
     <p>**Revisa las condiciones de la politica de riezgos de transporte en nuestras politicas generales de venta, el convenio 80/20 implica en caso de siniestro por robo con violencia Elite bike absorbe 80% y el Distribuidor el 20%</p>
     <p>*** Aplica para bicicletas que no son liquidación, y durante el año modelo 2024, consulta condiciones en nuestras politicas generales de venta.</p>
+  </div>
+
+  <ng-container *ngIf="clasificacionSeleccionada.valor >= 2">
+    <p class="titulo">COMPRAS MINIMAS ANUALES DE APPAREL, ACCESORIOS Y COMPONENTES</p>
+    <div class="contenedor-compra-minima-apparel">
+      <p>{{clasificacionSeleccionada.descripcion || "Elige un NIVEL"}}</p>
+      <div>
+        <p>APAREL, SYNCROS Y VITTORIA</p>
+        <p>CASCOS, ZAPATOS, ROPA, GUANTES, BOLSAS Y MOCHILAS, LENTES, PROTECCIONES, COMPONENTES, RUEDAS, ASIENTOS, GRIPS Y CINTAS, BOMBAS, HERRAMIENTAS, ANFORA Y PORTANFORA, ACCESORIOS DIVERSOS, NEUMATICOS, INSERTOS, SELLADORES</p>
+        <p>{{multimarcaMinimaCompraInicialLinea | currency:'MXN':'symbol':'1.0-0'}}</p>
+      </div>
+    </div>
+  </ng-container>
+
+  <p class="titulo">PROGRAMAS ESPECIALES Y DE IMPULSO</p>
+  <table class="tabla programa-especial">
+    <tbody>
+      <ng-container *ngFor="let item of listaProgramaEspecialImpulso">
+       <tr>
+        <td>{{ item.descripcion }}</td>
+        <td>{{ item.valor }}</td>
+       </tr>
+      </ng-container>
+    </tbody>
+  </table>
+
+  <div class="restriccion-programa">
+    <p><b>RESTRICCIONES</b> DE LOS PROGRAMAS</p>
+    <ol>
+      <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL INFERIOR:</b> Si por motivo de incumplimiento o por deseo del distribuidor se cambia de Nivel hacia un Nivel inferior, y dicho cambio es posterior a finalizar el primer bloque, el Distribuidor pierde los derechos de obtener retroactivos anuales, si dicho cambio se efectúa antes de finalizar el primer bloque, deberá cumplir con los requisitos de la categoría a la que se está cambiando.</li>
+      <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL SUPERIOR:</b> En los casos que el Distribuidor decide cambiar a un nivel superior, lo podrá hacer en cualquier momento, y deberá cumplir los requisitos de la categoria superior para acceder a los descuentos retroactivos.</li>
+      <li><b>PRECIOS DE LAS PAQUETERIAS:</b> Las tarifas de las paqueterias, normalmente se negocían con las mísmas a principios de cada temporada, y casi siempre permanecen por todo el periodo, en los últimos meses, esta situación ha cambiado, y en ocasiones los costos se incrementaron considerablemente, por lo tanto, en el caso de sufrir un aumento considerable tendremos que impactarlo en los precios cobrados, sin dejar de lado que el objeto del programa de subisidio a los costos de los fletes es con el objeto de mejorar nuestra oferta de negocio y lograr que la rentabilidad con Elite Bike sea cada temprada mejor.</li>
+      <li><b>SUBSIDIO A SEGURO DE TRANSPORTE:</b> En la presente temporada en algunos niveles de distribución se subsidia al 100% el costo cobrado por concepto de seguro de transporte, para revisar las condiciones de los riesgos de transito, debes revisar nuestras politicas de venta.</li>
+      <li><b>DESCUENTO POR PRE-PAGO O PAGO DE CONTADO:</b> Este descuento se efectúa mediante nota de crédito, dias despues de haber hecho la compra o pago, no es parte de los descuentos retroactivos.													</li>
+    </ol>
   </div>
 </div>

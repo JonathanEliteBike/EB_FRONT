@@ -1,18 +1,20 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // 1. Import this
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import { HomeBarComponent } from "../../../components/home-bar/home-bar.component";
 
 //Modelos
-import { Poligono } from './models/Poligono.model';
+import { Poligono, LISTA_POLIGONOS } from './models/Poligono.model';
 import { Clasificacion } from './models/clasificacion-model';
 import { ClasificacionAnualPorNivel } from './models/clasificacion-anual-por-nivel.mode';
-import { Sucursal } from './models/sucursal.model';
+import { Sucursal, SUCURSAL} from './models/sucursal.model';
 import { CalculoMargenesRetroactivos } from './models/calculo-margen-retroactivo.model';
 import { CalculoAnualAdicionalPorNivel } from './models/calculo-anual-adicional-por-nivel.model';
 import { AnualAdicionalPorNivelCantidad } from './models/anual-adicional-por-nivel-cantidad.model';
 import { AnualPorCumplimiento } from './models/anual-por-cumplimiento.model';
+import { ProgramaEspecialImpulso, LISTA_PROGRAMA_ESPECIAL_IMPULSO} from './models/programa-especial-impulso.model';
 
 const clasificacionVacia = (): Clasificacion => ({
   id: 0,
@@ -70,204 +72,15 @@ const anualPorCumpimientoVacio = (): AnualPorCumplimiento => ({
 
 @Component({
   selector: 'app-calculadora-retroactivos',
-  imports: [CommonModule, FormsModule, HomeBarComponent],
+  imports: [CommonModule, FormsModule, HomeBarComponent, RouterModule],
   templateUrl: './calculadora-retroactivos.component.html',
   styleUrl: './calculadora-retroactivos.component.css'
 })
 export class CalculadoraRetroactivosComponent {
 
-  listaPoligonos: Poligono[] = [
-    { ciudad: "Acapulco.", descripcion: "Acapulco Norte.", clasificacionId: 3 },
-    { ciudad: "Acapulco.", descripcion: "Acapulco Sur.", clasificacionId: 3 },
-    { ciudad: "Aguascalientes.", descripcion: "Aguascalientes   Sur.", clasificacionId: 2 },
-    { ciudad: "Aguascalientes.", descripcion: "Aguascalientes Este.", clasificacionId: 2 },
-    { ciudad: "Aguascalientes.", descripcion: "Aguascalientes Norte.", clasificacionId: 3 },
-    { ciudad: "Ahome.", descripcion: "Ahome.", clasificacionId: 2 },
-    { ciudad: "Arandas.", descripcion: "Arandas", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Azcapotzalgo,Cdmx.", clasificacionId: 2 },
-    { ciudad: "Ensenada.", descripcion: "Baja Norte Ensenada.", clasificacionId: 3 },
-    { ciudad: "San José del Cabo.", descripcion: "Baja sur  Norte San José del Cabo.", clasificacionId: 2 },
-    { ciudad: "Cabo San Lucas.", descripcion: "Baja Sur Cabo San Lucas Centro.", clasificacionId: 1 },
-    { ciudad: "Cabo San Lucas.", descripcion: "Baja Sur Cabo San Lucas Este.", clasificacionId: 2 },
-    { ciudad: "Cabo San Lucas.", descripcion: "Baja Sur Cabo San Lucas Norte.", clasificacionId: 2 },
-    { ciudad: "Cabo San Lucas.", descripcion: "Baja Sur Cabo San Lucas Sur.", clasificacionId: 3 },
-    { ciudad: "San José del Cabo.", descripcion: "Baja sur Centro San José del Cabo.", clasificacionId: 1 },
-    { ciudad: "Loreto.", descripcion: "Baja Sur Loreto.", clasificacionId: 2 },
-    { ciudad: "San José del Cabo.", descripcion: "Baja sur Sur San Jose del Cabo.", clasificacionId: 2 },
-    { ciudad: "Boca del rio.", descripcion: "Boca del rio.", clasificacionId: 3 },
-    { ciudad: "Campeche.", descripcion: "Campeche.", clasificacionId: 2 },
-    { ciudad: "Cancún.", descripcion: "Cancún", clasificacionId: 3 },
-    { ciudad: "Cd. Juárez.", descripcion: "CD. JUAREZ.", clasificacionId: 2 },
-    { ciudad: "Cd. Madero.", descripcion: "Cd. Madero.", clasificacionId: 2 },
-    { ciudad: "Cd. Victoria.", descripcion: "Cd. Victoria", clasificacionId: 2 },
-    { ciudad: "Celaya.", descripcion: "Celaya  Centro", clasificacionId: 2 },
-    { ciudad: "Celaya.", descripcion: "Celaya Este", clasificacionId: 2 },
-    { ciudad: "Celaya.", descripcion: "Celaya Noroeste", clasificacionId: 2 },
-    { ciudad: "Celaya.", descripcion: "Celaya Norte", clasificacionId: 2 },
-    { ciudad: "Celaya.", descripcion: "Celaya Sur", clasificacionId: 2 },
-    { ciudad: "Chetumal.", descripcion: "Chetumal", clasificacionId: 2 },
-    { ciudad: "Chihuahua.", descripcion: "Chihuahua Centro.", clasificacionId: 4 },
-    { ciudad: "Chihuahua.", descripcion: "Chihuahua Norte.", clasificacionId: 2 },
-    { ciudad: "Chihuahua.", descripcion: "Chihuahua Sur.", clasificacionId: 1 },
-    { ciudad: "Chilpancingo.", descripcion: "Chilpancingo.", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Coapa Oriente,Cdmx.", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Coapa Poniente,Cdmx.", clasificacionId: 3 },
-    { ciudad: "Coatepec.", descripcion: "Coatepec.", clasificacionId: 1 },
-    { ciudad: "Coatzacoalcos.", descripcion: "Coatzacoalcos.", clasificacionId: 2 },
-    { ciudad: "Colima.", descripcion: "Colima Polígono Este", clasificacionId: 3 },
-    { ciudad: "Colima.", descripcion: "colima Polígono Oeste", clasificacionId: 2 },
-    { ciudad: "Comitan.", descripcion: "Comitan.", clasificacionId: 2 },
-    { ciudad: "Cordova.", descripcion: "Cordova.", clasificacionId: 2 },
-    { ciudad: "Cuauhtémoc.", descripcion: "Cuauhtémoc.", clasificacionId: 2 },
-    { ciudad: "Culiacán", descripcion: "Culiacán Norte", clasificacionId: 3 },
-    { ciudad: "Culiacán", descripcion: "Culiacán Sur", clasificacionId: 2 },
-    { ciudad: "Delicias.", descripcion: "Delicias.", clasificacionId: 1 },
-    { ciudad: "Durango.", descripcion: "Durango Cap. Oriente.", clasificacionId: 2 },
-    { ciudad: "Durango.", descripcion: "Durango Cap. Poniente.", clasificacionId: 3 },
-    { ciudad: "Fresnillo.", descripcion: "Fresnillo.", clasificacionId: 2 },
-    { ciudad: "Gomez Palacio.", descripcion: "Goméz Palacio.", clasificacionId: 2 },
-    { ciudad: "Guadalajara.", descripcion: "Guadalajara Centro", clasificacionId: 4 },
-    { ciudad: "Guadalajara.", descripcion: "Guadalajara Este", clasificacionId: 3 },
-    { ciudad: "Guadalajara.", descripcion: "Guadalajara Este", clasificacionId: 4 },
-    { ciudad: "Guadalajara.", descripcion: "Guadalajara Noreste", clasificacionId: 3 },
-    { ciudad: "Guadalajara.", descripcion: "Guadalajara Norte", clasificacionId: 4 },
-    { ciudad: "Guadalajara.", descripcion: "Guadalajara sur", clasificacionId: 3 },
-    { ciudad: "Guadalupe.", descripcion: "Guadalupe.", clasificacionId: 2 },
-    { ciudad: "Guasave.", descripcion: "Guasave.", clasificacionId: 1 },
-    { ciudad: "Hermosillo.", descripcion: "Hermosillo Norte", clasificacionId: 2 },
-    { ciudad: "Hermosillo.", descripcion: "Hermosillo Sur", clasificacionId: 2 },
-    { ciudad: "Heroica Cárdenas", descripcion: "Heroica Cárdenas", clasificacionId: 1 },
-    { ciudad: "Huejutla", descripcion: "Huejutla", clasificacionId: 1 },
-    { ciudad: "Irapuato.", descripcion: "Irapuato  Sur", clasificacionId: 2 },
-    { ciudad: "Irapuato.", descripcion: "Irapuato Este", clasificacionId: 2 },
-    { ciudad: "Irapuato.", descripcion: "Irapuato Noroeste", clasificacionId: 2 },
-    { ciudad: "Irapuato.", descripcion: "Irapuato Norte", clasificacionId: 2 },
-    { ciudad: "Irapuato.", descripcion: "Irapuato Sureste", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Iztapalapa,Cdmx.", clasificacionId: 2 },
-    { ciudad: "Jeréz.", descripcion: "Jeréz.", clasificacionId: 1 },
-    { ciudad: "Juchitán", descripcion: "Juchitán", clasificacionId: 2 },
-    { ciudad: "León.", descripcion: "Leon Polígono  Centro Sur", clasificacionId: 2 },
-    { ciudad: "León.", descripcion: "Leon Polígono  Oeste", clasificacionId: 2 },
-    { ciudad: "León.", descripcion: "Leon Polígono Bronce Sureste", clasificacionId: 1 },
-    { ciudad: "León.", descripcion: "Leon Polígono Centro Norte", clasificacionId: 3 },
-    { ciudad: "León.", descripcion: "Leon Polígono Este", clasificacionId: 2 },
-    { ciudad: "León.", descripcion: "Leon Polígono Norte", clasificacionId: 4 },
-    { ciudad: "León.", descripcion: "Leon Polígono Sur", clasificacionId: 3 },
-    { ciudad: "León.", descripcion: "Leon Polígono Suroeste", clasificacionId: 1 },
-    { ciudad: "Loreto Zac.", descripcion: "Loreto Zac.", clasificacionId: 1 },
-    { ciudad: "Matamoros", descripcion: "Matamoros", clasificacionId: 1 },
-    { ciudad: "Mazatlán.", descripcion: "Mazatlán.", clasificacionId: 3 },
-    { ciudad: "Merida Norte.", descripcion: "Merida Norte.", clasificacionId: 3 },
-    { ciudad: "Merida Sur.", descripcion: "Merida Sur.", clasificacionId: 2 },
-    { ciudad: "Metepec ", descripcion: "Metepec ", clasificacionId: 4 },
-    { ciudad: "Minatitlan.", descripcion: "Minatitlan.", clasificacionId: 1 },
-    { ciudad: "Monclova", descripcion: "Monclova", clasificacionId: 2 },
-    { ciudad: "Morelia.", descripcion: "Morelia Centro Oeste", clasificacionId: 3 },
-    { ciudad: "Morelia.", descripcion: "Morelia Este", clasificacionId: 4 },
-    { ciudad: "Morelia.", descripcion: "Morelia Noreste", clasificacionId: 2 },
-    { ciudad: "Morelia.", descripcion: "Morelia Noroeste", clasificacionId: 3 },
-    { ciudad: "Morelia.", descripcion: "Morelia Sur   ", clasificacionId: 2 },
-    { ciudad: "Morelia.", descripcion: "Morelia Sureste", clasificacionId: 3 },
-    { ciudad: "Cuautla.", descripcion: "Morelos Cuautla.", clasificacionId: 1 },
-    { ciudad: "Cuernavaca.", descripcion: "Morelos Norte.", clasificacionId: 3 },
-    { ciudad: "Cuernavaca.", descripcion: "Morelos Sur.", clasificacionId: 2 },
-    { ciudad: "Allende.", descripcion: "N.L. Allende.", clasificacionId: 2 },
-    { ciudad: "Apodaca.", descripcion: "N.L. Apodaca.", clasificacionId: 3 },
-    { ciudad: "Monterrey.", descripcion: "N.L. Carretera Nac.", clasificacionId: 3 },
-    { ciudad: "Monterrey.", descripcion: "N.L. Country.", clasificacionId: 3 },
-    { ciudad: "Monterrey.", descripcion: "N.L. Cumbres.", clasificacionId: 3 },
-    { ciudad: "San Nicolás.", descripcion: "N.L. San Nicolás.", clasificacionId: 2 },
-    { ciudad: "San Pedro.", descripcion: "N.L. San Pedro.", clasificacionId: 4 },
-    { ciudad: "Monterrey.", descripcion: "N.L. Santa Catarina.", clasificacionId: 2 },
-    { ciudad: "Monterrey.", descripcion: "N.L.Monterrey.", clasificacionId: 4 },
-    { ciudad: "CDMX.", descripcion: "Narvarte Oriente,Cdmx.", clasificacionId: 3 },
-    { ciudad: "CDMX.", descripcion: "Narvarte Poniente,Cdmx.", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Naucalpan Poniente,Cdmx.", clasificacionId: 2 },
-    { ciudad: "Navojoa", descripcion: "Navojoa", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Nucalpan Oriente,Cdmx.", clasificacionId: 2 },
-    { ciudad: "Oaxaca.", descripcion: "Oaxaca Cap. Norte", clasificacionId: 3 },
-    { ciudad: "Oaxaca.", descripcion: "Oaxaca Cap. Sur.", clasificacionId: 2 },
-    { ciudad: "Obregón", descripcion: "Obregón", clasificacionId: 1 },
-    { ciudad: "Obregón ", descripcion: "Obregón ", clasificacionId: 2 },
-    { ciudad: "Orizaba.", descripcion: "Orizaba Norte.", clasificacionId: 2 },
-    { ciudad: "Orizaba.", descripcion: "Orizaba Sur.", clasificacionId: 3 },
-    { ciudad: "Pachuca.", descripcion: "Pachuca Este", clasificacionId: 3 },
-    { ciudad: "Pachuca.", descripcion: "Pachuca Norte", clasificacionId: 2 },
-    { ciudad: "Pachuca.", descripcion: "Pachuca Oeste", clasificacionId: 2 },
-    { ciudad: "Pachuca.", descripcion: "Pachuca sur", clasificacionId: 2 },
-    { ciudad: "Playa del Carmen.", descripcion: "Playa del Carmen.", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Polanco,Cdmx.", clasificacionId: 4 },
-    { ciudad: "Poza Rica.", descripcion: "Poza Rica.", clasificacionId: 2 },
-    { ciudad: "Puebla.", descripcion: "Puebla Centro  ", clasificacionId: 3 },
-    { ciudad: "Puebla.", descripcion: "Puebla Centroeste", clasificacionId: 3 },
-    { ciudad: "Puebla.", descripcion: "Puebla Este", clasificacionId: 2 },
-    { ciudad: "Puebla.", descripcion: "Puebla Norte", clasificacionId: 3 },
-    { ciudad: "Puebla.", descripcion: "Puebla Sur", clasificacionId: 4 },
-    { ciudad: "Puebla.", descripcion: "Puebla Sureste", clasificacionId: 2 },
-    { ciudad: "Querétaro.", descripcion: "Querétaro Centro", clasificacionId: 4 },
-    { ciudad: "Querétaro.", descripcion: "Querétaro Centro/Norte", clasificacionId: 2 },
-    { ciudad: "Querétaro.", descripcion: "Querétaro Diamante Este", clasificacionId: 4 },
-    { ciudad: "Querétaro.", descripcion: "Querétaro Noroeste", clasificacionId: 4 },
-    { ciudad: "Querétaro.", descripcion: "Querétaro Norte", clasificacionId: 2 },
-    { ciudad: "Querétaro.", descripcion: "Querétaro Sur", clasificacionId: 3 },
-    { ciudad: "Reynosa.", descripcion: "Reynosa", clasificacionId: 1 },
-    { ciudad: "Rio Verde", descripcion: "Rio Verde", clasificacionId: 1 },
-    { ciudad: "CDMX.", descripcion: "Roma,Cdmx.", clasificacionId: 3 },
-    { ciudad: "Salina Cruz.", descripcion: "Salina Cruz.", clasificacionId: 2 },
-    { ciudad: "Saltillo.", descripcion: "Saltillo Norte.", clasificacionId: 3 },
-    { ciudad: "Saltillo.", descripcion: "Saltillo Sur.", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "San Angel Cdmx.", clasificacionId: 3 },
-    { ciudad: "San Cristobal.", descripcion: "San Cristobal Norte.", clasificacionId: 2 },
-    { ciudad: "Tapachula.", descripcion: "San cristobal Sur.", clasificacionId: 2 },
-    { ciudad: "San Juan de los Lagos.", descripcion: "San Juan de los Lagos ", clasificacionId: 2 },
-    { ciudad: "San Juan del Rio.", descripcion: "San Juan del Rio", clasificacionId: 2 },
-    { ciudad: "San Luis Potosí", descripcion: "San Luis Potosí", clasificacionId: 3 },
-    { ciudad: "San Luis Potosí", descripcion: "San Luis Potosí", clasificacionId: 3 },
-    { ciudad: "San Luis Potosí", descripcion: "San Luis Potosí", clasificacionId: 3 },
-    { ciudad: "San Luis Potosí", descripcion: "San Luis Potosí", clasificacionId: 2 },
-    { ciudad: "San Luis Potosí", descripcion: "San Luis Potosí", clasificacionId: 2 },
-    { ciudad: "San Luis Potosí", descripcion: "San Luis Potosí", clasificacionId: 2 },
-    { ciudad: "San Luis Potosi", descripcion: "San Luis Potosí", clasificacionId: 4 },
-    { ciudad: "San Miguel Allende.", descripcion: "San Miguel Allende Centro", clasificacionId: 2 },
-    { ciudad: "San Miguel Allende.", descripcion: "San Miguel Allende Noreste", clasificacionId: 2 },
-    { ciudad: "San Miguel Allende.", descripcion: "San Miguel Allende Norte", clasificacionId: 2 },
-    { ciudad: "San Miguel Allende.", descripcion: "San Miguel Allende Sur", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Santa Fé Norte.", clasificacionId: 4 },
-    { ciudad: "CDMX.", descripcion: "Santa Fé Sur.", clasificacionId: 4 },
-    { ciudad: "Tampico.", descripcion: "Tampico.", clasificacionId: 2 },
-    { ciudad: "Comitan.", descripcion: "Tapachula", clasificacionId: 2 },
-    { ciudad: "Tepatitlan.", descripcion: "Tepatitlan", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Tepeyac,Cdmx.", clasificacionId: 2 },
-    { ciudad: "Tepic.", descripcion: "Tepic Este", clasificacionId: 1 },
-    { ciudad: "Tepic.", descripcion: "Tepic Norte", clasificacionId: 2 },
-    { ciudad: "Tepic.", descripcion: "Tepic Oeste", clasificacionId: 2 },
-    { ciudad: "Tepic.", descripcion: "Tepic Sur", clasificacionId: 2 },
-    { ciudad: "Tepic.", descripcion: "Tepic Sureste", clasificacionId: 2 },
-    { ciudad: "Edo. Mex", descripcion: "Tequixquiac, Edo.Méx.", clasificacionId: 2 },
-    { ciudad: "Tezontepec.", descripcion: "Tezontepec", clasificacionId: 1 },
-    { ciudad: "Tlaxiaco.", descripcion: "Tlaxiaco", clasificacionId: 2 },
-    { ciudad: "Torreón.", descripcion: "Torreón Oriente.", clasificacionId: 3 },
-    { ciudad: "Torreón.", descripcion: "Torreón Poniente.", clasificacionId: 2 },
-    { ciudad: "Tula.", descripcion: "Tula ", clasificacionId: 2 },
-    { ciudad: "Tuxpan.", descripcion: "Tuxpan Guerrero.", clasificacionId: 1 },
-    { ciudad: "Tuxtla Gutierrez.", descripcion: "Tuxtla Norte.", clasificacionId: 2 },
-    { ciudad: "Tuxtla Gutierrez.", descripcion: "Tuxtla Sur.", clasificacionId: 2 },
-    { ciudad: "Tuxtla Ver.", descripcion: "Tuxtla Ver.", clasificacionId: 1 },
-    { ciudad: "CDMX.", descripcion: "Universidad,Cdmx.", clasificacionId: 3 },
-    { ciudad: "Vallarta.", descripcion: "Vallarta Centro", clasificacionId: 2 },
-    { ciudad: "Vallarta.", descripcion: "Vallarta Este", clasificacionId: 2 },
-    { ciudad: "Vallarta.", descripcion: "Vallarta Norte ", clasificacionId: 2 },
-    { ciudad: "CDMX.", descripcion: "Valle de Bravo, Oriente.", clasificacionId: 3 },
-    { ciudad: "CDMX.", descripcion: "Valle de Bravo, Poniente.", clasificacionId: 3 },
-    { ciudad: "Veracruz Pto.", descripcion: "Veracruz Pto.", clasificacionId: 2 },
-    { ciudad: "Villahermosa.", descripcion: "Villahermosa.", clasificacionId: 3 },
-    { ciudad: "Xalapa.", descripcion: "Xalapa Norte.", clasificacionId: 2 },
-    { ciudad: "Xalapa.", descripcion: "Xalapa Sur.", clasificacionId: 3 },
-    { ciudad: "Zacatecas.", descripcion: "Zacatecas", clasificacionId: 2 },
-    { ciudad: "Zamora.", descripcion: "Zamora Norte", clasificacionId: 2 },
-    { ciudad: "Zamora.", descripcion: "Zamora Sur", clasificacionId: 2 },
-    { ciudad: "Zihuatanejo.", descripcion: "Zihuatanejo", clasificacionId: 1 }
-  ];
+  listaPoligonos = LISTA_POLIGONOS
+  listaSucursales = SUCURSAL
+  listaProgramaEspecialImpulso = LISTA_PROGRAMA_ESPECIAL_IMPULSO
 
   listaClasificaciones: Clasificacion[] = [
     { id: 1, descripcion: "Partner Elite Plus", valor: 4, descuento_retroactivo_por_logro: 1, importe_compra_minimo_anual_adicional_iva_incluido: 800000, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 6.5, bicicleta_porcentaje_compra_inicial: 65, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 6000000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 60, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0, poligono_exclusivo: "SI", plazo_pago: "90 y 120 Días", beneficios_dinamicos: [{descripcion: "Politica de Garantía de Buena Voluntad	", valor: "SI" }]},
@@ -275,15 +88,6 @@ export class CalculadoraRetroactivosComponent {
     { id: 3, descripcion: "Partner", valor: 2, descuento_retroactivo_por_logro: 4.5, importe_compra_minimo_anual_adicional_iva_incluido: 5000000, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 2.0, bicicleta_porcentaje_compra_inicial: 65, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 1500000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 0, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0,poligono_exclusivo: "", plazo_pago: "60 Días", beneficios_dinamicos: [{ descripcion: "SEGURO DE INVERSION (Descuento retroactivo en caso de disminución de precios***)", valor: "0" }, { descripcion: "ACCESO TIENDAS ELITE (Pedidos en Transito Con preferencia de acceso nuevo producto)", valor: "SI"}]},
     { id: 4, descripcion: "Distribuidor", valor: 1, descuento_retroactivo_por_logro: 0, importe_compra_minimo_anual_adicional_iva_incluido: 0, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 0, bicicleta_porcentaje_compra_inicial: 70, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 350000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 0, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0, poligono_exclusivo: "", plazo_pago: "30 Días", beneficios_dinamicos: [{ descripcion: "ACCESO TIENDAS ELITE (Pedidos en Transito Con preferencia de acceso nuevo producto)", valor: "SI" }]}
   ];
-
-  listaSucursales: Sucursal[] = [
-    { id: 1, cantidad: 1, multiplo: 1 },
-    { id: 2, cantidad: 2, multiplo: 1.5 },
-    { id: 3, cantidad: 3, multiplo: 2.25 },
-    { id: 4, cantidad: 4, multiplo: 3 },
-    { id: 5, cantidad: 5, multiplo: 3.75 },
-    { id: 6, cantidad: 6, multiplo: 4.5 },
-  ]
 
   listaAnualAdicional: ClasificacionAnualPorNivel[] = [
     { clasifiacionId: 1, adicional_minimo_total_anual_iva: 0, adicional_total_compra_anual_minimo_iva: 0 },
@@ -312,7 +116,7 @@ export class CalculadoraRetroactivosComponent {
     { id: 2, descripcion: "Compra Minima de Apparel, Syncros y Vittoria (Nivel Partner)", descuento: 1.5, seleccionado: false},
     { id: 3, descripcion: "Pre-Pago o pago de Contado***", descuento: 2.0, seleccionado: false},
   ]
-  
+
   //Inicializacion de objetos
   poligonoSeleccionado: Poligono = poligonoVacio();
   sucursalSeleccionada: Sucursal = sucursalVacia();
@@ -374,7 +178,6 @@ export class CalculadoraRetroactivosComponent {
 
   obtenerAnualPorCumplimiento(){
     this.anualPorCumplimiento = this.listaAnualPorCumplimiento.filter(item => item.seleccionado);
-
     this.actualizarMargenRetroactivo();
   }
 
@@ -418,12 +221,13 @@ export class CalculadoraRetroactivosComponent {
 
     this.listaCalculoMargenesRetroactivos.update(listaActual => 
     listaActual.map(item => {
+    let margen_temporada = item.margen_precio_distribuidor + this.clasificacionSeleccionada.margen_inicial_adicional_distribuidor;
         return {
           ...item,
           nivel_elegido: this.clasificacionSeleccionada.descripcion,
-          margen_inicio_temporada: (item.margen_precio_distribuidor + this.clasificacionSeleccionada.margen_inicial_adicional_distribuidor),
-          suma_descuento_retroactivo: descuentoRetroActivo
-          //suma_descuento_retroactivo: this.anualAdicionalPorNivel.descuento_retroactivo
+          margen_inicio_temporada: margen_temporada,
+          suma_descuento_retroactivo: descuentoRetroActivo,
+          margen_con_descuento_retroactivo: (margen_temporada + descuentoRetroActivo)
         };
       })
     );
@@ -443,7 +247,12 @@ export class CalculadoraRetroactivosComponent {
   }
 
   obtenerClasificacionSugerida() {
-    this.clasificacionSugerida = this.listaClasificaciones.find( item => item.id === this.poligonoSeleccionado?.clasificacionId) || clasificacionVacia();
+    if (!this.validarDatos()){
+      this.clasificacionSugerida = this.listaClasificaciones.find( item => item.id === this.poligonoSeleccionado?.clasificacionId) || clasificacionVacia();
+    } 
+    else {
+      this.calcularDetalleRetroActivo();
+    }
   }
 
   calcularDetalleRetroActivo(){
@@ -500,11 +309,13 @@ export class CalculadoraRetroactivosComponent {
       this.calcularDetalleRetroActivo();
     }
 
-    let valorPoligonoExclusivo = this.clasificacionSugerida.valor <= this.clasificacionSeleccionada.valor ? "SI" : "NO"
+    if (this.clasificacionSugerida.valor >0 ){
+      let valorPoligonoExclusivo = this.clasificacionSugerida.valor <= this.clasificacionSeleccionada.valor ? "SI" : "NO"
       this.clasificacionSeleccionada.beneficios_dinamicos = [
         ...this.clasificacionSeleccionada.beneficios_dinamicos.filter(item => item.descripcion != "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO"),
         { descripcion: "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO", valor: valorPoligonoExclusivo }
       ];
+    }
   }
 
   obtenerBeneficios(){
