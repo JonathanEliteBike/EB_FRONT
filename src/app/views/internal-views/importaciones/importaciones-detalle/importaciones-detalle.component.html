@@ -961,7 +961,7 @@
         <div class="field-row full caja-header"><label>Piezas por tipo de caja</label></div>
 
         <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_r24')">
-          <label><span class="caja-modelo">SCOTT R-24</span><span class="caja-tag">CAJA 1 · 0.16 m³</span></label>
+          <label><span class="caja-modelo">SCOTT R-24</span><span class="caja-tag">CAJA 1 · 0.164 m³</span></label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('cos_caja_scott_r24')">
               <input type="number" min="0" [value]="embarque.cos_caja_scott_r24 ?? ''" (change)="marcarCambio('cos_caja_scott_r24', +$any($event.target).value || null)" placeholder="Piezas" />
@@ -972,7 +972,7 @@
         </div>
 
         <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_r20')">
-          <label><span class="caja-modelo">SCOTT R-20</span><span class="caja-tag">CAJA 2 · 0.14 m³</span></label>
+          <label><span class="caja-modelo">SCOTT R-20</span><span class="caja-tag">CAJA 2 · 0.136 m³</span></label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('cos_caja_scott_r20')">
               <input type="number" min="0" [value]="embarque.cos_caja_scott_r20 ?? ''" (change)="marcarCambio('cos_caja_scott_r20', +$any($event.target).value || null)" placeholder="Piezas" />
@@ -994,7 +994,7 @@
         </div>
 
         <div class="field-row caja-row" [class.campo-faltante]="esCampoFaltante('cos_caja_scott_tw')">
-          <label><span class="caja-modelo">SCOTT TW</span><span class="caja-tag">CAJA 4 · 0.42 m³</span></label>
+          <label><span class="caja-modelo">SCOTT TW</span><span class="caja-tag">CAJA 4 · 0.4228 m³</span></label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('cos_caja_scott_tw')">
               <input type="number" min="0" [value]="embarque.cos_caja_scott_tw ?? ''" (change)="marcarCambio('cos_caja_scott_tw', +$any($event.target).value || null)" placeholder="Piezas" />
@@ -1056,11 +1056,11 @@
           <div class="field-row full">
             <div class="precio-bici-grid">
               <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_r24">
-                <span class="precio-bici-modelo">SCOTT R-24 <span class="precio-bici-vol">0.16 m³</span></span>
+                <span class="precio-bici-modelo">SCOTT R-24 <span class="precio-bici-vol">0.164 m³</span></span>
                 <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_r24 | number:'1.2-2' }}</span>
               </div>
               <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_r20">
-                <span class="precio-bici-modelo">SCOTT R-20 <span class="precio-bici-vol">0.14 m³</span></span>
+                <span class="precio-bici-modelo">SCOTT R-20 <span class="precio-bici-vol">0.136 m³</span></span>
                 <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_r20 | number:'1.2-2' }}</span>
               </div>
               <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_adulto">
@@ -1068,7 +1068,7 @@
                 <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_adulto | number:'1.2-2' }}</span>
               </div>
               <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_tw">
-                <span class="precio-bici-modelo">SCOTT TW <span class="precio-bici-vol">0.42 m³</span></span>
+                <span class="precio-bici-modelo">SCOTT TW <span class="precio-bici-vol">0.4228 m³</span></span>
                 <span class="precio-bici-val">${{ embarque.cos_precio_bici_scott_tw | number:'1.2-2' }}</span>
               </div>
               <div class="precio-bici-row" *ngIf="embarque.cos_precio_bici_scott_tw_electrica">
