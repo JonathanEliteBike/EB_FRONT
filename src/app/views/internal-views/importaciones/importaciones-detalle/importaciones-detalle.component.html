@@ -384,15 +384,6 @@
               (dateChange)="marcarCambio('imp_bl_revalidado', $event || null)">
             </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_porte')">
-          <label>Carta porte (fecha)</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.imp_carta_porte || ''"
-              (dateChange)="marcarCambio('imp_carta_porte', $event || null)">
-            </app-date-picker>
-        </div>
-
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_entrega_facturas_aa')"><label>14. Entrega de facturas al AA</label>
           <select [value]="embarque.imp_entrega_facturas_aa || ''" (change)="marcarCambio('imp_entrega_facturas_aa', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
@@ -404,11 +395,9 @@
           </select>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_entrega_certificado_origen')"><label>16. Entrega de certificado de origen</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.imp_entrega_certificado_origen || ''"
-              (dateChange)="marcarCambio('imp_entrega_certificado_origen', $event || null)">
-            </app-date-picker>
+          <select [value]="embarque.imp_entrega_certificado_origen || ''" (change)="marcarCambio('imp_entrega_certificado_origen', $any($event.target).value || null)">
+            <option value="">—</option><option>SI</option><option>NO</option><option>N/A</option>
+          </select>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_relacion_numeros_serie')"><label>17. Relación de números de serie</label>
           <select [value]="embarque.imp_relacion_numeros_serie || ''" (change)="marcarCambio('imp_relacion_numeros_serie', $any($event.target).value || null)">
@@ -421,9 +410,11 @@
           </select>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_recepcion_draft_pedimento')"><label>19. Recepción de draft de pedimento</label>
-          <select [value]="embarque.imp_recepcion_draft_pedimento || ''" (change)="marcarCambio('imp_recepcion_draft_pedimento', $any($event.target).value || null)">
-            <option value="">—</option><option>SI</option><option>NO</option>
-          </select>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_recepcion_draft_pedimento || ''"
+              (dateChange)="marcarCambio('imp_recepcion_draft_pedimento', $event || null)">
+          </app-date-picker>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_entrega_docs_aa')"><label>20. Fecha entrega documentos al AA</label>
           <app-date-picker

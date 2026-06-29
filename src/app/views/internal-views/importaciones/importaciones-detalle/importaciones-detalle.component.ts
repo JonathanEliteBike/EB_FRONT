@@ -79,7 +79,6 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'imp_terminal',                   label: 'Terminal' },
       { campo: 'imp_bl_endosado',                label: 'BL endosado por el forwarder al AA' },
       { campo: 'imp_bl_revalidado',              label: 'BL revalidado por el AA' },
-      { campo: 'imp_carta_porte',                label: 'Carta porte (fecha)' },
       { campo: 'imp_entrega_facturas_aa',        label: 'Entrega de facturas al AA' },
       { campo: 'imp_traduccion_aa',              label: 'Traducción para el AA' },
       { campo: 'imp_entrega_certificado_origen', label: 'Entrega de certificado de origen' },
