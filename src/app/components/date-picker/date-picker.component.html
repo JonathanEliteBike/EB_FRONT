@@ -1,0 +1,127 @@
+<div class="dr-wrap">
+
+  <!-- Single mode: div con input de texto + ícono para abrir calendario -->
+  <div *ngIf="mode === 'single'"
+       class="dr-trigger"
+       [class.dr-active]="mostrarCalendario"
+       [class.dr-filled]="tieneValor">
+    <button type="button" class="dr-cal-btn" (click)="toggleCalendario($event)">
+      <i class="fas fa-calendar-alt"></i>
+    </button>
+    <input class="dr-text-input"
+           [value]="textoFecha"
+           (input)="onTextInput($event)"
+           (blur)="onInputBlur($event)"
+           (keydown.enter)="$any($event.target).blur()"
+           [placeholder]="placeholder"
+           maxlength="10">
+    <button *ngIf="tieneValor" class="dr-clear-x"
+            (click)="$event.stopPropagation(); limpiar()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Range mode: button (sin cambios) -->
+  <button *ngIf="mode === 'range'"
+          class="dr-trigger"
+          [class.dr-active]="mostrarCalendario"
+          [class.dr-filled]="tieneValor"
+          (click)="toggleCalendario($event)">
+    <i class="fas fa-calendar-alt dr-cal-icon"></i>
+    <span class="dr-placeholder" *ngIf="!fechaDesde && !fechaHasta">{{ placeholder }}</span>
+    <ng-container *ngIf="fechaDesde || fechaHasta">
+      <span class="dr-fecha-chip" [class.dr-chip-sel]="seleccionando === 'inicio'">
+        {{ fechaDesde ? formatFecha(fechaDesde) : 'Inicio' }}
+      </span>
+      <i class="fas fa-long-arrow-alt-right dr-arrow-icon"></i>
+      <span class="dr-fecha-chip" [class.dr-chip-sel]="seleccionando === 'fin'">
+        {{ fechaHasta ? formatFecha(fechaHasta) : 'Fin' }}
+      </span>
+    </ng-container>
+    <button *ngIf="tieneValor" class="dr-clear-x"
+            (click)="$event.stopPropagation(); limpiar()">
+      <i class="fas fa-times"></i>
+    </button>
+  </button>
+
+  <!-- Popover -->
+  <div class="dr-popover" *ngIf="mostrarCalendario" (click)="$event.stopPropagation()">
+
+    <!-- Step hint — only range mode -->
+    <div class="dr-step-hint" *ngIf="mode === 'range'">
+      <span class="dr-step" [class.dr-step-on]="seleccionando === 'inicio'">
+        <i class="fas fa-circle"></i> INICIO
+      </span>
+      <div class="dr-step-line"></div>
+      <span class="dr-step" [class.dr-step-on]="seleccionando === 'fin'">
+        <i class="fas fa-circle"></i> FIN
+      </span>
+    </div>
+
+    <!-- Nav bar -->
+    <div class="dr-nav">
+      <button class="dr-nav-btn" (click)="mesAnterior()"><i class="fas fa-chevron-left"></i></button>
+
+      <ng-container *ngIf="calVista === 'dias'">
+        <button class="dr-label-btn" (click)="abrirVistaMeses()">
+          {{ NOMBRES_MESES[calMes] }} {{ calAnio }}
+        </button>
+      </ng-container>
+      <ng-container *ngIf="calVista === 'meses'">
+        <button class="dr-label-btn" (click)="abrirVistaAnios()">{{ calAnio }}</button>
+      </ng-container>
+      <ng-container *ngIf="calVista === 'anios'">
+        <span class="dr-mes-label">{{ calDecadaInicio }} – {{ calDecadaInicio + 11 }}</span>
+      </ng-container>
+
+      <button class="dr-nav-btn" (click)="mesSiguiente()"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <!-- Vista: días -->
+    <ng-container *ngIf="calVista === 'dias'">
+      <div class="dr-dias-header">
+        <span *ngFor="let d of DIAS_SEM">{{ d }}</span>
+      </div>
+      <div class="dr-dias-grid">
+        <div *ngFor="let dia of diasDelMes()" class="dr-dia"
+             [class.dr-dia-vacio]="!dia"
+             [class.dr-dia-inicio]="esInicio(dia)"
+             [class.dr-dia-fin]="esFin(dia)"
+             [class.dr-dia-rango]="enRango(dia)"
+             [class.dr-dia-hoy]="esHoy(dia)"
+             (click)="dia && seleccionarDia(dia)">
+          {{ dia || '' }}
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Vista: meses -->
+    <div class="dr-meses-grid" *ngIf="calVista === 'meses'">
+      <button *ngFor="let m of NOMBRES_MESES; let i = index"
+              class="dr-mes-item"
+              [class.dr-item-actual]="esMesActual(i)"
+              [class.dr-item-sel]="calMes === i"
+              (click)="seleccionarMes(i)">
+        {{ m.slice(0, 3) }}
+      </button>
+    </div>
+
+    <!-- Vista: años -->
+    <div class="dr-anios-grid" *ngIf="calVista === 'anios'">
+      <button *ngFor="let a of aniosDecada()"
+              class="dr-anio-item"
+              [class.dr-item-actual]="esAnioActual(a)"
+              [class.dr-item-sel]="calAnio === a"
+              (click)="seleccionarAnio(a)">
+        {{ a }}
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="dr-footer" *ngIf="tieneValor">
+      <button class="dr-btn-borrar" (click)="limpiar()">
+        <i class="fas fa-trash-alt"></i> Borrar
+      </button>
+    </div>
+  </div>
+</div>
