@@ -599,11 +599,9 @@
           <div class="calc-display">
             <span *ngIf="embarque.des_fecha_limite_naviera">
               <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
-              {{ embarque.des_fecha_limite_naviera | slice:0:10 }}
+              {{ isoADMY(embarque.des_fecha_limite_naviera) }}
             </span>
-            <span *ngIf="!embarque.des_fecha_limite_naviera" style="color:#475569;font-size:.8rem">
-              — (se calcula al guardar: ETA Puerto + días sin demoras)
-            </span>
+            <span *ngIf="!embarque.des_fecha_limite_naviera" style="color:#475569;font-size:.8rem">—</span>
           </div>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')">

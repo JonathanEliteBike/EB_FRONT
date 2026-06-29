@@ -274,6 +274,48 @@ export class ImportacionesDetalleComponent implements OnInit {
       this.camposConError.delete(campo as string);
       if (this.camposConError.size === 0) this.validacionError = [];
     }
+    this._recalcularCamposLocales();
+  }
+
+  private _diffDias(a: string | null, b: string | null): number | null {
+    if (!a || !b) return null;
+    try {
+      const msA = new Date(a + 'T00:00:00').getTime();
+      const msB = new Date(b + 'T00:00:00').getTime();
+      return Math.round((msB - msA) / 86400000);
+    } catch { return null; }
+  }
+
+  private _recalcularCamposLocales(): void {
+    const e = this.embarque as any;
+
+    // Días libres en terminal = fecha_limite_cruce - llegada_contenedor_puerto
+    const dias1 = this._diffDias(e.imp_llegada_contenedor_puerto, e.imp_fecha_limite_cruce);
+    if (dias1 !== null) e.imp_dias_libres_almacenaje = dias1;
+
+    // Días de despacho aduanero = cruce_real - llegada_contenedor_puerto
+    const dias2 = this._diffDias(e.imp_llegada_contenedor_puerto, e.des_fecha_cruce_real);
+    if (dias2 !== null) e.imp_dias_despacho_aduanero = dias2;
+
+    // Fecha límite naviera = ETA puerto + días sin demoras
+    const eta = e.log_eta_puerto;
+    const dias = e.des_dias_sin_demoras;
+    if (eta && dias != null && dias !== '') {
+      try {
+        const d = new Date(eta + 'T00:00:00');
+        d.setDate(d.getDate() + Number(dias));
+        e.des_fecha_limite_naviera = d.toISOString().slice(0, 10);
+      } catch { e.des_fecha_limite_naviera = null; }
+    } else {
+      e.des_fecha_limite_naviera = null;
+    }
+  }
+
+  isoADMY(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const s = String(iso).substring(0, 10);
+    const [y, m, d] = s.split('-');
+    return `${d}/${m}/${y}`;
   }
 
   private valorValido(v: any): boolean {
