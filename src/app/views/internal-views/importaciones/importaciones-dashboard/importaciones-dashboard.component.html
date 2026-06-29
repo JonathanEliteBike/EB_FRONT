@@ -451,7 +451,7 @@
                 <td class="td-bici-val">
                   <ng-container *ngIf="e.costo_por_bicicleta; else sinBici">
                     <i class="fas fa-bicycle" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
-                    <span class="bici-num">{{ formatUsd(e.costo_por_bicicleta) }}</span>
+                    <span class="bici-num">${{ e.costo_por_bicicleta | number:'1.2-2' }} USD</span>
                     <span class="bici-sub" *ngIf="e.cos_cantidad_bicicletas"> / {{ e.cos_cantidad_bicicletas }} uds</span>
                   </ng-container>
                   <ng-template #sinBici><span class="td-gray">—</span></ng-template>
