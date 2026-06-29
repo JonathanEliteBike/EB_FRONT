@@ -786,7 +786,9 @@
         <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_saldo_favor_aa')"><label>5. Saldo a favor del Agente Aduanal</label>
           <input type="text" [value]="embarque.cie_saldo_favor_aa || ''" (change)="marcarCambio('cie_saldo_favor_aa', $any($event.target).value || null)" placeholder="SI / NO + importe" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_liquidado_aa')"><label>6. Liquidado a Agente Aduanal</label>
-          <input type="text" [value]="embarque.cie_liquidado_aa || ''" (change)="marcarCambio('cie_liquidado_aa', $any($event.target).value || null)" /></div>
+          <select [value]="embarque.cie_liquidado_aa || ''" (change)="marcarCambio('cie_liquidado_aa', $any($event.target).value || null)">
+            <option value="">—</option><option>SI</option><option>NO</option><option>N/A</option>
+          </select></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_fecha_pago_aa')"><label>Fecha de pago a Agente Aduanal</label>
           <app-date-picker
               mode="single"

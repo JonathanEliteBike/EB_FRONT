@@ -1,3 +1,6 @@
+/* Todos los inputs de texto muestran mayúsculas mientras el usuario escribe */
+:host input[type="text"] { text-transform: uppercase; }
+
 /* CSS variables heredadas por app-date-picker en este módulo */
 :host {
   --surface2: #1a1f2e; --border2: #2d3748;

@@ -268,6 +268,10 @@ export class ImportacionesDetalleComponent implements OnInit {
 
   marcarCambio(campo: keyof Importacion, valor: any): void {
     if (!this.embarque) return;
+    // Uppercase texto libre; excluye fechas ISO (YYYY-MM-DD) y valores nulos/numéricos
+    if (typeof valor === 'string' && valor && !/^\d{4}-\d{2}-\d{2}/.test(valor)) {
+      valor = valor.toUpperCase();
+    }
     (this.embarque as any)[campo] = valor;
     (this.cambiosPendientes as any)[campo] = valor;
     if (this.valorValido(valor)) {
