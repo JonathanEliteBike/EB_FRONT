@@ -772,11 +772,17 @@
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_liquidado_elite')"><label>3. Liquidado a Elite Bike</label>
           <input type="text" [value]="embarque.cie_liquidado_elite || ''" (change)="marcarCambio('cie_liquidado_elite', $any($event.target).value || null)" placeholder="PAGADO + fecha" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_fecha_pago_elite')"><label>Fecha de pago a Elite Bike</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.cie_fecha_pago_elite || ''"
-              (dateChange)="marcarCambio('cie_fecha_pago_elite', $event || null)">
-            </app-date-picker></div>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cie_fecha_pago_elite')">
+              <app-date-picker
+                  mode="single"
+                  [value]="embarque.cie_fecha_pago_elite || ''"
+                  (dateChange)="marcarCambio('cie_fecha_pago_elite', $event || null)">
+              </app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('cie_fecha_pago_elite')" class="na-badge" (click)="toggleNA('cie_fecha_pago_elite')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cie_fecha_pago_elite')" (click)="toggleNA('cie_fecha_pago_elite')">N/A</button>
+          </div></div>
         <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_saldo_favor_aa')"><label>5. Saldo a favor del Agente Aduanal</label>
           <input type="text" [value]="embarque.cie_saldo_favor_aa || ''" (change)="marcarCambio('cie_saldo_favor_aa', $any($event.target).value || null)" placeholder="SI / NO + importe" /></div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_liquidado_aa')"><label>6. Liquidado a Agente Aduanal</label>

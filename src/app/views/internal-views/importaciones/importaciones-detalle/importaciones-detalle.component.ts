@@ -151,7 +151,7 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'cie_recepcion_cuenta_gastos', label: 'Recepción de cuenta de gastos' },
       { campo: 'cie_saldo_favor_elite',       label: 'Saldo a favor de Elite Bike' },
       { campo: 'cie_liquidado_elite',         label: 'Liquidado a Elite Bike' },
-      { campo: 'cie_fecha_pago_elite',        label: 'Fecha de pago a Elite Bike' },
+      { campo: 'cie_fecha_pago_elite',        label: 'Fecha de pago a Elite Bike', opcional: true },
       { campo: 'cie_saldo_favor_aa',          label: 'Saldo a favor del Agente Aduanal' },
       { campo: 'cie_liquidado_aa',            label: 'Liquidado a Agente Aduanal' },
       { campo: 'cie_fecha_pago_aa',           label: 'Fecha de pago a Agente Aduanal' },
