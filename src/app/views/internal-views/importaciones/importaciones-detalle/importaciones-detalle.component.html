@@ -458,16 +458,28 @@
           </select>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_layout_verificacion')"><label>26. Layout para verificación</label>
-          <select [value]="embarque.imp_layout_verificacion || ''" (change)="marcarCambio('imp_layout_verificacion', $any($event.target).value || null)">
-            <option value="">—</option><option>SI</option><option>NO</option>
-          </select>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('imp_layout_verificacion')">
+              <select [value]="embarque.imp_layout_verificacion || ''" (change)="marcarCambio('imp_layout_verificacion', $any($event.target).value || null)">
+                <option value="">—</option><option>SI</option><option>NO</option>
+              </select>
+            </ng-container>
+            <span *ngIf="esNA('imp_layout_verificacion')" class="na-badge" (click)="toggleNA('imp_layout_verificacion')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('imp_layout_verificacion')" (click)="toggleNA('imp_layout_verificacion')">N/A</button>
+          </div>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_envio_layout')"><label>27. Envío de layout (si aplica)</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.imp_envio_layout || ''"
-              (dateChange)="marcarCambio('imp_envio_layout', $event || null)">
-            </app-date-picker>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('imp_envio_layout')">
+              <app-date-picker
+                  mode="single"
+                  [value]="embarque.imp_envio_layout || ''"
+                  (dateChange)="marcarCambio('imp_envio_layout', $event || null)">
+              </app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('imp_envio_layout')" class="na-badge" (click)="toggleNA('imp_envio_layout')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('imp_envio_layout')" (click)="toggleNA('imp_envio_layout')">N/A</button>
+          </div>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_318')"><label>28. Carta 3.1.8</label>
           <select [value]="embarque.imp_carta_318 || ''" (change)="marcarCambio('imp_carta_318', $any($event.target).value || null)">
