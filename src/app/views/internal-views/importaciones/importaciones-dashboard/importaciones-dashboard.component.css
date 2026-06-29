@@ -171,6 +171,7 @@
 /* ══ Charts ════════════════════════════════════════════════════════════════ */
 .charts-row {
   display: grid; gap: 16px; margin-bottom: 16px;
+  align-items: start;
 }
 .charts-row.r1 { grid-template-columns: 240px 1fr 240px; }
 .charts-row.r2 { grid-template-columns: 1fr 1fr; }
@@ -270,6 +271,9 @@
   transition: width 300ms ease; /* re-renders al filtrar */
 }
 .estado-pct { font-size: .68rem; color: #4b5563; text-align: right; }
+
+/* Card derecho: compacto y sin huecos */
+.estado-card { justify-content: space-between; }
 
 /* Avance ring */
 .avance-ring-wrap {
