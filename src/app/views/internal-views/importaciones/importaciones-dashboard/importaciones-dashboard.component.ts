@@ -349,6 +349,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           }],
         },
         options: {
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días promedio` } },
@@ -479,6 +480,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           }],
         },
         options: {
+          maintainAspectRatio: false,
           indexAxis: 'y',
           plugins: {
             legend: { display: false },
@@ -503,6 +505,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           }],
         },
         options: {
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días promedio` } },
@@ -561,8 +564,8 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     this.notasEditVal = e.notas ?? '';
   }
 
-  guardarNotas(e: any, event: Event): void {
-    const val = (event.target as HTMLInputElement).value.trim();
+  confirmarNotas(e: any): void {
+    const val = this.notasEditVal.trim();
     this.notasEditId = null;
     if (val === (e.notas ?? '').trim()) return;
     e.notas = val || null;

@@ -258,8 +258,7 @@
           <div *ngIf="!desgloseOrigen && data.latencias.total_dias === null" class="chart-empty">
             <i class="fas fa-inbox"></i> Sin datos suficientes
           </div>
-          <canvas #chartLatOrigen *ngIf="desgloseOrigen || data.latencias.total_dias !== null"
-                  [attr.height]="desgloseOrigen ? null : 120"></canvas>
+          <canvas #chartLatOrigen *ngIf="desgloseOrigen || data.latencias.total_dias !== null"></canvas>
         </div>
 
         <div class="chart-card">
@@ -496,19 +495,27 @@
                   <ng-template #sinBici><span class="td-gray">—</span></ng-template>
                 </td>
 
-                <td class="td-notas" (click)="abrirNotasEdit(e, $event)" [title]="e.notas || 'Click para agregar nota'">
-                  <input *ngIf="notasEditId === e.id"
-                    class="notas-input"
-                    [value]="notasEditVal"
-                    (blur)="guardarNotas(e, $event)"
-                    (keyup.enter)="guardarNotas(e, $event)"
-                    (keyup.escape)="cancelarNotas()"
-                    (click)="$event.stopPropagation()"
-                    placeholder="Agregar nota..."
-                    #notasInputRef>
-                  <span *ngIf="notasEditId !== e.id" [class.notas-vacio]="!e.notas">
-                    {{ e.notas ? (e.notas.length > 50 ? (e.notas | slice:0:50) + '…' : e.notas) : '+ Nota' }}
-                  </span>
+                <td class="td-notas" (click)="abrirNotasEdit(e, $event)">
+                  <!-- Modo edición -->
+                  <div class="notas-editor" *ngIf="notasEditId === e.id" (click)="$event.stopPropagation()">
+                    <input class="notas-input"
+                      [(ngModel)]="notasEditVal"
+                      (keyup.enter)="confirmarNotas(e)"
+                      (keyup.escape)="cancelarNotas()"
+                      placeholder="Escribe una nota..."
+                      autofocus>
+                    <div class="notas-actions">
+                      <button class="notas-save" (click)="confirmarNotas(e)" title="Guardar"><i class="fas fa-check"></i></button>
+                      <button class="notas-cancel" (click)="cancelarNotas()" title="Cancelar"><i class="fas fa-times"></i></button>
+                    </div>
+                  </div>
+                  <!-- Modo vista -->
+                  <div class="notas-view" *ngIf="notasEditId !== e.id">
+                    <span class="notas-text" [class.notas-empty]="!e.notas">
+                      {{ e.notas ? (e.notas.length > 45 ? (e.notas | slice:0:45) + '…' : e.notas) : '—' }}
+                    </span>
+                    <i class="fas fa-pen notas-edit-icon"></i>
+                  </div>
                 </td>
 
               </tr>
