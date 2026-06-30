@@ -313,6 +313,10 @@ export class ImportacionesDetalleComponent implements OnInit {
     } else {
       e.des_fecha_limite_naviera = null;
     }
+
+    // Real días etiquetado = terminación - inicio
+    const diasEtiq = this._diffDias(e.alm_inicio_etiquetado, e.alm_terminacion_etiquetado);
+    if (diasEtiq !== null) e.alm_real_dias_etiquetado = diasEtiq;
   }
 
   isoADMY(iso: string | null | undefined): string {
