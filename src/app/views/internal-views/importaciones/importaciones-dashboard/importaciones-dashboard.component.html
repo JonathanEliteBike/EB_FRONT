@@ -288,7 +288,9 @@
           <div *ngIf="data.latencias.x_embarque.length === 0" class="chart-empty">
             <i class="fas fa-inbox"></i> Sin embarques con ambas fechas
           </div>
-          <canvas #chartLatEmbarque *ngIf="data.latencias.x_embarque.length > 0"></canvas>
+          <div class="lat-canvas-wrap" *ngIf="data.latencias.x_embarque.length > 0">
+            <canvas #chartLatEmbarque></canvas>
+          </div>
         </div>
 
         <!-- ── Etiquetado: estimado vs real ─────────────────────────────── -->
@@ -321,7 +323,9 @@
         <div *ngIf="data.latencias.etiquetado.x_embarque.length === 0" class="chart-empty">
           <i class="fas fa-inbox"></i> Sin embarques con datos de etiquetado
         </div>
-        <canvas #chartEtiquetado *ngIf="data.latencias.etiquetado.x_embarque.length > 0"></canvas>
+        <div class="lat-canvas-wrap" *ngIf="data.latencias.etiquetado.x_embarque.length > 0">
+          <canvas #chartEtiquetado></canvas>
+        </div>
         </div><!-- /etiquetado chart-card -->
 
       </div><!-- /charts-row r2 embarque+etiquetado -->

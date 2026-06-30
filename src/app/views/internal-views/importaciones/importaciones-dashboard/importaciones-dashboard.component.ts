@@ -255,6 +255,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           }],
         },
         options: {
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días · ${d[ctx.dataIndex].log_origen}` } },
@@ -300,6 +301,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
             ],
           },
           options: {
+            maintainAspectRatio: false,
             plugins: {
               legend: {
                 display: true,
