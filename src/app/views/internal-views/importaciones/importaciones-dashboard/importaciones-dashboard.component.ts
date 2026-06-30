@@ -39,6 +39,13 @@ interface DashData {
     contabilidad:           LatSingle;
     transito:               LatSingle;
     transito_x_importador:  LatImp[];
+    etiquetado: {
+      proyectado_promedio: number | null;
+      real_promedio:       number | null;
+      n_proyectado:        number;
+      n_real:              number;
+      x_embarque:          { id: number; referencia: string; nombre: string; proyectado: number | null; real: number | null; diferencia: number | null }[];
+    };
   };
   costo_paqueteria:           CostoPaq[];
   precio_bici_x_caja:         PrecioBici[];

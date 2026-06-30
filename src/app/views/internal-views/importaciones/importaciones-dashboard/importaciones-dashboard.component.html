@@ -284,6 +284,61 @@
         <canvas #chartLatEmbarque *ngIf="data.latencias.x_embarque.length > 0"></canvas>
       </div>
 
+      <!-- ── Etiquetado: proyectado vs real ───────────────────────────────── -->
+      <div class="chart-card chart-full" *ngIf="data.latencias.etiquetado">
+        <div class="chart-title"><i class="fas fa-tag"></i> Etiquetado — Proyectado vs Real</div>
+
+        <div class="etiq-kpis">
+          <div class="etiq-kpi">
+            <span class="etiq-num">{{ data.latencias.etiquetado.proyectado_promedio ?? '—' }}<small *ngIf="data.latencias.etiquetado.proyectado_promedio !== null"> días</small></span>
+            <span class="etiq-lbl">Prom. Proyectado</span>
+            <span class="etiq-sub">n={{ data.latencias.etiquetado.n_proyectado }}</span>
+          </div>
+          <div class="etiq-kpi">
+            <span class="etiq-num">{{ data.latencias.etiquetado.real_promedio ?? '—' }}<small *ngIf="data.latencias.etiquetado.real_promedio !== null"> días</small></span>
+            <span class="etiq-lbl">Prom. Real</span>
+            <span class="etiq-sub">n={{ data.latencias.etiquetado.n_real }}</span>
+          </div>
+          <div class="etiq-kpi" *ngIf="data.latencias.etiquetado.proyectado_promedio !== null && data.latencias.etiquetado.real_promedio !== null">
+            <span class="etiq-num" [style.color]="(data.latencias.etiquetado.real_promedio - data.latencias.etiquetado.proyectado_promedio) > 0 ? '#ef4444' : '#22c55e'">
+              {{ (data.latencias.etiquetado.real_promedio - data.latencias.etiquetado.proyectado_promedio) > 0 ? '+' : '' }}{{ (data.latencias.etiquetado.real_promedio - data.latencias.etiquetado.proyectado_promedio) | number:'1.1-1' }}<small> días</small>
+            </span>
+            <span class="etiq-lbl">Desviación Prom.</span>
+            <span class="etiq-sub">real − proyectado</span>
+          </div>
+        </div>
+
+        <div *ngIf="data.latencias.etiquetado.x_embarque.length === 0" class="chart-empty">
+          <i class="fas fa-inbox"></i> Sin embarques con datos de etiquetado
+        </div>
+
+        <table class="etiq-table" *ngIf="data.latencias.etiquetado.x_embarque.length > 0">
+          <thead>
+            <tr>
+              <th>Embarque</th>
+              <th>Proyectado</th>
+              <th>Real</th>
+              <th>Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of data.latencias.etiquetado.x_embarque" (click)="irDetalle(e.id)" style="cursor:pointer">
+              <td>
+                <span class="etiq-ref">{{ e.referencia }}</span>
+                <span class="etiq-nombre" *ngIf="e.nombre">{{ e.nombre }}</span>
+              </td>
+              <td>{{ e.proyectado !== null ? e.proyectado + ' días' : '—' }}</td>
+              <td>{{ e.real !== null ? e.real + ' días' : '—' }}</td>
+              <td *ngIf="e.diferencia !== null" [style.color]="e.diferencia > 0 ? '#ef4444' : '#22c55e'">
+                {{ e.diferencia > 0 ? '+' : '' }}{{ e.diferencia }} días
+              </td>
+              <td *ngIf="e.diferencia === null" style="color:#475569">—</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
     </ng-container>
 
     <!-- ════════════════════════════════ TAB: COSTOS ══════════════════════════ -->

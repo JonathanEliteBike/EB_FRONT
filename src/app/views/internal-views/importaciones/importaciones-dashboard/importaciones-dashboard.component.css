@@ -452,6 +452,39 @@ td { padding: 10px 14px; vertical-align: middle; }
 }
 .lat-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
 
+/* ── Etiquetado proyectado vs real ── */
+.etiq-kpis {
+  display: flex; gap: 24px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.etiq-kpi {
+  display: flex; flex-direction: column; gap: 2px;
+  background: #131924; border: 1px solid #1e2535; border-radius: 10px;
+  padding: 14px 20px; min-width: 140px;
+}
+.etiq-num {
+  font-size: 1.6rem; font-weight: 700; color: #e2e8f0; line-height: 1;
+}
+.etiq-num small { font-size: .9rem; font-weight: 400; color: #94a3b8; margin-left: 3px; }
+.etiq-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; margin-top: 4px; }
+.etiq-sub { font-size: .68rem; color: #475569; }
+
+.etiq-table {
+  width: 100%; border-collapse: collapse; font-size: .82rem;
+}
+.etiq-table thead th {
+  text-align: left; padding: 8px 12px;
+  color: #64748b; font-weight: 600; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 1px solid #1e2535;
+}
+.etiq-table tbody tr {
+  border-bottom: 1px solid #0f1520;
+  transition: background 140ms;
+}
+.etiq-table tbody tr:hover { background: #131924; }
+.etiq-table tbody td { padding: 9px 12px; color: #cbd5e1; }
+.etiq-ref { font-weight: 600; color: #e2e8f0; display: block; }
+.etiq-nombre { font-size: .73rem; color: #64748b; display: block; }
+
 .costo-paq-sub {
   font-size: .68rem; color: #4b5563; margin-top: -6px;
 }
