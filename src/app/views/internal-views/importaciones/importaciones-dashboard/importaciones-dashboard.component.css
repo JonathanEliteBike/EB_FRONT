@@ -456,9 +456,9 @@ td { padding: 10px 14px; vertical-align: middle; }
 .notas-cancel:hover { background: rgba(239,68,68,.25); }
 
 /* Latencia Origen + Importador misma altura */
-.lat-row-igual { align-items: stretch; }
-.lat-row-igual .chart-card { display: flex; flex-direction: column; min-height: 280px; }
-.lat-row-igual .chart-card canvas { flex: 1; min-height: 0; height: 0 !important; }
+.lat-row-igual { align-items: start; }
+.lat-canvas-wrap { position: relative; height: 220px; }
+.lat-canvas-wrap canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
 
 /* ══ Sección Latencias ════════════════════════════════════════════════════ */
 .section-title {

@@ -258,7 +258,9 @@
           <div *ngIf="!desgloseOrigen && data.latencias.total_dias === null" class="chart-empty">
             <i class="fas fa-inbox"></i> Sin datos suficientes
           </div>
-          <canvas #chartLatOrigen *ngIf="desgloseOrigen || data.latencias.total_dias !== null"></canvas>
+          <div class="lat-canvas-wrap" *ngIf="desgloseOrigen || data.latencias.total_dias !== null">
+            <canvas #chartLatOrigen></canvas>
+          </div>
         </div>
 
         <div class="chart-card">
@@ -266,7 +268,9 @@
           <div *ngIf="data.latencias.transito_x_importador.length === 0" class="chart-empty">
             <i class="fas fa-inbox"></i> Sin datos de importador
           </div>
-          <canvas #chartLatImp *ngIf="data.latencias.transito_x_importador.length > 0"></canvas>
+          <div class="lat-canvas-wrap" *ngIf="data.latencias.transito_x_importador.length > 0">
+            <canvas #chartLatImp></canvas>
+          </div>
         </div>
 
       </div>
