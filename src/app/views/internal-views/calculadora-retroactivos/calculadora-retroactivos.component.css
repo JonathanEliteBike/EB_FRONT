@@ -176,6 +176,7 @@ input[type="checkbox"]{
     background-color: transparent;
     border-color: #666;
     color: #bbb;
+    z-index: 1;
 }
 
 .btn-volver:hover {
