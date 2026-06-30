@@ -244,7 +244,8 @@
 
       </div>
 
-      <div class="charts-row r2">
+      <!-- Origen + Importador: misma altura proporcional -->
+      <div class="charts-row r2 lat-row-igual">
 
         <div class="chart-card">
           <div class="chart-title">
@@ -266,26 +267,29 @@
           <div *ngIf="data.latencias.transito_x_importador.length === 0" class="chart-empty">
             <i class="fas fa-inbox"></i> Sin datos de importador
           </div>
-          <canvas #chartLatImp *ngIf="data.latencias.transito_x_importador.length > 0" height="160"></canvas>
+          <canvas #chartLatImp *ngIf="data.latencias.transito_x_importador.length > 0"></canvas>
         </div>
 
       </div>
 
-      <div class="chart-card chart-full">
-        <div class="chart-title"><i class="fas fa-sort-amount-down"></i> Latencia Total por Embarque (entrega → liberación final)</div>
-        <div class="lat-legend">
-          <span class="lat-dot" style="background:#3b82f6"></span> ≤ 40 d &nbsp;
-          <span class="lat-dot" style="background:#f59e0b"></span> 41–60 d &nbsp;
-          <span class="lat-dot" style="background:#ef4444"></span> > 60 d
-        </div>
-        <div *ngIf="data.latencias.x_embarque.length === 0" class="chart-empty">
-          <i class="fas fa-inbox"></i> Sin embarques con ambas fechas registradas
-        </div>
-        <canvas #chartLatEmbarque *ngIf="data.latencias.x_embarque.length > 0"></canvas>
-      </div>
+      <!-- Latencia por embarque + Etiquetado: lado a lado -->
+      <div class="charts-row r2">
 
-      <!-- ── Etiquetado: estimado vs real ─────────────────────────────────── -->
-      <div class="chart-card chart-full" *ngIf="data.latencias.etiquetado">
+        <div class="chart-card">
+          <div class="chart-title"><i class="fas fa-sort-amount-down"></i> Latencia por Embarque</div>
+          <div class="lat-legend">
+            <span class="lat-dot" style="background:#3b82f6"></span> ≤ 40 d &nbsp;
+            <span class="lat-dot" style="background:#f59e0b"></span> 41–60 d &nbsp;
+            <span class="lat-dot" style="background:#ef4444"></span> > 60 d
+          </div>
+          <div *ngIf="data.latencias.x_embarque.length === 0" class="chart-empty">
+            <i class="fas fa-inbox"></i> Sin embarques con ambas fechas
+          </div>
+          <canvas #chartLatEmbarque *ngIf="data.latencias.x_embarque.length > 0"></canvas>
+        </div>
+
+        <!-- ── Etiquetado: estimado vs real ─────────────────────────────── -->
+        <div class="chart-card" *ngIf="data.latencias.etiquetado">
         <div class="chart-title"><i class="fas fa-tag"></i> Etiquetado — Estimado vs Real</div>
 
         <!-- Strip resumen -->
@@ -315,7 +319,9 @@
           <i class="fas fa-inbox"></i> Sin embarques con datos de etiquetado
         </div>
         <canvas #chartEtiquetado *ngIf="data.latencias.etiquetado.x_embarque.length > 0"></canvas>
-      </div>
+        </div><!-- /etiquetado chart-card -->
+
+      </div><!-- /charts-row r2 embarque+etiquetado -->
 
     </ng-container>
 
@@ -490,8 +496,19 @@
                   <ng-template #sinBici><span class="td-gray">—</span></ng-template>
                 </td>
 
-                <td class="td-notas" [title]="e.notas">
-                  {{ e.notas ? (e.notas.length > 55 ? (e.notas | slice:0:55) + '…' : e.notas) : '—' }}
+                <td class="td-notas" (click)="abrirNotasEdit(e, $event)" [title]="e.notas || 'Click para agregar nota'">
+                  <input *ngIf="notasEditId === e.id"
+                    class="notas-input"
+                    [value]="notasEditVal"
+                    (blur)="guardarNotas(e, $event)"
+                    (keyup.enter)="guardarNotas(e, $event)"
+                    (keyup.escape)="cancelarNotas()"
+                    (click)="$event.stopPropagation()"
+                    placeholder="Agregar nota..."
+                    #notasInputRef>
+                  <span *ngIf="notasEditId !== e.id" [class.notas-vacio]="!e.notas">
+                    {{ e.notas ? (e.notas.length > 50 ? (e.notas | slice:0:50) + '…' : e.notas) : '+ Nota' }}
+                  </span>
                 </td>
 
               </tr>

@@ -394,8 +394,8 @@ td { padding: 10px 14px; vertical-align: middle; }
 .llegada-rel   { display: block; font-size: .65rem; color: #4b5563; margin-top: 1px; }
 
 /* Col 7: Costo proyectado / real */
-.td-costo { min-width: 150px; }
-.costo-stack { display: flex; flex-direction: column; gap: 3px; }
+.td-costo { min-width: 150px; text-align: center; }
+.costo-stack { display: inline-flex; flex-direction: column; gap: 3px; text-align: left; }
 .costo-line  { display: flex; align-items: center; gap: 6px; }
 .ctag {
   font-size: .58rem; font-weight: 700; letter-spacing: .05em;
@@ -414,9 +414,21 @@ td { padding: 10px 14px; vertical-align: middle; }
 
 /* Col 9: Notas */
 .td-notas {
-  font-size: .75rem; color: #64748b;
+  font-size: .75rem; color: #94a3b8;
   max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: text;
 }
+.td-notas:hover { color: #e2e8f0; }
+.notas-vacio { color: #334155; font-style: italic; }
+.notas-input {
+  width: 100%; min-width: 150px; padding: 4px 8px;
+  background: #1e2535; border: 1px solid #3b82f6; border-radius: 5px;
+  color: #e2e8f0; font-size: .75rem; outline: none;
+}
+
+/* Latencia Origen + Importador misma altura -->
+.lat-row-igual { align-items: stretch; }
+.lat-row-igual .chart-card { min-height: 220px; }
 
 /* ══ Sección Latencias ════════════════════════════════════════════════════ */
 .section-title {

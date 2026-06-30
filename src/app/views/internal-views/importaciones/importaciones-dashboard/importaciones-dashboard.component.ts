@@ -81,6 +81,8 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' = 'resumen';
 
   filtros = { via: '', estado: '', origen: '', anio: '' };
+  notasEditId: number | null = null;
+  notasEditVal = '';
 
   private charts: Chart[] = [];
 
@@ -249,18 +251,17 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
             data: d.map(e => e.dias),
             backgroundColor: d.map(e => e.dias > 60 ? '#ef4444' : e.dias > 40 ? '#f59e0b' : '#3b82f6'),
             borderRadius: 4,
-            barThickness: 14,
+            barPercentage: 0.6,
           }],
         },
         options: {
-          indexAxis: 'y',
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días · ${d[ctx.dataIndex].log_origen}` } },
           },
           scales: {
-            x: { ticks: { color: textColor }, grid: { color: gridColor }, border: { color: gridColor } },
-            y: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
+            x: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: textColor, callback: v => `${v}d` }, grid: { color: gridColor }, border: { color: gridColor } },
           },
         },
       }));
@@ -299,7 +300,6 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
             ],
           },
           options: {
-            indexAxis: 'y',
             plugins: {
               legend: {
                 display: true,
@@ -320,12 +320,12 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
             },
             scales: {
               x: {
-                ticks: { color: textColor, callback: v => `${v}d` },
-                grid: { color: gridColor }, border: { color: gridColor },
+                ticks: { color: '#e2e8f0', font: { size: 10 } },
+                grid: { display: false },
               },
               y: {
-                ticks: { color: '#e2e8f0', font: { size: 11 } },
-                grid: { display: false },
+                ticks: { color: textColor, callback: v => `${v}d` },
+                grid: { color: gridColor }, border: { color: gridColor },
               },
             },
           },
@@ -554,6 +554,22 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   irDetalle(id: number): void { this.router.navigate(['/importaciones', id], { queryParams: { from: 'dashboard' } }); }
+
+  abrirNotasEdit(e: any, event: Event): void {
+    event.stopPropagation();
+    this.notasEditId = e.id;
+    this.notasEditVal = e.notas ?? '';
+  }
+
+  guardarNotas(e: any, event: Event): void {
+    const val = (event.target as HTMLInputElement).value.trim();
+    this.notasEditId = null;
+    if (val === (e.notas ?? '').trim()) return;
+    e.notas = val || null;
+    this.svc.actualizar(e.id, { notas: val || null } as any).subscribe();
+  }
+
+  cancelarNotas(): void { this.notasEditId = null; }
 
   get costoPaqConDatos(): CostoPaq[] {
     return this.data?.costo_paqueteria?.filter(e => e.total_usd > 0) ?? [];
