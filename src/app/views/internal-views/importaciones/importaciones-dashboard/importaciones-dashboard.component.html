@@ -509,8 +509,8 @@
                       placeholder="Escribe una nota..."
                       autofocus>
                     <div class="notas-actions">
-                      <button class="notas-save" (click)="confirmarNotas(e)" title="Guardar"><i class="fas fa-check"></i></button>
-                      <button class="notas-cancel" (click)="cancelarNotas()" title="Cancelar"><i class="fas fa-times"></i></button>
+                      <button class="notas-save" (click)="$event.stopPropagation(); confirmarNotas(e)" title="Guardar"><i class="fas fa-check"></i></button>
+                      <button class="notas-cancel" (click)="$event.stopPropagation(); cancelarNotas()" title="Cancelar"><i class="fas fa-times"></i></button>
                     </div>
                   </div>
                   <!-- Modo vista -->
