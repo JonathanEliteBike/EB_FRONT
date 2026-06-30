@@ -491,6 +491,32 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return this.data?.costo_paqueteria?.filter(e => e.total_usd > 0) ?? [];
   }
 
+  // ── Etiquetado helpers ───────────────────────────────────────────────────────
+
+  get etiqMaxReal(): number {
+    const rows = this.data?.latencias?.etiquetado?.x_embarque;
+    if (!rows?.length) return 1;
+    return Math.max(...rows.flatMap(e => [e.real ?? 0, e.proyectado ?? 0]), 1);
+  }
+
+  etiqPct(val: number | null, max: number): number {
+    if (val === null || !max) return 0;
+    return Math.min(Math.round((val / max) * 100), 100);
+  }
+
+  etiqBaseWidth(proy: number | null, real: number | null): number {
+    if (proy === null && real === null) return 0;
+    if (proy === null) return real!;
+    if (real === null) return proy;
+    return Math.min(proy, real);
+  }
+
+  get etiqRatio(): number | null {
+    const e = this.data?.latencias?.etiquetado;
+    if (!e?.real_promedio || !e?.proyectado_promedio) return null;
+    return Math.round((e.real_promedio / e.proyectado_promedio) * 10) / 10;
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   colorPct(p: number): string {

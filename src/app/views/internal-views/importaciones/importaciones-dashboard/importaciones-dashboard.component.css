@@ -452,38 +452,105 @@ td { padding: 10px 14px; vertical-align: middle; }
 }
 .lat-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
 
-/* ── Etiquetado proyectado vs real ── */
-.etiq-kpis {
-  display: flex; gap: 24px; margin-bottom: 20px; flex-wrap: wrap;
-}
-.etiq-kpi {
-  display: flex; flex-direction: column; gap: 2px;
-  background: #131924; border: 1px solid #1e2535; border-radius: 10px;
-  padding: 14px 20px; min-width: 140px;
-}
-.etiq-num {
-  font-size: 1.6rem; font-weight: 700; color: #e2e8f0; line-height: 1;
-}
-.etiq-num small { font-size: .9rem; font-weight: 400; color: #94a3b8; margin-left: 3px; }
-.etiq-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; margin-top: 4px; }
-.etiq-sub { font-size: .68rem; color: #475569; }
+/* ── Etiquetado: estimado vs real ── */
+.etiq-card { }
 
-.etiq-table {
-  width: 100%; border-collapse: collapse; font-size: .82rem;
+.etiq-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 20px; margin-bottom: 28px;
 }
-.etiq-table thead th {
-  text-align: left; padding: 8px 12px;
-  color: #64748b; font-weight: 600; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
-  border-bottom: 1px solid #1e2535;
+.etiq-summary {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
 }
-.etiq-table tbody tr {
-  border-bottom: 1px solid #0f1520;
-  transition: background 140ms;
+.etiq-stat { display: flex; flex-direction: column; gap: 3px; }
+.etiq-stat-row { display: flex; align-items: baseline; gap: 5px; }
+.etiq-stat-val {
+  font-size: 2rem; font-weight: 700; color: #e2e8f0; line-height: 1;
 }
-.etiq-table tbody tr:hover { background: #131924; }
-.etiq-table tbody td { padding: 9px 12px; color: #cbd5e1; }
-.etiq-ref { font-weight: 600; color: #e2e8f0; display: block; }
-.etiq-nombre { font-size: .73rem; color: #64748b; display: block; }
+.etiq-val-real { color: #ef4444; }
+.etiq-stat-unit { font-size: .82rem; color: #64748b; }
+.etiq-stat-lbl {
+  font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b;
+}
+.etiq-stat-sub { font-size: .62rem; color: #334155; }
+.etiq-arrow-icon { color: #1e2535; font-size: 1.1rem; flex-shrink: 0; }
+.etiq-ratio {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 20px; border-radius: 12px; border: 1px solid;
+}
+.etiq-ratio--over { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); }
+.etiq-ratio--under { background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.25); }
+.etiq-ratio-val { font-size: 1.9rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.etiq-ratio--over .etiq-ratio-val { color: #ef4444; }
+.etiq-ratio--under .etiq-ratio-val { color: #22c55e; }
+.etiq-ratio-lbl {
+  font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b;
+}
+
+/* Legend */
+.etiq-legend {
+  display: flex; gap: 18px; margin-bottom: 14px;
+  font-size: .68rem; color: #64748b; flex-wrap: wrap; align-items: center;
+}
+.etiq-leg-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 2px; margin-right: 4px; vertical-align: middle;
+}
+.etiq-leg-dash {
+  display: inline-block; width: 12px; height: 0;
+  border-top: 2px dashed #475569; vertical-align: middle; margin-right: 4px;
+}
+
+/* Rows */
+.etiq-rows { display: flex; flex-direction: column; }
+.etiq-row {
+  padding: 12px 0; border-top: 1px solid #0f1520;
+  cursor: pointer; transition: background 120ms ease;
+}
+.etiq-row:hover { background: rgba(255,255,255,.02); border-radius: 6px; }
+.etiq-row-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.etiq-row-id { display: flex; flex-direction: column; gap: 2px; }
+.etiq-row-ref { font-size: .82rem; font-weight: 600; color: #e2e8f0; }
+.etiq-row-nombre { font-size: .7rem; color: #475569; }
+.etiq-row-nums {
+  display: flex; align-items: center; gap: 10px; font-size: .74rem;
+}
+.etiq-num-est { color: #475569; }
+.etiq-num-real { color: #94a3b8; }
+.etiq-num-diff {
+  font-weight: 700; padding: 2px 7px; border-radius: 5px; font-size: .72rem;
+}
+.etiq-diff-over  { color: #ef4444; background: rgba(239,68,68,.12); }
+.etiq-diff-under { color: #22c55e; background: rgba(34,197,94,.12); }
+.etiq-diff-ok    { color: #94a3b8; }
+
+/* Bars */
+.etiq-bar-track {
+  position: relative; height: 7px;
+  background: #1e2535; border-radius: 4px; overflow: visible;
+}
+.etiq-bar-base {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: #3b82f6; border-radius: 4px 0 0 4px;
+  transition: width 500ms cubic-bezier(0.23,1,0.32,1);
+}
+.etiq-bar-base--under {
+  background: #22c55e; border-radius: 4px;
+}
+.etiq-bar-over {
+  position: absolute; top: 0; height: 100%;
+  background: #ef4444; border-radius: 0 4px 4px 0;
+  transition: width 500ms cubic-bezier(0.23,1,0.32,1) 100ms,
+              left  500ms cubic-bezier(0.23,1,0.32,1) 100ms;
+}
+.etiq-bar-marker {
+  position: absolute; top: -4px; bottom: -4px; width: 2px;
+  background: #94a3b8; transform: translateX(-50%);
+  border-radius: 1px; z-index: 2;
+}
 
 .costo-paq-sub {
   font-size: .68rem; color: #4b5563; margin-top: -6px;
