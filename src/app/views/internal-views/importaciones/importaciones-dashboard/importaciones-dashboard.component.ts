@@ -66,7 +66,8 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   @ViewChild('chartOrigen')     chartOrigenRef!:     ElementRef<HTMLCanvasElement>;
   @ViewChild('chartMes')        chartMesRef!:        ElementRef<HTMLCanvasElement>;
   @ViewChild('chartFlete')      chartFleteRef!:      ElementRef<HTMLCanvasElement>;
-  @ViewChild('chartLatOrigen')  chartLatOrigenRef!:  ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartLatOrigen')     chartLatOrigenRef!:     ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartEtiquetado')    chartEtiquetadoRef!:    ElementRef<HTMLCanvasElement>;
   @ViewChild('chartLatEmbarque')chartLatEmbarqueRef!:ElementRef<HTMLCanvasElement>;
   @ViewChild('chartLatImp')     chartLatImpRef!:     ElementRef<HTMLCanvasElement>;
   @ViewChild('chartCostoPaq')   chartCostoPaqRef!:   ElementRef<HTMLCanvasElement>;
@@ -265,7 +266,74 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
       }));
     }
 
-    // 7. Latencia tránsito x importador
+    // 7. Etiquetado: estimado vs real (grouped bar)
+    if (this.chartEtiquetadoRef?.nativeElement && this.data.latencias.etiquetado) {
+      const rows = this.data.latencias.etiquetado.x_embarque
+        .filter(e => e.proyectado !== null || e.real !== null)
+        .slice(0, 15);
+      if (rows.length > 0) {
+        const barH = Math.max(16, Math.min(28, Math.floor(280 / rows.length)));
+        this.charts.push(new Chart(this.chartEtiquetadoRef.nativeElement, {
+          type: 'bar',
+          data: {
+            labels: rows.map(e => e.nombre ? `${e.referencia} · ${e.nombre}` : e.referencia),
+            datasets: [
+              {
+                label: 'Estimado',
+                data: rows.map(e => e.proyectado),
+                backgroundColor: '#334155',
+                borderRadius: 3,
+                barThickness: barH,
+              },
+              {
+                label: 'Real',
+                data: rows.map(e => e.real),
+                backgroundColor: rows.map(e =>
+                  e.diferencia === null ? '#64748b' :
+                  e.diferencia > 0     ? '#ef4444' :
+                  e.diferencia < 0     ? '#22c55e' : '#3b82f6'
+                ),
+                borderRadius: 3,
+                barThickness: barH,
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            plugins: {
+              legend: {
+                display: true,
+                labels: { color: textColor, font: { size: 11 }, boxWidth: 10, padding: 16 },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.raw as number;
+                    if (ctx.datasetIndex === 1 && rows[ctx.dataIndex].diferencia !== null) {
+                      const diff = rows[ctx.dataIndex].diferencia!;
+                      return ` ${val}d real (${diff > 0 ? '+' : ''}${diff}d vs estimado)`;
+                    }
+                    return ` ${val}d estimado`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor, callback: v => `${v}d` },
+                grid: { color: gridColor }, border: { color: gridColor },
+              },
+              y: {
+                ticks: { color: '#e2e8f0', font: { size: 11 } },
+                grid: { display: false },
+              },
+            },
+          },
+        }));
+      }
+    }
+
+    // 8. Latencia tránsito x importador
     if (this.chartLatImpRef?.nativeElement) {
       const d = this.data.latencias.transito_x_importador;
       const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
@@ -489,26 +557,6 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   get costoPaqConDatos(): CostoPaq[] {
     return this.data?.costo_paqueteria?.filter(e => e.total_usd > 0) ?? [];
-  }
-
-  // ── Etiquetado helpers ───────────────────────────────────────────────────────
-
-  get etiqMaxReal(): number {
-    const rows = this.data?.latencias?.etiquetado?.x_embarque;
-    if (!rows?.length) return 1;
-    return Math.max(...rows.flatMap(e => [e.real ?? 0, e.proyectado ?? 0]), 1);
-  }
-
-  etiqPct(val: number | null, max: number): number {
-    if (val === null || !max) return 0;
-    return Math.min(Math.round((val / max) * 100), 100);
-  }
-
-  etiqBaseWidth(proy: number | null, real: number | null): number {
-    if (proy === null && real === null) return 0;
-    if (proy === null) return real!;
-    if (real === null) return proy;
-    return Math.min(proy, real);
   }
 
   get etiqRatio(): number | null {

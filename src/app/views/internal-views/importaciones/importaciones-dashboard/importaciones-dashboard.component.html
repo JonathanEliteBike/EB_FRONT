@@ -285,95 +285,36 @@
       </div>
 
       <!-- ── Etiquetado: estimado vs real ─────────────────────────────────── -->
-      <div class="chart-card chart-full etiq-card" *ngIf="data.latencias.etiquetado">
+      <div class="chart-card chart-full" *ngIf="data.latencias.etiquetado">
+        <div class="chart-title"><i class="fas fa-tag"></i> Etiquetado — Estimado vs Real</div>
 
-        <!-- Cabecera con números resumen -->
-        <div class="etiq-header">
-          <span class="chart-title" style="margin:0"><i class="fas fa-tag"></i> Etiquetado — Estimado vs Real</span>
-
-          <div class="etiq-summary" *ngIf="data.latencias.etiquetado.proyectado_promedio !== null">
-            <div class="etiq-stat">
-              <div class="etiq-stat-row">
-                <span class="etiq-stat-val">{{ data.latencias.etiquetado.proyectado_promedio | number:'1.0-1' }}</span>
-                <span class="etiq-stat-unit">días</span>
-              </div>
-              <span class="etiq-stat-lbl">Estimado prom.</span>
-              <span class="etiq-stat-sub">n={{ data.latencias.etiquetado.n_proyectado }}</span>
-            </div>
-
-            <i class="fas fa-arrow-right etiq-arrow-icon"></i>
-
-            <div class="etiq-stat">
-              <div class="etiq-stat-row">
-                <span class="etiq-stat-val etiq-val-real">{{ data.latencias.etiquetado.real_promedio !== null ? (data.latencias.etiquetado.real_promedio | number:'1.0-1') : '—' }}</span>
-                <span class="etiq-stat-unit" *ngIf="data.latencias.etiquetado.real_promedio !== null">días</span>
-              </div>
-              <span class="etiq-stat-lbl">Real prom.</span>
-              <span class="etiq-stat-sub">n={{ data.latencias.etiquetado.n_real }}</span>
-            </div>
-
-            <div class="etiq-ratio"
-              *ngIf="etiqRatio !== null"
-              [class.etiq-ratio--over]="etiqRatio > 1"
-              [class.etiq-ratio--under]="etiqRatio <= 1">
-              <span class="etiq-ratio-val">{{ etiqRatio }}×</span>
-              <span class="etiq-ratio-lbl">{{ etiqRatio > 1 ? 'sobre el estimado' : 'del estimado' }}</span>
-            </div>
+        <!-- Strip resumen -->
+        <div class="etiq-strip" *ngIf="data.latencias.etiquetado.proyectado_promedio !== null">
+          <div class="etiq-strip-stat">
+            <span class="etiq-strip-val">{{ data.latencias.etiquetado.proyectado_promedio | number:'1.0-1' }}</span>
+            <span class="etiq-strip-unit">días</span>
+            <span class="etiq-strip-lbl">Estimado prom. · n={{ data.latencias.etiquetado.n_proyectado }}</span>
+          </div>
+          <i class="fas fa-long-arrow-alt-right etiq-strip-arrow"></i>
+          <div class="etiq-strip-stat">
+            <span class="etiq-strip-val" [class.etiq-strip-val--over]="etiqRatio !== null && etiqRatio > 1" [class.etiq-strip-val--under]="etiqRatio !== null && etiqRatio <= 1">
+              {{ data.latencias.etiquetado.real_promedio !== null ? (data.latencias.etiquetado.real_promedio | number:'1.0-1') : '—' }}
+            </span>
+            <span class="etiq-strip-unit" *ngIf="data.latencias.etiquetado.real_promedio !== null">días</span>
+            <span class="etiq-strip-lbl">Real prom. · n={{ data.latencias.etiquetado.n_real }}</span>
+          </div>
+          <div class="etiq-strip-badge"
+            *ngIf="etiqRatio !== null"
+            [class.etiq-strip-badge--over]="etiqRatio > 1"
+            [class.etiq-strip-badge--under]="etiqRatio <= 1">
+            {{ etiqRatio }}× {{ etiqRatio > 1 ? 'sobre estimado' : 'del estimado' }}
           </div>
         </div>
 
         <div *ngIf="data.latencias.etiquetado.x_embarque.length === 0" class="chart-empty">
           <i class="fas fa-inbox"></i> Sin embarques con datos de etiquetado
         </div>
-
-        <div class="etiq-rows" *ngIf="data.latencias.etiquetado.x_embarque.length > 0">
-
-          <div class="etiq-legend">
-            <span><span class="etiq-leg-dot" style="background:#3b82f6"></span> Dentro del estimado</span>
-            <span><span class="etiq-leg-dot" style="background:#ef4444"></span> Exceso</span>
-            <span><span class="etiq-leg-dot" style="background:#22c55e"></span> Ahorro</span>
-            <span><span class="etiq-leg-dash"></span> Meta estimada</span>
-          </div>
-
-          <div class="etiq-row" *ngFor="let e of data.latencias.etiquetado.x_embarque" (click)="irDetalle(e.id)">
-            <div class="etiq-row-head">
-              <div class="etiq-row-id">
-                <span class="etiq-row-ref">{{ e.referencia }}</span>
-                <span class="etiq-row-nombre" *ngIf="e.nombre">{{ e.nombre }}</span>
-              </div>
-              <div class="etiq-row-nums">
-                <span class="etiq-num-est">Est: {{ e.proyectado !== null ? e.proyectado + 'd' : '—' }}</span>
-                <span class="etiq-num-real">Real: {{ e.real !== null ? e.real + 'd' : '—' }}</span>
-                <span class="etiq-num-diff"
-                  *ngIf="e.diferencia !== null"
-                  [class.etiq-diff-over]="e.diferencia > 0"
-                  [class.etiq-diff-under]="e.diferencia < 0"
-                  [class.etiq-diff-ok]="e.diferencia === 0">
-                  {{ e.diferencia > 0 ? '+' : '' }}{{ e.diferencia }}d
-                </span>
-              </div>
-            </div>
-            <div class="etiq-bar-track">
-              <!-- Segmento base: 0 → min(proy, real); azul si sobre, verde si bajo -->
-              <div class="etiq-bar-base"
-                [class.etiq-bar-base--under]="e.diferencia !== null && e.real !== null && e.proyectado !== null && e.real < e.proyectado"
-                [style.width.%]="etiqPct(etiqBaseWidth(e.proyectado, e.real), etiqMaxReal)">
-              </div>
-              <!-- Segmento exceso: proy → real (rojo) -->
-              <div class="etiq-bar-over"
-                *ngIf="e.diferencia !== null && e.diferencia > 0 && e.proyectado !== null"
-                [style.left.%]="etiqPct(e.proyectado, etiqMaxReal)"
-                [style.width.%]="etiqPct(e.diferencia, etiqMaxReal)">
-              </div>
-              <!-- Línea de meta estimada -->
-              <div class="etiq-bar-marker"
-                *ngIf="e.proyectado !== null"
-                [style.left.%]="etiqPct(e.proyectado, etiqMaxReal)">
-              </div>
-            </div>
-          </div>
-
-        </div>
+        <canvas #chartEtiquetado *ngIf="data.latencias.etiquetado.x_embarque.length > 0"></canvas>
       </div>
 
     </ng-container>
