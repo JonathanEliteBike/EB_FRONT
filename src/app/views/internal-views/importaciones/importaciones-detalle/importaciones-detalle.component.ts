@@ -198,7 +198,8 @@ export class ImportacionesDetalleComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.route.snapshot.queryParamMap.get('from') === 'dashboard') {
-      this.returnUrl = '/importaciones/dashboard';
+      const tab = this.route.snapshot.queryParamMap.get('tab');
+      this.returnUrl = '/importaciones/dashboard' + (tab ? `?tab=${tab}` : '');
     }
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.svc.obtener(id).subscribe({
@@ -441,11 +442,11 @@ export class ImportacionesDetalleComponent implements OnInit {
       for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
       const payload: any = { _borrador_seccion: this.seccionActiva, ...naPayload, ...this.cambiosPendientes };
       this.svc.actualizar(this.embarque!.id, payload).subscribe({
-        next:  () => this.router.navigate([this.returnUrl]),
-        error: () => this.router.navigate([this.returnUrl]),
+        next:  () => this.router.navigateByUrl(this.returnUrl),
+        error: () => this.router.navigateByUrl(this.returnUrl),
       });
     } else {
-      this.router.navigate([this.returnUrl]);
+      this.router.navigateByUrl(this.returnUrl);
     }
   }
 

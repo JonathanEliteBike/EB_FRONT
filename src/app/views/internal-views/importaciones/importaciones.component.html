@@ -23,28 +23,28 @@
 
   <!-- ── Stats ── -->
   <div class="imp-stats" *ngIf="!cargando">
-    <div class="stat-card">
+    <div class="stat-card stat-filtrable" (click)="filtroEstado = ''; filtroVia = ''; filtrar()" [class.active]="!filtroEstado && !filtroVia">
       <span class="stat-num">{{ stats.total }}</span>
       <span class="stat-lbl">Total</span>
     </div>
-    <div class="stat-card stat-proceso">
+    <div class="stat-card stat-proceso stat-filtrable" (click)="toggleFiltroEstado('activo')" [class.active]="filtroEstado === 'activo'">
       <span class="stat-num">{{ stats.enProceso }}</span>
       <span class="stat-lbl">En Proceso</span>
     </div>
-    <div class="stat-card stat-ok">
+    <div class="stat-card stat-ok stat-filtrable" (click)="toggleFiltroEstado('cerrado')" [class.active]="filtroEstado === 'cerrado'">
       <span class="stat-num">{{ stats.completados }}</span>
-      <span class="stat-lbl">Completados</span>
+      <span class="stat-lbl">Cerrados</span>
     </div>
-    <div class="stat-card stat-pend">
+    <div class="stat-card stat-pend stat-filtrable" (click)="toggleFiltroEstado('pendiente')" [class.active]="filtroEstado === 'pendiente'">
       <span class="stat-num">{{ stats.pendientes }}</span>
       <span class="stat-lbl">Sin Iniciar</span>
     </div>
-    <div class="stat-card stat-via" (click)="filtroVia = filtroVia === 'MARITIMO' ? '' : 'MARITIMO'; filtrar()" [class.active]="filtroVia === 'MARITIMO'">
+    <div class="stat-card stat-via" (click)="toggleFiltroVia('MARITIMO')" [class.active]="filtroVia === 'MARITIMO'">
       <i class="fas fa-ship"></i>
       <span class="stat-num">{{ stats.maritimo }}</span>
       <span class="stat-lbl">Marítimo</span>
     </div>
-    <div class="stat-card stat-via" (click)="filtroVia = filtroVia === 'AEREO' ? '' : 'AEREO'; filtrar()" [class.active]="filtroVia === 'AEREO'">
+    <div class="stat-card stat-via" (click)="toggleFiltroVia('AEREO')" [class.active]="filtroVia === 'AEREO'">
       <i class="fas fa-plane"></i>
       <span class="stat-num">{{ stats.aereo }}</span>
       <span class="stat-lbl">Aéreo</span>
@@ -62,6 +62,15 @@
       <option value="">Todos los orígenes</option>
       <option *ngFor="let o of origenes" [value]="o">{{ o }}</option>
     </select>
+    <div class="filtro-fecha-wrap">
+      <app-date-picker
+        mode="range"
+        placeholder="Filtrar por ETA"
+        [desde]="filtroFechaDesde"
+        [hasta]="filtroFechaHasta"
+        (rangeChange)="onRangoFecha($event)">
+      </app-date-picker>
+    </div>
   </div>
 
   <!-- ── Spinner ── -->
@@ -95,8 +104,9 @@
             <th class="col-del"></th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let e of embarquesFiltrados" class="macro-row" (click)="abrirDetalle(e.id)">
+        <tbody class="imp-tbody">
+          <tr *ngFor="let e of embarquesFiltrados; let i = index" class="macro-row" (click)="abrirDetalle(e.id)"
+              [style.--row-delay]="(i < 12 ? i * 35 : 420) + 'ms'">
 
             <!-- Referencia + Nombre -->
             <td class="col-ref">

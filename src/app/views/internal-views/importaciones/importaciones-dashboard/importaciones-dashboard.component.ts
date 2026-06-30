@@ -3,7 +3,7 @@ import {
   ElementRef, ViewChild, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { ImportacionesService } from '../../../../services/importaciones.service';
@@ -89,10 +89,15 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   constructor(
     private svc: ImportacionesService,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
   ) {}
 
-  ngOnInit():        void { this.cargar(); }
+  ngOnInit(): void {
+    const tab = this.route.snapshot.queryParamMap.get('tab') as typeof this.activeTab | null;
+    if (tab && ['resumen','latencias','costos','embarques'].includes(tab)) this.activeTab = tab;
+    this.cargar();
+  }
   ngAfterViewInit(): void {}
   ngOnDestroy():     void { this.destroyCharts(); }
 
@@ -558,7 +563,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return `hace ${Math.round(diff / 30)}m`;
   }
 
-  irDetalle(id: number): void { this.router.navigate(['/importaciones', id], { queryParams: { from: 'dashboard' } }); }
+  irDetalle(id: number): void { this.router.navigate(['/importaciones', id], { queryParams: { from: 'dashboard', tab: this.activeTab } }); }
 
   abrirNotasEdit(e: any, event: Event): void {
     event.stopPropagation();
