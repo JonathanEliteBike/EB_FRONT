@@ -216,24 +216,28 @@ export class ImportacionesDetalleComponent implements OnInit {
   }
 
   private _aplicarBorradores(): void {
-    if (!this.embarque?.borradores) return;
+    if (!this.embarque?.borradores) {
+      this._recalcularCamposLocales();
+      return;
+    }
     for (const campos of Object.values(this.embarque.borradores)) {
       for (const [campo, valor] of Object.entries(campos as Record<string, any>)) {
         if (valor === '__NA__') {
           const actual = (this.embarque as any)[campo];
           if (!this.camposNA.has(campo) && (actual === null || actual === undefined || actual === '')) {
             this.camposNA.add(campo);
-            (this.cambiosPendientes as any)[campo] = '__NA__'; // borrador pendiente → habilita Guardar
+            (this.cambiosPendientes as any)[campo] = '__NA__';
           }
         } else {
           const actual = (this.embarque as any)[campo];
           if (actual === null || actual === undefined || actual === '') {
             (this.embarque as any)[campo] = valor;
-            (this.cambiosPendientes as any)[campo] = valor; // borrador pendiente → habilita Guardar
+            (this.cambiosPendientes as any)[campo] = valor;
           }
         }
       }
     }
+    this._recalcularCamposLocales();
   }
 
   toggleNA(campo: string): void {
