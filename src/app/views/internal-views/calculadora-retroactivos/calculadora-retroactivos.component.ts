@@ -166,7 +166,7 @@ export class CalculadoraRetroactivosComponent {
   detalleMultimarcaCompraSepOct = 0;
   detalleMultimarcaCompraNovDic = 0;
 
-  detalleTotalCompraInicial = 0;
+  detalleTotalCompraInicialPrimerSemestre = 0;
 
 
   ngOnInit(): void {
@@ -187,7 +187,7 @@ export class CalculadoraRetroactivosComponent {
     let descuentoRetroActivo = 0;
     let bonoPorCumplimiento = null;
 
-    if (this.clasificacionSeleccionada.valor === 3 || this.clasificacionSeleccionada.valor === 4){
+    if (this.clasificacionSeleccionada.valor >= 2){
       descuentoRetroActivo = this.anualAdicionalPorNivel.descuento_retroactivo;
        bonoPorCumplimiento = this.anualPorCumplimiento
       .filter(item => item.id === 1 || item.id === 3)
@@ -202,6 +202,7 @@ export class CalculadoraRetroactivosComponent {
     }
     
     if (this.clasificacionSeleccionada.valor === 1){
+      console.log("Suma por anual con dsitruibodua")
       bonoPorCumplimiento = this.anualPorCumplimiento.find(item => item.id === 3);
       if (bonoPorCumplimiento?.seleccionado){
         descuentoRetroActivo += bonoPorCumplimiento.descuento
@@ -209,6 +210,7 @@ export class CalculadoraRetroactivosComponent {
     }
 
     if ((this.clasificacionSeleccionada.valor === 2)){
+      console.log("suma por anual pro cumplimiento ")
       bonoPorCumplimiento = this.anualPorCumplimiento
       .filter(item => item.id === 2 || item.id === 3)
       .map(item => ({ ...item }));
@@ -302,7 +304,8 @@ export class CalculadoraRetroactivosComponent {
       this.detalleMultimarcaCompraSepOct = (this.porcentajeSemestreSepOct * this.multimarcaMinimaCompraInicial) / 100;
       this.detalleMultimarcaCompraNovDic = (this.porcentajeSemestreNovDic * this.multimarcaMinimaCompraInicial) / 100;
 
-      this.detalleTotalCompraInicial = (this.bicicletaMinimaCompraInicial + this.multimarcaMinimaCompraInicial);
+      this.detalleTotalCompraInicialPrimerSemestre = (this.bicicletaMinimaCompraInicial + this.multimarcaMinimaCompraInicial);
+      //this.detalleTotalCompraInicialSegundoSemestre = (this.bicicletaMinimaCompraInicial + this.multimarcaMinimaCompraInicial);
 
       this.actualizarMargenRetroactivo()
       this.actualizarAnualAdicionalPorNivel();
@@ -337,7 +340,7 @@ export class CalculadoraRetroactivosComponent {
 
   obtenerMultimarcaCompraMinimaAnual(){
     this.listaClasificaciones = this.listaClasificaciones.map( item => {
-      const factorPorcentaje = (item.id === 1) ? 0.11 : 0.15;
+      const factorPorcentaje = (item.valor === 4) ? 0.11 : 0.15;
       return {
         ...item,
         multimarca_compra_minima_anual: Math.ceil((item.bicicleta_compra_minima_anual * factorPorcentaje) / 5000) * 5000

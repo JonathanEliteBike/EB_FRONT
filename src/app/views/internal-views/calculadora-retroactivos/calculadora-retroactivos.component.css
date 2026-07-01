@@ -55,8 +55,7 @@ th, td {
 }
 
 .tabla td {
-  border: none;
-  border-bottom: 1px solid #484848;
+  border: 1px solid #484848;
 }
 
 .container {
@@ -135,6 +134,18 @@ th, td {
 
 .alineacion-derecha{
   text-align: end;
+}
+
+.totales {
+  font-weight: 700;
+}
+
+.alineacion-centrada {
+  text-align: center;
+} 
+
+td.alineacion-centrada:nth-child(2) {
+  border-right: 1px solid #484848;
 }
 
 input[type="checkbox"]{
