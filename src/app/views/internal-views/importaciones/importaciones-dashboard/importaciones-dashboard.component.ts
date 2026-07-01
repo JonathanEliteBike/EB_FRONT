@@ -16,9 +16,10 @@ interface Kpis {
   flete_total_usd: number; flete_promedio_usd: number;
   transito_maritimo_promedio_dias: number; pct_avance_promedio: number;
 }
-interface LatSingle  { dias_promedio: number | null; n: number; }
+interface LatEmbarqDet { id: number; referencia: string; nombre: string; log_origen: string; fecha_ini: string; fecha_fin: string; dias: number; }
+interface LatSingle  { dias_promedio: number | null; n: number; x_embarque?: LatEmbarqDet[]; }
 interface LatOrigen  { origen: string; dias_promedio: number; n: number; }
-interface LatEmbarq  { id: number; referencia: string; nombre: string; log_origen: string; dias: number; }
+interface LatEmbarq  { id: number; referencia: string; nombre: string; log_origen: string; fecha_ini: string; fecha_fin: string; dias: number; }
 interface LatImp     { importador: string; dias_promedio: number; n: number; }
 interface CostoPaq   { id: number; referencia: string; nombre: string; log_origen: string; total_usd: number; }
 interface PrecioBici { label: string; vol: string; promedio: number; n: number; }
@@ -84,6 +85,14 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   notasEditId: number | null = null;
   notasEditVal = '';
 
+  modalLat: { titulo: string; subtitulo: string; items: LatEmbarqDet[]; n: number; promedio: number | null; min_dias: number | null; max_dias: number | null; } | null = null;
+  modalEtiq = false;
+  modalEmbarquesDet: {
+    titulo: string; subtitulo: string; items: any[];
+    n: number; mode: 'resumen' | 'costos'; total_usd?: number | null;
+  } | null = null;
+  readonly Math = Math;
+
   private charts: Chart[] = [];
 
   constructor(
@@ -132,6 +141,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   switchTab(tab: 'resumen' | 'latencias' | 'costos' | 'embarques'): void {
     if (tab === this.activeTab) return;
     this.activeTab = tab;
+    this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
     this.destroyCharts();
     this.desgloseOrigen = false;
     this.cdr.detectChanges();
@@ -277,7 +287,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     if (this.chartEtiquetadoRef?.nativeElement && this.data.latencias.etiquetado) {
       const rows = this.data.latencias.etiquetado.x_embarque
         .filter(e => e.proyectado !== null || e.real !== null)
-        .slice(0, 15);
+        .slice(0, 5);
       if (rows.length > 0) {
         const barH = Math.max(16, Math.min(28, Math.floor(280 / rows.length)));
         this.charts.push(new Chart(this.chartEtiquetadoRef.nativeElement, {
@@ -580,6 +590,58 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   cancelarNotas(): void { this.notasEditId = null; }
+
+  abrirModalLat(tipo: 'almacen' | 'contabilidad' | 'transito' | 'total'): void {
+    if (!this.data) return;
+    const lat = this.data.latencias;
+    const cfgBase: Record<string, { titulo: string; subtitulo: string; rawItems: LatEmbarqDet[] }> = {
+      almacen:      { titulo: 'Latencia Almacén',      subtitulo: 'Llegada al almacén → Recepción Odoo',  rawItems: (lat.almacen?.x_embarque      ?? []) as LatEmbarqDet[] },
+      contabilidad: { titulo: 'Latencia Contabilidad', subtitulo: 'Fecha cruce real → Recepción docs',    rawItems: (lat.contabilidad?.x_embarque ?? []) as LatEmbarqDet[] },
+      transito:     { titulo: 'Latencia Tránsito',     subtitulo: 'Fecha entrega → Llegada almacén',      rawItems: (lat.transito?.x_embarque     ?? []) as LatEmbarqDet[] },
+      total:        { titulo: 'Latencia Total',         subtitulo: 'Fecha entrega → Liberación final',     rawItems: (lat.x_embarque               ?? []) as LatEmbarqDet[] },
+    };
+    const { titulo, subtitulo, rawItems } = cfgBase[tipo];
+    const items = [...rawItems].sort((a, b) => b.dias - a.dias);
+    const diasVals = items.map(i => i.dias).filter(d => d != null);
+    const promedio = diasVals.length ? Math.round(diasVals.reduce((a, b) => a + b, 0) / diasVals.length) : null;
+    const min_dias = diasVals.length ? Math.min(...diasVals) : null;
+    const max_dias = diasVals.length ? Math.max(...diasVals) : null;
+    this.modalLat = { titulo, subtitulo, items, n: items.length, promedio, min_dias, max_dias };
+  }
+
+  cerrarModalLat():  void { this.modalLat  = null; }
+  cerrarModalEtiq(): void { this.modalEtiq = false; }
+
+  abrirModalResumen(tipo: 'total' | 'activos' | 'cerrados' | 'transito' | 'avance'): void {
+    if (!this.data) return;
+    const emb = this.data.embarques;
+    type Cfg = { titulo: string; subtitulo: string; filter: (e: any) => boolean; sort: (a: any, b: any) => number };
+    const cfgBase: Record<string, Cfg> = {
+      total:    { titulo: 'Todos los Embarques',   subtitulo: `${emb.length} embarques registrados`,          filter: () => true,                           sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
+      activos:  { titulo: 'Embarques en Proceso',  subtitulo: 'Estado activo · ordenado por avance',          filter: e => e.estado === 'activo',           sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
+      cerrados: { titulo: 'Embarques Cerrados',    subtitulo: 'Estado cerrado · más recientes primero',       filter: e => e.estado === 'cerrado',          sort: (a, b) => { const da = a.des_llegada_almacen ? +new Date(a.des_llegada_almacen) : 0; const db = b.des_llegada_almacen ? +new Date(b.des_llegada_almacen) : 0; return db - da; } },
+      transito: { titulo: 'Embarques Marítimos',   subtitulo: 'Vía marítima · ordenado por avance',          filter: e => e.via_transporte === 'MARITIMO', sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
+      avance:   { titulo: 'Avance por Embarque',   subtitulo: 'Menor avance primero · todos los embarques',  filter: () => true,                           sort: (a, b) => (a.pct_avance ?? 101) - (b.pct_avance ?? 101) },
+    };
+    const { titulo, subtitulo, filter, sort } = cfgBase[tipo];
+    const items = emb.filter(filter).sort(sort);
+    this.modalEmbarquesDet = { titulo, subtitulo, items, n: items.length, mode: 'resumen' };
+  }
+
+  abrirModalCostosDetalle(tipo: 'flete' | 'bici'): void {
+    if (!this.data) return;
+    const emb = this.data.embarques;
+    if (tipo === 'flete') {
+      const items = [...emb].filter(e => e.cos_flete_internacional_usd).sort((a, b) => (b.cos_flete_internacional_usd ?? 0) - (a.cos_flete_internacional_usd ?? 0));
+      const total_usd = items.reduce((acc: number, e: any) => acc + (e.cos_flete_internacional_usd ?? 0), 0);
+      this.modalEmbarquesDet = { titulo: 'Detalle de Fletes', subtitulo: 'Flete internacional USD · mayor a menor', items, n: items.length, mode: 'costos', total_usd };
+    } else {
+      const items = [...emb].filter(e => e.costo_por_bicicleta).sort((a, b) => (b.costo_por_bicicleta ?? 0) - (a.costo_por_bicicleta ?? 0));
+      this.modalEmbarquesDet = { titulo: 'Costo Logístico por Bicicleta', subtitulo: 'Embarques con datos de bikecount · mayor a menor', items, n: items.length, mode: 'costos' };
+    }
+  }
+
+  cerrarModalEmbarquesDet(): void { this.modalEmbarquesDet = null; }
 
   get costoPaqConDatos(): CostoPaq[] {
     return this.data?.costo_paqueteria?.filter(e => e.total_usd > 0) ?? [];

@@ -79,7 +79,7 @@
 
       <div class="kpi-row">
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('total')" title="Ver todos los embarques">
           <div class="kpi-icon kpi-blue"><i class="fas fa-boxes"></i></div>
           <div class="kpi-info">
             <span class="kpi-num">{{ data.kpis.total }}</span>
@@ -87,7 +87,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('activos')" title="Ver embarques en proceso">
           <div class="kpi-icon kpi-yellow"><i class="fas fa-clock"></i></div>
           <div class="kpi-info">
             <span class="kpi-num" style="color:#f59e0b">{{ data.kpis.activos }}</span>
@@ -95,7 +95,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('cerrados')" title="Ver embarques cerrados">
           <div class="kpi-icon kpi-green"><i class="fas fa-check-circle"></i></div>
           <div class="kpi-info">
             <span class="kpi-num" style="color:#22c55e">{{ data.kpis.cerrados }}</span>
@@ -103,7 +103,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('transito')" title="Ver embarques marítimos">
           <div class="kpi-icon kpi-cyan"><i class="fas fa-ship"></i></div>
           <div class="kpi-info">
             <span class="kpi-num">{{ data.kpis.transito_maritimo_promedio_dias || '—' }}<small> días</small></span>
@@ -111,7 +111,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('avance')" title="Ver avance por embarque">
           <div class="kpi-icon kpi-green"><i class="fas fa-tasks"></i></div>
           <div class="kpi-info">
             <span class="kpi-num" [style.color]="colorPct(data.kpis.pct_avance_promedio)">
@@ -198,7 +198,7 @@
 
       <div class="kpi-row">
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalLat('almacen')" title="Ver detalle por embarque">
           <div class="kpi-icon kpi-orange"><i class="fas fa-warehouse"></i></div>
           <div class="kpi-info">
             <span class="kpi-num">
@@ -209,7 +209,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalLat('contabilidad')" title="Ver detalle por embarque">
           <div class="kpi-icon kpi-red"><i class="fas fa-file-invoice"></i></div>
           <div class="kpi-info">
             <span class="kpi-num">
@@ -220,7 +220,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalLat('transito')" title="Ver detalle por embarque">
           <div class="kpi-icon kpi-cyan"><i class="fas fa-truck-moving"></i></div>
           <div class="kpi-info">
             <span class="kpi-num">
@@ -231,7 +231,7 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalLat('total')" title="Ver detalle por embarque">
           <div class="kpi-icon kpi-blue"><i class="fas fa-hourglass-half"></i></div>
           <div class="kpi-info">
             <span class="kpi-num">
@@ -295,7 +295,13 @@
 
         <!-- ── Etiquetado: estimado vs real ─────────────────────────────── -->
         <div class="chart-card" *ngIf="data.latencias.etiquetado">
-        <div class="chart-title"><i class="fas fa-tag"></i> Etiquetado — Estimado vs Real</div>
+        <div class="chart-title">
+          <span><i class="fas fa-tag"></i> Etiquetado — Estimado vs Real</span>
+          <button class="btn-desglose" (click)="modalEtiq=true"
+            *ngIf="data.latencias.etiquetado.x_embarque.length > 0">
+            <i class="fas fa-expand-alt"></i> Ver todo ({{ data.latencias.etiquetado.x_embarque.length }})
+          </button>
+        </div>
 
         <!-- Strip resumen -->
         <div class="etiq-strip" *ngIf="data.latencias.etiquetado.proyectado_promedio !== null">
@@ -337,7 +343,7 @@
 
       <div class="kpi-row">
 
-        <div class="kpi-card" [title]="'$' + (data.kpis.flete_total_usd | number:'1.0-0') + ' USD'">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalCostosDetalle('flete')" [title]="'$' + (data.kpis.flete_total_usd | number:'1.0-0') + ' USD — Ver desglose'">
           <div class="kpi-icon kpi-blue"><i class="fas fa-dollar-sign"></i></div>
           <div class="kpi-info">
             <span class="kpi-num kpi-sm">{{ abreviarUsd(data.kpis.flete_total_usd) }} <small>USD</small></span>
@@ -345,7 +351,7 @@
           </div>
         </div>
 
-        <div class="kpi-card" [title]="'$' + (data.kpis.flete_promedio_usd | number:'1.0-0') + ' USD'">
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalCostosDetalle('flete')" [title]="'$' + (data.kpis.flete_promedio_usd | number:'1.0-0') + ' USD — Ver desglose'">
           <div class="kpi-icon kpi-purple"><i class="fas fa-calculator"></i></div>
           <div class="kpi-info">
             <span class="kpi-num kpi-sm">{{ abreviarUsd(data.kpis.flete_promedio_usd) }} <small>USD</small></span>
@@ -353,7 +359,7 @@
           </div>
         </div>
 
-        <div class="kpi-card" *ngIf="data.precio_bici_total_promedio">
+        <div class="kpi-card kpi-card--clickable" *ngIf="data.precio_bici_total_promedio" (click)="abrirModalCostosDetalle('bici')" title="Ver costo por bicicleta">
           <div class="kpi-icon" style="background:rgba(99,102,241,.15);color:#6366f1"><i class="fas fa-bicycle"></i></div>
           <div class="kpi-info">
             <span class="kpi-num kpi-sm">${{ data.precio_bici_total_promedio | number:'1.2-2' }} <small>USD</small></span>
@@ -538,4 +544,305 @@
     </ng-container>
 
   </ng-container>
+
+  <!-- ══════════════════════ MODAL: LATENCIA DETALLE ══════════════════════ -->
+  <div class="modal-overlay" *ngIf="modalLat" (click)="cerrarModalLat()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h3 class="modal-titulo">{{ modalLat.titulo }}</h3>
+          <span class="modal-sub">{{ modalLat.subtitulo }}</span>
+        </div>
+        <button class="modal-close-btn" (click)="cerrarModalLat()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="modal-stats-strip" *ngIf="modalLat.items.length">
+        <div class="mss-item">
+          <span class="mss-val">{{ modalLat.n }}</span>
+          <span class="mss-lbl">embarques</span>
+        </div>
+        <div class="mss-sep"></div>
+        <div class="mss-item">
+          <span class="mss-val"
+            [style.color]="modalLat.promedio !== null ? (modalLat.promedio > 60 ? '#ef4444' : modalLat.promedio > 40 ? '#f59e0b' : '#22c55e') : '#64748b'">
+            {{ modalLat.promedio !== null ? modalLat.promedio + 'd' : '—' }}
+          </span>
+          <span class="mss-lbl">promedio</span>
+        </div>
+        <div class="mss-sep"></div>
+        <div class="mss-item">
+          <span class="mss-val" style="color:#22c55e">{{ modalLat.min_dias !== null ? modalLat.min_dias + 'd' : '—' }}</span>
+          <span class="mss-lbl">mínimo</span>
+        </div>
+        <div class="mss-sep"></div>
+        <div class="mss-item">
+          <span class="mss-val" style="color:#ef4444">{{ modalLat.max_dias !== null ? modalLat.max_dias + 'd' : '—' }}</span>
+          <span class="mss-lbl">máximo</span>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-empty" *ngIf="!modalLat.items.length">
+          <i class="fas fa-inbox"></i> Sin embarques con ambas fechas registradas
+        </p>
+        <div class="modal-table-wrap" *ngIf="modalLat.items.length">
+          <table class="lat-modal-table">
+            <thead>
+              <tr>
+                <th class="th-rank">#</th>
+                <th>Ref.</th>
+                <th>Nombre</th>
+                <th>Origen</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th class="th-dias">Días</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of modalLat.items; let i = index"
+                class="lat-modal-row"
+                [class.row-over60]="item.dias > 60"
+                [class.row-over40]="item.dias > 40 && item.dias <= 60"
+                (click)="irDetalle(item.id); cerrarModalLat()">
+                <td class="td-rank">{{ i + 1 }}</td>
+                <td><span class="ref-badge">{{ item.referencia }}</span></td>
+                <td class="td-nombre">{{ item.nombre || '—' }}</td>
+                <td><span class="origen-chip">{{ item.log_origen || '—' }}</span></td>
+                <td class="td-fecha">{{ item.fecha_ini ? (item.fecha_ini | date:'dd/MM/yy') : '—' }}</td>
+                <td class="td-fecha">
+                  <ng-container *ngIf="item.fecha_fin; else sinFin">{{ item.fecha_fin | date:'dd/MM/yy' }}</ng-container>
+                  <ng-template #sinFin><span class="tag-pendiente">Pendiente</span></ng-template>
+                </td>
+                <td class="td-dias-val">
+                  <span class="dias-badge"
+                    [style.background]="item.dias > 60 ? 'rgba(239,68,68,.12)' : item.dias > 40 ? 'rgba(245,158,11,.12)' : 'rgba(34,197,94,.12)'"
+                    [style.color]="item.dias > 60 ? '#ef4444' : item.dias > 40 ? '#f59e0b' : '#22c55e'"
+                    [style.border-color]="item.dias > 60 ? 'rgba(239,68,68,.3)' : item.dias > 40 ? 'rgba(245,158,11,.3)' : 'rgba(34,197,94,.3)'">
+                    {{ item.dias }}d
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════ MODAL: ETIQUETADO COMPLETO ═══════════════════ -->
+  <div class="modal-overlay" *ngIf="modalEtiq && data?.latencias?.etiquetado" (click)="cerrarModalEtiq()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h3 class="modal-titulo"><i class="fas fa-tag"></i> Etiquetado — Estimado vs Real</h3>
+          <span class="modal-sub">
+            Estimado prom: {{ data?.latencias?.etiquetado?.proyectado_promedio | number:'1.0-1' }}d (n={{ data?.latencias?.etiquetado?.n_proyectado }}) &nbsp;·&nbsp;
+            Real prom: {{ data?.latencias?.etiquetado?.real_promedio !== null ? (data?.latencias?.etiquetado?.real_promedio | number:'1.0-1') + 'd' : '—' }} (n={{ data?.latencias?.etiquetado?.n_real }})
+            <span *ngIf="etiqRatio !== null" class="etiq-ratio-badge" [class.etiq-ratio-badge--over]="etiqRatio > 1">
+              {{ etiqRatio }}×
+            </span>
+          </span>
+        </div>
+        <button class="modal-close-btn" (click)="cerrarModalEtiq()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-table-wrap">
+          <table class="lat-modal-table etiq-modal-table">
+            <thead>
+              <tr>
+                <th>Ref.</th>
+                <th>Nombre</th>
+                <th class="th-num">Estimado (días)</th>
+                <th class="th-num">Real (días)</th>
+                <th class="th-num">Diferencia</th>
+                <th class="th-num">Barra</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of data?.latencias?.etiquetado?.x_embarque" class="lat-modal-row" (click)="irDetalle(e.id); cerrarModalEtiq()">
+                <td><span class="ref-badge">{{ e.referencia }}</span></td>
+                <td class="td-nombre">{{ e.nombre || '—' }}</td>
+                <td class="td-num">{{ e.proyectado ?? '—' }}</td>
+                <td class="td-num" [style.color]="e.diferencia !== null ? (e.diferencia > 0 ? '#ef4444' : '#22c55e') : ''">
+                  {{ e.real ?? '—' }}
+                </td>
+                <td class="td-num td-diff"
+                  [style.color]="e.diferencia !== null ? (e.diferencia > 0 ? '#ef4444' : e.diferencia < 0 ? '#22c55e' : '#64748b') : '#64748b'">
+                  {{ e.diferencia !== null ? ((e.diferencia > 0 ? '+' : '') + e.diferencia + 'd') : '—' }}
+                </td>
+                <td class="td-bar-cell">
+                  <div class="etiq-bar-wrap" *ngIf="e.proyectado !== null">
+                    <div class="etiq-bar etiq-bar--est" [style.width.px]="Math.min(e.proyectado! * 3, 120)"></div>
+                    <div class="etiq-bar etiq-bar--real"
+                      *ngIf="e.real !== null"
+                      [style.width.px]="Math.min(e.real * 3, 120)"
+                      [style.background]="e.diferencia !== null && e.diferencia > 0 ? '#ef444488' : '#22c55e88'">
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════ MODAL: EMBARQUES DETALLE ═════════════════════ -->
+  <div class="modal-overlay" *ngIf="modalEmbarquesDet" (click)="cerrarModalEmbarquesDet()">
+    <div class="modal-panel modal-panel--wide" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h3 class="modal-titulo">{{ modalEmbarquesDet.titulo }}</h3>
+          <span class="modal-sub">{{ modalEmbarquesDet.subtitulo }}</span>
+        </div>
+        <button class="modal-close-btn" (click)="cerrarModalEmbarquesDet()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Stats strip — modo resumen -->
+      <div class="modal-stats-strip" *ngIf="modalEmbarquesDet.mode === 'resumen'">
+        <div class="mss-item">
+          <span class="mss-val">{{ modalEmbarquesDet.n }}</span>
+          <span class="mss-lbl">embarques</span>
+        </div>
+      </div>
+
+      <!-- Stats strip — modo costos -->
+      <div class="modal-stats-strip" *ngIf="modalEmbarquesDet.mode === 'costos' && modalEmbarquesDet.total_usd">
+        <div class="mss-item">
+          <span class="mss-val">{{ modalEmbarquesDet.n }}</span>
+          <span class="mss-lbl">con flete</span>
+        </div>
+        <div class="mss-sep"></div>
+        <div class="mss-item">
+          <span class="mss-val" style="color:#3b82f6">{{ abreviarUsd(modalEmbarquesDet.total_usd) }}</span>
+          <span class="mss-lbl">total USD</span>
+        </div>
+        <div class="mss-sep"></div>
+        <div class="mss-item">
+          <span class="mss-val" style="color:#8b5cf6">{{ abreviarUsd(modalEmbarquesDet.total_usd / modalEmbarquesDet.n) }}</span>
+          <span class="mss-lbl">promedio</span>
+        </div>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- ── Tabla modo: resumen ──────────────────────────────────── -->
+        <div class="modal-table-wrap" *ngIf="modalEmbarquesDet.mode === 'resumen'">
+          <table class="lat-modal-table">
+            <thead>
+              <tr>
+                <th class="th-rank">#</th>
+                <th>Ref.</th>
+                <th>Contenido</th>
+                <th>Origen</th>
+                <th>Vía</th>
+                <th>Estado</th>
+                <th>Avance</th>
+                <th>Llegada Almacén</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of modalEmbarquesDet.items; let i = index"
+                class="lat-modal-row"
+                (click)="irDetalle(e.id); cerrarModalEmbarquesDet()">
+                <td class="td-rank">{{ i + 1 }}</td>
+                <td><span class="ref-badge">{{ e.referencia }}</span></td>
+                <td class="td-nombre">
+                  <span class="contenido-chip" [title]="e.log_tipo_productos">{{ abrevContenido(e.log_tipo_productos) }}</span>
+                </td>
+                <td><span class="origen-chip">{{ e.log_origen || '—' }}</span></td>
+                <td>
+                  <span class="via-pill"
+                    [style.background]="colorVia(e.via_transporte) + '1a'"
+                    [style.color]="colorVia(e.via_transporte)">
+                    <i class="fas" [ngClass]="e.via_transporte === 'AEREO' ? 'fa-plane' : 'fa-ship'"></i>
+                    {{ e.via_transporte === 'AEREO' ? 'Aéreo' : 'Mar.' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="estatus-badge"
+                    [style.color]="colorEstado(e.estado)"
+                    [style.border-color]="colorEstado(e.estado) + '44'"
+                    [style.background]="colorEstado(e.estado) + '12'">
+                    {{ e.estado | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <ng-container *ngIf="e.pct_avance !== undefined && e.pct_avance !== null; else sinAvance">
+                    <div class="pct-cell" style="min-width:90px">
+                      <div class="pct-bar-bg" style="flex:none;width:60px">
+                        <div class="pct-bar-fill" [style.width.%]="e.pct_avance" [style.background]="colorPct(e.pct_avance)"></div>
+                      </div>
+                      <span class="pct-num" [style.color]="colorPct(e.pct_avance)">{{ e.pct_avance }}%</span>
+                    </div>
+                  </ng-container>
+                  <ng-template #sinAvance><span class="td-gray">—</span></ng-template>
+                </td>
+                <td class="td-fecha">
+                  <ng-container *ngIf="e.des_llegada_almacen; else sinLlegadaMod">
+                    {{ e.des_llegada_almacen | date:'dd/MM/yy' }}
+                    <span class="llegada-rel">{{ llegadaRelativa(e.des_llegada_almacen) }}</span>
+                  </ng-container>
+                  <ng-template #sinLlegadaMod><span class="tag-pendiente">Pendiente</span></ng-template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── Tabla modo: costos ──────────────────────────────────── -->
+        <div class="modal-table-wrap" *ngIf="modalEmbarquesDet.mode === 'costos'">
+          <table class="lat-modal-table">
+            <thead>
+              <tr>
+                <th class="th-rank">#</th>
+                <th>Ref.</th>
+                <th>Origen</th>
+                <th>Vía</th>
+                <th class="th-num">Flete Internacional</th>
+                <th class="th-num">Costo Total MXN</th>
+                <th class="th-num">Costo / Bici</th>
+                <th class="th-num">Bicis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of modalEmbarquesDet.items; let i = index"
+                class="lat-modal-row"
+                (click)="irDetalle(e.id); cerrarModalEmbarquesDet()">
+                <td class="td-rank">{{ i + 1 }}</td>
+                <td><span class="ref-badge">{{ e.referencia }}</span></td>
+                <td><span class="origen-chip">{{ e.log_origen || '—' }}</span></td>
+                <td>
+                  <span class="via-pill"
+                    [style.background]="colorVia(e.via_transporte) + '1a'"
+                    [style.color]="colorVia(e.via_transporte)">
+                    <i class="fas" [ngClass]="e.via_transporte === 'AEREO' ? 'fa-plane' : 'fa-ship'"></i>
+                    {{ e.via_transporte === 'AEREO' ? 'Aéreo' : 'Mar.' }}
+                  </span>
+                </td>
+                <td class="td-num" style="color:#60a5fa;font-weight:600">
+                  {{ e.cos_flete_internacional_usd ? formatUsd(e.cos_flete_internacional_usd) : '—' }}
+                </td>
+                <td class="td-num">{{ e.costo_total_pesos ? formatPesos(e.costo_total_pesos) : '—' }}</td>
+                <td class="td-num" style="color:#a78bfa;font-weight:600">
+                  {{ e.costo_por_bicicleta ? ('$' + (e.costo_por_bicicleta | number:'1.2-2') + ' USD') : '—' }}
+                </td>
+                <td class="td-num td-gray">{{ e.cos_cantidad_bicicletas || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </div>

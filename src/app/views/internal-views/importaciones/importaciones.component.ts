@@ -78,7 +78,7 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     const hasta = this.filtroFechaHasta;
     this.embarquesFiltrados = [...this.embarques].filter((e) => {
       const matchQ = !q || e.referencia.toLowerCase().includes(q) || (e.nombre || '').toLowerCase().includes(q);
-      const matchO = !o || (e.log_origen || '').toLowerCase().includes(o);
+      const matchO = !o || this._normOrigen(e.log_origen || '').toLowerCase().includes(o);
       const matchV = !v || (e.via_transporte || 'MARITIMO') === v;
       const matchE = !est
         || (est === 'cerrado'   && (e as any).estado === 'cerrado')
@@ -129,8 +129,15 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     this.router.navigate(['/importaciones', id]);
   }
 
+  private _normOrigen(s: string): string {
+    if (!s) return '';
+    const key = s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toUpperCase();
+    const canon: Record<string, string> = { 'ESPANA': 'ESPAÑA', 'BELGICA': 'BÉLGICA' };
+    return canon[key] ?? key;
+  }
+
   get origenes(): string[] {
-    return [...new Set(this.embarques.map((e) => e.log_origen || '').filter(Boolean))].sort();
+    return [...new Set(this.embarques.map((e) => this._normOrigen(e.log_origen || '')).filter(Boolean))].sort();
   }
 
   get stats() {

@@ -232,6 +232,7 @@
 .donut-wrap {
   position: relative; display: flex;
   justify-content: center; align-items: center;
+  height: 190px;
 }
 .donut-center {
   position: absolute; display: flex; flex-direction: column;
@@ -603,3 +604,168 @@ td { padding: 10px 14px; vertical-align: middle; }
     transition: none;
   }
 }
+
+/* ══ KPI clickable ══════════════════════════════════════════════════════════ */
+.kpi-card--clickable {
+  cursor: pointer; position: relative;
+}
+.kpi-card--clickable::after {
+  font-family: 'Font Awesome 5 Free'; font-weight: 900;
+  content: '\f065';
+  font-size: .55rem; color: #3b4a6055; position: absolute; top: 9px; right: 10px;
+  pointer-events: none;
+  transition: color 140ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .kpi-card--clickable {
+    transition: border-color 140ms ease-out, transform 140ms var(--ease-out), box-shadow 140ms ease-out;
+  }
+  .kpi-card--clickable:hover {
+    border-color: #3b82f655;
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px #3b82f622, 0 4px 16px #0006;
+  }
+  .kpi-card--clickable:hover::after { color: #3b82f6aa; }
+}
+.kpi-card--clickable:active { transform: scale(0.98) !important; }
+
+/* ══ Modal overlay ══════════════════════════════════════════════════════════ */
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 4000;
+  background: #000a;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: overlay-in 160ms ease-out both;
+}
+.modal-panel {
+  background: #111827; border: 1px solid #1e2535; border-radius: 16px;
+  width: 100%; max-width: min(920px, 94vw); max-height: 88vh;
+  display: flex; flex-direction: column;
+  animation: modal-in 220ms var(--ease-out) both;
+  overflow: hidden;
+}
+.modal-panel--wide { max-width: min(1040px, 96vw); }
+
+.modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #1e2535; flex-shrink: 0;
+}
+.modal-header-text { display: flex; flex-direction: column; gap: 4px; }
+.modal-titulo { font-size: 1.05rem; font-weight: 700; color: #e2e8f0; margin: 0; }
+.modal-titulo i { color: #3b82f6; margin-right: 7px; }
+.modal-sub { font-size: .75rem; color: #64748b; }
+
+.modal-close-btn {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: #1e2535; border: 1px solid #2d3748; border-radius: 8px;
+  color: #94a3b8; cursor: pointer; font-size: .8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 140ms ease-out, color 140ms ease-out;
+}
+.modal-close-btn:hover { background: #2d3748; color: #e2e8f0; }
+
+.modal-body {
+  overflow-y: auto; flex: 1;
+  padding: 0 24px 20px;
+}
+.modal-empty {
+  color: #64748b; font-size: .85rem; text-align: center;
+  padding: 40px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+/* ── Tabla modal latencia ── */
+.modal-table-wrap { overflow-x: auto; }
+.lat-modal-table {
+  width: 100%; border-collapse: collapse; margin-top: 16px;
+  font-size: .82rem;
+}
+.lat-modal-table thead tr {
+  border-bottom: 1px solid #1e2535;
+}
+.lat-modal-table th {
+  color: #64748b; font-weight: 600; text-align: left;
+  padding: 8px 12px; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em;
+  white-space: nowrap;
+}
+.lat-modal-table .th-num,
+.lat-modal-table .th-dias { text-align: right; }
+.lat-modal-table td {
+  padding: 9px 12px; border-bottom: 1px solid #1a2030; color: #cbd5e1;
+}
+.lat-modal-row { cursor: pointer; transition: background 100ms ease-out; }
+.lat-modal-row:hover { background: #1a2035; }
+.lat-modal-row:last-child td { border-bottom: none; }
+
+.td-nombre { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-fecha  { color: #64748b; white-space: nowrap; font-size: .78rem; }
+.td-gray   { color: #94a3b8; }
+.td-dias-val { text-align: right; font-weight: 700; font-size: .9rem; }
+.td-num    { text-align: right; font-size: .82rem; }
+.td-diff   { font-weight: 700; }
+
+/* ── Tabla etiquetado modal ── */
+.etiq-modal-table .td-bar-cell { padding: 6px 12px; }
+.etiq-bar-wrap { display: flex; flex-direction: column; gap: 3px; min-width: 60px; }
+.etiq-bar {
+  height: 5px; border-radius: 3px; min-width: 2px;
+  transition: width 300ms var(--ease-out);
+}
+.etiq-bar--est  { background: #334155; }
+.etiq-bar--real { background: #ef444488; }
+
+.etiq-ratio-badge {
+  display: inline-block; margin-left: 10px;
+  background: #14532d33; color: #22c55e; border-radius: 6px;
+  padding: 1px 7px; font-size: .72rem; font-weight: 700;
+}
+.etiq-ratio-badge--over { background: #7f1d1d33; color: #ef4444; }
+
+/* ── kpi-red (latencias) ── */
+.kpi-red { background: #7f1d1d22; color: #ef4444; }
+
+/* ── Modal stats strip ── */
+.modal-stats-strip {
+  display: flex; align-items: center; gap: 0;
+  background: #0d1117; border-bottom: 1px solid #1e2535;
+  padding: 14px 24px; flex-shrink: 0;
+}
+.mss-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  flex: 1;
+}
+.mss-val { font-size: 1.45rem; font-weight: 700; color: #e2e8f0; line-height: 1; }
+.mss-lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .07em; color: #4b5563; }
+.mss-sep { width: 1px; height: 40px; background: #1e2535; flex-shrink: 0; margin: 0 8px; }
+
+/* ── Modal table enhancements ── */
+.th-rank { width: 36px; text-align: center; color: #2d3748; }
+.td-rank { text-align: center; font-size: .7rem; color: #2d3748; font-weight: 600; }
+
+.dias-badge {
+  display: inline-block; border: 1px solid;
+  border-radius: 20px; padding: 3px 10px;
+  font-size: .8rem; font-weight: 700; white-space: nowrap;
+}
+.td-dias-val { text-align: center; }
+
+.origen-chip {
+  display: inline-block; background: #1a2030;
+  border: 1px solid #2d3748; border-radius: 4px;
+  padding: 2px 8px; font-size: .72rem; color: #94a3b8; white-space: nowrap;
+}
+
+.tag-pendiente {
+  font-size: .7rem; color: #4b5563; font-style: italic;
+}
+
+.row-over60 { background: rgba(239,68,68,.04); }
+.row-over40 { background: rgba(245,158,11,.04); }
+.row-over60:hover { background: rgba(239,68,68,.1) !important; }
+.row-over40:hover { background: rgba(245,158,11,.1) !important; }
