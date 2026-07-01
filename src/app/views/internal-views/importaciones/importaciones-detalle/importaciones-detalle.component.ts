@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
+import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { ImportacionesService, Importacion } from '../../../../services/importaciones.service';
 
 type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos';
 
-interface CampoValidar { campo: keyof Importacion; label: string; }
+interface CampoValidar { campo: keyof Importacion; label: string; opcional?: boolean; }
 
 @Component({
   selector: 'app-importaciones-detalle',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, DatePickerComponent],
   templateUrl: './importaciones-detalle.component.html',
   styleUrl: './importaciones-detalle.component.css',
 })
@@ -27,6 +28,7 @@ export class ImportacionesDetalleComponent implements OnInit {
 
   validacionError: string[] = [];
   camposConError = new Set<string>();
+  camposNA = new Set<string>();
 
   readonly tabs: { key: Seccion; label: string; icon: string }[] = [
     { key: 'logistica',   label: 'Logística',   icon: 'fa-ship' },
@@ -35,8 +37,8 @@ export class ImportacionesDetalleComponent implements OnInit {
     { key: 'odoo',        label: 'Odoo / SAE',   icon: 'fa-database' },
     { key: 'almacen',     label: 'Almacén',      icon: 'fa-warehouse' },
     { key: 'recepcion',   label: 'Recepción',    icon: 'fa-box-open' },
-    { key: 'cierre',      label: 'Cierre',       icon: 'fa-check-circle' },
     { key: 'costos',      label: 'Costos',       icon: 'fa-dollar-sign' },
+    { key: 'cierre',      label: 'Cierre',       icon: 'fa-check-circle' },
   ];
 
   private readonly CAMPOS_VALIDAR: Partial<Record<Seccion, CampoValidar[]>> = {
@@ -44,7 +46,6 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'log_fecha_notificacion',           label: 'Fecha notificación de entrega' },
       { campo: 'log_fecha_entrega',                label: 'Fecha de entrega' },
       { campo: 'log_titulo_correo_salida',         label: 'Título correo salida de contenedor' },
-      { campo: 'log_titulo_correo_2',              label: 'Segunda línea del correo' },
       { campo: 'log_confirmacion_enterado',        label: 'Confirmación de enterado ELEI' },
       { campo: 'log_origen',                       label: 'Origen' },
       { campo: 'log_tipo_productos',               label: 'Tipo de productos' },
@@ -61,8 +62,9 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'log_contenedor',                   label: 'Contenedor(es)' },
       { campo: 'log_recepcion_bl_co',              label: 'Recepción de BL y CO' },
       { campo: 'log_confirmacion_bl_co',           label: 'Confirmación de BL y CO definitivos' },
+      { campo: 'log_envio_certificado',            label: 'Envío de Certificado a México', opcional: true },
       { campo: 'log_certificado_seguro',           label: 'Certificado de Seguro (número)' },
-      { campo: 'log_recepcion_documentos',         label: 'Recepción de documentos' },
+      // log_recepcion_documentos moved to odoo
     ],
     importacion: [
       { campo: 'imp_fecha_traduccion',           label: 'Fecha entrega de traducción al RBF' },
@@ -115,14 +117,16 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'des_fecha_lavado',               label: 'Fecha de lavado de contenedor' },
       { campo: 'des_entrega_contenedor_naviera', label: 'Fecha entrega contenedor a naviera' },
       { campo: 'des_dias_sin_demoras',           label: 'Días sin demoras para devolver contenedor' },
-      { campo: 'des_fecha_limite_naviera',       label: 'Fecha límite entrega contenedor a naviera' },
+      { campo: 'des_recepcion_eir',              label: 'Recepción de documento EIR' },
     ],
     odoo: [
+      { campo: 'odoo_importador',       label: 'Importador' },
       { campo: 'odoo_codificacion',     label: 'Codificación de productos' },
       { campo: 'odoo_alta_catalogo',    label: 'Alta de catálogo en Odoo' },
       { campo: 'odoo_alta_precios',     label: 'Alta de precios en Odoo' },
       { campo: 'odoo_alta_orden_compra', label: 'Alta de orden de compra' },
       { campo: 'odoo_folio_orden',      label: 'Folio(s) de orden de compra' },
+      { campo: 'log_recepcion_documentos', label: 'Recepción de documentos' },
     ],
     almacen: [
       { campo: 'alm_base_datos_etiquetas',    label: 'Base de datos para etiquetas' },
@@ -137,13 +141,37 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'rec_recepcion_odoo',          label: 'Recepción en Odoo' },
       { campo: 'rec_folio_compra',            label: 'Folio de Compra en Odoo' },
       { campo: 'rec_liberacion_verificacion', label: 'Liberación de productos a verificación' },
+      { campo: 'rec_liberacion_final',        label: 'Liberación final del producto' },
     ],
     cierre: [
       { campo: 'cie_recepcion_cuenta_gastos', label: 'Recepción de cuenta de gastos' },
       { campo: 'cie_saldo_favor_elite',       label: 'Saldo a favor de Elite Bike' },
       { campo: 'cie_liquidado_elite',         label: 'Liquidado a Elite Bike' },
+      { campo: 'cie_fecha_pago_elite',        label: 'Fecha de pago a Elite Bike' },
       { campo: 'cie_saldo_favor_aa',          label: 'Saldo a favor del Agente Aduanal' },
       { campo: 'cie_liquidado_aa',            label: 'Liquidado a Agente Aduanal' },
+      { campo: 'cie_fecha_pago_aa',           label: 'Fecha de pago a Agente Aduanal' },
+    ],
+    costos: [
+      { campo: 'cos_tipo_cambio_pedimento',    label: 'Tipo de cambio pedimento'        },
+      { campo: 'cos_valor_factura',            label: 'Valor factura'                   },
+      { campo: 'cos_cantidad_bicicletas',      label: 'Cantidad de bicicletas'          },
+      { campo: 'cos_flete_internacional_usd',  label: 'Costo flete internacional (USD)' },
+      { campo: 'cos_gastos_forwarder_pesos',   label: 'Gastos forwarder en destino'     },
+      { campo: 'cos_seguro_pesos',             label: 'Seguro (pesos)'                  },
+      { campo: 'cos_custodia_pesos',           label: 'Custodia'                        },
+      { campo: 'cos_maniobras_pesos',          label: 'Maniobras'                       },
+      { campo: 'cos_cargos_adicionales_pesos', label: 'Cargos adicionales / multas'     },
+      { campo: 'cos_honorarios_pesos',         label: 'Honorarios AA'                   },
+      { campo: 'cos_flete_terrestre_usd',      label: 'Flete terrestre (USD)'           },
+      { campo: 'cos_pernoctas_usd',            label: 'Pernoctas flete terrestre (USD)' },
+      { campo: 'cos_paquetexpress_usd',        label: 'Ingreso a PaquetExpress (USD)'   },
+      { campo: 'cos_demoras_usd',              label: 'Demoras / almacenaje (USD)'      },
+      { campo: 'cos_verificacion_pesos',       label: 'Verificación (pesos)'            },
+      { campo: 'cos_lavado_contenedor_pesos',  label: 'Lavado de contenedor'            },
+      { campo: 'cos_monitoreo_pesos',          label: 'Monitoreo'                       },
+      { campo: 'cos_impuestos_pagados_pesos',  label: 'Impuestos pagados'               },
+      { campo: 'cos_reconocimiento_aduanero',  label: 'Reconocimiento aduanero'         },
     ],
   };
 
@@ -158,6 +186,10 @@ export class ImportacionesDetalleComponent implements OnInit {
     this.svc.obtener(id).subscribe({
       next: (data) => {
         this.embarque = data;
+        // Restore authoritative N/A state first (from official saves)
+        for (const campo of (this.embarque.campos_na || [])) {
+          this.camposNA.add(campo);
+        }
         this._aplicarBorradores();
         this.cargando = false;
       },
@@ -168,13 +200,44 @@ export class ImportacionesDetalleComponent implements OnInit {
   private _aplicarBorradores(): void {
     if (!this.embarque?.borradores) return;
     for (const campos of Object.values(this.embarque.borradores)) {
-      for (const [campo, valor] of Object.entries(campos)) {
-        const actual = (this.embarque as any)[campo];
-        if (actual === null || actual === undefined || actual === '') {
-          (this.embarque as any)[campo] = valor;
+      for (const [campo, valor] of Object.entries(campos as Record<string, any>)) {
+        if (valor === '__NA__') {
+          // Only apply draft N/A if the DB value is empty AND not already in camposNA (from campos_na)
+          const actual = (this.embarque as any)[campo];
+          if (!this.camposNA.has(campo) && (actual === null || actual === undefined || actual === '')) {
+            this.camposNA.add(campo);
+          }
+        } else {
+          const actual = (this.embarque as any)[campo];
+          if (actual === null || actual === undefined || actual === '') {
+            (this.embarque as any)[campo] = valor;
+          }
         }
       }
     }
+  }
+
+  toggleNA(campo: string): void {
+    if (this.camposNA.has(campo)) {
+      this.camposNA.delete(campo);
+      // Restaurar valor del borrador si existe, si no dejar null
+    } else {
+      this.camposNA.add(campo);
+      (this.embarque as any)[campo] = null;
+      (this.cambiosPendientes as any)[campo] = '__NA__';
+    }
+  }
+
+  esNA(campo: string): boolean {
+    return this.camposNA.has(campo);
+  }
+
+  esCampoFaltante(campo: string): boolean {
+    if (this.camposNA.has(campo)) return false;
+    const seccCampos = this.CAMPOS_VALIDAR[this.seccionActiva] ?? [];
+    const def = seccCampos.find(c => c.campo === campo);
+    if (!def) return false;
+    return !this.valorValido((this.embarque as any)[campo]);
   }
 
   marcarCambio(campo: keyof Importacion, valor: any): void {
@@ -196,10 +259,9 @@ export class ImportacionesDetalleComponent implements OnInit {
   }
 
   private validarSeccionActual(): string[] {
-    if (this.seccionActiva === 'costos') return [];
     const campos = this.CAMPOS_VALIDAR[this.seccionActiva] ?? [];
     return campos
-      .filter(c => !this.valorValido((this.embarque as any)[c.campo]))
+      .filter(c => !c.opcional && !this.camposNA.has(c.campo as string) && !this.valorValido((this.embarque as any)[c.campo]))
       .map(c => c.label);
   }
 
@@ -207,7 +269,7 @@ export class ImportacionesDetalleComponent implements OnInit {
     const campos = this.CAMPOS_VALIDAR[this.seccionActiva] ?? [];
     return new Set(
       campos
-        .filter(c => !this.valorValido((this.embarque as any)[c.campo]))
+        .filter(c => !c.opcional && !this.camposNA.has(c.campo as string) && !this.valorValido((this.embarque as any)[c.campo]))
         .map(c => c.campo as string)
     );
   }
@@ -231,10 +293,21 @@ export class ImportacionesDetalleComponent implements OnInit {
     this.validacionError = [];
     this.camposConError.clear();
 
-    // Enviar TODOS los campos de la sección + indicar sección oficial para limpiar borrador
+    // Enviar todos los campos de la sección (incluyendo opcionales) + campos extra que el usuario cambió
     const payload: any = { _seccion_oficial: this.seccionActiva };
     for (const c of (this.CAMPOS_VALIDAR[this.seccionActiva] ?? [])) {
-      payload[c.campo] = (this.embarque as any)[c.campo];
+      if (this.camposNA.has(c.campo as string)) {
+        payload[c.campo] = '__NA__';   // N/A explícito → backend lo cuenta como completado
+      } else {
+        const val = (this.embarque as any)[c.campo];
+        payload[c.campo] = val === '__NA__' ? null : val;  // si antes era __NA__ y se quitó → limpiar
+      }
+    }
+    // Incluir cambios adicionales que no estén en CAMPOS_VALIDAR (campos en el HTML sin validación)
+    for (const [campo, valor] of Object.entries(this.cambiosPendientes)) {
+      if (!(campo in payload)) {
+        payload[campo] = this.camposNA.has(campo) ? '__NA__' : (valor === '__NA__' ? null : valor);
+      }
     }
 
     this.guardando = true;
@@ -245,6 +318,10 @@ export class ImportacionesDetalleComponent implements OnInit {
         this.cambiosPendientes = {};
         this.svc.obtener(this.embarque!.id).subscribe((d) => {
           this.embarque = d;
+          this.camposNA.clear();
+          for (const campo of (d.campos_na || [])) {
+            this.camposNA.add(campo);
+          }
           this._aplicarBorradores();
         });
         setTimeout(() => { this.guardadoOk = false; }, 2500);
@@ -253,10 +330,30 @@ export class ImportacionesDetalleComponent implements OnInit {
     });
   }
 
+  guardarBorrador(): void {
+    if (!this.embarque || !this.hayCambios()) return;
+    const naPayload: any = {};
+    for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
+    const payload: any = { _borrador_seccion: this.seccionActiva, ...naPayload, ...this.cambiosPendientes };
+    this.guardando = true;
+    this.svc.actualizar(this.embarque.id, payload).subscribe({
+      next: () => {
+        this.guardando = false;
+        this.cambiosPendientes = {};
+        this.svc.obtener(this.embarque!.id).subscribe(d => {
+          this.embarque = d;
+          this._aplicarBorradores();
+        });
+      },
+      error: () => { this.guardando = false; },
+    });
+  }
+
   volver(): void {
-    if (this.hayCambios()) {
-      // Guardar cambios como BORRADOR (no cuenta en porcentajes)
-      const payload: any = { _borrador_seccion: this.seccionActiva, ...this.cambiosPendientes };
+    if (this.hayCambios() || this.camposNA.size > 0) {
+      const naPayload: any = {};
+      for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
+      const payload: any = { _borrador_seccion: this.seccionActiva, ...naPayload, ...this.cambiosPendientes };
       this.svc.actualizar(this.embarque!.id, payload).subscribe({
         next: () => this.router.navigate(['/importaciones']),
         error: () => this.router.navigate(['/importaciones']),
@@ -279,6 +376,18 @@ export class ImportacionesDetalleComponent implements OnInit {
 
   hayCambios(): boolean {
     return Object.keys(this.cambiosPendientes).length > 0;
+  }
+
+  formatFechaCalc(s: string | null | undefined): string {
+    if (!s) return '—';
+    const parts = s.split('-');
+    if (parts.length !== 3) return s;
+    const [y, m, d] = parts;
+    const day = parseInt(d);
+    const mon = parseInt(m) - 1;
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    if (isNaN(day) || isNaN(mon) || mon < 0 || mon > 11) return s;
+    return `${day} ${meses[mon]} ${y}`;
   }
 
   get progresoPct(): number {

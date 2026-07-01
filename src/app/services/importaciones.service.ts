@@ -33,7 +33,6 @@ export interface Importacion {
   log_fecha_notificacion?: string;
   log_fecha_entrega?: string;
   log_titulo_correo_salida?: string;
-  log_titulo_correo_2?: string;
   log_confirmacion_enterado?: string;
   log_origen?: string;
   log_tipo_productos?: string;
@@ -114,6 +113,7 @@ export interface Importacion {
   des_recepcion_eir?: string;
 
   // Odoo
+  odoo_importador?: string;
   odoo_codificacion?: string;
   odoo_alta_catalogo?: string;
   odoo_alta_precios?: string;
@@ -167,6 +167,7 @@ export interface Importacion {
 
   notas?: string;
   borradores?: Record<string, Record<string, any>>;
+  campos_na?: string[];
 }
 
 @Injectable({ providedIn: 'root' })

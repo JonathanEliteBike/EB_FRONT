@@ -1,4 +1,4 @@
-<app-home-bar></app-home-bar>
+﻿<app-home-bar></app-home-bar>
 
 <div class="det-page">
 
@@ -36,7 +36,14 @@
           </div>
           <span class="prog-lbl">Completado</span>
         </div>
-        <!-- Guardar -->
+        <!-- Borrador -->
+        <button class="btn-borrador" (click)="guardarBorrador()"
+          [disabled]="!hayCambios() || guardando"
+          title="Guardar sin registrar avance">
+          <i class="fas fa-cloud-upload-alt"></i>
+          Borrador
+        </button>
+        <!-- Guardar oficial -->
         <button class="btn-guardar" (click)="guardar()"
           [disabled]="!hayCambios() || guardando"
           [class.btn-ok]="guardadoOk">
@@ -46,32 +53,26 @@
       </div>
     </div>
 
-    <!-- ── Mini progress por sección ── -->
-    <div class="det-progress-bar">
-      <ng-container *ngFor="let tab of tabs">
-        <div class="prog-seg" *ngIf="tab.key !== 'costos'"
-          [title]="tab.label + ' · ' + pct(tab.key) + '%'"
-          [style.--seg-color]="colorPct(pct(tab.key))">
-          <span class="seg-lbl">{{ tab.label }}</span>
-          <div class="seg-bar-bg">
-            <div class="seg-bar-fill" [style.width.%]="pct(tab.key)" [style.background]="colorPct(pct(tab.key))"></div>
-          </div>
-          <span class="seg-pct">{{ pct(tab.key) }}%</span>
-        </div>
-      </ng-container>
-    </div>
-
     <!-- ── Tabs ── -->
     <div class="det-tabs">
       <button *ngFor="let tab of tabs" class="tab-btn"
         [class.active]="seccionActiva === tab.key"
+        [class.tab-complete]="pct(tab.key) === 100"
         (click)="cambiarSeccion(tab.key)">
-        <i class="fas" [ngClass]="tab.icon"></i>
-        {{ tab.label }}
-        <span class="tab-pct" *ngIf="tab.key !== 'costos'"
-          [style.background]="colorPct(pct(tab.key))">
+        <div class="tab-top">
+          <i class="fas" [ngClass]="tab.icon"></i>
+          <span class="tab-label">{{ tab.label }}</span>
+        </div>
+        <span class="tab-num"
+          [style.color]="seccionActiva === tab.key ? '#93c5fd' : colorPct(pct(tab.key))">
           {{ pct(tab.key) }}%
         </span>
+        <div class="tab-progress">
+          <div class="tab-progress-fill"
+            [style.width.%]="pct(tab.key)"
+            [style.background]="colorPct(pct(tab.key))">
+          </div>
+        </div>
       </button>
     </div>
 
@@ -111,130 +112,163 @@
           </div>
         </div>
 
-        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_notificacion')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_notificacion')" [class.campo-faltante]="esCampoFaltante('log_fecha_notificacion')">
           <label>1. Fecha notificación de entrega</label>
-          <input type="date" [value]="embarque.log_fecha_notificacion || ''"
-            (change)="marcarCambio('log_fecha_notificacion', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_fecha_notificacion || ''"
+              (dateChange)="marcarCambio('log_fecha_notificacion', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_entrega')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_entrega')" [class.campo-faltante]="esCampoFaltante('log_fecha_entrega')">
           <label>2. Fecha de entrega</label>
-          <input type="date" [value]="embarque.log_fecha_entrega || ''"
-            (change)="marcarCambio('log_fecha_entrega', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_fecha_entrega || ''"
+              (dateChange)="marcarCambio('log_fecha_entrega', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row full" [class.campo-error]="esCampoError('log_titulo_correo_salida')">
+        <div class="field-row full" [class.campo-error]="esCampoError('log_titulo_correo_salida')" [class.campo-faltante]="esCampoFaltante('log_titulo_correo_salida')">
           <label>3. Título correo salida de contenedor (Proveedor)</label>
           <input type="text" [value]="embarque.log_titulo_correo_salida || ''"
             (change)="marcarCambio('log_titulo_correo_salida', $any($event.target).value || null)" />
         </div>
-        <div class="field-row full" [class.campo-error]="esCampoError('log_titulo_correo_2')">
-          <label>3b. Segunda línea del correo</label>
-          <input type="text" [value]="embarque.log_titulo_correo_2 || ''"
-            (change)="marcarCambio('log_titulo_correo_2', $any($event.target).value || null)" />
-        </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_enterado')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_enterado')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_enterado')">
           <label>4. Confirmación de enterado ELEI</label>
-          <input type="date" [value]="embarque.log_confirmacion_enterado || ''"
-            (change)="marcarCambio('log_confirmacion_enterado', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_confirmacion_enterado || ''"
+              (dateChange)="marcarCambio('log_confirmacion_enterado', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_origen')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_origen')" [class.campo-faltante]="esCampoFaltante('log_origen')">
           <label>5. Origen</label>
           <input type="text" [value]="embarque.log_origen || ''"
             (change)="marcarCambio('log_origen', $any($event.target).value || null)"
             placeholder="BELGICA, VIETNAM, TAIWAN..." />
         </div>
-        <div class="field-row full" [class.campo-error]="esCampoError('log_tipo_productos')">
+        <div class="field-row full" [class.campo-error]="esCampoError('log_tipo_productos')" [class.campo-faltante]="esCampoFaltante('log_tipo_productos')">
           <label>6. Tipo de productos</label>
           <input type="text" [value]="embarque.log_tipo_productos || ''"
             (change)="marcarCambio('log_tipo_productos', $any($event.target).value || null)" />
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_solicitud_cotizaciones')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_solicitud_cotizaciones')" [class.campo-faltante]="esCampoFaltante('log_fecha_solicitud_cotizaciones')">
           <label>7. Fecha solicitud de cotizaciones</label>
-          <input type="date" [value]="embarque.log_fecha_solicitud_cotizaciones || ''"
-            (change)="marcarCambio('log_fecha_solicitud_cotizaciones', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_fecha_solicitud_cotizaciones || ''"
+              (dateChange)="marcarCambio('log_fecha_solicitud_cotizaciones', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_cotizacion')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_cotizacion')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_cotizacion')">
           <label>8. Confirmación de cotización y forwarder</label>
           <input type="text" [value]="embarque.log_confirmacion_cotizacion || ''"
             (change)="marcarCambio('log_confirmacion_cotizacion', $any($event.target).value || null)" />
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_costo_flete')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_costo_flete')" [class.campo-faltante]="esCampoFaltante('log_costo_flete')">
           <label>9. Costo de flete</label>
           <input type="text" [value]="embarque.log_costo_flete || ''"
             (change)="marcarCambio('log_costo_flete', $any($event.target).value || null)"
             placeholder="$5,469 / MF MAX LOAD" />
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_shipping_instructions')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_shipping_instructions')" [class.campo-faltante]="esCampoFaltante('log_fecha_shipping_instructions')">
           <label>10. Envío shipping instructions a Proveedor</label>
-          <input type="date" [value]="embarque.log_fecha_shipping_instructions || ''"
-            (change)="marcarCambio('log_fecha_shipping_instructions', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_fecha_shipping_instructions || ''"
+              (dateChange)="marcarCambio('log_fecha_shipping_instructions', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_booking')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_booking')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_booking')">
           <label>11. Confirmación de booking</label>
-          <input type="date" [value]="embarque.log_confirmacion_booking || ''"
-            (change)="marcarCambio('log_confirmacion_booking', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_confirmacion_booking || ''"
+              (dateChange)="marcarCambio('log_confirmacion_booking', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_booking')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_fecha_booking')" [class.campo-faltante]="esCampoFaltante('log_fecha_booking')">
           <label>12. Booking (fecha salida contenedor)</label>
-          <input type="date" [value]="embarque.log_fecha_booking || ''"
-            (change)="marcarCambio('log_fecha_booking', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_fecha_booking || ''"
+              (dateChange)="marcarCambio('log_fecha_booking', $event || null)">
+            </app-date-picker>
         </div>
         <div class="field-row field-calc">
           <label>· Días en salir tras entrega Scott</label>
           <span class="calc-val">{{ embarque.log_dias_salida_tras_entrega ?? '—' }} días</span>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_eta_puerto')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_eta_puerto')" [class.campo-faltante]="esCampoFaltante('log_eta_puerto')">
           <label>13. ETA Puerto</label>
-          <input type="date" [value]="embarque.log_eta_puerto || ''"
-            (change)="marcarCambio('log_eta_puerto', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_eta_puerto || ''"
+              (dateChange)="marcarCambio('log_eta_puerto', $event || null)">
+            </app-date-picker>
         </div>
         <div class="field-row field-calc">
           <label>· Días de tránsito marítimo</label>
           <span class="calc-val">{{ embarque.log_dias_transito_maritimo ?? '—' }} días</span>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_buque')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_buque')" [class.campo-faltante]="esCampoFaltante('log_buque')">
           <label>14. Buque</label>
           <input type="text" [value]="embarque.log_buque || ''"
             (change)="marcarCambio('log_buque', $any($event.target).value || null)" />
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_no_viaje')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_no_viaje')" [class.campo-faltante]="esCampoFaltante('log_no_viaje')">
           <label>15. No. de Viaje</label>
           <input type="text" [value]="embarque.log_no_viaje || ''"
             (change)="marcarCambio('log_no_viaje', $any($event.target).value || null)" />
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_puerto_salida')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_puerto_salida')" [class.campo-faltante]="esCampoFaltante('log_puerto_salida')">
           <label>16. Puerto de salida</label>
           <input type="text" [value]="embarque.log_puerto_salida || ''"
             (change)="marcarCambio('log_puerto_salida', $any($event.target).value || null)" />
         </div>
-        <div class="field-row full" [class.campo-error]="esCampoError('log_contenedor')">
+        <div class="field-row full" [class.campo-error]="esCampoError('log_contenedor')" [class.campo-faltante]="esCampoFaltante('log_contenedor')">
           <label>17. Contenedor(es)</label>
           <input type="text" [value]="embarque.log_contenedor || ''"
             (change)="marcarCambio('log_contenedor', $any($event.target).value || null)" />
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_recepcion_bl_co')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_recepcion_bl_co')" [class.campo-faltante]="esCampoFaltante('log_recepcion_bl_co')">
           <label>18. Recepción de BL y CO para revisión</label>
-          <input type="date" [value]="embarque.log_recepcion_bl_co || ''"
-            (change)="marcarCambio('log_recepcion_bl_co', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_recepcion_bl_co || ''"
+              (dateChange)="marcarCambio('log_recepcion_bl_co', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_bl_co')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_bl_co')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_bl_co')">
           <label>19. Confirmación de BL y CO definitivos</label>
-          <input type="date" [value]="embarque.log_confirmacion_bl_co || ''"
-            (change)="marcarCambio('log_confirmacion_bl_co', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_confirmacion_bl_co || ''"
+              (dateChange)="marcarCambio('log_confirmacion_bl_co', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
-          <label>20. Envío de Certificado a México</label>
-          <input type="date" [value]="embarque.log_envio_certificado || ''"
-            (change)="marcarCambio('log_envio_certificado', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_envio_certificado')">
+          <label>20. Envío de Certificado a México <span style="color:#64748b;font-size:.75rem">(opcional)</span></label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('log_envio_certificado')">
+              <app-date-picker
+                  mode="single"
+                  [value]="embarque.log_envio_certificado || ''"
+                  (dateChange)="marcarCambio('log_envio_certificado', $event || null)">
+                </app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('log_envio_certificado')" class="na-badge" (click)="toggleNA('log_envio_certificado')" title="Click para quitar N/A">
+              <i class="fas fa-check"></i> N/A
+            </span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('log_envio_certificado')" (click)="toggleNA('log_envio_certificado')" title="Marcar como No Aplica">
+              N/A
+            </button>
+          </div>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_certificado_seguro')">
+        <div class="field-row" [class.campo-error]="esCampoError('log_certificado_seguro')" [class.campo-faltante]="esCampoFaltante('log_certificado_seguro')">
           <label>21. Certificado de Seguro (número)</label>
           <input type="text" [value]="embarque.log_certificado_seguro || ''"
             (change)="marcarCambio('log_certificado_seguro', $any($event.target).value || null)" />
-        </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_recepcion_documentos')">
-          <label>22. Recepción de documentos</label>
-          <input type="date" [value]="embarque.log_recepcion_documentos || ''"
-            (change)="marcarCambio('log_recepcion_documentos', $any($event.target).value || null)" />
         </div>
 
       </div>
@@ -246,22 +280,28 @@
     <div class="det-section" *ngIf="seccionActiva === 'importacion'">
       <div class="fields-grid">
 
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_traduccion')">
           <label>1. Fecha entrega de traducción al RBF</label>
-          <input type="date" [value]="embarque.imp_fecha_traduccion || ''"
-            (change)="marcarCambio('imp_fecha_traduccion', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_fecha_traduccion || ''"
+              (dateChange)="marcarCambio('imp_fecha_traduccion', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_numeros_serie')">
           <label>2. Fecha entrega de números de serie</label>
-          <input type="date" [value]="embarque.imp_fecha_numeros_serie || ''"
-            (change)="marcarCambio('imp_fecha_numeros_serie', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_fecha_numeros_serie || ''"
+              (dateChange)="marcarCambio('imp_fecha_numeros_serie', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_bl_guia')">
           <label>3. BL / Guía</label>
           <input type="text" [value]="embarque.imp_bl_guia || ''"
             (change)="marcarCambio('imp_bl_guia', $any($event.target).value || null)" />
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_co')">
           <label>4. CO</label>
           <select [value]="embarque.imp_co || ''"
             (change)="marcarCambio('imp_co', $any($event.target).value || null)">
@@ -269,12 +309,12 @@
             <option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row full">
+        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('imp_facturas')">
           <label>5. Facturas (números)</label>
           <input type="text" [value]="embarque.imp_facturas || ''"
             (change)="marcarCambio('imp_facturas', $any($event.target).value || null)" />
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_series')">
           <label>6. Series</label>
           <select [value]="embarque.imp_series || ''"
             (change)="marcarCambio('imp_series', $any($event.target).value || null)">
@@ -282,143 +322,185 @@
             <option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_solicitud_pago_forwarder')">
           <label>7. Solicitud de pago a Forwarder</label>
-          <input type="date" [value]="embarque.imp_solicitud_pago_forwarder || ''"
-            (change)="marcarCambio('imp_solicitud_pago_forwarder', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_solicitud_pago_forwarder || ''"
+              (dateChange)="marcarCambio('imp_solicitud_pago_forwarder', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_llegada_contenedor_puerto')">
           <label>8. Llegada de contenedor a puerto</label>
-          <input type="date" [value]="embarque.imp_llegada_contenedor_puerto || ''"
-            (change)="marcarCambio('imp_llegada_contenedor_puerto', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_llegada_contenedor_puerto || ''"
+              (dateChange)="marcarCambio('imp_llegada_contenedor_puerto', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
-          <label>9. Días libres de almacenaje en terminal</label>
-          <input type="number" [value]="embarque.imp_dias_libres_almacenaje ?? 17"
-            (change)="marcarCambio('imp_dias_libres_almacenaje', +$any($event.target).value)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_limite_cruce')">
+          <label>9. Fecha límite cruce sin almacenajes</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_fecha_limite_cruce || ''"
+              (dateChange)="marcarCambio('imp_fecha_limite_cruce', $event || null)">
+            </app-date-picker>
         </div>
         <div class="field-row field-calc">
-          <label>· Fecha límite cruce sin almacenajes</label>
-          <span class="calc-val">{{ embarque.imp_fecha_limite_cruce || '—' }}</span>
+          <label>· Días libres de almacenaje en terminal</label>
+          <span class="calc-val">{{ embarque.imp_dias_libres_almacenaje ?? '—' }} días</span>
         </div>
         <div class="field-row field-calc">
           <label>· Días de despacho aduanero</label>
           <span class="calc-val">{{ embarque.imp_dias_despacho_aduanero ?? '—' }} días</span>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_terminal')">
           <label>10. Terminal</label>
           <input type="text" [value]="embarque.imp_terminal || ''"
             (change)="marcarCambio('imp_terminal', $any($event.target).value || null)" />
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_bl_endosado')">
           <label>11. BL endosado por el forwarder al AA</label>
-          <input type="date" [value]="embarque.imp_bl_endosado || ''"
-            (change)="marcarCambio('imp_bl_endosado', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_bl_endosado || ''"
+              (dateChange)="marcarCambio('imp_bl_endosado', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_bl_revalidado')">
           <label>12. BL revalidado por el AA</label>
-          <input type="date" [value]="embarque.imp_bl_revalidado || ''"
-            (change)="marcarCambio('imp_bl_revalidado', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_bl_revalidado || ''"
+              (dateChange)="marcarCambio('imp_bl_revalidado', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row">
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_porte')">
           <label>Carta porte (fecha)</label>
-          <input type="date" [value]="embarque.imp_carta_porte || ''"
-            (change)="marcarCambio('imp_carta_porte', $any($event.target).value || null)" />
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_carta_porte || ''"
+              (dateChange)="marcarCambio('imp_carta_porte', $event || null)">
+            </app-date-picker>
         </div>
 
-        <div class="field-row"><label>14. Entrega de facturas al AA</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_entrega_facturas_aa')"><label>14. Entrega de facturas al AA</label>
           <select [value]="embarque.imp_entrega_facturas_aa || ''" (change)="marcarCambio('imp_entrega_facturas_aa', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>15. Traducción para el AA</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_traduccion_aa')"><label>15. Traducción para el AA</label>
           <select [value]="embarque.imp_traduccion_aa || ''" (change)="marcarCambio('imp_traduccion_aa', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>16. Entrega de certificado de origen</label>
-          <input type="date" [value]="embarque.imp_entrega_certificado_origen || ''" (change)="marcarCambio('imp_entrega_certificado_origen', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_entrega_certificado_origen')"><label>16. Entrega de certificado de origen</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_entrega_certificado_origen || ''"
+              (dateChange)="marcarCambio('imp_entrega_certificado_origen', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row"><label>17. Relación de números de serie</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_relacion_numeros_serie')"><label>17. Relación de números de serie</label>
           <select [value]="embarque.imp_relacion_numeros_serie || ''" (change)="marcarCambio('imp_relacion_numeros_serie', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>18. Relación de incrementables</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_relacion_incrementables')"><label>18. Relación de incrementables</label>
           <select [value]="embarque.imp_relacion_incrementables || ''" (change)="marcarCambio('imp_relacion_incrementables', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>19. Recepción de draft de pedimento</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_recepcion_draft_pedimento')"><label>19. Recepción de draft de pedimento</label>
           <select [value]="embarque.imp_recepcion_draft_pedimento || ''" (change)="marcarCambio('imp_recepcion_draft_pedimento', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>20. Fecha entrega documentos al AA</label>
-          <input type="date" [value]="embarque.imp_fecha_entrega_docs_aa || ''" (change)="marcarCambio('imp_fecha_entrega_docs_aa', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_entrega_docs_aa')"><label>20. Fecha entrega documentos al AA</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_fecha_entrega_docs_aa || ''"
+              (dateChange)="marcarCambio('imp_fecha_entrega_docs_aa', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row"><label>21. Pedimento revisado definitivo</label>
-          <input type="date" [value]="embarque.imp_pedimento_revisado || ''" (change)="marcarCambio('imp_pedimento_revisado', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_pedimento_revisado')"><label>21. Pedimento revisado definitivo</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_pedimento_revisado || ''"
+              (dateChange)="marcarCambio('imp_pedimento_revisado', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row"><label>22. Pedimento (número)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_pedimento')"><label>22. Pedimento (número)</label>
           <input type="text" [value]="embarque.imp_pedimento || ''" (change)="marcarCambio('imp_pedimento', $any($event.target).value || null)" />
         </div>
-        <div class="field-row"><label>23. Elaboración de COVES del AA</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_coves_aa')"><label>23. Elaboración de COVES del AA</label>
           <select [value]="embarque.imp_coves_aa || ''" (change)="marcarCambio('imp_coves_aa', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>24. Revisión de COVES por ELEI</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_revision_coves')"><label>24. Revisión de COVES por ELEI</label>
           <select [value]="embarque.imp_revision_coves || ''" (change)="marcarCambio('imp_revision_coves', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>25. ¿Aplica verificación?</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_aplica_verificacion')"><label>25. ¿Aplica verificación?</label>
           <select [value]="embarque.imp_aplica_verificacion || ''" (change)="marcarCambio('imp_aplica_verificacion', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>26. Layout para verificación</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_layout_verificacion')"><label>26. Layout para verificación</label>
           <select [value]="embarque.imp_layout_verificacion || ''" (change)="marcarCambio('imp_layout_verificacion', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>27. Envío de layout (si aplica)</label>
-          <input type="date" [value]="embarque.imp_envio_layout || ''" (change)="marcarCambio('imp_envio_layout', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_envio_layout')"><label>27. Envío de layout (si aplica)</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_envio_layout || ''"
+              (dateChange)="marcarCambio('imp_envio_layout', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row"><label>28. Carta 3.1.8</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_318')"><label>28. Carta 3.1.8</label>
           <select [value]="embarque.imp_carta_318 || ''" (change)="marcarCambio('imp_carta_318', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>29. Carta de incrementables</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_incrementables')"><label>29. Carta de incrementables</label>
           <select [value]="embarque.imp_carta_incrementables || ''" (change)="marcarCambio('imp_carta_incrementables', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>30. Carta de no previo</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_no_previo')"><label>30. Carta de no previo</label>
           <select [value]="embarque.imp_carta_no_previo || ''" (change)="marcarCambio('imp_carta_no_previo', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>31. Carta declaración de marca</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_declaracion_marca')"><label>31. Carta declaración de marca</label>
           <select [value]="embarque.imp_carta_declaracion_marca || ''" (change)="marcarCambio('imp_carta_declaracion_marca', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row"><label>32. Carta aplicación de UVA</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_carta_aplicacion_uva')"><label>32. Carta aplicación de UVA</label>
           <select [value]="embarque.imp_carta_aplicacion_uva || ''" (change)="marcarCambio('imp_carta_aplicacion_uva', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select>
         </div>
-        <div class="field-row full"><label>33. Artículos a verificar y cantidad total</label>
+        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('imp_articulos_verificar')"><label>33. Artículos a verificar y cantidad total</label>
           <input type="text" [value]="embarque.imp_articulos_verificar || ''" (change)="marcarCambio('imp_articulos_verificar', $any($event.target).value || null)" placeholder="2261/BICI/ACCE" />
         </div>
-        <div class="field-row"><label>34. Liberación de folios</label>
-          <input type="date" [value]="embarque.imp_liberacion_folios || ''" (change)="marcarCambio('imp_liberacion_folios', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_liberacion_folios')"><label>34. Liberación de folios</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_liberacion_folios || ''"
+              (dateChange)="marcarCambio('imp_liberacion_folios', $event || null)">
+            </app-date-picker>
         </div>
-        <div class="field-row"><label>35. Fecha de pago de pedimento</label>
-          <input type="date" [value]="embarque.imp_fecha_pago_pedimento || ''" (change)="marcarCambio('imp_fecha_pago_pedimento', $any($event.target).value || null)" />
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_pago_pedimento')"><label>35. Fecha de pago de pedimento</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.imp_fecha_pago_pedimento || ''"
+              (dateChange)="marcarCambio('imp_fecha_pago_pedimento', $event || null)">
+            </app-date-picker>
         </div>
 
       </div>
@@ -429,38 +511,95 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'despacho'">
       <div class="fields-grid">
-        <div class="field-row"><label>1. Solicitud de cita para cruce</label>
-          <input type="date" [value]="embarque.des_solicitud_cita_cruce || ''" (change)="marcarCambio('des_solicitud_cita_cruce', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>2. Cita para cruce</label>
-          <input type="date" [value]="embarque.des_cita_cruce || ''" (change)="marcarCambio('des_cita_cruce', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>3. Fecha de cruce real</label>
-          <input type="date" [value]="embarque.des_fecha_cruce_real || ''" (change)="marcarCambio('des_fecha_cruce_real', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>4. Solicitud de pase para maniobras (AA)</label>
-          <input type="date" [value]="embarque.des_solicitud_pase_maniobras || ''" (change)="marcarCambio('des_solicitud_pase_maniobras', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>5. Carta de maniobras (transportista)</label>
-          <input type="date" [value]="embarque.des_carta_maniobras || ''" (change)="marcarCambio('des_carta_maniobras', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Datos para carta porte</label>
-          <input type="date" [value]="embarque.des_fecha_carta_porte || ''" (change)="marcarCambio('des_fecha_carta_porte', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>6. Fecha de entrega en almacén programada</label>
-          <input type="date" [value]="embarque.des_fecha_entrega_almacen_prog || ''" (change)="marcarCambio('des_fecha_entrega_almacen_prog', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>7. Lugar de destino (Ciudad)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_solicitud_cita_cruce')"><label>1. Solicitud de cita para cruce</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_solicitud_cita_cruce || ''"
+              (dateChange)="marcarCambio('des_solicitud_cita_cruce', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_cita_cruce')"><label>2. Cita para cruce</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_cita_cruce || ''"
+              (dateChange)="marcarCambio('des_cita_cruce', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_cruce_real')"><label>3. Fecha de cruce real</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_fecha_cruce_real || ''"
+              (dateChange)="marcarCambio('des_fecha_cruce_real', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_solicitud_pase_maniobras')"><label>4. Solicitud de pase para maniobras (AA)</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_solicitud_pase_maniobras || ''"
+              (dateChange)="marcarCambio('des_solicitud_pase_maniobras', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_carta_maniobras')"><label>5. Carta de maniobras (transportista)</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_carta_maniobras || ''"
+              (dateChange)="marcarCambio('des_carta_maniobras', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_carta_porte')"><label>Datos para carta porte</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_fecha_carta_porte || ''"
+              (dateChange)="marcarCambio('des_fecha_carta_porte', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_entrega_almacen_prog')"><label>6. Fecha de entrega en almacén programada</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_fecha_entrega_almacen_prog || ''"
+              (dateChange)="marcarCambio('des_fecha_entrega_almacen_prog', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_lugar_destino')"><label>7. Lugar de destino (Ciudad)</label>
           <input type="text" [value]="embarque.des_lugar_destino || ''" (change)="marcarCambio('des_lugar_destino', $any($event.target).value || null)" placeholder="TORREÓN" /></div>
-        <div class="field-row"><label>8. Llegada de contenedor a almacén</label>
-          <input type="date" [value]="embarque.des_llegada_almacen || ''" (change)="marcarCambio('des_llegada_almacen', $any($event.target).value || null)" /></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_llegada_almacen')"><label>8. Llegada de contenedor a almacén</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_llegada_almacen || ''"
+              (dateChange)="marcarCambio('des_llegada_almacen', $event || null)">
+            </app-date-picker></div>
         <div class="field-row field-calc"><label>· Días de tránsito terrestre</label>
           <span class="calc-val">{{ embarque.des_dias_transito_terrestre ?? '—' }} días</span></div>
-        <div class="field-row"><label>9. Solicitud de carta para entrega de vacío</label>
-          <input type="date" [value]="embarque.des_solicitud_carta_vacio || ''" (change)="marcarCambio('des_solicitud_carta_vacio', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>10. Fecha de lavado de contenedor</label>
-          <input type="date" [value]="embarque.des_fecha_lavado || ''" (change)="marcarCambio('des_fecha_lavado', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>11. Fecha entrega contenedor a naviera (real)</label>
-          <input type="date" [value]="embarque.des_entrega_contenedor_naviera || ''" (change)="marcarCambio('des_entrega_contenedor_naviera', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>12. Días sin demoras para devolver contenedor</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_solicitud_carta_vacio')"><label>9. Solicitud de carta para entrega de vacío</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_solicitud_carta_vacio || ''"
+              (dateChange)="marcarCambio('des_solicitud_carta_vacio', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_lavado')"><label>10. Fecha de lavado de contenedor</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_fecha_lavado || ''"
+              (dateChange)="marcarCambio('des_fecha_lavado', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_entrega_contenedor_naviera')"><label>11. Fecha entrega contenedor a naviera (real)</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_entrega_contenedor_naviera || ''"
+              (dateChange)="marcarCambio('des_entrega_contenedor_naviera', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_dias_sin_demoras')"><label>12. Días sin demoras para devolver contenedor</label>
           <input type="number" [value]="embarque.des_dias_sin_demoras || ''" (change)="marcarCambio('des_dias_sin_demoras', +$any($event.target).value || null)" /></div>
         <div class="field-row"><label>13. Fecha límite entrega contenedor a naviera</label>
-          <input type="date" [value]="embarque.des_fecha_limite_naviera || ''" (change)="marcarCambio('des_fecha_limite_naviera', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>14. Recepción de documento EIR</label>
-          <input type="date" [value]="embarque.des_recepcion_eir || ''" (change)="marcarCambio('des_recepcion_eir', $any($event.target).value || null)" /></div>
+          <div class="calc-display">
+            <span *ngIf="embarque.des_fecha_limite_naviera">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ embarque.des_fecha_limite_naviera | slice:0:10 }}
+            </span>
+            <span *ngIf="!embarque.des_fecha_limite_naviera" style="color:#475569;font-size:.8rem">
+              — (se calcula al guardar: ETA Puerto + días sin demoras)
+            </span>
+          </div>
+        </div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')"><label>14. Recepción de documento EIR</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.des_recepcion_eir || ''"
+              (dateChange)="marcarCambio('des_recepcion_eir', $event || null)">
+            </app-date-picker></div>
       </div>
     </div>
 
@@ -469,22 +608,42 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'odoo'">
       <div class="fields-grid">
-        <div class="field-row"><label>1. Codificación de productos</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_codificacion')"><label>1. Codificación de productos</label>
           <select [value]="embarque.odoo_codificacion || ''" (change)="marcarCambio('odoo_codificacion', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select></div>
-        <div class="field-row"><label>2. Alta de catálogo en Odoo</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_alta_catalogo')"><label>2. Alta de catálogo en Odoo</label>
           <select [value]="embarque.odoo_alta_catalogo || ''" (change)="marcarCambio('odoo_alta_catalogo', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select></div>
-        <div class="field-row"><label>3. Alta de precios en Odoo</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_alta_precios')"><label>3. Alta de precios en Odoo</label>
           <select [value]="embarque.odoo_alta_precios || ''" (change)="marcarCambio('odoo_alta_precios', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select></div>
-        <div class="field-row"><label>4. Alta de orden de compra</label>
-          <input type="date" [value]="embarque.odoo_alta_orden_compra || ''" (change)="marcarCambio('odoo_alta_orden_compra', $any($event.target).value || null)" /></div>
-        <div class="field-row full"><label>5. Folio(s) de orden de compra</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_alta_orden_compra')"><label>4. Alta de orden de compra</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.odoo_alta_orden_compra || ''"
+              (dateChange)="marcarCambio('odoo_alta_orden_compra', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('odoo_folio_orden')"><label>5. Folio(s) de orden de compra</label>
           <input type="text" [value]="embarque.odoo_folio_orden || ''" (change)="marcarCambio('odoo_folio_orden', $any($event.target).value || null)" placeholder="2083, 2084, 2085" /></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_importador')">
+          <label>6. Importador</label>
+          <select [value]="embarque.odoo_importador || ''" (change)="marcarCambio('odoo_importador', $any($event.target).value || null)">
+            <option value="">—</option>
+            <option>RBF</option>
+            <option>ROY MORAN</option>
+          </select>
+        </div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
+          <label>7. Recepción de documentos</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.log_recepcion_documentos || ''"
+              (dateChange)="marcarCambio('log_recepcion_documentos', $event || null)">
+            </app-date-picker>
+        </div>
       </div>
     </div>
 
@@ -493,18 +652,42 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'almacen'">
       <div class="fields-grid">
-        <div class="field-row"><label>1. Base de datos para etiquetas</label>
-          <input type="date" [value]="embarque.alm_base_datos_etiquetas || ''" (change)="marcarCambio('alm_base_datos_etiquetas', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>2. Base de datos de artículos a verificación</label>
-          <input type="date" [value]="embarque.alm_base_datos_verificacion || ''" (change)="marcarCambio('alm_base_datos_verificacion', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>3. Liberación de etiquetado por almacén</label>
-          <input type="date" [value]="embarque.alm_liberacion_etiquetado || ''" (change)="marcarCambio('alm_liberacion_etiquetado', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>4. Envío de información a la UVA</label>
-          <input type="date" [value]="embarque.alm_envio_info_uva || ''" (change)="marcarCambio('alm_envio_info_uva', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>5. Liberación de etiquetado por la UVA</label>
-          <input type="date" [value]="embarque.alm_liberacion_uva || ''" (change)="marcarCambio('alm_liberacion_uva', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>6. Fecha límite cumplimiento etiquetado (UVA)</label>
-          <input type="date" [value]="embarque.alm_fecha_limite_etiquetado || ''" (change)="marcarCambio('alm_fecha_limite_etiquetado', $any($event.target).value || null)" /></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_etiquetas')"><label>1. Base de datos para etiquetas</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.alm_base_datos_etiquetas || ''"
+              (dateChange)="marcarCambio('alm_base_datos_etiquetas', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_verificacion')"><label>2. Base de datos de artículos a verificación</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.alm_base_datos_verificacion || ''"
+              (dateChange)="marcarCambio('alm_base_datos_verificacion', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_etiquetado')"><label>3. Liberación de etiquetado por almacén</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.alm_liberacion_etiquetado || ''"
+              (dateChange)="marcarCambio('alm_liberacion_etiquetado', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')"><label>4. Envío de información a la UVA</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.alm_envio_info_uva || ''"
+              (dateChange)="marcarCambio('alm_envio_info_uva', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_uva')"><label>5. Liberación de etiquetado por la UVA</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.alm_liberacion_uva || ''"
+              (dateChange)="marcarCambio('alm_liberacion_uva', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_fecha_limite_etiquetado')"><label>6. Fecha límite cumplimiento etiquetado (UVA)</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.alm_fecha_limite_etiquetado || ''"
+              (dateChange)="marcarCambio('alm_fecha_limite_etiquetado', $event || null)">
+            </app-date-picker></div>
       </div>
     </div>
 
@@ -513,18 +696,30 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'recepcion'">
       <div class="fields-grid">
-        <div class="field-row"><label>1. Cédula de costeo de IGI</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('rec_cedula_costeo')"><label>1. Cédula de costeo de IGI</label>
           <select [value]="embarque.rec_cedula_costeo || ''" (change)="marcarCambio('rec_cedula_costeo', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option>
           </select></div>
-        <div class="field-row"><label>2. Recepción en Odoo</label>
-          <input type="date" [value]="embarque.rec_recepcion_odoo || ''" (change)="marcarCambio('rec_recepcion_odoo', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>3. Folio de Compra en Odoo</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('rec_recepcion_odoo')"><label>2. Recepción en Odoo</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.rec_recepcion_odoo || ''"
+              (dateChange)="marcarCambio('rec_recepcion_odoo', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('rec_folio_compra')"><label>3. Folio de Compra en Odoo</label>
           <input type="text" [value]="embarque.rec_folio_compra || ''" (change)="marcarCambio('rec_folio_compra', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>4. Liberación de productos a verificación</label>
-          <input type="date" [value]="embarque.rec_liberacion_verificacion || ''" (change)="marcarCambio('rec_liberacion_verificacion', $any($event.target).value || null)" /></div>
-        <div class="field-row highlight-final"><label><i class="fas fa-flag-checkered"></i> LIBERACIÓN FINAL DEL PRODUCTO</label>
-          <input type="date" [value]="embarque.rec_liberacion_final || ''" (change)="marcarCambio('rec_liberacion_final', $any($event.target).value || null)" /></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('rec_liberacion_verificacion')"><label>4. Liberación de productos a verificación</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.rec_liberacion_verificacion || ''"
+              (dateChange)="marcarCambio('rec_liberacion_verificacion', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row highlight-final" [class.campo-faltante]="esCampoFaltante('rec_liberacion_final')"><label><i class="fas fa-flag-checkered"></i> LIBERACIÓN FINAL DEL PRODUCTO</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.rec_liberacion_final || ''"
+              (dateChange)="marcarCambio('rec_liberacion_final', $event || null)">
+            </app-date-picker></div>
       </div>
     </div>
 
@@ -533,20 +728,28 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'cierre'">
       <div class="fields-grid">
-        <div class="field-row full"><label>1. Recepción de cuenta de gastos</label>
+        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_recepcion_cuenta_gastos')"><label>1. Recepción de cuenta de gastos</label>
           <input type="text" [value]="embarque.cie_recepcion_cuenta_gastos || ''" (change)="marcarCambio('cie_recepcion_cuenta_gastos', $any($event.target).value || null)" placeholder="SI / NO / % recuperadas" /></div>
-        <div class="field-row full"><label>2. Saldo a favor de Elite Bike</label>
+        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_saldo_favor_elite')"><label>2. Saldo a favor de Elite Bike</label>
           <input type="text" [value]="embarque.cie_saldo_favor_elite || ''" (change)="marcarCambio('cie_saldo_favor_elite', $any($event.target).value || null)" placeholder="SI / NO + importe" /></div>
-        <div class="field-row"><label>3. Liquidado a Elite Bike</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_liquidado_elite')"><label>3. Liquidado a Elite Bike</label>
           <input type="text" [value]="embarque.cie_liquidado_elite || ''" (change)="marcarCambio('cie_liquidado_elite', $any($event.target).value || null)" placeholder="PAGADO + fecha" /></div>
-        <div class="field-row"><label>Fecha de pago a Elite Bike</label>
-          <input type="date" [value]="embarque.cie_fecha_pago_elite || ''" (change)="marcarCambio('cie_fecha_pago_elite', $any($event.target).value || null)" /></div>
-        <div class="field-row full"><label>5. Saldo a favor del Agente Aduanal</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_fecha_pago_elite')"><label>Fecha de pago a Elite Bike</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.cie_fecha_pago_elite || ''"
+              (dateChange)="marcarCambio('cie_fecha_pago_elite', $event || null)">
+            </app-date-picker></div>
+        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_saldo_favor_aa')"><label>5. Saldo a favor del Agente Aduanal</label>
           <input type="text" [value]="embarque.cie_saldo_favor_aa || ''" (change)="marcarCambio('cie_saldo_favor_aa', $any($event.target).value || null)" placeholder="SI / NO + importe" /></div>
-        <div class="field-row"><label>6. Liquidado a Agente Aduanal</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_liquidado_aa')"><label>6. Liquidado a Agente Aduanal</label>
           <input type="text" [value]="embarque.cie_liquidado_aa || ''" (change)="marcarCambio('cie_liquidado_aa', $any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Fecha de pago a Agente Aduanal</label>
-          <input type="date" [value]="embarque.cie_fecha_pago_aa || ''" (change)="marcarCambio('cie_fecha_pago_aa', $any($event.target).value || null)" /></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_fecha_pago_aa')"><label>Fecha de pago a Agente Aduanal</label>
+          <app-date-picker
+              mode="single"
+              [value]="embarque.cie_fecha_pago_aa || ''"
+              (dateChange)="marcarCambio('cie_fecha_pago_aa', $event || null)">
+            </app-date-picker></div>
       </div>
     </div>
 
@@ -555,43 +758,43 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'costos'">
       <div class="fields-grid">
-        <div class="field-row"><label>Tipo de cambio pedimento</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_tipo_cambio_pedimento')"><label>Tipo de cambio pedimento</label>
           <input type="number" step="0.0001" [value]="embarque.cos_tipo_cambio_pedimento || ''" (change)="marcarCambio('cos_tipo_cambio_pedimento', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Valor factura</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_valor_factura')"><label>Valor factura</label>
           <input type="number" step="0.01" [value]="embarque.cos_valor_factura || ''" (change)="marcarCambio('cos_valor_factura', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Cantidad de bicicletas</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_cantidad_bicicletas')"><label>Cantidad de bicicletas</label>
           <input type="number" [value]="embarque.cos_cantidad_bicicletas || ''" (change)="marcarCambio('cos_cantidad_bicicletas', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Costo flete internacional (USD)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_flete_internacional_usd')"><label>Costo flete internacional (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_flete_internacional_usd || ''" (change)="marcarCambio('cos_flete_internacional_usd', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Gastos forwarder en destino (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_gastos_forwarder_pesos')"><label>Gastos forwarder en destino (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_gastos_forwarder_pesos || ''" (change)="marcarCambio('cos_gastos_forwarder_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Seguro (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_seguro_pesos')"><label>Seguro (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_seguro_pesos || ''" (change)="marcarCambio('cos_seguro_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Custodia (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_custodia_pesos')"><label>Custodia (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_custodia_pesos || ''" (change)="marcarCambio('cos_custodia_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Maniobras (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_maniobras_pesos')"><label>Maniobras (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_maniobras_pesos || ''" (change)="marcarCambio('cos_maniobras_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Cargos adicionales / Multas (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_cargos_adicionales_pesos')"><label>Cargos adicionales / Multas (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_cargos_adicionales_pesos || ''" (change)="marcarCambio('cos_cargos_adicionales_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Honorarios AA (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_honorarios_pesos')"><label>Honorarios AA (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_honorarios_pesos || ''" (change)="marcarCambio('cos_honorarios_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Flete terrestre (USD)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_flete_terrestre_usd')"><label>Flete terrestre (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_flete_terrestre_usd || ''" (change)="marcarCambio('cos_flete_terrestre_usd', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Pernoctas flete terrestre (USD)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_pernoctas_usd')"><label>Pernoctas flete terrestre (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_pernoctas_usd || ''" (change)="marcarCambio('cos_pernoctas_usd', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Ingreso a Paquetexpress (USD)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_paquetexpress_usd')"><label>Ingreso a Paquetexpress (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_paquetexpress_usd || ''" (change)="marcarCambio('cos_paquetexpress_usd', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Demoras / Almacenaje (USD)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_demoras_usd')"><label>Demoras / Almacenaje (USD)</label>
           <input type="number" step="0.01" [value]="embarque.cos_demoras_usd || ''" (change)="marcarCambio('cos_demoras_usd', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Verificación (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_verificacion_pesos')"><label>Verificación (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_verificacion_pesos || ''" (change)="marcarCambio('cos_verificacion_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Lavado de contenedor (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_lavado_contenedor_pesos')"><label>Lavado de contenedor (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_lavado_contenedor_pesos || ''" (change)="marcarCambio('cos_lavado_contenedor_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Monitoreo (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_monitoreo_pesos')"><label>Monitoreo (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_monitoreo_pesos || ''" (change)="marcarCambio('cos_monitoreo_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Impuestos pagados (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_impuestos_pagados_pesos')"><label>Impuestos pagados (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_impuestos_pagados_pesos || ''" (change)="marcarCambio('cos_impuestos_pagados_pesos', +$any($event.target).value || null)" /></div>
-        <div class="field-row"><label>Reconocimiento aduanero (pesos)</label>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_reconocimiento_aduanero')"><label>Reconocimiento aduanero (pesos)</label>
           <input type="number" step="0.01" [value]="embarque.cos_reconocimiento_aduanero || ''" (change)="marcarCambio('cos_reconocimiento_aduanero', +$any($event.target).value || null)" /></div>
       </div>
     </div>
