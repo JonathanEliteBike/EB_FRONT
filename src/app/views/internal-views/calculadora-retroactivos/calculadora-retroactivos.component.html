@@ -102,8 +102,8 @@
   </tbody>
   <tfoot>
     <tr>
-      <td>TOTAL DE COMPRA ANUAL:</td>
-      <td class="alineacion-derecha" colspan="3">{{ totalCompraMinimaAnual | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td colspan="3">TOTAL DE COMPRA ANUAL:</td>
+      <td class="alineacion-derecha totales">{{ totalCompraMinimaAnual | currency:'MXN':'symbol':'1.0-0' }}</td>
     </tr>
   </tfoot>
   </table>
@@ -154,17 +154,19 @@
         <td>APPAREL, SYNCROS Y VITTORIA</td>
         <td class="alineacion-derecha">{{ detalleMultimarcaCompraJulAgo | currency:'MXN':'symbol':'1.0-0' }}</td>
         <td class="alineacion-derecha">{{ detalleMultimarcaCompraSepOct | currency:'MXN':'symbol':'1.0-0' }}</td>
-        <td class="alineacion-derecha" colspan="4">{{ detalleMultimarcaCompraNovDic | currency:'MXN':'symbol':'1.0-0' }}</td>
+        <td class="alineacion-derecha">{{ detalleMultimarcaCompraNovDic | currency:'MXN':'symbol':'1.0-0' }}</td>
+        <td colspan="3">
       </tr>
     </tbody>
     <tfoot>
       <tr>
         <td>TOTAL DE COMPRA INICIAL:</td>
-        <td class="alineacion-derecha" colspan="6">{{ detalleTotalCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
+        <td class="alineacion-centrada totales" colspan="3">{{ detalleTotalCompraInicialPrimerSemestre | currency:'MXN':'symbol':'1.0-0' }}</td>
+        <td class="alineacion-centrada totales" colspan="3">{{ segundoSemestreMinimaBicicletaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
       </tr>
     </tfoot>
   </table>
-  <ng-container *ngIf="clasificacionSeleccionada.id !== 4"> 
+  <ng-container *ngIf="clasificacionSeleccionada.id !== 1"> 
     <p class="titulo">COMPRAS ANUALES ADICIONALES AL IMPORTE MINIMO DE CADA NIVEL</p>
     <div class="contenedor-compra-anual">
       <table class="tabla">
