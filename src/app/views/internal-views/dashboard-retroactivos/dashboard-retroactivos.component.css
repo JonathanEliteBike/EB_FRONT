@@ -83,6 +83,25 @@ h2 {
     /* Borde un poco más claro */
 }
 
+/* Botón Exportar Excel */
+.btn-excel {
+    background-color: rgba(34, 85, 34, 0.15);
+    border-color: #1d6b1d;
+    color: #7ec87e;
+}
+
+.btn-excel:hover:not(:disabled) {
+    background-color: #1d6b1d;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(29, 107, 29, 0.5);
+    border-color: #28922a;
+}
+
+.btn-excel:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Estado deshabilitado (cuando está cargando) */
 .btn-actualizar:disabled {
     background-color: #2d252b;

@@ -20,6 +20,10 @@
             <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i>
             {{ cargando ? 'Sincronizando...' : 'Actualizar Odoo' }}
         </button>
+
+        <button class="btn btn-excel" (click)="exportarExcel()" [disabled]="cargando || retroactivos.length === 0">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
     </div>
 
     <div *ngIf="cargando" class="cargando-spinner">

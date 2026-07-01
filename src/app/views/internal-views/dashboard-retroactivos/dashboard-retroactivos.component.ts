@@ -5,6 +5,8 @@ import { RetroactivosService } from '../../../services/retroactivos.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
 import { switchMap } from 'rxjs/operators';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 interface FiltroOption {
   value: string;
@@ -191,6 +193,51 @@ export class DashboardRetroactivosComponent implements OnInit {
   }
 
   // ==========================================
+
+  exportarExcel(): void {
+    const pct = (v: number) => v ? `${(v * 100).toFixed(1)}%` : '0.0%';
+    const usd = (v: number) => v ?? 0;
+
+    const filas = this.retroactivos.map(item => ({
+      'Clave':                    item.CLAVE,
+      'Zona':                     item.ZONA,
+      'Cliente':                  item.CLIENTE,
+      'Categoría':                item.CATEGORIA,
+      'Compra Mín. Anual':        usd(item.COMPRA_MINIMA_ANUAL),
+      'Compra Mín. Apparel':      usd(item.COMPRA_MINIMA_APPAREL),
+      'Compras Totales (Crudo)':  usd(item.COMPRAS_TOTALES_CRUDO),
+      '% Avance General':         pct(item.porcentaje_avance_general),
+      'Meta MY26':                item.META_MY26_CUMPLIDA === 'SI' || item.META_MY26_CUMPLIDA === 1 ? 'SÍ' : 'NO',
+      'Compra Global Scott':      usd(item.COMPRA_GLOBAL_SCOTT),
+      '% Avance Scott':           pct(item.porcentaje_avance_scott),
+      'Compra Global Apparel':    usd(item.COMPRA_GLOBAL_APPAREL),
+      '% Avance Apparel':         pct(item.porcentaje_avance_apparel),
+      'Compra Global Bold':       usd(item.COMPRA_GLOBAL_BOLD),
+      'Total Acumulado':          usd(item.TOTAL_ACUMULADO),
+      'Notas de Crédito':         usd(item.notas_credito),
+      'Garantías':                usd(item.garantias),
+      'Prod. Ofertados':          usd(item.productos_ofertados),
+      'Bici Demo':                usd(item.bicicleta_demo),
+      'Bicis Bold':               usd(item.bicicletas_bold),
+      'Importe Final Base':       usd(item.importe_final),
+      'Compra Anual Crudo':       usd(item.compra_anual_crudo),
+      'Compra Adicional':         usd(item.compra_adicional),
+      '% Retroactivo':            pct(item.porcentaje_retroactivo),
+      '% Retroactivo Apparel':    pct(item.porcentaje_retroactivo_apparel),
+      '% Total':                  pct(item.retroactivo_total),
+      'Importe a Pagar':          usd(item.importe),
+      'Estatus':                  item.estatus ?? '',
+      'Fecha Aplicación':         item.fecha_aplicacion ?? '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(filas);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Retroactivos MY26');
+
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const fecha = new Date().toISOString().slice(0, 10);
+    saveAs(new Blob([buf], { type: 'application/octet-stream' }), `retroactivos_${fecha}.xlsx`);
+  }
 
   calcularTotales(): void {
     // Reiniciamos totales
