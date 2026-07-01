@@ -1104,6 +1104,45 @@
           </div>
         </ng-container>
 
+        <!-- ── Proyección de Costos ── -->
+        <div class="fields-subsection-header">
+          <i class="fas fa-chart-line"></i> Proyección de Costos
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_flete_proyectado_usd')"><label>Flete proyectado (USD)</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_flete_proyectado_usd')">
+              <input type="text" [value]="formatMoney(embarque.cos_flete_proyectado_usd)" (change)="marcarCambio('cos_flete_proyectado_usd', parseMoney($any($event.target).value))" placeholder="0.00" />
+            </ng-container>
+            <span *ngIf="esNA('cos_flete_proyectado_usd')" class="na-badge" (click)="toggleNA('cos_flete_proyectado_usd')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_flete_proyectado_usd')" (click)="toggleNA('cos_flete_proyectado_usd')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_tipo_cambio_proyectado')"><label>Tipo de cambio proyectado</label>
+          <input type="number" step="0.0001" [value]="embarque.cos_tipo_cambio_proyectado || ''" (change)="marcarCambio('cos_tipo_cambio_proyectado', +$any($event.target).value || null)" placeholder="Ej: 17.50" />
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_maniobras_proyectado_pesos')"><label>Maniobras proyectado (pesos)</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_maniobras_proyectado_pesos')">
+              <input type="text" [value]="formatMoney(embarque.cos_maniobras_proyectado_pesos)" (change)="marcarCambio('cos_maniobras_proyectado_pesos', parseMoney($any($event.target).value))" placeholder="0.00" />
+            </ng-container>
+            <span *ngIf="esNA('cos_maniobras_proyectado_pesos')" class="na-badge" (click)="toggleNA('cos_maniobras_proyectado_pesos')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_maniobras_proyectado_pesos')" (click)="toggleNA('cos_maniobras_proyectado_pesos')">N/A</button>
+          </div>
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_honorarios_proyectado_pesos')"><label>Honorarios proyectado (pesos)</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('cos_honorarios_proyectado_pesos')">
+              <input type="text" [value]="formatMoney(embarque.cos_honorarios_proyectado_pesos)" (change)="marcarCambio('cos_honorarios_proyectado_pesos', parseMoney($any($event.target).value))" placeholder="0.00" />
+            </ng-container>
+            <span *ngIf="esNA('cos_honorarios_proyectado_pesos')" class="na-badge" (click)="toggleNA('cos_honorarios_proyectado_pesos')" title="Quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('cos_honorarios_proyectado_pesos')" (click)="toggleNA('cos_honorarios_proyectado_pesos')">N/A</button>
+          </div>
+        </div>
+
       </div>
     </div>
 

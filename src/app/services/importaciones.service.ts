@@ -204,6 +204,12 @@ export interface Importacion {
   cos_precio_bici_megamo_vitae?: number;
   cos_precio_bici_total?: number;
 
+  // Proyección de costos
+  cos_flete_proyectado_usd?: number;
+  cos_tipo_cambio_proyectado?: number;
+  cos_maniobras_proyectado_pesos?: number;
+  cos_honorarios_proyectado_pesos?: number;
+
   notas?: string;
   borradores?: Record<string, Record<string, any>>;
   campos_na?: string[];

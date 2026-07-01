@@ -333,6 +333,27 @@
 .table-order button:active { transform: scale(0.95); }
 .table-order button.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; }
 
+/* Buscador de embarques */
+.table-search {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-bottom: 1px solid #1e2535;
+  background: #0d1220;
+}
+.table-search-icon { color: #4b5563; font-size: .75rem; }
+.table-search-input {
+  flex: 1; background: #0f1523; border: 1px solid #2d3748; border-radius: 6px;
+  color: #e2e8f0; font-size: .78rem; padding: 6px 10px; outline: none;
+  transition: border-color 150ms ease;
+}
+.table-search-input::placeholder { color: #374151; }
+.table-search-input:focus { border-color: #3b82f6; }
+.table-search-clear {
+  background: none; border: none; color: #4b5563; cursor: pointer;
+  font-size: .75rem; padding: 4px 6px; border-radius: 4px;
+  transition: color 150ms ease;
+}
+.table-search-clear:hover { color: #94a3b8; }
+
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; min-width: 900px; }
 thead tr { background: #0f1523; }
@@ -421,10 +442,20 @@ td { padding: 10px 14px; vertical-align: middle; }
   white-space: nowrap;
 }
 
-/* Col 6: Llegada */
-.td-llegada { min-width: 90px; }
-.llegada-fecha { display: block; font-size: .8rem; color: #cbd5e1; white-space: nowrap; }
-.llegada-rel   { display: block; font-size: .65rem; color: #4b5563; margin-top: 1px; }
+/* Col 6: Almacén (Proyectado / Real) */
+.td-llegada { min-width: 115px; }
+.llegada-dual { display: flex; flex-direction: column; gap: 3px; }
+.llegada-row  { display: flex; align-items: center; gap: 5px; }
+.llegada-label {
+  font-size: .55rem; font-weight: 700; letter-spacing: .05em;
+  padding: 1px 4px; border-radius: 3px; flex-shrink: 0;
+}
+.llegada-label-proy { background: #1e3a5f44; color: #60a5fa; }
+.llegada-label-real { background: #14532d33; color: #4ade80; }
+.llegada-fecha { font-size: .78rem; color: #cbd5e1; white-space: nowrap; }
+.llegada-tarde  { color: #f87171 !important; }
+.llegada-tiempo { color: #4ade80 !important; }
+.llegada-rel   { font-size: .62rem; color: #4b5563; margin-top: 1px; }
 
 /* Col 7: Costo proyectado / real */
 .td-costo { min-width: 150px; text-align: center; }
@@ -434,10 +465,11 @@ td { padding: 10px 14px; vertical-align: middle; }
   font-size: .58rem; font-weight: 700; letter-spacing: .05em;
   padding: 1px 5px; border-radius: 3px; flex-shrink: 0;
 }
-.ctag-flete { background: #1e3a5f44; color: #60a5fa; }
+.ctag-proy  { background: #1e3a5f44; color: #60a5fa; }
 .ctag-real  { background: #78350f33; color: #f59e0b; }
 .cval       { font-size: .78rem; color: #94a3b8; font-family: monospace; white-space: nowrap; }
 .cval-real  { color: #e2e8f0; font-weight: 600; }
+.cval-sin-dato { color: #374151; }
 
 /* Col 8: Costo / Bici */
 .th-bici    { text-align: center; }

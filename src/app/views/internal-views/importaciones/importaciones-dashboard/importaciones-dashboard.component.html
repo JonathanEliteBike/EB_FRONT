@@ -433,6 +433,13 @@
             <button [class.active]="ordenTabla === 'bici'"    (click)="ordenTabla = 'bici'">Costo/Bici</button>
           </div>
         </div>
+        <div class="table-search">
+          <i class="fas fa-search table-search-icon"></i>
+          <input class="table-search-input" type="text" [(ngModel)]="textoBuscador" placeholder="Buscar por referencia, nombre, origen, contenido..." />
+          <button *ngIf="textoBuscador" class="table-search-clear" (click)="textoBuscador = ''">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -442,7 +449,7 @@
                 <th>Origen</th>
                 <th>Contenido</th>
                 <th>Estatus</th>
-                <th>Llegada Almacén</th>
+                <th>Almacén</th>
                 <th>Proyectado / Real</th>
                 <th class="th-bici">Costo / Bici</th>
                 <th>Notas</th>
@@ -483,20 +490,45 @@
                 </td>
 
                 <td class="td-llegada">
-                  <span class="llegada-fecha">{{ e.des_llegada_almacen ? (e.des_llegada_almacen | date:'dd/MMM/yy') : '—' }}</span>
-                  <span class="llegada-rel" *ngIf="e.des_llegada_almacen">{{ llegadaRelativa(e.des_llegada_almacen) }}</span>
+                  <div class="llegada-dual">
+                    <div class="llegada-row">
+                      <span class="llegada-label llegada-label-proy">PROY</span>
+                      <span class="llegada-fecha">{{ e.des_fecha_entrega_almacen_prog ? (e.des_fecha_entrega_almacen_prog | date:'dd/MMM/yy') : '—' }}</span>
+                    </div>
+                    <div class="llegada-row">
+                      <span class="llegada-label llegada-label-real">REAL</span>
+                      <span class="llegada-fecha"
+                        [class.llegada-tarde]="e.des_fecha_entrega_almacen_prog && e.des_llegada_almacen && e.des_llegada_almacen > e.des_fecha_entrega_almacen_prog"
+                        [class.llegada-tiempo]="e.des_fecha_entrega_almacen_prog && e.des_llegada_almacen && e.des_llegada_almacen <= e.des_fecha_entrega_almacen_prog">
+                        {{ e.des_llegada_almacen ? (e.des_llegada_almacen | date:'dd/MMM/yy') : '—' }}
+                      </span>
+                    </div>
+                    <span class="llegada-rel" *ngIf="e.des_llegada_almacen">{{ llegadaRelativa(e.des_llegada_almacen) }}</span>
+                  </div>
                 </td>
 
                 <td class="td-costo">
                   <div class="costo-stack">
-                    <div class="costo-line">
-                      <span class="ctag ctag-flete">FLETE</span>
-                      <span class="cval">{{ e.cos_flete_internacional_usd ? formatUsd(e.cos_flete_internacional_usd) : '—' }}</span>
+                    <div class="costo-line" *ngIf="e.costo_proyectado_pesos; else sinProy">
+                      <span class="ctag ctag-proy">PROY</span>
+                      <span class="cval">{{ formatPesos(e.costo_proyectado_pesos) }}</span>
                     </div>
-                    <div class="costo-line" *ngIf="e.costo_total_pesos">
+                    <ng-template #sinProy>
+                      <div class="costo-line">
+                        <span class="ctag ctag-proy">PROY</span>
+                        <span class="cval cval-sin-dato">—</span>
+                      </div>
+                    </ng-template>
+                    <div class="costo-line" *ngIf="e.costo_real_pesos; else sinReal">
                       <span class="ctag ctag-real">REAL</span>
-                      <span class="cval cval-real">{{ formatPesos(e.costo_total_pesos) }}</span>
+                      <span class="cval cval-real">{{ formatPesos(e.costo_real_pesos) }}</span>
                     </div>
+                    <ng-template #sinReal>
+                      <div class="costo-line">
+                        <span class="ctag ctag-real">REAL</span>
+                        <span class="cval cval-sin-dato">—</span>
+                      </div>
+                    </ng-template>
                   </div>
                 </td>
 

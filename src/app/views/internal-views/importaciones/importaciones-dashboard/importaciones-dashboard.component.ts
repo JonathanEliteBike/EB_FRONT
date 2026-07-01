@@ -78,6 +78,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   cargando  = true;
   error     = '';
   ordenTabla:    'llegada' | 'costo' | 'bici' = 'llegada';
+  textoBuscador = '';
   desgloseOrigen = false;
   activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' = 'resumen';
 
@@ -548,7 +549,18 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   get embarquesOrdenados(): any[] {
     if (!this.data) return [];
-    return [...this.data.embarques].sort((a, b) => {
+    const q = this.textoBuscador.trim().toLowerCase();
+    const filtrados = q
+      ? this.data.embarques.filter((e: any) =>
+          (e.referencia || '').toLowerCase().includes(q) ||
+          (e.nombre || '').toLowerCase().includes(q) ||
+          (e.log_origen || '').toLowerCase().includes(q) ||
+          (e.log_tipo_productos || '').toLowerCase().includes(q) ||
+          (e.estado || '').toLowerCase().includes(q) ||
+          (e.notas || '').toLowerCase().includes(q)
+        )
+      : this.data.embarques;
+    return [...filtrados].sort((a, b) => {
       if (this.ordenTabla === 'llegada') {
         const da = a.des_llegada_almacen ? new Date(a.des_llegada_almacen).getTime() : 0;
         const db = b.des_llegada_almacen ? new Date(b.des_llegada_almacen).getTime() : 0;

@@ -185,6 +185,11 @@ export class ImportacionesDetalleComponent implements OnInit {
       { campo: 'cos_caja_megamo_track',       label: 'MEGAMO TRACK / PULSE — CAJA 5 (0.32 m³)',             opcional: true },
       { campo: 'cos_caja_megamo_reason',      label: 'MEGAMO REASON / FLAME / ALONG / RYAL — CAJA 6 (0.42 m³)', opcional: true },
       { campo: 'cos_caja_megamo_vitae',       label: 'MEGAMO VITAE MUSCULAR / NATURAL — CAJA 7 (0.46 m³)', opcional: true },
+      // Proyección de costos
+      { campo: 'cos_flete_proyectado_usd',        label: 'Flete proyectado (USD)',         opcional: true },
+      { campo: 'cos_tipo_cambio_proyectado',       label: 'Tipo de cambio proyectado',      opcional: true },
+      { campo: 'cos_maniobras_proyectado_pesos',   label: 'Maniobras proyectado (pesos)',   opcional: true },
+      { campo: 'cos_honorarios_proyectado_pesos',  label: 'Honorarios proyectado (pesos)',  opcional: true },
     ],
   };
 
