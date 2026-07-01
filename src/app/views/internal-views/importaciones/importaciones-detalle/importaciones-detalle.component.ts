@@ -465,6 +465,18 @@ export class ImportacionesDetalleComponent implements OnInit {
     return Object.keys(this.cambiosPendientes).length > 0;
   }
 
+  formatMoney(val: number | null | undefined, decimals = 2): string {
+    if (val === null || val === undefined) return '';
+    return val.toLocaleString('es-MX', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  }
+
+  parseMoney(str: string): number | null {
+    if (!str) return null;
+    const cleaned = str.replace(/[$\s]/g, '').replace(/,/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+
   formatFechaCalc(s: string | null | undefined): string {
     if (!s) return '—';
     const parts = s.split('-');
