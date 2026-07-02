@@ -63,6 +63,7 @@ import { adminGuard } from './guards/admin.guard';
 import { usuarioGuard } from './guards/usuario.guard';
 import { flujoGuard } from './guards/flujo.guard';
 import { loggedInGuard } from './guards/logged-in.guard';
+import { importacionesGuard } from './guards/importaciones.guard';
 
 import { CalculadoraRetroactivosComponent } from './views/internal-views/calculadora-retroactivos/calculadora-retroactivos.component';
 
@@ -121,8 +122,8 @@ export const routes: Routes = [
   { path: 'garantias/formulario', component: GarantiasFormularioComponent,  canActivate: [loggedInGuard] },
   { path: 'garantias/editor',     component: GarantiasEditorComponent,      canActivate: [adminGuard] },
   { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
-  { path: 'importaciones',           component: ImportacionesComponent,          canActivate: [adminGuard] },
-  { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent,  canActivate: [adminGuard] },
-  { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [adminGuard] },
+  { path: 'importaciones',           component: ImportacionesComponent,          canActivate: [importacionesGuard] },
+  { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent,  canActivate: [importacionesGuard] },
+  { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
