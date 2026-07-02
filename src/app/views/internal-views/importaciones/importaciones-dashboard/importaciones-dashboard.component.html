@@ -111,6 +111,17 @@
           </div>
         </div>
 
+        <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('transito_aereo')" title="Ver embarques aéreos · booking → almacén">
+          <div class="kpi-icon kpi-purple"><i class="fas fa-plane"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-num">
+              {{ data.kpis.transito_aereo_promedio_dias != null ? data.kpis.transito_aereo_promedio_dias : '—' }}<small *ngIf="data.kpis.transito_aereo_promedio_dias != null"> días</small>
+            </span>
+            <span class="kpi-lbl">Tránsito Aéreo</span>
+            <span class="kpi-sub" *ngIf="data.kpis.transito_aereo_n">n={{ data.kpis.transito_aereo_n }}</span>
+          </div>
+        </div>
+
         <div class="kpi-card kpi-card--clickable" (click)="abrirModalResumen('avance')" title="Ver avance por embarque">
           <div class="kpi-icon kpi-green"><i class="fas fa-tasks"></i></div>
           <div class="kpi-info">

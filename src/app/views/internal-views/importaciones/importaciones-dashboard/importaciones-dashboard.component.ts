@@ -15,6 +15,7 @@ interface Kpis {
   total: number; activos: number; cerrados: number; cancelados: number;
   flete_total_usd: number; flete_promedio_usd: number;
   transito_maritimo_promedio_dias: number; pct_avance_promedio: number;
+  transito_aereo_promedio_dias: number | null; transito_aereo_n: number;
 }
 interface LatEmbarqDet { id: number; referencia: string; nombre: string; log_origen: string; fecha_ini: string; fecha_fin: string; dias: number; }
 interface LatSingle  { dias_promedio: number | null; n: number; x_embarque?: LatEmbarqDet[]; }
@@ -612,7 +613,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   cerrarModalLat():  void { this.modalLat  = null; }
   cerrarModalEtiq(): void { this.modalEtiq = false; }
 
-  abrirModalResumen(tipo: 'total' | 'activos' | 'cerrados' | 'transito' | 'avance'): void {
+  abrirModalResumen(tipo: 'total' | 'activos' | 'cerrados' | 'transito' | 'transito_aereo' | 'avance'): void {
     if (!this.data) return;
     const emb = this.data.embarques;
     type Cfg = { titulo: string; subtitulo: string; filter: (e: any) => boolean; sort: (a: any, b: any) => number };
@@ -620,7 +621,8 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
       total:    { titulo: 'Todos los Embarques',   subtitulo: `${emb.length} embarques registrados`,          filter: () => true,                           sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
       activos:  { titulo: 'Embarques en Proceso',  subtitulo: 'Estado activo · ordenado por avance',          filter: e => e.estado === 'activo',           sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
       cerrados: { titulo: 'Embarques Cerrados',    subtitulo: 'Estado cerrado · más recientes primero',       filter: e => e.estado === 'cerrado',          sort: (a, b) => { const da = a.des_llegada_almacen ? +new Date(a.des_llegada_almacen) : 0; const db = b.des_llegada_almacen ? +new Date(b.des_llegada_almacen) : 0; return db - da; } },
-      transito: { titulo: 'Embarques Marítimos',   subtitulo: 'Vía marítima · ordenado por avance',          filter: e => e.via_transporte === 'MARITIMO', sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
+      transito:       { titulo: 'Embarques Marítimos', subtitulo: 'Vía marítima · ordenado por avance',           filter: e => e.via_transporte === 'MARITIMO', sort: (a, b) => (b.pct_avance ?? 0) - (a.pct_avance ?? 0) },
+      transito_aereo: { titulo: 'Embarques Aéreos',    subtitulo: 'Vía aérea · booking → llegada almacén',       filter: e => e.via_transporte === 'AEREO',    sort: (a, b) => { const da = a.des_llegada_almacen ? +new Date(a.des_llegada_almacen) : 0; const db = b.des_llegada_almacen ? +new Date(b.des_llegada_almacen) : 0; return db - da; } },
       avance:   { titulo: 'Avance por Embarque',   subtitulo: 'Menor avance primero · todos los embarques',  filter: () => true,                           sort: (a, b) => (a.pct_avance ?? 101) - (b.pct_avance ?? 101) },
     };
     const { titulo, subtitulo, filter, sort } = cfgBase[tipo];
