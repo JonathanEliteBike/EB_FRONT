@@ -26,10 +26,12 @@ export const adminGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     const decodedToken: any = jwtDecode(token);
 
     if (decodedToken.rol === 1) {
-      // Admin, puede acceder
       return true;
+    } else if (decodedToken.rol === 3) {
+      // Importaciones — solo puede acceder a sus rutas propias
+      router.navigate(['/importaciones/dashboard']);
+      return false;
     } else {
-      // No es admin, redirigimos a su dashboard
       router.navigate(['/usuarios/dashboard']);
       return false;
     }

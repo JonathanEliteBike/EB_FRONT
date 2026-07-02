@@ -43,6 +43,8 @@ export class LoginComponent {
           this.router.navigate(['/home']);
         } else if (decodedToken.rol === 2) {
           this.router.navigate(['/usuarios/dashboard']);
+        } else if (decodedToken.rol === 3) {
+          this.router.navigate(['/importaciones/dashboard']);
         } else {
           this.router.navigate(['/login']);
         }
