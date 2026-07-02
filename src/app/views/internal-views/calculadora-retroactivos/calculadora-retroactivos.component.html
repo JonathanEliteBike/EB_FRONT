@@ -8,7 +8,7 @@
     <p>CALCULO DE MARGENES DE RETROACTIVOS</p> 
   </div> 
 
-  <table class="tabla" style="position: sticky; top: 0;">
+  <table class="tabla margen-retroactivo">
       <tr class="cabecera">
         <th></th>
         <th>MARGEN PRECIO DISTRIBUIDOR</th>
@@ -22,7 +22,7 @@
           <td>{{ item.descripcion }}</td>
           <td class="alineacion-derecha">{{ item.margen_precio_distribuidor }}%</td>
           <td class="alineacion-derecha">{{ item.margen_inicio_temporada.toFixed(2) }}%</td>
-          <td class="alineacion-derecha">{{ item.nivel_elegido }} </td>
+          <td>{{ item.nivel_elegido }} </td>
           <td class="alineacion-derecha">{{ item.suma_descuento_retroactivo.toFixed(2) }}%</td>
           <td class="alineacion-derecha">{{ item.margen_con_descuento_retroactivo.toFixed(2) }}%</td>
         </tr>
@@ -78,6 +78,7 @@
         <th>COMPRA MINIMA ANUAL POR LINEAS</th>
         <th>% COMPRA</th>
         <th>MONTO COMPRA INICIAL</th>
+        <th>SEGUNDO SEMESTRE</th>
       </tr>
     </thead>
     <tbody>
@@ -86,24 +87,28 @@
       <td class="alineacion-derecha">{{ bicicletaMinimaCompraInicialLinea | currency:'MXN':'symbol':'1.0-0' }}</td>
       <td class="alineacion-derecha">{{ bicicletaPorcentajeInicial }}%</td>
       <td class="alineacion-derecha">{{ bicicletaMinimaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td></td>
     </tr>
     <tr>
-      <td>APPAREL, SYNCROS Y VITTORIA</td>
+      <td>APPAREL Y SYNCROS</td>
       <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicialLinea | currency:'MXN':'symbol':'1.0-0' }}</td>
       <td class="alineacion-derecha">{{ multimarcaPorcentajeInicial }}%</td>
       <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td></td>
     </tr>
     <tr>
-      <td>2Do Semestre Bicicletas</td>
-      <td></td>
+      <td colspan="2">2DO SEMESTRE BICICLETAS</td>
       <td class="alineacion-derecha">{{ segundoSemestreMinimaBicicletaPorcentajeInicial }}%</td>
-      <td class="alineacion-derecha">{{ segundoSemestreMinimaBicicletaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td colspan="2" class="alineacion-derecha">{{ segundoSemestreMinimaBicicletaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
     </tr>
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="3">TOTAL DE COMPRA ANUAL:</td>
-      <td class="alineacion-derecha totales">{{ totalCompraMinimaAnual | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td>TOTAL DE COMPRA ANUAL:</td>
+      <td class="alineacion-derecha totales">{{ totalCompraMinimaAnualPrimerSemestre | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td></td>
+      <td class="alineacion-derecha totales">{{ totalCompraMinimaAnualSegundoSemestre | currency:'MXN':'symbol':'1.0-0' }}</td>
+      <td></td>
     </tr>
   </tfoot>
   </table>
@@ -151,11 +156,13 @@
         <td class="alineacion-derecha">{{ detalleBiciCompraMayJun | currency:'MXN':'symbol':'1.0-0' }}</td>
       </tr>
       <tr>
-        <td>APPAREL, SYNCROS Y VITTORIA</td>
+        <td>APPAREL Y SYNCROS</td>
         <td class="alineacion-derecha">{{ detalleMultimarcaCompraJulAgo | currency:'MXN':'symbol':'1.0-0' }}</td>
         <td class="alineacion-derecha">{{ detalleMultimarcaCompraSepOct | currency:'MXN':'symbol':'1.0-0' }}</td>
         <td class="alineacion-derecha">{{ detalleMultimarcaCompraNovDic | currency:'MXN':'symbol':'1.0-0' }}</td>
-        <td colspan="3">
+        <td class="alineacion-derecha">{{ detalleMultimarcaCompraJulAgo | currency:'MXN':'symbol':'1.0-0' }}</td>
+        <td class="alineacion-derecha">{{ detalleMultimarcaCompraSepOct | currency:'MXN':'symbol':'1.0-0' }}</td>
+        <td class="alineacion-derecha">{{ detalleMultimarcaCompraNovDic | currency:'MXN':'symbol':'1.0-0' }}</td>
       </tr>
     </tbody>
     <tfoot>
@@ -172,9 +179,9 @@
       <table class="tabla">
         <thead>
           <tr class="cabecera">
-            <th>MARGEN NIVEL ADICIONAL</th>
-            <th>IMPORTE MINIMO TOTAL ANUAL DEL NIVEL (I.V.A. INCLUIDO)</th>
-            <th>Descuento Retroactivo por Logro de Compra Anual Adicional al Minimo del Nivel</th>
+            <th>COMPRA MÍNIMA ANUAL EN LUGAR DE MARGEN NIVEL ADICIONAL</th>
+            <th>IMPORTE TOTAL DE COMPRA ANUAL, ADICIONAL AL MINIMO DEL NIVEL (IVA INCLUIDO)</th>
+            <th>DESCUENTO RETROACTIVO POR LOGRO DE COMPRA ANUAL ADICIONAL AL MINIMO DEL NIVEL</th>
           </tr>
         </thead>
         <tbody>
@@ -190,10 +197,10 @@
       <br>
       <div class="dropdown">
         <label>Cantidad</label>
-        <select class="select-control" [(ngModel)]="anualAdicionalPorNivel" (ngModelChange)="calcularDetalleRetroActivo()">
+        <select class="select-control" [(ngModel)]="anualAdicionalPorNivel" (ngModelChange)="calcularDetalleRetroActivo()" [compareWith]="compararAnualAdicionalPorNivel">
           <option value="" disabled selected>Selecciona una opción...</option>
-          <option *ngFor="let item of listaAnualAdicionalPorNivelCantidad" [ngValue]="item">
-            {{ item.valor | currency:'MXN':'symbol':'1.0-0'}}
+          <option *ngFor="let item of listaAnualAdicionalPorNivelCantidad()" [ngValue]="item">
+            {{ item.valor_calculado | currency:'MXN':'symbol':'1.0-0'}}
           </option>
         </select>
       </div>
@@ -204,14 +211,14 @@
   <table class="tabla">
     <thead>
       <tr class="cabecera">
-        <th colspan="3">NOTA: Al alcanzar una categoría igual o superior a la sugerida, podrás acceder a un retroactivo del 2.5% en compras mínimas de apparel Syncros y Vittoria — un beneficio exclusivo que mejora significativamente el incentivo base del 1.5%.</th>
+        <th colspan="3">NOTA: AL ALCANZAR UNA CATEGORÍA IGUAL O SUPERIOR A LA SUGERIDA, PODRÁS ACCEDER A UN RETROACTIVO DEL 2.5% EN COMPRAS MÍNIMAS DE APPAREL SYNCROS — UN BENEFICIO EXCLUSIVO QUE MEJORA SIGNIFICATIVAMENTE EL INCENTIVO BASE DEL 1.5%.</th>
       </tr>
     </thead>
     <tbody>
       <ng-container *ngFor="let item of listaAnualPorCumplimiento">
         <tr>
           <td><input type="checkbox" [(ngModel)]="item.seleccionado" (ngModelChange)="obtenerAnualPorCumplimiento()"></td>
-          <td>{{ item.descripcion }}</td>
+          <td>{{ item.descripcion | uppercase }}</td>
           <td class="alineacion-derecha">{{ item.descuento }}</td>
         </tr>
       </ng-container>
@@ -270,7 +277,7 @@
         </tr>
       </ng-container>
       <tr>
-        <td>PLAZO DE PAGO A: </td>
+        <td>PLAZO DE PAGO A:</td>
         <td colspan="4"> {{ clasificacionSeleccionada.plazo_pago }} </td>
       </tr>
     </tbody>
@@ -286,7 +293,7 @@
     <div class="contenedor-compra-minima-apparel">
       <p>{{clasificacionSeleccionada.descripcion || "Elige un NIVEL"}}</p>
       <div>
-        <p>APAREL, SYNCROS Y VITTORIA</p>
+        <p>APAREL Y SYNCROS</p>
         <p>CASCOS, ZAPATOS, ROPA, GUANTES, BOLSAS Y MOCHILAS, LENTES, PROTECCIONES, COMPONENTES, RUEDAS, ASIENTOS, GRIPS Y CINTAS, BOMBAS, HERRAMIENTAS, ANFORA Y PORTANFORA, ACCESORIOS DIVERSOS, NEUMATICOS, INSERTOS, SELLADORES</p>
         <p>{{multimarcaMinimaCompraInicialLinea | currency:'MXN':'symbol':'1.0-0'}}</p>
       </div>
@@ -298,8 +305,8 @@
     <tbody>
       <ng-container *ngFor="let item of listaProgramaEspecialImpulso">
        <tr>
-        <td>{{ item.descripcion }}</td>
-        <td>{{ item.valor }}</td>
+        <td>{{item.descripcion | uppercase}}</td>
+        <td>{{item.valor | uppercase }}</td>
        </tr>
       </ng-container>
     </tbody>
@@ -308,11 +315,15 @@
   <div class="restriccion-programa">
     <p><b>RESTRICCIONES</b> DE LOS PROGRAMAS</p>
     <ol>
-      <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL INFERIOR:</b> Si por motivo de incumplimiento o por deseo del distribuidor se cambia de Nivel hacia un Nivel inferior, y dicho cambio es posterior a finalizar el primer bloque, el Distribuidor pierde los derechos de obtener retroactivos anuales, si dicho cambio se efectúa antes de finalizar el primer bloque, deberá cumplir con los requisitos de la categoría a la que se está cambiando.</li>
+      <ng-container *ngFor="let item of listaRestriccionesPrograma">
+        <li><b>{{item.descripcion | uppercase}}</b> {{item.valor | uppercase}}</li>
+      </ng-container>
+
+      <!-- <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL INFERIOR:</b> Si por motivo de incumplimiento o por deseo del distribuidor se cambia de Nivel hacia un Nivel inferior, y dicho cambio es posterior a finalizar el primer bloque, el Distribuidor pierde los derechos de obtener retroactivos anuales, si dicho cambio se efectúa antes de finalizar el primer bloque, deberá cumplir con los requisitos de la categoría a la que se está cambiando.</li>
       <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL SUPERIOR:</b> En los casos que el Distribuidor decide cambiar a un nivel superior, lo podrá hacer en cualquier momento, y deberá cumplir los requisitos de la categoria superior para acceder a los descuentos retroactivos.</li>
       <li><b>PRECIOS DE LAS PAQUETERIAS:</b> Las tarifas de las paqueterias, normalmente se negocían con las mísmas a principios de cada temporada, y casi siempre permanecen por todo el periodo, en los últimos meses, esta situación ha cambiado, y en ocasiones los costos se incrementaron considerablemente, por lo tanto, en el caso de sufrir un aumento considerable tendremos que impactarlo en los precios cobrados, sin dejar de lado que el objeto del programa de subisidio a los costos de los fletes es con el objeto de mejorar nuestra oferta de negocio y lograr que la rentabilidad con Elite Bike sea cada temprada mejor.</li>
       <li><b>SUBSIDIO A SEGURO DE TRANSPORTE:</b> En la presente temporada en algunos niveles de distribución se subsidia al 100% el costo cobrado por concepto de seguro de transporte, para revisar las condiciones de los riesgos de transito, debes revisar nuestras politicas de venta.</li>
-      <li><b>DESCUENTO POR PRE-PAGO O PAGO DE CONTADO:</b> Este descuento se efectúa mediante nota de crédito, dias despues de haber hecho la compra o pago, no es parte de los descuentos retroactivos.													</li>
+      <li><b>DESCUENTO POR PRE-PAGO O PAGO DE CONTADO:</b> Este descuento se efectúa mediante nota de crédito, dias despues de haber hecho la compra o pago, no es parte de los descuentos retroactivos.													</li> -->
     </ol>
   </div>
 </div>

@@ -52,6 +52,26 @@ th, td {
   border-spacing: 0;
   border-radius: 10px;
   overflow: hidden;
+  font-size: 0.88rem;
+}
+
+.tabla tr:nth-child(even) {
+    background-color: #1e1e1c;
+}
+
+.tabla tr:nth-child(odd) {
+    background-color: #252422;
+}
+
+.margen-retroactivo {
+  position: sticky;
+  top: 0;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.margen-retroactivo td:nth-child(4) {
+  text-align: center;
 }
 
 .tabla td {
@@ -155,9 +175,9 @@ input[type="checkbox"]{
 }
 
 .principal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .principal p {
@@ -170,30 +190,30 @@ input[type="checkbox"]{
 }
 
 .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid transparent;
-    text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  text-decoration: none;
 }
 
 .btn-volver {
-    background-color: transparent;
-    border-color: #666;
-    color: #bbb;
-    z-index: 1;
+  background-color: transparent;
+  border-color: #666;
+  color: #bbb;
+  z-index: 1;
 }
 
 .btn-volver:hover {
-    background-color: #333;
-    color: #fff;
-    border-color: #fff;
+  background-color: #333;
+  color: #fff;
+  border-color: #fff;
 }
 
 .contenedor-compra-anual {
@@ -243,7 +263,7 @@ input[type="checkbox"]{
 
 .restriccion-programa {
   margin-top: 1rem;
-  background-color: #992200;
+  background-color: #700000;
   padding: 10px;
   border-radius: 5px;
 }
