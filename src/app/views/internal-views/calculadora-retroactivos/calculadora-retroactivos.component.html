@@ -94,7 +94,7 @@
       <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicialLinea | currency:'MXN':'symbol':'1.0-0' }}</td>
       <td class="alineacion-derecha">{{ multimarcaPorcentajeInicial }}%</td>
       <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
-      <td></td>
+      <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
     </tr>
     <tr>
       <td colspan="2">2DO SEMESTRE BICICLETAS</td>
@@ -243,14 +243,14 @@
         <td>CAJA ACCS.</td>
       </tr>
       <tr>
-        <td>PRECIOS ACTUALES *Sujetos a cambios</td>
+        <td>PRECIOS ACTUALES *SUJETOS A CAMBIOS</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_bici_cn | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_bici_tw | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_ebike | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_caja_acc | currency:'MXN':'symbol':'1.0-0'}}</td>
       </tr>
       <tr>
-        <td>Porcentaje de Subsidio</td>
+        <td>PORCENTAJE DE SUBSIDIO</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.porcentaje_subsidio }}%</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.porcentaje_subsidio }}%</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.porcentaje_subsidio }}%</td>
@@ -272,7 +272,7 @@
       </tr>
       <ng-container *ngFor="let item of clasificacionSeleccionada.beneficios_dinamicos">
         <tr>
-          <td>{{ item.descripcion }}</td>
+          <td>{{ item.descripcion | uppercase }}</td>
           <td class="alineacion-derecha" colspan="4">{{ item.valor }}</td>
         </tr>
       </ng-container>
@@ -318,12 +318,6 @@
       <ng-container *ngFor="let item of listaRestriccionesPrograma">
         <li><b>{{item.descripcion | uppercase}}</b> {{item.valor | uppercase}}</li>
       </ng-container>
-
-      <!-- <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL INFERIOR:</b> Si por motivo de incumplimiento o por deseo del distribuidor se cambia de Nivel hacia un Nivel inferior, y dicho cambio es posterior a finalizar el primer bloque, el Distribuidor pierde los derechos de obtener retroactivos anuales, si dicho cambio se efectúa antes de finalizar el primer bloque, deberá cumplir con los requisitos de la categoría a la que se está cambiando.</li>
-      <li><b>CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL SUPERIOR:</b> En los casos que el Distribuidor decide cambiar a un nivel superior, lo podrá hacer en cualquier momento, y deberá cumplir los requisitos de la categoria superior para acceder a los descuentos retroactivos.</li>
-      <li><b>PRECIOS DE LAS PAQUETERIAS:</b> Las tarifas de las paqueterias, normalmente se negocían con las mísmas a principios de cada temporada, y casi siempre permanecen por todo el periodo, en los últimos meses, esta situación ha cambiado, y en ocasiones los costos se incrementaron considerablemente, por lo tanto, en el caso de sufrir un aumento considerable tendremos que impactarlo en los precios cobrados, sin dejar de lado que el objeto del programa de subisidio a los costos de los fletes es con el objeto de mejorar nuestra oferta de negocio y lograr que la rentabilidad con Elite Bike sea cada temprada mejor.</li>
-      <li><b>SUBSIDIO A SEGURO DE TRANSPORTE:</b> En la presente temporada en algunos niveles de distribución se subsidia al 100% el costo cobrado por concepto de seguro de transporte, para revisar las condiciones de los riesgos de transito, debes revisar nuestras politicas de venta.</li>
-      <li><b>DESCUENTO POR PRE-PAGO O PAGO DE CONTADO:</b> Este descuento se efectúa mediante nota de crédito, dias despues de haber hecho la compra o pago, no es parte de los descuentos retroactivos.													</li> -->
     </ol>
   </div>
 </div>
