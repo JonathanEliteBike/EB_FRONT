@@ -94,7 +94,7 @@
       <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicialLinea | currency:'MXN':'symbol':'1.0-0' }}</td>
       <td class="alineacion-derecha">{{ multimarcaPorcentajeInicial }}%</td>
       <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
-      <td></td>
+      <td class="alineacion-derecha">{{ multimarcaMinimaCompraInicial | currency:'MXN':'symbol':'1.0-0' }}</td>
     </tr>
     <tr>
       <td colspan="2">2DO SEMESTRE BICICLETAS</td>
@@ -243,14 +243,14 @@
         <td>CAJA ACCS.</td>
       </tr>
       <tr>
-        <td>PRECIOS ACTUALES *Sujetos a cambios</td>
+        <td>PRECIOS ACTUALES *SUJETOS A CAMBIOS</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_bici_cn | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_bici_tw | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_ebike | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_caja_acc | currency:'MXN':'symbol':'1.0-0'}}</td>
       </tr>
       <tr>
-        <td>Porcentaje de Subsidio</td>
+        <td>PORCENTAJE DE SUBSIDIO</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.porcentaje_subsidio }}%</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.porcentaje_subsidio }}%</td>
         <td class="alineacion-derecha">{{ clasificacionSeleccionada.porcentaje_subsidio }}%</td>
@@ -272,7 +272,7 @@
       </tr>
       <ng-container *ngFor="let item of clasificacionSeleccionada.beneficios_dinamicos">
         <tr>
-          <td>{{ item.descripcion }}</td>
+          <td>{{ item.descripcion | uppercase }}</td>
           <td class="alineacion-derecha" colspan="4">{{ item.valor }}</td>
         </tr>
       </ng-container>

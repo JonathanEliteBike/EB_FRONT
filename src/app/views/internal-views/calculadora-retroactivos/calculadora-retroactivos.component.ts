@@ -226,7 +226,7 @@ export class CalculadoraRetroactivosComponent {
     let descuentoRetroActivo = 0;
     let bonoPorCumplimiento = null;
 
-    if (this.clasificacionSeleccionada.valor >= 2){
+    if (this.clasificacionSeleccionada.valor >= 3){
       descuentoRetroActivo = this.anualAdicionalPorNivel.descuento_retroactivo;
       bonoPorCumplimiento = this.anualPorCumplimiento
       .filter(item => item.id === 1 || item.id === 3)
@@ -254,9 +254,7 @@ export class CalculadoraRetroactivosComponent {
 
       if (bonoPorCumplimiento){
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
-        bonoPorCumplimiento.map(item => {
-          descuentoRetroActivo += item.descuento
-        });
+        bonoPorCumplimiento.map(item => { descuentoRetroActivo += item.descuento });
       }
     }
 
