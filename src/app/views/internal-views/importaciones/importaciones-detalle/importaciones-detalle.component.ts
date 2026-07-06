@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -200,6 +200,13 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   ) {}
 
   private returnUrl = '/importaciones';
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(e: BeforeUnloadEvent): void {
+    if (Object.keys(this.cambiosPendientes).length > 0) {
+      e.preventDefault();
+    }
+  }
 
   ngOnInit(): void {
     if (this.route.snapshot.queryParamMap.get('from') === 'dashboard') {
