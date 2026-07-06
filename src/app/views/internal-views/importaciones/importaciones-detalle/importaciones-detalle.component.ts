@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +17,7 @@ interface CampoValidar { campo: keyof Importacion; label: string; opcional?: boo
   templateUrl: './importaciones-detalle.component.html',
   styleUrl: './importaciones-detalle.component.css',
 })
-export class ImportacionesDetalleComponent implements OnInit {
+export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   embarque: Importacion | null = null;
   cargando = true;
   guardando = false;
@@ -210,15 +210,55 @@ export class ImportacionesDetalleComponent implements OnInit {
     this.svc.obtener(id).subscribe({
       next: (data) => {
         this.embarque = data;
-        // Restore authoritative N/A state first (from official saves)
         for (const campo of (this.embarque.campos_na || [])) {
           this.camposNA.add(campo);
         }
         this._aplicarBorradores();
+        this._cargarDraftLocal(id);
         this.cargando = false;
       },
       error: () => { this.error = 'Embarque no encontrado'; this.cargando = false; },
     });
+  }
+
+  ngOnDestroy(): void {
+    if (!this.embarque) return;
+    const tieneCambios = Object.keys(this.cambiosPendientes).length > 0;
+    if (!tieneCambios) return;
+    const draft = {
+      seccion:  this.seccionActiva,
+      cambios:  this.cambiosPendientes,
+      na:       Array.from(this.camposNA),
+    };
+    localStorage.setItem(`imp_draft_${this.embarque.id}`, JSON.stringify(draft));
+  }
+
+  private _cargarDraftLocal(id: number): void {
+    const raw = localStorage.getItem(`imp_draft_${id}`);
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw);
+      for (const [campo, valor] of Object.entries(draft.cambios || {})) {
+        const actual = (this.embarque as any)[campo];
+        if (actual === null || actual === undefined || actual === '') {
+          if (valor === '__NA__') {
+            this.camposNA.add(campo);
+          } else {
+            (this.embarque as any)[campo] = valor;
+          }
+          (this.cambiosPendientes as any)[campo] = valor;
+        }
+      }
+      for (const campo of (draft.na || [])) {
+        const actual = (this.embarque as any)[campo];
+        if (!this.camposNA.has(campo) && !actual) {
+          this.camposNA.add(campo);
+          (this.cambiosPendientes as any)[campo] = '__NA__';
+        }
+      }
+      if (draft.seccion) this.seccionActiva = draft.seccion;
+      this._recalcularCamposLocales();
+    } catch {}
   }
 
   private _aplicarBorradores(): void {
@@ -403,6 +443,7 @@ export class ImportacionesDetalleComponent implements OnInit {
         this.guardadoOk = true;
         this.error = '';
         this.cambiosPendientes = {};
+        localStorage.removeItem(`imp_draft_${this.embarque!.id}`);
         this.svc.obtener(this.embarque!.id).subscribe((d) => {
           this.embarque = d;
           this.camposNA.clear();
