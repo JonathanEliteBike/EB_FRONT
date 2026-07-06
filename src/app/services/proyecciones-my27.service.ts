@@ -68,7 +68,8 @@ export class ProyeccionesMY27Service {
     return this.http.get<ProyeccionesMY27Response>(`${this.api}/proyecciones-my27`, { params });
   }
 
-  getExportUrl(periodo = '2026-2027'): string {
-    return `${this.api}/proyecciones-my27/exportar?periodo=${periodo}`;
+  getExportUrl(periodo = '2026-2027', marca = ''): string {
+    const m = marca ? `&marca=${marca}` : '';
+    return `${this.api}/proyecciones-my27/exportar?periodo=${periodo}${m}`;
   }
 }

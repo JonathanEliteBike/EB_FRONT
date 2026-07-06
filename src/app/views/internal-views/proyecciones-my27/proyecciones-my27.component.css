@@ -77,6 +77,13 @@
 }
 .btn-primary:hover { background: #d44e1e; }
 
+.btn-megamo {
+  background: #1a3c5e;
+  color: #fff;
+  border: 1px solid #2e6da4;
+}
+.btn-megamo:hover { background: #2e6da4; }
+
 /* ── State boxes ── */
 .state-box {
   display: flex;

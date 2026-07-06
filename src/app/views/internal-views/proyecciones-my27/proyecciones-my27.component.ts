@@ -75,6 +75,10 @@ export class ProyeccionesMY27Component implements OnInit {
     window.open(this.svc.getExportUrl(), '_blank');
   }
 
+  exportarMegamo(): void {
+    window.open(this.svc.getExportUrl(this.datos?.periodo ?? '2026-2027', 'MEGAMO'), '_blank');
+  }
+
   get articulosFiltrados(): ArticuloMY27[] {
     if (!this.datos) return [];
     const q = this.busqueda.toLowerCase().trim();
