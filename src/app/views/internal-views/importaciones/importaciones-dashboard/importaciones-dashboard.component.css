@@ -491,7 +491,7 @@ td { padding: 10px 14px; vertical-align: middle; }
 }
 .notas-text {
   font-size: .75rem; color: #64748b; flex: 1;
-  white-space: pre-wrap; line-height: 1.45;
+  white-space: pre-wrap; line-height: 1.45; text-align: justify;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
   overflow: hidden;
 }
