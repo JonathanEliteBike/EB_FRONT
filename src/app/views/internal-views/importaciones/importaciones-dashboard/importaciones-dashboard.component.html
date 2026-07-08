@@ -555,21 +555,24 @@
                 <td class="td-notas" (click)="abrirNotasEdit(e, $event)">
                   <!-- Modo edición -->
                   <div class="notas-editor" *ngIf="notasEditId === e.id" (click)="$event.stopPropagation()">
-                    <input class="notas-input"
+                    <textarea class="notas-input"
                       [(ngModel)]="notasEditVal"
-                      (keyup.enter)="confirmarNotas(e)"
-                      (keyup.escape)="cancelarNotas()"
+                      (keydown.escape)="cancelarNotas()"
+                      (keydown.control.enter)="confirmarNotas(e)"
                       placeholder="Escribe una nota..."
-                      autofocus>
-                    <div class="notas-actions">
-                      <button class="notas-save" (click)="$event.stopPropagation(); confirmarNotas(e)" title="Guardar"><i class="fas fa-check"></i></button>
-                      <button class="notas-cancel" (click)="$event.stopPropagation(); cancelarNotas()" title="Cancelar"><i class="fas fa-times"></i></button>
+                      rows="3"></textarea>
+                    <div class="notas-actions-row">
+                      <span class="notas-hint">Ctrl+Enter guarda · Esc cancela</span>
+                      <div class="notas-actions">
+                        <button class="notas-save" (click)="$event.stopPropagation(); confirmarNotas(e)" title="Guardar"><i class="fas fa-check"></i></button>
+                        <button class="notas-cancel" (click)="$event.stopPropagation(); cancelarNotas()" title="Cancelar"><i class="fas fa-times"></i></button>
+                      </div>
                     </div>
                   </div>
                   <!-- Modo vista -->
                   <div class="notas-view" *ngIf="notasEditId !== e.id">
-                    <span class="notas-text" [class.notas-empty]="!e.notas">
-                      {{ e.notas ? (e.notas.length > 45 ? (e.notas | slice:0:45) + '…' : e.notas) : '—' }}
+                    <span class="notas-text" [class.notas-empty]="!e.notas" [title]="e.notas || ''">
+                      {{ e.notas || '—' }}
                     </span>
                     <i class="fas fa-pen notas-edit-icon"></i>
                   </div>

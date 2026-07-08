@@ -483,19 +483,21 @@ td { padding: 10px 14px; vertical-align: middle; }
 .table-wrap table tbody .td-ref { text-align: left; }
 
 /* Col 9: Notas */
-.td-notas { max-width: 220px; cursor: pointer; overflow: visible; }
+.td-notas { min-width: 200px; max-width: 280px; cursor: pointer; overflow: visible; vertical-align: top; padding-top: 10px; }
 
 .notas-view {
-  display: flex; align-items: center; gap: 6px;
-  padding: 3px 0; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 2px 0;
 }
 .notas-text {
-  font-size: .75rem; color: #64748b;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+  font-size: .75rem; color: #64748b; flex: 1;
+  white-space: pre-wrap; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.notas-empty { color: #2d3748; }
+.notas-empty { color: #2d3748; white-space: normal; }
 .notas-edit-icon {
-  font-size: .55rem; color: #2d3748; flex-shrink: 0;
+  font-size: .55rem; color: #2d3748; flex-shrink: 0; margin-top: 2px;
   opacity: 0; transition: opacity 140ms ease;
 }
 .emb-row:hover .notas-edit-icon { opacity: 1; }
@@ -503,11 +505,14 @@ td { padding: 10px 14px; vertical-align: middle; }
 
 .notas-editor { display: flex; flex-direction: column; gap: 5px; }
 .notas-input {
-  width: 170px; padding: 5px 9px;
+  width: 220px; padding: 6px 9px;
   background: #0d1117; border: 1px solid #3b82f6; border-radius: 6px;
-  color: #e2e8f0; font-size: .75rem; outline: none;
+  color: #e2e8f0; font-size: .75rem; outline: none; font-family: inherit;
   box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+  resize: vertical; line-height: 1.5; min-height: 64px;
 }
+.notas-actions-row { display: flex; align-items: center; justify-content: space-between; }
+.notas-hint { font-size: .6rem; color: #374151; }
 .notas-actions { display: flex; gap: 4px; }
 .notas-save, .notas-cancel {
   width: 24px; height: 24px; border-radius: 5px; border: none;

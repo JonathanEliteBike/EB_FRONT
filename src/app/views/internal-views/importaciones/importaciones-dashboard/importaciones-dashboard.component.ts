@@ -592,12 +592,16 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     event.stopPropagation();
     this.notasEditId = e.id;
     this.notasEditVal = e.notas ?? '';
+    setTimeout(() => {
+      const el = document.querySelector('.notas-input') as HTMLTextAreaElement;
+      if (el) { el.focus(); el.selectionStart = el.selectionEnd = el.value.length; }
+    }, 20);
   }
 
   confirmarNotas(e: any): void {
-    const val = this.notasEditVal.trim();
+    const val = this.notasEditVal.replace(/\n+$/, '').replace(/^\n+/, '');
     this.notasEditId = null;
-    if (val === (e.notas ?? '').trim()) return;
+    if (val === (e.notas ?? '')) return;
     e.notas = val || null;
     this.svc.actualizar(e.id, { notas: val || null } as any).subscribe();
   }
