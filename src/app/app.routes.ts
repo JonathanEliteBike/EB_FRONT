@@ -67,6 +67,8 @@ import { importacionesGuard } from './guards/importaciones.guard';
 
 import { CalculadoraRetroactivosComponent } from './views/internal-views/calculadora-retroactivos/calculadora-retroactivos.component';
 
+import { InventarioItComponent } from './views/internal-views/inventario-it/inventario-it.component';
+
 export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
   { path: 'login', component: LoginComponent, canActivate: [authGuard] },
@@ -124,6 +126,7 @@ export const routes: Routes = [
   { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
   { path: 'importaciones',           component: ImportacionesComponent,          canActivate: [importacionesGuard] },
   { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent,  canActivate: [importacionesGuard] },
+  { path: 'inventario-it', component: InventarioItComponent },
   { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
