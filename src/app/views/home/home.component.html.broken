@@ -13,7 +13,7 @@
         <div class="tarjeta-icono-wrap">
           <i class="fas fa-desktop"></i>
         </div>
-        <h2>Monitor MY26</h2>
+        <h2></h2>
         <p>Visualizacion y administracion de unidades, seguimiento de embarques y estatus de ordenes.</p>
         <button [routerLink]="['/previo']">Ir a Monitor</button>
       </div>

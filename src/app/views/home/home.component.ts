@@ -158,7 +158,15 @@ export class HomeComponent implements OnInit, OnDestroy {
       boton: 'Ir a Importaciones',
       ruta: '/importaciones',
       accion: null
-    }
+    },
+    {
+      icono: 'fa-laptop',
+      titulo: 'Inventario IT',
+      descripcion: 'Administra equipos tecnológicos, asignaciones, responsivas, auditorías e historial de movimientos.',
+      boton: 'Ir a Inventario',
+      ruta: '/inventario-it',
+      accion: null
+    },  
   ];
 
   private readonly PINS_KEY = 'eb_home_pinned';
