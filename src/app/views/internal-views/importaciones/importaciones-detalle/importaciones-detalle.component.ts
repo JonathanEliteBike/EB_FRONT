@@ -245,26 +245,31 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     if (!raw) return;
     try {
       const draft = JSON.parse(raw);
+      let applied = false;
       for (const [campo, valor] of Object.entries(draft.cambios || {})) {
         const actual = (this.embarque as any)[campo];
-        if (actual === null || actual === undefined || actual === '') {
-          if (valor === '__NA__') {
-            this.camposNA.add(campo);
-          } else {
-            (this.embarque as any)[campo] = valor;
-          }
-          (this.cambiosPendientes as any)[campo] = valor;
+        // Comparar como string (primeros 10 chars para fechas ISO) para detectar si ya está guardado
+        const mismoValor = actual !== null && actual !== undefined && actual !== ''
+          && String(actual).slice(0, 10) === String(valor).slice(0, 10);
+        if (mismoValor) continue; // ya está guardado en DB con ese valor, no hay cambio pendiente
+        if (valor === '__NA__') {
+          this.camposNA.add(campo);
+        } else {
+          (this.embarque as any)[campo] = valor;
         }
+        (this.cambiosPendientes as any)[campo] = valor;
+        applied = true;
       }
       for (const campo of (draft.na || [])) {
         const actual = (this.embarque as any)[campo];
         if (!this.camposNA.has(campo) && !actual) {
           this.camposNA.add(campo);
           (this.cambiosPendientes as any)[campo] = '__NA__';
+          applied = true;
         }
       }
-      if (draft.seccion) this.seccionActiva = draft.seccion;
-      this._recalcularCamposLocales();
+      if (applied && draft.seccion) this.seccionActiva = draft.seccion;
+      if (applied) this._recalcularCamposLocales();
     } catch {}
   }
 
