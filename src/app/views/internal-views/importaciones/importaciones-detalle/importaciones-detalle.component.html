@@ -242,19 +242,23 @@
         </div>
         <div class="field-row" [class.campo-error]="esCampoError('log_recepcion_bl_co')" [class.campo-faltante]="esCampoFaltante('log_recepcion_bl_co')">
           <label>19. Recepción de BL y CO para revisión</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.log_recepcion_bl_co || ''"
-              (dateChange)="marcarCambio('log_recepcion_bl_co', $event || null)">
-            </app-date-picker>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('log_recepcion_bl_co')">
+              <app-date-picker mode="single" [value]="embarque.log_recepcion_bl_co || ''" (dateChange)="marcarCambio('log_recepcion_bl_co', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('log_recepcion_bl_co')" class="na-badge" (click)="toggleNA('log_recepcion_bl_co')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('log_recepcion_bl_co')" (click)="toggleNA('log_recepcion_bl_co')" title="Marcar como No Aplica">N/A</button>
+          </div>
         </div>
         <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_bl_co')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_bl_co')">
           <label>20. Confirmación de BL y CO definitivos</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.log_confirmacion_bl_co || ''"
-              (dateChange)="marcarCambio('log_confirmacion_bl_co', $event || null)">
-            </app-date-picker>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('log_confirmacion_bl_co')">
+              <app-date-picker mode="single" [value]="embarque.log_confirmacion_bl_co || ''" (dateChange)="marcarCambio('log_confirmacion_bl_co', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('log_confirmacion_bl_co')" class="na-badge" (click)="toggleNA('log_confirmacion_bl_co')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('log_confirmacion_bl_co')" (click)="toggleNA('log_confirmacion_bl_co')" title="Marcar como No Aplica">N/A</button>
+          </div>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_envio_certificado')">
           <label>21. Envío de Certificado a México <span style="color:#64748b;font-size:.75rem">(opcional)</span></label>
@@ -500,12 +504,15 @@
         <div class="field-row full" [class.campo-faltante]="esCampoFaltante('imp_articulos_verificar')"><label>32. Artículos a verificar y cantidad total</label>
           <input type="text" [value]="embarque.imp_articulos_verificar || ''" (change)="marcarCambio('imp_articulos_verificar', $any($event.target).value || null)" placeholder="2261/BICI/ACCE" />
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_liberacion_folios')"><label>33. Liberación de folios</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.imp_liberacion_folios || ''"
-              (dateChange)="marcarCambio('imp_liberacion_folios', $event || null)">
-            </app-date-picker>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_liberacion_folios')">
+          <label>33. Liberación de folios</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('imp_liberacion_folios')">
+              <app-date-picker mode="single" [value]="embarque.imp_liberacion_folios || ''" (dateChange)="marcarCambio('imp_liberacion_folios', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('imp_liberacion_folios')" class="na-badge" (click)="toggleNA('imp_liberacion_folios')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('imp_liberacion_folios')" (click)="toggleNA('imp_liberacion_folios')" title="Marcar como No Aplica">N/A</button>
+          </div>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_pago_pedimento')"><label>34. Fecha de pago de pedimento</label>
           <app-date-picker
@@ -575,18 +582,26 @@
             </app-date-picker></div>
         <div class="field-row field-calc"><label>· Días de tránsito terrestre</label>
           <span class="calc-val">{{ embarque.des_dias_transito_terrestre ?? '—' }} días</span></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_solicitud_carta_vacio')"><label>10. Solicitud de carta para entrega de vacío</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.des_solicitud_carta_vacio || ''"
-              (dateChange)="marcarCambio('des_solicitud_carta_vacio', $event || null)">
-            </app-date-picker></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_lavado')"><label>11. Fecha de lavado de contenedor</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.des_fecha_lavado || ''"
-              (dateChange)="marcarCambio('des_fecha_lavado', $event || null)">
-            </app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_solicitud_carta_vacio')">
+          <label>10. Solicitud de carta para entrega de vacío</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('des_solicitud_carta_vacio')">
+              <app-date-picker mode="single" [value]="embarque.des_solicitud_carta_vacio || ''" (dateChange)="marcarCambio('des_solicitud_carta_vacio', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('des_solicitud_carta_vacio')" class="na-badge" (click)="toggleNA('des_solicitud_carta_vacio')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('des_solicitud_carta_vacio')" (click)="toggleNA('des_solicitud_carta_vacio')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_fecha_lavado')">
+          <label>11. Fecha de lavado de contenedor</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('des_fecha_lavado')">
+              <app-date-picker mode="single" [value]="embarque.des_fecha_lavado || ''" (dateChange)="marcarCambio('des_fecha_lavado', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('des_fecha_lavado')" class="na-badge" (click)="toggleNA('des_fecha_lavado')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('des_fecha_lavado')" (click)="toggleNA('des_fecha_lavado')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_entrega_contenedor_naviera')"><label>12. Fecha entrega contenedor a naviera (real)</label>
           <app-date-picker
               mode="single"
@@ -670,11 +685,27 @@
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_etiquetas')"><label>1. Base de datos para etiquetas</label>
           <app-date-picker mode="single" [value]="embarque.alm_base_datos_etiquetas || ''" (dateChange)="marcarCambio('alm_base_datos_etiquetas', $event || null)"></app-date-picker></div>
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_verificacion')"><label>2. Base de datos de artículos a verificación</label>
-          <app-date-picker mode="single" [value]="embarque.alm_base_datos_verificacion || ''" (dateChange)="marcarCambio('alm_base_datos_verificacion', $event || null)"></app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_verificacion')">
+          <label>2. Base de datos de artículos a verificación</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_base_datos_verificacion')">
+              <app-date-picker mode="single" [value]="embarque.alm_base_datos_verificacion || ''" (dateChange)="marcarCambio('alm_base_datos_verificacion', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_base_datos_verificacion')" class="na-badge" (click)="toggleNA('alm_base_datos_verificacion')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_base_datos_verificacion')" (click)="toggleNA('alm_base_datos_verificacion')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_fecha_limite_etiquetado')"><label>3. Fecha límite cumplimiento etiquetado (UVA)</label>
-          <app-date-picker mode="single" [value]="embarque.alm_fecha_limite_etiquetado || ''" (dateChange)="marcarCambio('alm_fecha_limite_etiquetado', $event || null)"></app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_fecha_limite_etiquetado')">
+          <label>3. Fecha límite cumplimiento etiquetado (UVA)</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_fecha_limite_etiquetado')">
+              <app-date-picker mode="single" [value]="embarque.alm_fecha_limite_etiquetado || ''" (dateChange)="marcarCambio('alm_fecha_limite_etiquetado', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_fecha_limite_etiquetado')" class="na-badge" (click)="toggleNA('alm_fecha_limite_etiquetado')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_fecha_limite_etiquetado')" (click)="toggleNA('alm_fecha_limite_etiquetado')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
 
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_etiquetado')">
           <label>4. Liberación de etiquetado por almacén</label>
@@ -698,11 +729,27 @@
           </div>
         </div>
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')"><label>6. Envío de información a la UVA</label>
-          <app-date-picker mode="single" [value]="embarque.alm_envio_info_uva || ''" (dateChange)="marcarCambio('alm_envio_info_uva', $event || null)"></app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')">
+          <label>6. Envío de información a la UVA</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_envio_info_uva')">
+              <app-date-picker mode="single" [value]="embarque.alm_envio_info_uva || ''" (dateChange)="marcarCambio('alm_envio_info_uva', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_envio_info_uva')" class="na-badge" (click)="toggleNA('alm_envio_info_uva')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_envio_info_uva')" (click)="toggleNA('alm_envio_info_uva')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_uva')"><label>7. Liberación de etiquetado por la UVA</label>
-          <app-date-picker mode="single" [value]="embarque.alm_liberacion_uva || ''" (dateChange)="marcarCambio('alm_liberacion_uva', $event || null)"></app-date-picker></div>
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_liberacion_uva')">
+          <label>7. Liberación de etiquetado por la UVA</label>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_liberacion_uva')">
+              <app-date-picker mode="single" [value]="embarque.alm_liberacion_uva || ''" (dateChange)="marcarCambio('alm_liberacion_uva', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_liberacion_uva')" class="na-badge" (click)="toggleNA('alm_liberacion_uva')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_liberacion_uva')" (click)="toggleNA('alm_liberacion_uva')" title="Marcar como No Aplica">N/A</button>
+          </div>
+        </div>
 
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_proyectado_dias_etiquetado')"><label>8. Proyectado de días estimado para el etiquetado</label>
           <input type="number" [value]="embarque.alm_proyectado_dias_etiquetado || ''" (change)="marcarCambio('alm_proyectado_dias_etiquetado', +$any($event.target).value || null)" placeholder="Ej: 5" /></div>
