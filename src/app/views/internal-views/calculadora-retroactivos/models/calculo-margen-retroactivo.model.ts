@@ -1,4 +1,5 @@
 export interface CalculoMargenesRetroactivos {
+  id: number;
   descripcion: string,
   margen_precio_distribuidor: number,
   margen_inicio_temporada: number,
