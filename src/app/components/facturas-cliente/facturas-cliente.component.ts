@@ -363,9 +363,14 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
               if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.error = null;
               this.refrescando = false;
-              // Actualizar nombre real del cliente si el backend lo devuelve
+              // Nombre real: preferir campo cliente del response, si no leer del primer row
               if (response?.cliente?.nombre_cliente) {
                 this.infoCliente = response.cliente;
+              } else {
+                const primeraFila = response?.data?.[0] ?? response?.rows?.[0];
+                if (primeraFila?.cliente) {
+                  this.infoCliente = { nombre_cliente: primeraFila.cliente, clave: clienteParam ?? '' };
+                }
               }
               if (this.facturas.length > 0) {
                 this.filtrarFacturas();
