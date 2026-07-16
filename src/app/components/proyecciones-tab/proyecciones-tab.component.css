@@ -1255,10 +1255,15 @@
   background: rgba(255, 255, 255, 0.03);
   cursor: not-allowed;
 }
-/* Mes con unidades pendientes (proyectado pero aún no cubierto por pedidos) */
+/* Mes con unidades pendientes (proyectado y aún no cubierto) */
 .mes-pendiente {
   color: #EB5E28;
   font-weight: 700;
+}
+/* Mes que fue proyectado y ya fue pedido+entregado (cubierto) */
+.mes-entregado {
+  color: #52B788;
+  font-weight: 600;
 }
 .td-qty-lock {
   color: #444;
