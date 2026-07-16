@@ -46,6 +46,8 @@ interface Factura {
   po_name: string | null;
   /** Verdadero cuando el SKU de esta línea existe en forecast_proyecciones para este cliente. */
   de_proyeccion: boolean;
+  /** Etiquetas de la orden de venta en Odoo (ej. ["MY27 SEP"]). */
+  etiquetas: string[];
 }
 
 /**
@@ -358,7 +360,8 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
                 cantidad_entregada: Number(r.cantidad_entregada ?? 0) || 0,
                 fecha_esperada: r.fecha_esperada ?? null,
                 po_name: r.po_name ?? null,
-                de_proyeccion: r.de_proyeccion ?? false
+                de_proyeccion: r.de_proyeccion ?? false,
+                etiquetas: Array.isArray(r.etiquetas) ? r.etiquetas : []
               }));
               if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.error = null;

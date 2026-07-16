@@ -168,6 +168,7 @@
                             <td>
                                 {{ factura.numero_factura }}
                                 <span *ngIf="factura.de_proyeccion" class="badge-proyeccion" title="Pedido de proyecciones">PROY</span>
+                                <span *ngFor="let tag of factura.etiquetas" class="badge-etiqueta" [title]="tag">{{ tag }}</span>
                             </td>
                             <td>{{ factura.referencia_interna }}</td>
                             <td>{{ factura.nombre_producto }}</td>

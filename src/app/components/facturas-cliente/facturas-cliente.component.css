@@ -531,6 +531,22 @@
   white-space: nowrap;
 }
 
+/* Etiqueta de temporada/mes de entrega (MY27 SEP, etc.) */
+.badge-etiqueta {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  background: #2c4a3e;
+  color: #52b788;
+  border: 1px solid #3a6b57;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 /* ── Paginación ───────────────────────────────────────────────────────────── */
 .paginador {
   display: flex;
