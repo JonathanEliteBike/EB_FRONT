@@ -280,9 +280,10 @@ export class CalculadoraRetroactivosComponent {
             totalConDescuento = item.id === 1 ? (item.cantidadIngresada * margenBicicleta.margen_inicio_temporada) : (item.cantidadIngresada * margenAparel.margen_inicio_temporada);
             totalConDescuento = totalConDescuento / 100;
             totalConPorcentaje = (item.cantidadIngresada * item.porcentaje ) / 100;
-            totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
           }
-
+          
+          totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
+          
           return {
               ...item,
               totalMargenConDescuento: totalConDescuento,
