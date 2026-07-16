@@ -1,0 +1,42 @@
+<div class="ts-wrap">
+    <button
+        type="button"
+        class="ts-trigger"
+        [class.ts-active]="abierto"
+        [class.ts-historico]="seleccionada"
+        [disabled]="disabled"
+        (click)="toggle($event)"
+    >
+        <i class="fas" [class.fa-clock]="seleccionada" [class.fa-calendar-alt]="!seleccionada"></i>
+        <span>{{ etiquetaActual }}</span>
+        <i class="fas fa-chevron-down ts-chevron" [class.ts-chevron-open]="abierto"></i>
+    </button>
+
+    <div class="ts-popover" *ngIf="abierto">
+        <button
+            type="button"
+            class="ts-item ts-item-actual"
+            [class.ts-item-sel]="!seleccionada"
+            (click)="elegir('')"
+        >
+            <i class="fas fa-circle ts-dot-live"></i>
+            <span>Temporada actual</span>
+            <i class="fas fa-check ts-check" *ngIf="!seleccionada"></i>
+        </button>
+
+        <div class="ts-divider" *ngIf="temporadas.length"></div>
+
+        <div class="ts-cerradas-label" *ngIf="temporadas.length">Temporadas cerradas</div>
+
+        <button
+            type="button"
+            class="ts-item"
+            *ngFor="let t of temporadas"
+            [class.ts-item-sel]="seleccionada === t"
+            (click)="elegir(t)"
+        >
+            <span>{{ t }}</span>
+            <i class="fas fa-check ts-check" *ngIf="seleccionada === t"></i>
+        </button>
+    </div>
+</div>

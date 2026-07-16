@@ -1,0 +1,52 @@
+:host { display: block; }
+
+.ah-banner {
+  max-width: 1100px;
+  margin: -0.5rem auto 1.5rem auto;
+  padding: 14px 18px;
+  background: #1a1a1a;
+  border: 1px solid rgba(235, 94, 40, 0.4);
+  border-left: 4px solid #EB5E28;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: ahIn 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes ahIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ah-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #FFFCF2;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.ah-icon { color: #EB5E28; font-size: 0.95rem; flex-shrink: 0; }
+.ah-info strong { color: #EB5E28; font-weight: 700; }
+
+.ah-btn-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #403F3F;
+  color: #FFFCF2;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 150ms ease-out, transform 120ms ease-out;
+}
+.ah-btn-volver:hover { background: #EB5E28; }
+.ah-btn-volver:active { transform: scale(0.97); }

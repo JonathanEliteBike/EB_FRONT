@@ -35,6 +35,20 @@ export class MonitorOdooService {
     );
   }
 
+  /** Facturas acotadas al rango de una temporada (sin caché -- usado por
+   * Monitor de Facturas para poder ver también la temporada pasada). */
+  getFacturasPorTemporada(temporada: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/monitor_odoo`, { params: { temporada } });
+  }
+
+  getTemporadas(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/temporadas`);
+  }
+
+  getTemporadasDisponibles(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/temporadas_disponibles`);
+  }
+
   importarFacturas(formData: FormData): Observable<any> {
     return this.http.post(`${this.apiUrl}/importar_facturas`, formData).pipe(
       tap(() => this.facturasCache.next(null)) // Limpiamos caché para obligar recarga

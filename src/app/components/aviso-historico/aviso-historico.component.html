@@ -1,0 +1,12 @@
+<div class="ah-banner" *ngIf="temporada">
+    <div class="ah-info">
+        <i class="fas fa-clock ah-icon"></i>
+        <span>
+            Viendo temporada cerrada <strong>{{ temporada }}</strong><ng-container *ngIf="detalle"> {{ detalle
+                }}</ng-container> — datos congelados al cierre, no se recalculan.
+        </span>
+    </div>
+    <button type="button" class="ah-btn-volver" (click)="volver.emit()">
+        <i class="fas fa-undo"></i> Volver a temporada actual
+    </button>
+</div>

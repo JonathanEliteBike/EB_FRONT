@@ -12,6 +12,8 @@ import { FiltroComponent } from '../../../components/filtro/filtro.component';
 import { FiltroFechaComponent } from '../../../components/filtro-fecha/filtro-fecha.component';
 
 import { FechaActualizacionComponent } from '../../../components/fecha-actualizacion/fecha-actualizacion.component';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 import { Router } from '@angular/router';
 
@@ -39,7 +41,8 @@ interface Factura {
   selector: 'app-monitor',
   standalone: true,
   imports: [CommonModule, HomeBarComponent, FormsModule,
-    RouterModule, AlertaComponent, FiltroComponent, FiltroFechaComponent, FechaActualizacionComponent],
+    RouterModule, AlertaComponent, FiltroComponent, FiltroFechaComponent, FechaActualizacionComponent,
+    TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './monitor.component.html',
   styleUrls: ['./monitor.component.css'],
   providers: [MonitorOdooService]
@@ -152,6 +155,12 @@ export class MonitorComponent {
   fechaDesdeFiltro: string = '';
   fechaHastaFiltro: string = '';
 
+  // Selector de temporada
+  temporadaActualEtiqueta: string | null = null;
+  temporadasDisponibles: string[] = [];
+  modoHistorico = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+
   constructor(
     private monitorService: MonitorOdooService,
     private alertaService: AlertaService,
@@ -159,14 +168,30 @@ export class MonitorComponent {
   ) { }
 
   ngOnInit() {
-    this.obtenerFacturas();
+    this.monitorService.getTemporadas().subscribe({
+      next: (temporadas: any[]) => {
+        this.temporadaActualEtiqueta = temporadas.find(t => t.estado === 'abierta')?.etiqueta ?? null;
+        this.obtenerFacturas();
+      },
+      error: () => this.obtenerFacturas()
+    });
+
+    this.monitorService.getTemporadasDisponibles().subscribe({
+      next: (temporadas: string[]) => this.temporadasDisponibles = temporadas,
+      error: (error) => console.error('Error al obtener temporadas disponibles:', error)
+    });
 
     this.onInit.emit();
   }
 
   obtenerFacturas() {
     this.cargando = true;
-    this.monitorService.getFacturas().subscribe({
+    const etiqueta = this.temporadaHistoricaSeleccionada || this.temporadaActualEtiqueta;
+    const origen = etiqueta
+      ? this.monitorService.getFacturasPorTemporada(etiqueta)
+      : this.monitorService.getFacturas();
+
+    origen.subscribe({
       next: (data: any[]) => {
         this.facturas = data.filter(f =>
           f.numero_factura && f.numero_factura !== '/' &&
@@ -183,6 +208,38 @@ export class MonitorComponent {
         this.cargando = false;
       }
     });
+  }
+
+  verTemporadaPasada(temporada: string) {
+    if (this.temporadaHistoricaSeleccionada === temporada) return;
+    this.temporadaHistoricaSeleccionada = temporada;
+    this.modoHistorico = true;
+    this.limpiarTodosLosFiltros();
+    this.obtenerFacturas();
+  }
+
+  volverATemporadaActual() {
+    this.temporadaHistoricaSeleccionada = null;
+    this.modoHistorico = false;
+    this.limpiarTodosLosFiltros();
+    this.obtenerFacturas();
+  }
+
+  private limpiarTodosLosFiltros() {
+    this.selectedNumeros = [];
+    this.selectedReferencias = [];
+    this.selectedProductos = [];
+    this.selectedContactos = [];
+    this.selectedContactosNombres = [];
+    this.selectedMarcas = [];
+    this.selectedSubcategorias = [];
+    this.selectedEride = [];
+    this.selectedApparel = [];
+    this.selectedEvac = [];
+    this.selectedCategorias = [];
+    this.fechaOrden = null;
+    this.fechaDesdeFiltro = '';
+    this.fechaHastaFiltro = '';
   }
 
   actualizarListasUnicas() {

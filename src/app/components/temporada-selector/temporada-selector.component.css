@@ -1,0 +1,140 @@
+:host {
+  display: inline-block;
+  /* Tokens propios, autocontenidos -- este componente se usa dentro de 6
+     pantallas distintas que no comparten las mismas variables de tema, asi
+     que no depende de heredar nada del padre. */
+  --ts-orange: #EB5E28;
+  --ts-bg-trigger: #403F3F;
+  --ts-bg-popover: #131313;
+  --ts-border: #272727;
+  --ts-t1: #FFFCF2;
+  --ts-t2: #b8b6ae;
+  --ts-t3: #7a7870;
+}
+
+.ts-wrap { position: relative; display: inline-block; }
+
+/* ── Trigger ── */
+.ts-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--ts-bg-trigger);
+  color: var(--ts-t1);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: background 150ms ease-out, border-color 150ms ease-out, transform 120ms ease-out;
+}
+.ts-trigger:hover  { background: var(--ts-orange); }
+.ts-trigger:active { transform: scale(0.97); }
+.ts-trigger.ts-active {
+  border-color: rgba(235, 94, 40, 0.6);
+  box-shadow: 0 0 0 3px rgba(235, 94, 40, 0.15);
+}
+.ts-trigger.ts-historico {
+  background: rgba(235, 94, 40, 0.16);
+  color: var(--ts-orange);
+}
+.ts-trigger.ts-historico:hover { background: var(--ts-orange); color: var(--ts-t1); }
+
+.ts-trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ts-trigger:disabled:hover { background: var(--ts-bg-trigger); }
+
+.ts-trigger i:not(.ts-chevron) { font-size: 0.85rem; opacity: 0.85; }
+
+.ts-chevron {
+  font-size: 0.7rem;
+  margin-left: 2px;
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.ts-chevron-open { transform: rotate(180deg); }
+
+/* ── Popover ── */
+.ts-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 300;
+  min-width: 220px;
+  background: var(--ts-bg-popover);
+  border: 1px solid var(--ts-border);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(235, 94, 40, 0.06);
+  padding: 6px;
+  transform-origin: top left;
+  animation: tsIn 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes tsIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ts-cerradas-label {
+  padding: 8px 10px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ts-t3);
+}
+
+.ts-divider {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--ts-border);
+}
+
+.ts-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ts-t2);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease-out, color 120ms ease-out;
+}
+.ts-item:hover { background: rgba(235, 94, 40, 0.12); color: var(--ts-orange); }
+.ts-item:active { transform: scale(0.98); }
+
+.ts-item-sel {
+  background: var(--ts-orange);
+  color: #fff;
+  font-weight: 700;
+}
+.ts-item-sel:hover { background: var(--ts-orange); color: #fff; }
+
+.ts-item-actual { margin-bottom: 2px; }
+
+.ts-dot-live {
+  font-size: 0.4rem;
+  color: #3fb950;
+}
+.ts-item-sel .ts-dot-live { color: #fff; }
+
+.ts-check {
+  margin-left: auto;
+  font-size: 0.72rem;
+}
+
+/* Touch devices shouldn't get hover-triggered states */
+@media (hover: hover) and (pointer: fine) {
+  .ts-trigger:hover { background: var(--ts-orange); }
+}
