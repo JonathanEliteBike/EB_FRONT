@@ -369,7 +369,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   totalMes(mes: keyof ForecastRow): number {
-    return this.rowsFiltrados.reduce((s, r) => s + (Number(r[mes]) || 0), 0);
+    return this.rowsFiltrados.reduce((s, r) => s + this.getMesDisplay(r, mes), 0);
   }
 
   totalPrecioMes(mes: keyof ForecastRow): number {
@@ -1324,6 +1324,25 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   /** Type-safe getter for month value on a row */
   getMes(row: ForecastRow, mes: keyof ForecastRow): number {
     return Number(row[mes]) || 0;
+  }
+
+  /**
+   * Valor del mes descontando lo ya pedido (FIFO: descuenta de los meses más tempranos primero).
+   * En modo edición devuelve el valor bruto para no confundir al usuario.
+   */
+  getMesDisplay(row: ForecastRow, mes: keyof ForecastRow): number {
+    if (this.modoEdicion) return this.getMes(row, mes);
+    const av = this._avanceMapCache.get(row.sku);
+    if (!av || av.pedido_total <= 0) return this.getMes(row, mes);
+    let restante = av.pedido_total;
+    for (const m of MESES) {
+      const qty = Number(row[m]) || 0;
+      const deducido = Math.min(restante, qty);
+      if (m === mes) return Math.max(0, qty - deducido);
+      restante -= deducido;
+      if (restante <= 0) break;
+    }
+    return this.getMes(row, mes);
   }
 
   /** Type-safe setter for month value on a row */

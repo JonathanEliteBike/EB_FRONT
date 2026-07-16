@@ -368,8 +368,9 @@
               <span *ngIf="isBloqueadoMegamo(row, mes)" class="td-qty-lock" title="Solo disponible a partir de Julio">
                 <i class="fas fa-lock"></i>
               </span>
-              <!-- Vista normal (lectura) -->
-              <span *ngIf="!isBloqueadoMegamo(row, mes) && (!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo))">{{ getMes(row, mes) | number:'1.0-0' }}</span>
+              <!-- Vista normal (lectura): muestra valor pendiente (proyectado − ya pedido) -->
+              <span *ngIf="!isBloqueadoMegamo(row, mes) && (!modoEdicion || row._eliminar || (!puedeEditarMeses && !row._nuevo))"
+                    [class.mes-cubierto]="getMes(row, mes) > 0 && getMesDisplay(row, mes) === 0">{{ getMesDisplay(row, mes) || '' }}</span>
               <!-- Edición -->
               <input *ngIf="!isBloqueadoMegamo(row, mes) && modoEdicion && !row._eliminar && (puedeEditarMeses || row._nuevo)"
                      class="proy-input-num"

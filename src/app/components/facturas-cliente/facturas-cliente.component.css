@@ -48,12 +48,26 @@
   flex-shrink: 0;
 }
 
+.modal-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .modal-header h2 {
   color: #EB5E28;
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.3px;
+}
+
+.modal-cliente-nombre {
+  color: #FFFCF2;
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.8;
+  letter-spacing: 0.2px;
 }
 
 .close-button {

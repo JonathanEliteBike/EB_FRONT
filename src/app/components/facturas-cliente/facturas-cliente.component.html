@@ -1,7 +1,12 @@
 <div class="modal-overlay" [class.open]="isOpen" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-            <h2>Detalles de Compra</h2>
+            <div class="modal-header-info">
+                <h2>Detalles de Compra</h2>
+                <span *ngIf="infoCliente?.nombre_cliente" class="modal-cliente-nombre">
+                    {{ infoCliente.nombre_cliente }}
+                </span>
+            </div>
             <button class="close-button" (click)="closeModal()">×</button>
         </div>
 
