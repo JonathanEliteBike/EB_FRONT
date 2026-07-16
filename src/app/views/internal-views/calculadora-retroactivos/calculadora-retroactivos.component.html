@@ -257,22 +257,22 @@
         <th>PORCENTAJE RETROACTIVO</th>
         <th>TOTAL MARGEN POR CATEGORIA</th>
         <th>TOTAL MARGEN RETROACTIVO</th>
-        <th>TOTAL MARGEN CON DESCUENTO RETROACTIVO</th>
         <th>TOTAL BENEFICIOS</th>
+        <th>TOTAL MARGEN CATEGORIA, RETROACTIVO Y BENEFICIOS</th>
       </tr>
     </thead>
     <tbody>
       <ng-container *ngFor="let item of listaSimuladorRetroactivo()">
         <tr>
           <td>{{ item.descripcion | uppercase }}</td>
-          <td><input class="numberbox" type="text" (input)="validarCantidad($event, item)" [(ngModel)]="item.cantidadAMostrar" (change)="calcularSimuladorRetroactivo()"/> </td>
+          <td><input class="numberbox" type="text" (input)="validarCantidad($event, item)" [(ngModel)]="item.cantidadAMostrar" (change)="calcularSimuladorRetroactivo()" placeholder="Ingresa la cantidad"/> </td>
           <td class="alineacion-derecha">{{ item.compraMinima | currency:'MXN':'symbol':'1.0-0' }}</td>
           <td class="alineacion-derecha">{{ item.totalCompraConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
           <td class="alineacion-derecha">{{ item.porcentaje }}%</td>
           <td class="alineacion-derecha">{{ item.totalMargenConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
           <td class="alineacion-derecha">{{ item.totalMargenConPorcentaje | currency:'MXN':'symbol':'1.0-0' }}</td>
-          <td class="alineacion-derecha">{{ item.totalMargenCalculado | currency:'MXN':'symbol':'1.0-0' }}</td>
           <td class="alineacion-derecha">{{ item.totalBeneficios | currency:'MXN':'symbol':'1.0-0' }}</td>
+          <td class="alineacion-derecha">{{ item.totalMargenCalculado | currency:'MXN':'symbol':'1.0-0' }}</td>
         </tr>
       </ng-container>
     </tbody>
@@ -281,8 +281,8 @@
         <td colspan="5">TOTALES</td>
         <td class="alineacion-centrada totales">{{ totalMargenConDescuentoSimulador() | currency:'MXN':'symbol':'1.0-0' }}</td>
         <td class="alineacion-centrada totales">{{ totalMargenConPorcentajeSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
-        <td class="alineacion-centrada totales">{{ totalMargenCalculadoSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-centrada totales">{{ totalBeneficiosSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
+        <td class="alineacion-centrada totales">{{ totalMargenCalculadoSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
       </tr>
     </tfoot>
   </table>
