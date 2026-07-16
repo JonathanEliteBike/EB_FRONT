@@ -7,7 +7,7 @@ export interface SimuladorRetroactivo {
   totalCompraConDescuento: number;
   porcentaje: number;
   totalMargenConDescuento: number;
-  totalMargenCalculado: number;
   totalMargenConPorcentaje: number;
-  totalBeneficios: number;
+  totalBeneficios: number
+  totalMargenCalculado: number;
 }
