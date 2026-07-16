@@ -9,4 +9,5 @@ export interface SimuladorRetroactivo {
   totalMargenConDescuento: number;
   totalMargenCalculado: number;
   totalMargenConPorcentaje: number;
+  totalBeneficios: number;
 }
