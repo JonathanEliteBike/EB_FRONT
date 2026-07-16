@@ -15,7 +15,7 @@
         <th>MARGEN POR CATEGORIA</th>
         <th>NIVEL ELEGIDO</th>
         <th>DESCUENTO RETROACTIVO</th>
-        <th>MARGEN + DESCUENTO RETROACTIVO</th>
+        <th>MARGEN CON DESCUENTO RETROACTIVO</th>
       </tr>
       <ng-container *ngFor="let item of listaCalculoMargenesRetroactivos()">
         <tr>
@@ -232,7 +232,7 @@
       <tr class="cabecera">
         <th>
           <div class="dropdown-simulador">
-            <label>Nivel</label>
+            <label>NIVEL</label>
             <select class="select-control" required [(ngModel)]="clasificacionSeleccionadaSimulador" (ngModelChange)="calcularSimuladorRetroactivo()">
               <option value="" disabled selected>Selecciona una opción...</option>  
               <option *ngFor="let item of listaClasificacionesSimulador" [ngValue]="item">
@@ -243,7 +243,7 @@
         </th>
         <th> 
           <div class="dropdown-simulador">
-            <label>Sucursales</label>
+            <label>SUCURSALES</label>
             <select class="select-control" required [(ngModel)]="sucursalSeleccionadaSimulador" (ngModelChange)="calcularSimuladorRetroactivo()">
               <option value="" disabled selected>Selecciona una opción...</option>
               <option *ngFor="let item of listaSucursales" [ngValue]="item">
@@ -253,11 +253,12 @@
           </div>
         </th>
         <th>COMPRA MINIMA</th>
-        <th>CANTIDAD</th>
-        <th>PORCENTAJE</th>
-        <th>TOTAL MARGEN</th>
-        <th>TOTAL MARGEN PORCENTAJE</th>
-        <th>TOTAL</th>
+        <th>CANTIDAD ADICIONAL</th>
+        <th>PORCENTAJE RETROACTIVO</th>
+        <th>TOTAL MARGEN POR CATEGORIA</th>
+        <th>TOTAL MARGEN RETROACTIVO</th>
+        <th>TOTAL MARGEN CON DESCUENTO RETROACTIVO</th>
+        <th>TOTAL BENEFICIOS</th>
       </tr>
     </thead>
     <tbody>
@@ -271,6 +272,7 @@
           <td class="alineacion-derecha">{{ item.totalMargenConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
           <td class="alineacion-derecha">{{ item.totalMargenConPorcentaje | currency:'MXN':'symbol':'1.0-0' }}</td>
           <td class="alineacion-derecha">{{ item.totalMargenCalculado | currency:'MXN':'symbol':'1.0-0' }}</td>
+          <td class="alineacion-derecha">{{ item.totalBeneficios | currency:'MXN':'symbol':'1.0-0' }}</td>
         </tr>
       </ng-container>
     </tbody>
@@ -280,6 +282,7 @@
         <td class="alineacion-centrada totales">{{ totalMargenConDescuentoSimulador() | currency:'MXN':'symbol':'1.0-0' }}</td>
         <td class="alineacion-centrada totales">{{ totalMargenConPorcentajeSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-centrada totales">{{ totalMargenCalculadoSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
+        <td class="alineacion-centrada totales">{{ totalBeneficiosSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
       </tr>
     </tfoot>
   </table>

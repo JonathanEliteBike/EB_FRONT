@@ -120,8 +120,8 @@ export class CalculadoraRetroactivosComponent {
   ]);
   
   listaSimuladorRetroactivo = signal<SimuladorRetroactivo[]>([
-    { id: 1, descripcion: "BICICLETAS", cantidadIngresada: 0, cantidadAMostrar: "", compraMinima: 0, totalCompraConDescuento: 0, porcentaje: 0, totalMargenConDescuento: 0, totalMargenConPorcentaje: 0, totalMargenCalculado: 0 },
-    { id: 2, descripcion: "APPAREL Y SYNCROS", cantidadIngresada: 0, cantidadAMostrar: "", compraMinima: 0, totalCompraConDescuento: 0, porcentaje: 0, totalMargenConDescuento: 0, totalMargenConPorcentaje: 0, totalMargenCalculado: 0},
+    { id: 1, descripcion: "BICICLETAS", cantidadIngresada: 0, cantidadAMostrar: "", compraMinima: 0, totalCompraConDescuento: 0, porcentaje: 0, totalMargenConDescuento: 0, totalMargenConPorcentaje: 0, totalMargenCalculado: 0, totalBeneficios: 0 },
+    { id: 2, descripcion: "APPAREL Y SYNCROS", cantidadIngresada: 0, cantidadAMostrar: "", compraMinima: 0, totalCompraConDescuento: 0, porcentaje: 0, totalMargenConDescuento: 0, totalMargenConPorcentaje: 0, totalMargenCalculado: 0, totalBeneficios: 0 },
   ]);
   
   listaAnualPorCumplimiento: AnualPorCumplimiento[] = [
@@ -208,6 +208,10 @@ export class CalculadoraRetroactivosComponent {
     return this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.totalMargenCalculado, 0);
   });
 
+  totalBeneficiosSimulador = computed(() => {
+    return this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.totalBeneficios, 0);
+  });
+
   ngOnInit(): void {
     this.obtenerMultimarcaCompraMinimaAnual();
     this.obtenerBeneficios();
@@ -215,8 +219,8 @@ export class CalculadoraRetroactivosComponent {
   };
   
   calcularSimuladorRetroactivo() {
-    this.obtenerCompraMinimaSimulador();
     this.filtrarCantidadIngresadaSimulador();
+    this.obtenerCompraMinimaSimulador();
     this.obtenerCalculoMargenRetroactivo();
     this.actualizarAnualAdicionalPorNivelCantidad(this.listaAnualAdicionalPorNivelCantidadSimulador, this.sucursalSeleccionadaSimulador);
     this.obtenerPorcentajesSimulador();
@@ -267,11 +271,11 @@ export class CalculadoraRetroactivosComponent {
           let totalConDescuento = 0;
           let totalConPorcentaje = 0;
           let totalMargenCalculado = 0;
+          let totalBeneficios = (item.cantidadIngresada * this.clasificacionSeleccionadaSimulador.margen_inicial_adicional_distribuidor) / 100;
 
           if (item.cantidadIngresada >= item.compraMinima){
             totalConDescuento = item.id === 1 ? (item.cantidadIngresada * margenBicicleta.margen_inicio_temporada) : (item.cantidadIngresada * margenAparel.margen_inicio_temporada);
             totalConDescuento = totalConDescuento / 100;
-
             totalConPorcentaje = (item.cantidadIngresada * item.porcentaje ) / 100;
             totalMargenCalculado = totalConDescuento + totalConPorcentaje;
           }
@@ -280,13 +284,12 @@ export class CalculadoraRetroactivosComponent {
               ...item,
               totalMargenConDescuento: totalConDescuento,
               totalMargenConPorcentaje: totalConPorcentaje,
-              totalMargenCalculado: totalMargenCalculado
+              totalMargenCalculado: totalMargenCalculado,
+              totalBeneficios: totalBeneficios
             };
         })
       );
     }
-
-    console.log(this.listaSimuladorRetroactivo())
   }
 
   obtenerCalculoMargenRetroactivo(){
@@ -305,8 +308,8 @@ export class CalculadoraRetroactivosComponent {
   obtenerCompraMinimaSimulador(){
     let redondeoBiciMinimaCompraLinea = this.clasificacionSeleccionadaSimulador.id === 2 ? 5000 : 10000;
     let totalCompraMiminaMultimarca = Math.ceil((this.clasificacionSeleccionadaSimulador.multimarca_compra_minima_anual * (this.sucursalSeleccionadaSimulador?.multiplo)) / 10000) * 10000;
-    let totalCompraMinimaBici = (Math.ceil((this.clasificacionSeleccionadaSimulador.bicicleta_compra_minima_anual * (this.sucursalSeleccionadaSimulador?.multiplo)) / redondeoBiciMinimaCompraLinea) * redondeoBiciMinimaCompraLinea) + totalCompraMiminaMultimarca;
-            
+    let totalCompraMinimaBici = (Math.ceil((this.clasificacionSeleccionadaSimulador.bicicleta_compra_minima_anual * (this.sucursalSeleccionadaSimulador?.multiplo)) / redondeoBiciMinimaCompraLinea) * redondeoBiciMinimaCompraLinea);
+    
     this.listaSimuladorRetroactivo.update(listaActual => 
     listaActual.map(item => {
       let cantidad = item.cantidadIngresada !== null ? item.cantidadIngresada : 0;
@@ -343,7 +346,7 @@ export class CalculadoraRetroactivosComponent {
           }
         }
         else if (item.id === 2){
-          if ((item.cantidadIngresada > 0) && (item.cantidadIngresada > item.compraMinima) && (anualPorCumplimiento)){
+          if ((item.cantidadIngresada > 0) && (item.cantidadIngresada >= item.compraMinima) && (anualPorCumplimiento)){
             porcentaje = anualPorCumplimiento.descuento;
           }
         }
@@ -507,7 +510,8 @@ export class CalculadoraRetroactivosComponent {
         return {
           ...item,
           importe_minimo_total_anual_con_iva: (this.bicicletaMinimaCompraInicialLinea + this.multimarcaMinimaCompraInicialLinea),
-          importe_total_compra_adicional_con_iva: Math.ceil((this.clasificacionSeleccionada.importe_compra_minimo_anual_adicional_iva_incluido * this.sucursalSeleccionada.multiplo) / 10000 ) * 10000,
+          // importe_total_compra_adicional_con_iva: Math.ceil((this.clasificacionSeleccionada.importe_compra_minimo_anual_adicional_iva_incluido * this.sucursalSeleccionada.multiplo) / 10000 ) * 10000,
+          importe_total_compra_adicional_con_iva: (this.anualAdicionalPorNivel.valor * this.sucursalSeleccionada.multiplo),
           descuento_retroactivo_por_logro: this.anualAdicionalPorNivel.descuento_retroactivo
         };
       })
