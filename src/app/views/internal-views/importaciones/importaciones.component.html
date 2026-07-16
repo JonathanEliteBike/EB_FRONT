@@ -73,6 +73,23 @@
     </div>
   </div>
 
+  <!-- ── Filtro por etapa ── -->
+  <div class="etapa-filter-bar" *ngIf="!cargando">
+    <button class="etapa-pill etapa-all"
+            [class.active]="!filtroEtapa"
+            (click)="toggleEtapa('')">
+      Todas <span class="etapa-count">{{ embarques.length }}</span>
+    </button>
+    <button *ngFor="let et of ETAPAS"
+            class="etapa-pill"
+            [class.active]="filtroEtapa === et.key"
+            [style.--ec]="et.color"
+            [style.--eb]="et.bg"
+            (click)="toggleEtapa(et.key)">
+      {{ et.key }} <span class="etapa-count">{{ countEtapa(et.key) }}</span>
+    </button>
+  </div>
+
   <!-- ── Spinner ── -->
   <div class="imp-spinner" *ngIf="cargando">
     <div class="spinner"></div>
@@ -116,6 +133,7 @@
                   <i class="fas" [ngClass]="e.via_transporte === 'AEREO' ? 'fa-plane' : 'fa-ship'"></i>
                   {{ e.via_transporte === 'AEREO' ? 'Aéreo' : 'Marítimo' }}
                 </span>
+                <span class="estado-badge" [ngStyle]="estadoStyle(e)">{{ estadoActual(e) }}</span>
               </div>
               <span class="ref-nombre">{{ e.nombre }}</span>
             </td>

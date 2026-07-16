@@ -76,6 +76,7 @@
 
     <!-- ════════════════════════════════ TAB: RESUMEN ══════════════════════════ -->
     <ng-container *ngIf="activeTab === 'resumen'">
+    <div class="tab-panel">
 
       <div class="kpi-row">
 
@@ -202,10 +203,12 @@
         <canvas #chartMes *ngIf="data.por_mes.length > 0"></canvas>
       </div>
 
+    </div>
     </ng-container>
 
     <!-- ════════════════════════════════ TAB: LATENCIAS ═══════════════════════ -->
     <ng-container *ngIf="activeTab === 'latencias'">
+    <div class="tab-panel">
 
       <div class="kpi-row">
 
@@ -347,10 +350,12 @@
 
       </div><!-- /charts-row r2 embarque+etiquetado -->
 
+    </div>
     </ng-container>
 
     <!-- ════════════════════════════════ TAB: COSTOS ══════════════════════════ -->
     <ng-container *ngIf="activeTab === 'costos'">
+    <div class="tab-panel">
 
       <div class="kpi-row">
 
@@ -429,10 +434,12 @@
         <canvas #chartCostoPaq *ngIf="costoPaqConDatos.length > 0"></canvas>
       </div>
 
+    </div>
     </ng-container>
 
     <!-- ════════════════════════════════ TAB: EMBARQUES ══════════════════════ -->
     <ng-container *ngIf="activeTab === 'embarques'">
+    <div class="tab-panel">
 
       <div class="table-card">
         <div class="table-head">
@@ -451,73 +458,176 @@
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="table-wrap">
-          <table>
+        <div class="pipeline-legend">
+          <span class="leg-sep">Días:</span>
+          <span class="leg-item leg-ok"><span class="leg-dot"></span>Adelantado / A tiempo</span>
+          <span class="leg-item leg-late"><span class="leg-dot"></span>Atrasado</span>
+          <span class="leg-divider"></span>
+          <span class="leg-sep">Filtrar por etapa:</span>
+          <button class="etapa-pill etapa-all"
+                  [class.active]="!filtroEtapa"
+                  (click)="filtroEtapa = ''">
+            Todas <span class="etapa-count">{{ data?.embarques?.length ?? 0 }}</span>
+          </button>
+          <button *ngFor="let et of ETAPAS"
+                  class="etapa-pill"
+                  [class.active]="filtroEtapa === et.key"
+                  [style.--ec]="et.color"
+                  [style.--eb]="et.bg"
+                  (click)="filtroEtapa = filtroEtapa === et.key ? '' : et.key">
+            {{ et.key }} <span class="etapa-count">{{ countEtapa(et.key) }}</span>
+          </button>
+        </div>
+        <div class="table-wrap pipeline-wrap">
+          <table class="pipeline-table">
             <thead>
               <tr>
-                <th>ID Interno</th>
-                <th>Vía</th>
-                <th>Origen</th>
-                <th>Contenido</th>
-                <th>Estatus</th>
-                <th>Almacén</th>
-                <th>Proyectado / Real</th>
+                <th class="th-sticky th-ref">Embarque</th>
+                <th class="th-sticky th-via">Vía</th>
+                <th class="th-sticky th-org">Origen</th>
+                <th class="th-sticky th-cont">Contenido</th>
+                <th class="th-stage">Entrega</th>
+                <th class="th-stage">Booking</th>
+                <th class="th-stage">Mar / Aér</th>
+                <th class="th-stage">Aduana</th>
+                <th class="th-stage">Destino</th>
+                <th class="th-stage">Almacén</th>
+                <th class="th-stage">Verif.</th>
+                <th class="th-stage">Etiq.</th>
+                <th class="th-stage">Liberado</th>
+                <th class="th-stage">Lat. Total</th>
+                <th class="th-stage">Proy/Real</th>
                 <th class="th-bici">Costo / Bici</th>
-                <th>Notas</th>
+                <th class="th-notas">Notas</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let e of embarquesOrdenados" class="emb-row" (click)="irDetalle(e.id)">
 
-                <td class="td-ref">
+                <!-- ID / nombre / estado -->
+                <td class="td-sticky td-ref">
                   <span class="ref-badge">{{ e.referencia }}</span>
+                  <span class="ref-nombre" [title]="e.nombre">{{ abrevContenido(e.nombre || e.log_tipo_productos) }}</span>
+                  <span class="ref-estado" [ngStyle]="estadoStyle(e.estado_actual)">{{ e.estado_actual }}</span>
                 </td>
 
-                <td>
+                <!-- Vía -->
+                <td class="td-sticky td-via">
                   <span class="via-pill"
                     [style.background]="colorVia(e.via_transporte) + '1a'"
                     [style.color]="colorVia(e.via_transporte)">
                     <i class="fas" [ngClass]="e.via_transporte === 'AEREO' ? 'fa-plane' : 'fa-ship'"></i>
-                    {{ e.via_transporte === 'AEREO' ? 'Aéreo' : 'Mar.' }}
                   </span>
                 </td>
 
-                <td class="td-gray td-origen">{{ e.log_origen || '—' }}</td>
+                <!-- Origen -->
+                <td class="td-sticky td-org">{{ e.log_origen || '—' }}</td>
 
-                <td>
+                <!-- Contenido -->
+                <td class="td-sticky td-cont">
                   <span class="contenido-chip" [title]="e.log_tipo_productos">
                     {{ abrevContenido(e.log_tipo_productos) }}
                   </span>
                 </td>
 
-                <td>
-                  <span class="estatus-badge"
-                    [style.color]="colorEstado(e.estado)"
-                    [style.border-color]="colorEstado(e.estado) + '44'"
-                    [style.background]="colorEstado(e.estado) + '12'">
-                    <i class="fas fa-circle" style="font-size:.4rem"></i>
-                    {{ e.estado | titlecase }}
-                  </span>
-                </td>
+                <!-- ── Etapas del pipeline ── -->
 
-                <td class="td-llegada">
-                  <div class="llegada-dual">
-                    <div class="llegada-row">
-                      <span class="llegada-label llegada-label-proy">PROY</span>
-                      <span class="llegada-fecha">{{ e.des_fecha_entrega_almacen_prog ? (e.des_fecha_entrega_almacen_prog | date:'dd/MMM/yy') : '—' }}</span>
-                    </div>
-                    <div class="llegada-row">
-                      <span class="llegada-label llegada-label-real">REAL</span>
-                      <span class="llegada-fecha"
-                        [class.llegada-tarde]="e.des_fecha_entrega_almacen_prog && e.des_llegada_almacen && e.des_llegada_almacen > e.des_fecha_entrega_almacen_prog"
-                        [class.llegada-tiempo]="e.des_fecha_entrega_almacen_prog && e.des_llegada_almacen && e.des_llegada_almacen <= e.des_fecha_entrega_almacen_prog">
-                        {{ e.des_llegada_almacen ? (e.des_llegada_almacen | date:'dd/MMM/yy') : '—' }}
-                      </span>
-                    </div>
-                    <span class="llegada-rel" *ngIf="e.des_llegada_almacen">{{ llegadaRelativa(e.des_llegada_almacen) }}</span>
+                <!-- 1. Entrega proveedor -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.entrega)">
+                  <div class="sc">
+                    <span class="sc-p">{{ fmtD(e.pipeline?.entrega?.proy) }}</span>
+                    <span class="sc-r">{{ fmtD(e.pipeline?.entrega?.real) }}</span>
+                    <span class="sc-d" *ngIf="e.pipeline?.entrega?.delta != null" [ngClass]="deltaClass(e.pipeline.entrega.delta)">
+                      {{ absDelta(e.pipeline.entrega.delta!) }}d
+                    </span>
                   </div>
                 </td>
 
+                <!-- 2. Booking -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.booking)">
+                  <div class="sc">
+                    <span class="sc-p">{{ fmtD(e.pipeline?.booking?.proy) }}</span>
+                    <span class="sc-r">{{ fmtD(e.pipeline?.booking?.real) }}</span>
+                    <span class="sc-d" *ngIf="e.pipeline?.booking?.delta != null" [ngClass]="deltaClass(e.pipeline.booking.delta)">
+                      {{ absDelta(e.pipeline.booking.delta!) }}d
+                    </span>
+                  </div>
+                </td>
+
+                <!-- 3. Tránsito (ETA puerto → llegada puerto) -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.transito)">
+                  <div class="sc">
+                    <span class="sc-p">{{ fmtD(e.pipeline?.transito?.proy) }}</span>
+                    <span class="sc-r">{{ fmtD(e.pipeline?.transito?.real) }}</span>
+                    <span class="sc-d" *ngIf="e.pipeline?.transito?.delta != null" [ngClass]="deltaClass(e.pipeline.transito.delta)">
+                      {{ absDelta(e.pipeline.transito.delta!) }}d
+                    </span>
+                  </div>
+                </td>
+
+                <!-- 4. Aduana -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.aduana)">
+                  <div class="sc">
+                    <span class="sc-p">{{ fmtD(e.pipeline?.aduana?.proy) }}</span>
+                    <span class="sc-r">{{ fmtD(e.pipeline?.aduana?.real) }}</span>
+                    <span class="sc-d" *ngIf="e.pipeline?.aduana?.delta != null" [ngClass]="deltaClass(e.pipeline.aduana.delta)">
+                      {{ absDelta(e.pipeline.aduana.delta!) }}d
+                    </span>
+                  </div>
+                </td>
+
+                <!-- 5. Tránsito a destino -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.trans_dest)">
+                  <div class="sc">
+                    <span class="sc-p">{{ fmtD(e.pipeline?.trans_dest?.proy) }}</span>
+                    <span class="sc-r">{{ fmtD(e.pipeline?.trans_dest?.real) }}</span>
+                    <span class="sc-d" *ngIf="e.pipeline?.trans_dest?.delta != null" [ngClass]="deltaClass(e.pipeline.trans_dest.delta)">
+                      {{ absDelta(e.pipeline.trans_dest.delta!) }}d
+                    </span>
+                  </div>
+                </td>
+
+                <!-- 6. En almacén (solo real) -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.en_almacen)">
+                  <div class="sc">
+                    <span class="sc-r">{{ fmtD(e.pipeline?.en_almacen?.real) }}</span>
+                  </div>
+                </td>
+
+                <!-- 7. Verificación (solo real) -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.verif)">
+                  <div class="sc">
+                    <span class="sc-r">{{ fmtD(e.pipeline?.verif?.real) }}</span>
+                  </div>
+                </td>
+
+                <!-- 8. Etiquetado -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.etiquetado)">
+                  <div class="sc">
+                    <span class="sc-p">{{ fmtD(e.pipeline?.etiquetado?.proy) }}</span>
+                    <span class="sc-r">{{ fmtD(e.pipeline?.etiquetado?.real) }}</span>
+                    <span class="sc-d" *ngIf="e.pipeline?.etiquetado?.delta != null" [ngClass]="deltaClass(e.pipeline.etiquetado.delta)">
+                      {{ absDelta(e.pipeline.etiquetado.delta!) }}d
+                    </span>
+                  </div>
+                </td>
+
+                <!-- 9. Liberado (solo real) -->
+                <td class="td-stage" [ngClass]="stageCls(e.pipeline?.liberado)">
+                  <div class="sc">
+                    <span class="sc-r">{{ fmtD(e.pipeline?.liberado?.real) }}</span>
+                  </div>
+                </td>
+
+                <!-- Latencia total -->
+                <td class="td-lat-total">
+                  <span *ngIf="e.lat_total != null" class="lat-total-badge" [style.color]="latTotalColor(e.lat_total)">
+                    {{ e.lat_total }}d
+                  </span>
+                  <span *ngIf="e.lat_total == null" class="td-gray">—</span>
+                </td>
+
+                <!-- Proyectado / Real (costo) -->
                 <td class="td-costo">
                   <div class="costo-stack">
                     <div class="costo-line" *ngIf="e.costo_proyectado_pesos; else sinProy">
@@ -543,17 +653,20 @@
                   </div>
                 </td>
 
+                <!-- Costo / Bici -->
                 <td class="td-bici-val">
                   <ng-container *ngIf="e.costo_por_bicicleta; else sinBici">
-                    <i class="fas fa-bicycle" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
-                    <span class="bici-num">${{ e.costo_por_bicicleta | number:'1.2-2' }} USD</span>
-                    <span class="bici-sub" *ngIf="e.cos_cantidad_bicicletas"> / {{ e.cos_cantidad_bicicletas }} uds</span>
+                    <div class="bici-stack">
+                      <span class="bici-num">${{ e.costo_por_bicicleta | number:'1.2-2' }}</span>
+                      <span class="bici-cur">USD</span>
+                      <span class="bici-sub" *ngIf="e.cos_cantidad_bicicletas">{{ e.cos_cantidad_bicicletas }} uds</span>
+                    </div>
                   </ng-container>
                   <ng-template #sinBici><span class="td-gray">—</span></ng-template>
                 </td>
 
+                <!-- Notas -->
                 <td class="td-notas" (click)="abrirNotasEdit(e, $event)">
-                  <!-- Modo edición -->
                   <div class="notas-editor" *ngIf="notasEditId === e.id" (click)="$event.stopPropagation()">
                     <textarea class="notas-input"
                       [(ngModel)]="notasEditVal"
@@ -569,7 +682,6 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Modo vista -->
                   <div class="notas-view" *ngIf="notasEditId !== e.id">
                     <span class="notas-text" [class.notas-empty]="!e.notas" [title]="e.notas || ''">
                       {{ e.notas || '—' }}
@@ -580,13 +692,14 @@
 
               </tr>
               <tr *ngIf="embarquesOrdenados.length === 0">
-                <td colspan="9" class="sin-datos"><i class="fas fa-inbox"></i> Sin embarques con los filtros seleccionados</td>
+                <td colspan="17" class="sin-datos"><i class="fas fa-inbox"></i> Sin embarques con los filtros seleccionados</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
+    </div>
     </ng-container>
 
   </ng-container>

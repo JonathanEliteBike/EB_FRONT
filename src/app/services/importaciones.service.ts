@@ -31,6 +31,7 @@ export interface Importacion {
 
   // Logística
   log_fecha_notificacion?: string;
+  log_fecha_entrega_prog?: string | null;
   log_fecha_entrega?: string;
   log_titulo_correo_salida?: string;
   log_confirmacion_enterado?: string;
@@ -41,6 +42,7 @@ export interface Importacion {
   log_costo_flete?: string;
   log_fecha_shipping_instructions?: string;
   log_confirmacion_booking?: string;
+  log_fecha_booking_prog?: string | null;
   log_fecha_booking?: string;
   log_eta_puerto?: string;
   log_buque?: string;
@@ -63,6 +65,7 @@ export interface Importacion {
   imp_facturas?: string;
   imp_series?: string;
   imp_solicitud_pago_forwarder?: string;
+  imp_llegada_contenedor_prog?: string | null;
   imp_llegada_contenedor_puerto?: string;
   imp_fecha_limite_cruce?: string;
   imp_dias_libres_almacenaje?: number;
@@ -97,6 +100,7 @@ export interface Importacion {
   // Despacho
   des_solicitud_cita_cruce?: string;
   des_cita_cruce?: string;
+  des_fecha_cruce_prog?: string | null;
   des_fecha_cruce_real?: string;
   des_solicitud_pase_maniobras?: string;
   des_carta_maniobras?: string;
@@ -135,9 +139,12 @@ export interface Importacion {
 
   // Recepción
   rec_cedula_costeo?: string;
+  rec_recepcion_odoo_prog?: string | null;
   rec_recepcion_odoo?: string;
   rec_folio_compra?: string;
+  rec_liberacion_verificacion_prog?: string | null;
   rec_liberacion_verificacion?: string;
+  rec_liberacion_final_prog?: string | null;
   rec_liberacion_final?: string;
 
   // Cierre
@@ -213,6 +220,11 @@ export interface Importacion {
   notas?: string;
   borradores?: Record<string, Record<string, any>>;
   campos_na?: string[];
+
+  // Monitor pipeline
+  pipeline?: Record<string, { proy: string | null; real: string | null; delta: number | null }>;
+  lat_total?: number | null;
+  estado_actual?: string;
 }
 
 @Injectable({ providedIn: 'root' })

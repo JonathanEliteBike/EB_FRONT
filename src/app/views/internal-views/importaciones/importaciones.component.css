@@ -105,6 +105,37 @@
 .stat-via.active { background: #1e3a5f; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
 .stat-via .stat-num { color: #60a5fa; }
 
+/* ── Filtro por etapa ── */
+.etapa-filter-bar {
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap; margin-bottom: 16px;
+}
+.etapa-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px; border: 1px solid transparent;
+  font-size: .65rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; cursor: pointer;
+  background: #1a1f2e; color: #64748b; border-color: #2d3748;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  white-space: nowrap;
+}
+.etapa-pill:hover {
+  background: #222b3e; color: #94a3b8; border-color: #3d4f6a;
+}
+.etapa-pill.active.etapa-all {
+  background: #1e2d45; color: #93c5fd; border-color: #3b82f6;
+}
+.etapa-pill.active:not(.etapa-all) {
+  background: var(--eb); color: var(--ec); border-color: var(--ec);
+}
+.etapa-count {
+  background: rgba(255,255,255,.08); border-radius: 10px;
+  padding: 0 5px; font-size: .58rem; font-weight: 700;
+}
+.etapa-pill.active .etapa-count {
+  background: rgba(255,255,255,.15);
+}
+
 /* ── Filtros ── */
 .imp-filtros {
   display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
@@ -199,6 +230,13 @@ td { padding: 10px 12px; vertical-align: middle; }
 }
 .via-badge.via-aereo { background: #2d1f4a; color: #c4b5fd; }
 .via-badge i { font-size: .65rem; }
+.estado-badge {
+  display: inline-flex; align-items: center;
+  border-radius: 4px; padding: 2px 8px;
+  font-size: .62rem; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+  white-space: nowrap;
+}
 .ref-nombre {
   display: block; font-size: .8rem; color: #cbd5e1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;

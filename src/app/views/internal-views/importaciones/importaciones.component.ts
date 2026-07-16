@@ -22,8 +22,20 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
   filtroOrigen = '';
   filtroVia = '';
   filtroEstado = '';
+  filtroEtapa = '';
   filtroFechaDesde = '';
   filtroFechaHasta = '';
+
+  readonly ETAPAS = [
+    { key: 'Booking',           bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
+    { key: 'Tránsito Mar/Aér',  bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
+    { key: 'En Aduana',         bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
+    { key: 'Tránsito Destino',  bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
+    { key: 'En Almacén',        bg: 'rgba(20,184,166,.18)',  color: '#2dd4bf' },
+    { key: 'Verificación',      bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
+    { key: 'Liberado',          bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
+    { key: 'Pendiente',         bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
+  ];
   mostrarNuevo = false;
   guardandoNuevo = false;
 
@@ -74,6 +86,7 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     const o     = this.filtroOrigen.toLowerCase();
     const v     = this.filtroVia;
     const est   = this.filtroEstado;
+    const etapa = this.filtroEtapa;
     const desde = this.filtroFechaDesde;
     const hasta = this.filtroFechaHasta;
     this.embarquesFiltrados = [...this.embarques].filter((e) => {
@@ -84,9 +97,10 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
         || (est === 'cerrado'   && (e as any).estado === 'cerrado')
         || (est === 'activo'    && (e as any).estado !== 'cerrado')
         || (est === 'pendiente' && this.progresoPct(e) === 0);
+      const matchEtapa = !etapa || this.estadoActual(e) === etapa;
       const eta    = e.log_eta_puerto || '';
       const matchF = (!desde && !hasta) || ((!desde || eta >= desde) && (!hasta || eta <= hasta));
-      return matchQ && matchO && matchV && matchE && matchF;
+      return matchQ && matchO && matchV && matchE && matchEtapa && matchF;
     });
     // Dar un tick para que Angular renderice los nuevos <tr> antes de observar
     setTimeout(() => this.observeRows(), 0);
@@ -94,8 +108,17 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   toggleFiltroEstado(val: string): void {
     this.filtroEstado = this.filtroEstado === val ? '' : val;
-    this.filtroVia    = '';   // limpiar filtro de vía al activar filtro de estado
+    this.filtroVia    = '';
     this.filtrar();
+  }
+
+  toggleEtapa(key: string): void {
+    this.filtroEtapa = this.filtroEtapa === key ? '' : key;
+    this.filtrar();
+  }
+
+  countEtapa(key: string): number {
+    return this.embarques.filter(e => this.estadoActual(e) === key).length;
   }
 
   toggleFiltroVia(val: string): void {
@@ -120,13 +143,41 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   colorPct(pct: number): string {
     if (pct === 100) return '#22c55e';
-    if (pct >= 60) return '#f59e0b';
-    if (pct > 0)   return '#3b82f6';
+    if (pct >= 60)   return '#f59e0b';
+    if (pct > 0)     return '#ef4444';
     return '#374151';
   }
 
   abrirDetalle(id: number): void {
     this.router.navigate(['/importaciones', id]);
+  }
+
+  estadoActual(e: Importacion): string {
+    if (e.rec_liberacion_final)  return 'Liberado';
+    if (e.alm_envio_info_uva)    return 'Verificación';
+    if (e.des_llegada_almacen)   return 'En Almacén';
+    if (e.des_fecha_cruce_real)  return 'Tránsito Destino';
+    if (e.log_eta_puerto)        return 'En Aduana';
+    if (e.log_fecha_booking)     return 'Tránsito Mar/Aér';
+    if (e.log_fecha_entrega)     return 'Booking';
+    return 'Pendiente';
+  }
+
+  private static readonly _ESTADO_CFG: Record<string, { bg: string; color: string }> = {
+    'Liberado':          { bg: 'rgba(34,197,94,.18)',  color: '#22c55e' },
+    'Verificación':      { bg: 'rgba(99,102,241,.18)', color: '#818cf8' },
+    'En Almacén':        { bg: 'rgba(20,184,166,.18)', color: '#2dd4bf' },
+    'Tránsito Destino':  { bg: 'rgba(139,92,246,.18)', color: '#a78bfa' },
+    'En Aduana':         { bg: 'rgba(245,158,11,.18)', color: '#fbbf24' },
+    'Tránsito Mar/Aér':  { bg: 'rgba(6,182,212,.18)',  color: '#22d3ee' },
+    'Booking':           { bg: 'rgba(59,130,246,.18)', color: '#60a5fa' },
+    'Pendiente':         { bg: 'rgba(71,85,105,.18)',  color: '#94a3b8' },
+  };
+
+  estadoStyle(e: Importacion): { background: string; color: string } {
+    const cfg = ImportacionesComponent._ESTADO_CFG[this.estadoActual(e)]
+              ?? { bg: 'rgba(71,85,105,.18)', color: '#94a3b8' };
+    return { background: cfg.bg, color: cfg.color };
   }
 
   private _normOrigen(s: string): string {

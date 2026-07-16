@@ -80,10 +80,26 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   error     = '';
   ordenTabla:    'llegada' | 'costo' | 'bici' = 'llegada';
   textoBuscador = '';
+  filtroEtapa   = '';
   desgloseOrigen = false;
   activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' = 'resumen';
 
   filtros = { via: '', estado: '', origen: '', anio: '' };
+
+  readonly ETAPAS = [
+    { key: 'Booking',           bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
+    { key: 'Tránsito Mar/Aér',  bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
+    { key: 'En Aduana',         bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
+    { key: 'Tránsito Destino',  bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
+    { key: 'En Almacén',        bg: 'rgba(20,184,166,.18)',  color: '#2dd4bf' },
+    { key: 'Verificación',      bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
+    { key: 'Liberado',          bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
+    { key: 'Pendiente',         bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
+  ];
+
+  countEtapa(key: string): number {
+    return this.data?.embarques?.filter((e: any) => e.estado_actual === key).length ?? 0;
+  }
   notasEditId: number | null = null;
   notasEditVal = '';
 
@@ -551,7 +567,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   get embarquesOrdenados(): any[] {
     if (!this.data) return [];
     const q = this.textoBuscador.trim().toLowerCase();
-    const filtrados = q
+    let filtrados: any[] = q
       ? this.data.embarques.filter((e: any) =>
           (e.referencia || '').toLowerCase().includes(q) ||
           (e.nombre || '').toLowerCase().includes(q) ||
@@ -561,6 +577,9 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           (e.notas || '').toLowerCase().includes(q)
         )
       : this.data.embarques;
+    if (this.filtroEtapa) {
+      filtrados = filtrados.filter((e: any) => e.estado_actual === this.filtroEtapa);
+    }
     return [...filtrados].sort((a, b) => {
       if (this.ordenTabla === 'llegada') {
         const da = a.des_llegada_almacen ? new Date(a.des_llegada_almacen).getTime() : 0;
@@ -707,5 +726,52 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   pctVia(count: number): number {
     return this.data ? Math.round((count / this.data.kpis.total) * 100) : 0;
+  }
+
+  // ── Pipeline helpers ─────────────────────────────────────────────────────────
+
+  fmtD(s: string | null | undefined): string {
+    if (!s) return '—';
+    try {
+      const d = new Date(s + 'T12:00:00');
+      return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+    } catch { return s.slice(5); }
+  }
+
+  deltaClass(delta: number | null | undefined): string {
+    if (delta == null) return '';
+    return delta <= 0 ? 'delta-ok' : 'delta-late';
+  }
+
+  absDelta(delta: number): number { return Math.abs(delta); }
+
+  private static readonly _ESTADO_CFG: Record<string, { bg: string; color: string }> = {
+    'Liberado':          { bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
+    'Verificación':      { bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
+    'En Almacén':        { bg: 'rgba(20,184,166,.18)',  color: '#2dd4bf' },
+    'Tránsito Destino':  { bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
+    'En Aduana':         { bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
+    'Tránsito Mar/Aér':  { bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
+    'Booking':           { bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
+    'Pendiente':         { bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
+  };
+
+  estadoStyle(estado: string): { background: string; color: string } {
+    const cfg = ImportacionesDashboardComponent._ESTADO_CFG[estado]
+              ?? { bg: 'rgba(71,85,105,.18)', color: '#94a3b8' };
+    return { background: cfg.bg, color: cfg.color };
+  }
+
+  stageCls(stage: { proy?: string | null; real?: string | null; delta?: number | null } | undefined): string {
+    if (!stage?.real) return stage?.proy ? 'stage-pending' : '';
+    if (stage.delta != null) return stage.delta <= 0 ? 'stage-ok' : 'stage-late';
+    return 'stage-done';
+  }
+
+  latTotalColor(dias: number | null | undefined): string {
+    if (dias == null) return '#64748b';
+    if (dias > 120) return '#ef4444';
+    if (dias > 75)  return '#f59e0b';
+    return '#22c55e';
   }
 }
