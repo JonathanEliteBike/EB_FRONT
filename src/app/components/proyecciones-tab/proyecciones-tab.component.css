@@ -1255,11 +1255,10 @@
   background: rgba(255, 255, 255, 0.03);
   cursor: not-allowed;
 }
-/* Mes proyectado que ya fue cubierto por pedidos en Odoo */
-.mes-cubierto {
-  color: #3a9a3a;
-  font-size: 0.65rem;
-  opacity: 0.55;
+/* Mes con unidades pendientes (proyectado pero aún no cubierto por pedidos) */
+.mes-pendiente {
+  color: #EB5E28;
+  font-weight: 700;
 }
 .td-qty-lock {
   color: #444;

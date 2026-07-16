@@ -363,6 +363,10 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
               if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.error = null;
               this.refrescando = false;
+              // Actualizar nombre real del cliente si el backend lo devuelve
+              if (response?.cliente?.nombre_cliente) {
+                this.infoCliente = response.cliente;
+              }
               if (this.facturas.length > 0) {
                 this.filtrarFacturas();
               }
