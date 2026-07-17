@@ -60,7 +60,11 @@ th, td {
 }
 
 .simulador th:nth-child(1), .simulador th:nth-child(2) {
-  width: 250px;
+  width: 235px;
+}
+
+.simulador-descripciones {
+  font-weight: 500;
 }
 
 .tabla tr:nth-child(even) {
