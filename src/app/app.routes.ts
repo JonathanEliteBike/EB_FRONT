@@ -70,6 +70,7 @@ import { CalculadoraRetroactivosComponent } from './views/internal-views/calcula
 //Imports modulo de Natalia
 import { InventarioItComponent } from './views/internal-views/inventario-it/inventario-it.component';
 import { EquiposComponent } from './views/internal-views/inventario-it/equipos/equipos.component';
+import {ColaboradoresComponent } from './views/internal-views/inventario-it/colaboradores/colaboradores.component';
 
 export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
@@ -130,6 +131,7 @@ export const routes: Routes = [
   { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent,  canActivate: [importacionesGuard] },
   { path: 'inventario-it', component: InventarioItComponent },
   { path: 'inventario-it/equipos', component: EquiposComponent},
+  { path: 'inventario-it/colaboradores', component: ColaboradoresComponent},
   { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
