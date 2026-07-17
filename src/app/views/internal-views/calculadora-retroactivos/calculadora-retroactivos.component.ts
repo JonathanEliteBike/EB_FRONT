@@ -220,11 +220,14 @@ export class CalculadoraRetroactivosComponent {
   
   calcularSimuladorRetroactivo() {
     this.filtrarCantidadIngresadaSimulador();
-    this.obtenerCompraMinimaSimulador();
-    this.obtenerCalculoMargenRetroactivo();
-    this.actualizarAnualAdicionalPorNivelCantidad(this.listaAnualAdicionalPorNivelCantidadSimulador, this.sucursalSeleccionadaSimulador);
-    this.obtenerPorcentajesSimulador();
-    this.obtenerTotalMargenCalculado();
+
+    if ((this.clasificacionSeleccionadaSimulador.id > 0) && (this.sucursalSeleccionadaSimulador.id > 0)){
+      this.obtenerCompraMinimaSimulador();
+      this.obtenerCalculoMargenRetroactivo();
+      this.actualizarAnualAdicionalPorNivelCantidad(this.listaAnualAdicionalPorNivelCantidadSimulador, this.sucursalSeleccionadaSimulador);
+      this.obtenerPorcentajesSimulador();
+      this.obtenerTotalMargenCalculado();
+    }
   }
 
   validarCantidad(e: any, item: SimuladorRetroactivo) {
@@ -277,15 +280,16 @@ export class CalculadoraRetroactivosComponent {
             totalConDescuento = item.id === 1 ? (item.cantidadIngresada * margenBicicleta.margen_inicio_temporada) : (item.cantidadIngresada * margenAparel.margen_inicio_temporada);
             totalConDescuento = totalConDescuento / 100;
             totalConPorcentaje = (item.cantidadIngresada * item.porcentaje ) / 100;
-            totalMargenCalculado = totalConDescuento + totalConPorcentaje;
           }
-
+          
+          totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
+          
           return {
               ...item,
               totalMargenConDescuento: totalConDescuento,
               totalMargenConPorcentaje: totalConPorcentaje,
-              totalMargenCalculado: totalMargenCalculado,
-              totalBeneficios: totalBeneficios
+              totalBeneficios: totalBeneficios,
+              totalMargenCalculado: totalMargenCalculado
             };
         })
       );
