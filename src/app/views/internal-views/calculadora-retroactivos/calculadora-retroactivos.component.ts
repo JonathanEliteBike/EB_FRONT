@@ -266,8 +266,10 @@ export class CalculadoraRetroactivosComponent {
 
   obtenerTotalMargenCalculado() {            
     let margenBicicleta = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 1) //margn de bicicletas   
-    let margenAparel = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 5) //margn de bicicletas
-
+    let margenAparel = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 5); //margn de bicicletas
+    let sumaPorcentajes = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.porcentaje, 0);
+    //let sumaCantidadIngresada = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.cantidadIngresada, 0);
+    
     if ((margenBicicleta) && (margenAparel)){
         this.listaSimuladorRetroactivo.update(listaActual => 
         listaActual.map(item => {
@@ -279,7 +281,7 @@ export class CalculadoraRetroactivosComponent {
           if (item.cantidadIngresada >= item.compraMinima){
             totalConDescuento = item.id === 1 ? (item.cantidadIngresada * margenBicicleta.margen_inicio_temporada) : (item.cantidadIngresada * margenAparel.margen_inicio_temporada);
             totalConDescuento = totalConDescuento / 100;
-            totalConPorcentaje = (item.cantidadIngresada * item.porcentaje ) / 100;
+            totalConPorcentaje = (item.cantidadIngresada * sumaPorcentajes ) / 100;
           }
           
           totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
