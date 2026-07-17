@@ -63,13 +63,43 @@ th, td {
   width: 235px;
 }
 
-.simulador-descripciones {
-  font-weight: 500;
-}
-
 .tabla tr:nth-child(even) {
   background-color: #1e1e1c;
 }
+
+.tooltip-informacion i {
+  font-size: 1.1rem;
+  position: absolute;
+  top: 10%;
+  right: 5%;
+  color: #60a5fa;
+}
+
+.tooltip-informacion {
+  position: relative;
+}
+
+.tooltip-informacion .tooltip-informacion-recuadro {
+  display: none;
+  position: absolute;
+  width: 280px;
+  padding: 5px;
+  border-radius: 5px;
+  top: 20%;
+  right: 20%;
+  background: #484848;
+  color: white;
+  font-weight: 500;
+  font-size: .8rem; 
+}
+
+.tooltip-informacion i:hover {
+  cursor: pointer;
+}
+
+.tooltip-informacion i:hover + .tooltip-informacion-recuadro {
+  display: block;
+} 
 
 .tabla tr:nth-child(odd) {
   background-color: #252422;
@@ -80,6 +110,7 @@ th, td {
   top: 0;
   table-layout: fixed;
   width: 100%;
+  z-index: 2;
 }
 
 .margen-retroactivo td:nth-child(4) {
