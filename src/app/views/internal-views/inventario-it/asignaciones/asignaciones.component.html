@@ -1,1 +1,929 @@
-<p>asignaciones works!</p>
+<section class="asignaciones-page">
+  <header class="asignaciones-header">
+    <button
+      class="back-btn"
+      type="button"
+      routerLink="/inventario-it">
+      ← Volver
+    </button>
+
+    <div class="title-block">
+      <p class="eyebrow">
+        INVENTARIO IT · ELITE BIKE
+      </p>
+
+      <h1>Asignación de Equipos</h1>
+
+      <p>
+        Relaciona activos tecnológicos con colaboradores y
+        administra sus devoluciones.
+      </p>
+    </div>
+
+    <button
+      class="primary-btn"
+      type="button"
+      (click)="abrirFormulario()">
+      + Nueva asignación
+    </button>
+  </header>
+
+  <!-- FORMULARIO -->
+
+  <section
+    id="formulario-asignacion"
+    class="form-panel"
+    *ngIf="mostrarFormulario">
+
+    <div class="form-header">
+      <div>
+        <h2>Nueva asignación</h2>
+
+        <p>
+          Selecciona un colaborador activo y un equipo
+          disponible.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="close-btn"
+        (click)="cerrarFormulario()">
+        ×
+      </button>
+    </div>
+
+    <form
+      (ngSubmit)="guardarAsignacion()">
+
+      <div class="form-grid">
+        <label class="wide">
+          Colaborador *
+
+          <select
+            name="colaboradorId"
+            [(ngModel)]="
+              nuevaAsignacion.colaboradorId
+            "
+            (change)="cambiarColaborador()">
+
+            <option [ngValue]="null">
+              Selecciona un colaborador
+            </option>
+
+            <option
+              *ngFor="
+                let colaborador of colaboradores
+              "
+              [ngValue]="colaborador.id">
+
+              {{
+                colaborador.numeroEmpleado
+              }}
+              —
+              {{
+                colaborador.nombreCompleto
+              }}
+            </option>
+          </select>
+        </label>
+
+        <label class="wide">
+          Equipo disponible *
+
+          <select
+            name="equipoId"
+            [(ngModel)]="
+              nuevaAsignacion.equipoId
+            "
+            (change)="cambiarEquipo()">
+
+            <option [ngValue]="null">
+              Selecciona un equipo
+            </option>
+
+            <option
+              *ngFor="let equipo of equipos"
+              [ngValue]="equipo.id">
+
+              {{
+                equipo.inventario
+              }}
+              —
+              {{
+                equipo.nombre
+              }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Fecha de asignación
+
+          <input
+            type="datetime-local"
+            name="fechaAsignacion"
+            [(ngModel)]="
+              nuevaAsignacion.fechaAsignacion
+            "
+          />
+        </label>
+
+        <label>
+          Usuario que registra
+
+          <input
+            type="text"
+            name="usuarioRegistro"
+            [(ngModel)]="
+              nuevaAsignacion.usuarioRegistro
+            "
+          />
+        </label>
+
+        <label class="wide">
+          Observaciones de entrega
+
+          <textarea
+            name="observacionesEntrega"
+            [(ngModel)]="
+              nuevaAsignacion
+                .observacionesEntrega
+            "
+            placeholder="Estado de entrega, accesorios incluidos, detalles adicionales...">
+          </textarea>
+        </label>
+      </div>
+
+      <section
+        class="selection-preview"
+        *ngIf="
+          colaboradorSeleccionado ||
+          equipoSeleccionado
+        ">
+
+        <article
+          class="preview-card"
+          *ngIf="colaboradorSeleccionado">
+
+          <span class="preview-title">
+            COLABORADOR
+          </span>
+
+          <h3>
+            {{
+              colaboradorSeleccionado
+                .nombreCompleto
+            }}
+          </h3>
+
+          <p>
+            {{
+              colaboradorSeleccionado
+                .departamento
+            }}
+            ·
+            {{
+              colaboradorSeleccionado
+                .puesto
+            }}
+          </p>
+
+          <div class="preview-data">
+            <span>
+              Empresa:
+              <strong>
+                {{
+                  colaboradorSeleccionado
+                    .empresa
+                }}
+              </strong>
+            </span>
+
+            <span>
+              Equipos actuales:
+              <strong>
+                {{
+                  colaboradorSeleccionado
+                    .equiposAsignados
+                }}
+              </strong>
+            </span>
+
+            <span>
+              Correo:
+              <strong>
+                {{
+                  colaboradorSeleccionado
+                    .correo ||
+                  'Sin correo'
+                }}
+              </strong>
+            </span>
+          </div>
+        </article>
+
+        <article
+          class="preview-card"
+          *ngIf="equipoSeleccionado">
+
+          <span class="preview-title">
+            EQUIPO
+          </span>
+
+          <h3>
+            {{
+              equipoSeleccionado.inventario
+            }}
+          </h3>
+
+          <p>
+            {{
+              equipoSeleccionado.nombre
+            }}
+          </p>
+
+          <div class="preview-data">
+            <span>
+              Marca / modelo:
+              <strong>
+                {{
+                  equipoSeleccionado.marca ||
+                  'Sin marca'
+                }}
+                ·
+                {{
+                  equipoSeleccionado.modelo ||
+                  'Sin modelo'
+                }}
+              </strong>
+            </span>
+
+            <span>
+              Serie:
+              <strong>
+                {{
+                  equipoSeleccionado.serie ||
+                  'Sin serie'
+                }}
+              </strong>
+            </span>
+
+            <span>
+              Funcionamiento:
+              <strong>
+                {{
+                  equipoSeleccionado
+                    .funcionamiento ||
+                  'Sin dato'
+                }}
+              </strong>
+            </span>
+          </div>
+        </article>
+      </section>
+
+      <div
+        class="form-alert error"
+        *ngIf="errorFormulario">
+        {{ errorFormulario }}
+      </div>
+
+      <div
+        class="form-alert success"
+        *ngIf="mensajeExito">
+        {{ mensajeExito }}
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          [disabled]="guardando"
+          (click)="cerrarFormulario()">
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="save-btn"
+          [disabled]="guardando">
+
+          {{
+            guardando
+              ? 'Asignando...'
+              : 'Asignar equipo'
+          }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ESTADÍSTICAS -->
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Asignaciones activas</span>
+      <strong>
+        {{ estadisticas.activas }}
+      </strong>
+    </article>
+
+    <article class="stat-card">
+      <span>Equipos disponibles</span>
+      <strong>
+        {{ estadisticas.equiposDisponibles }}
+      </strong>
+    </article>
+
+    <article class="stat-card">
+      <span>Colaboradores con equipo</span>
+      <strong>
+        {{
+          estadisticas.colaboradoresConEquipo
+        }}
+      </strong>
+    </article>
+
+    <article class="stat-card">
+      <span>Devoluciones realizadas</span>
+      <strong>
+        {{ estadisticas.finalizadas }}
+      </strong>
+    </article>
+  </section>
+
+  <!-- FILTROS -->
+
+  <section class="filters-panel">
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="text"
+        [(ngModel)]="terminoBusqueda"
+        (keyup.enter)="aplicarFiltros()"
+        placeholder="Buscar por colaborador, empleado, inventario, equipo, marca, modelo o serie..."
+      />
+
+      <button
+        type="button"
+        class="search-btn"
+        (click)="aplicarFiltros()">
+        Buscar
+      </button>
+    </div>
+
+    <div class="filters-grid">
+      <label>
+        Estado
+
+        <select
+          [(ngModel)]="filtroEstado"
+          (change)="aplicarFiltros()">
+
+          <option
+            *ngFor="
+              let estado of estadosFiltro
+            "
+            [value]="estado">
+            {{ estado }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Departamento
+
+        <select
+          [(ngModel)]="
+            filtroDepartamento
+          "
+          (change)="aplicarFiltros()">
+
+          <option value="Todos">
+            Todos
+          </option>
+
+          <option
+            *ngFor="
+              let departamento of departamentos
+            "
+            [value]="departamento">
+            {{ departamento }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Empresa
+
+        <select
+          [(ngModel)]="filtroEmpresa"
+          (change)="aplicarFiltros()">
+
+          <option value="Todas">
+            Todas
+          </option>
+
+          <option
+            *ngFor="let empresa of empresas"
+            [value]="empresa">
+            {{ empresa }}
+          </option>
+        </select>
+      </label>
+
+      <button
+        type="button"
+        class="clear-btn"
+        *ngIf="hayFiltrosActivos"
+        (click)="limpiarFiltros()">
+        Limpiar filtros
+      </button>
+    </div>
+
+    <p class="results-text">
+      Mostrando
+      <strong>
+        {{ asignaciones.length }}
+      </strong>
+      asignaciones.
+    </p>
+  </section>
+
+  <div
+    class="loading-message"
+    *ngIf="cargando">
+    Cargando asignaciones...
+  </div>
+
+  <div
+    class="error-message"
+    *ngIf="errorCarga">
+    {{ errorCarga }}
+  </div>
+
+  <!-- TABLA -->
+
+  <section class="table-card">
+    <div class="table-header">
+      <h2>Control de asignaciones</h2>
+
+      <p>
+        Equipos entregados, responsables y devoluciones
+        registradas.
+      </p>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Equipo</th>
+            <th>Colaborador</th>
+            <th>Departamento / Puesto</th>
+            <th>Fecha de asignación</th>
+            <th>Responsiva</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="
+              let asignacion of asignaciones
+            ">
+
+            <td class="equipment-cell">
+              <strong>
+                {{
+                  asignacion.equipo.inventario
+                }}
+              </strong>
+
+              <small>
+                {{
+                  asignacion.equipo.nombre
+                }}
+              </small>
+
+              <small>
+                {{
+                  asignacion.equipo.marca ||
+                  'Sin marca'
+                }}
+                ·
+                {{
+                  asignacion.equipo.modelo ||
+                  'Sin modelo'
+                }}
+              </small>
+            </td>
+
+            <td class="person-cell">
+              <strong>
+                {{
+                  asignacion.colaborador
+                    .nombreCompleto
+                }}
+              </strong>
+
+              <small>
+                Empleado:
+                {{
+                  asignacion.colaborador
+                    .numeroEmpleado
+                }}
+              </small>
+            </td>
+
+            <td class="department-cell">
+              <strong>
+                {{
+                  asignacion.colaborador
+                    .departamento
+                }}
+              </strong>
+
+              <small>
+                {{
+                  asignacion.colaborador
+                    .puesto
+                }}
+              </small>
+            </td>
+
+            <td>
+              {{
+                asignacion.fechaAsignacion |
+                date:'dd/MM/yyyy HH:mm'
+              }}
+            </td>
+
+            <td>
+              <span
+                class="responsiva"
+                [class.pendiente]="
+                  asignacion.estado === 'Activa'
+                "
+                [class.no-aplica]="
+                  asignacion.estado !== 'Activa'
+                ">
+
+                {{
+                  asignacion.estado === 'Activa'
+                    ? 'Pendiente'
+                    : 'No aplica'
+                }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="status"
+                [ngClass]="
+                  estadoClase(
+                    asignacion.estado
+                  )
+                ">
+                {{ asignacion.estado }}
+              </span>
+            </td>
+
+            <td class="actions-cell">
+              <div class="actions-wrapper">
+                <button
+                  type="button"
+                  class="action-btn view-btn"
+                  (click)="
+                    verAsignacion(
+                      asignacion
+                    )
+                  ">
+                  Ver
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn finish-btn"
+                  *ngIf="
+                    asignacion.estado ===
+                    'Activa'
+                  "
+                  (click)="
+                    abrirDevolucion(
+                      asignacion
+                    )
+                  ">
+                  Devolver
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr
+            *ngIf="
+              !cargando &&
+              asignaciones.length === 0
+            ">
+
+            <td
+              colspan="7"
+              class="empty-state">
+              No se encontraron asignaciones.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MODAL DETALLE -->
+
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarDetalle">
+
+    <section class="detail-modal">
+      <header class="detail-header">
+        <div>
+          <p>DETALLE DE ASIGNACIÓN</p>
+
+          <h2>
+            Asignación
+            #{{ asignacionSeleccionada?.id }}
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          (click)="cerrarDetalle()">
+          ×
+        </button>
+      </header>
+
+      <div
+        class="detail-loading"
+        *ngIf="cargandoDetalle">
+        Cargando detalle...
+      </div>
+
+      <div
+        class="error-message"
+        *ngIf="errorDetalle">
+        {{ errorDetalle }}
+      </div>
+
+      <div
+        class="detail-body"
+        *ngIf="
+          asignacionSeleccionada &&
+          !cargandoDetalle
+        ">
+
+        <section class="detail-grid">
+          <article>
+            <span>Estado</span>
+
+            <strong>
+              {{
+                asignacionSeleccionada
+                  .estado
+              }}
+            </strong>
+          </article>
+
+          <article>
+            <span>Fecha de asignación</span>
+
+            <strong>
+              {{
+                asignacionSeleccionada
+                  .fechaAsignacion |
+                date:'dd/MM/yyyy HH:mm'
+              }}
+            </strong>
+          </article>
+
+          <article>
+            <span>Equipo</span>
+
+            <strong>
+              {{
+                asignacionSeleccionada
+                  .equipo.inventario
+              }}
+              —
+              {{
+                asignacionSeleccionada
+                  .equipo.nombre
+              }}
+            </strong>
+          </article>
+
+          <article>
+            <span>Marca / modelo</span>
+
+            <strong>
+              {{
+                asignacionSeleccionada
+                  .equipo.marca ||
+                'Sin marca'
+              }}
+              ·
+              {{
+                asignacionSeleccionada
+                  .equipo.modelo ||
+                'Sin modelo'
+              }}
+            </strong>
+          </article>
+
+          <article>
+            <span>Colaborador</span>
+
+            <strong>
+              {{
+                asignacionSeleccionada
+                  .colaborador.nombreCompleto
+              }}
+            </strong>
+          </article>
+
+          <article>
+            <span>Departamento / puesto</span>
+
+            <strong>
+              {{
+                asignacionSeleccionada
+                  .colaborador.departamento
+              }}
+              ·
+              {{
+                asignacionSeleccionada
+                  .colaborador.puesto
+              }}
+            </strong>
+          </article>
+        </section>
+
+        <section class="comments-section">
+          <h3>Observaciones de entrega</h3>
+
+          <p>
+            {{
+              asignacionSeleccionada
+                .observacionesEntrega ||
+              'Sin observaciones.'
+            }}
+          </p>
+        </section>
+
+        <section
+          class="comments-section"
+          *ngIf="
+            asignacionSeleccionada
+              .estado === 'Finalizada'
+          ">
+
+          <h3>Observaciones de devolución</h3>
+
+          <p>
+            {{
+              asignacionSeleccionada
+                .observacionesDevolucion ||
+              'Sin observaciones.'
+            }}
+          </p>
+        </section>
+
+        <div class="detail-actions">
+          <button
+            type="button"
+            class="secondary-btn"
+            (click)="cerrarDetalle()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL DEVOLUCIÓN -->
+
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarDevolucion">
+
+    <section class="return-modal">
+      <header class="detail-header">
+        <div>
+          <p>DEVOLUCIÓN DE EQUIPO</p>
+
+          <h2>
+            Finalizar asignación
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          (click)="cerrarDevolucion()">
+          ×
+        </button>
+      </header>
+
+      <form
+        class="return-body"
+        (ngSubmit)="finalizarAsignacion()">
+
+        <div
+          class="return-summary"
+          *ngIf="asignacionFinalizar">
+
+          <strong>
+            {{
+              asignacionFinalizar
+                .equipo.inventario
+            }}
+            —
+            {{
+              asignacionFinalizar
+                .equipo.nombre
+            }}
+          </strong>
+
+          <span>
+            Responsable:
+            {{
+              asignacionFinalizar
+                .colaborador.nombreCompleto
+            }}
+          </span>
+        </div>
+
+        <label>
+          Fecha de devolución
+
+          <input
+            type="datetime-local"
+            name="fechaDevolucion"
+            [(ngModel)]="
+              datosDevolucion.fechaDevolucion
+            "
+          />
+        </label>
+
+        <label>
+          Observaciones de devolución
+
+          <textarea
+            name="observacionesDevolucion"
+            [(ngModel)]="
+              datosDevolucion
+                .observacionesDevolucion
+            "
+            placeholder="Condiciones del equipo, accesorios entregados, daños o comentarios...">
+          </textarea>
+        </label>
+
+        <div
+          class="form-alert error"
+          *ngIf="errorDevolucion">
+          {{ errorDevolucion }}
+        </div>
+
+        <div
+          class="form-alert success"
+          *ngIf="mensajeDevolucion">
+          {{ mensajeDevolucion }}
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="finalizando"
+            (click)="cerrarDevolucion()">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="save-btn"
+            [disabled]="finalizando">
+
+            {{
+              finalizando
+                ? 'Finalizando...'
+                : 'Confirmar devolución'
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>

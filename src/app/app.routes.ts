@@ -71,6 +71,7 @@ import { CalculadoraRetroactivosComponent } from './views/internal-views/calcula
 import { InventarioItComponent } from './views/internal-views/inventario-it/inventario-it.component';
 import { EquiposComponent } from './views/internal-views/inventario-it/equipos/equipos.component';
 import {ColaboradoresComponent } from './views/internal-views/inventario-it/colaboradores/colaboradores.component';
+import { AsignacionesComponent } from './views/internal-views/inventario-it/asignaciones/asignaciones.component';
 
 export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
@@ -132,6 +133,7 @@ export const routes: Routes = [
   { path: 'inventario-it', component: InventarioItComponent },
   { path: 'inventario-it/equipos', component: EquiposComponent},
   { path: 'inventario-it/colaboradores', component: ColaboradoresComponent},
+  { path: 'inventario-it/asignaciones', component: AsignacionesComponent },
   { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
