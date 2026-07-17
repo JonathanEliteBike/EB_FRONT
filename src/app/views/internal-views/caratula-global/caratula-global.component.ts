@@ -383,14 +383,19 @@ export class CaratulaGlobalComponent implements OnInit {
     return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
   }
 
+  /** Semanas transcurridas desde el inicio REAL de la temporada (1 jul 2025),
+   * no desde "la semana ISO 26 mas reciente" -- ese calculo por modulo de
+   * calendario se reiniciaba cada año en la semana 26 (~fin de junio),
+   * dando semanas absurdamente bajas (p. ej. 3) apenas pasaba esa semana en
+   * 2026 aunque la temporada llevara +50 semanas corriendo. Acotado a
+   * [0, 52] para que el proyectado nunca exceda la meta una vez terminada
+   * la duracion normal de una temporada. */
   obtenerSemanasTranscurridas(): number {
-    const semanaActual = this.obtenerSemanaISO();
-    const semanaInicioTemporada = 26;
-
-    if (semanaActual < semanaInicioTemporada) {
-      return (52 - semanaInicioTemporada) + semanaActual;
-    }
-    return semanaActual - semanaInicioTemporada;
+    const FECHA_INICIO_TEMPORADA = new Date(2025, 6, 1); // 1 jul 2025
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const dias = Math.floor((hoy.getTime() - FECHA_INICIO_TEMPORADA.getTime()) / 86400000);
+    return Math.max(0, Math.min(52, Math.floor(dias / 7)));
   }
 
   calcularProyectadoMonto1(): void {
