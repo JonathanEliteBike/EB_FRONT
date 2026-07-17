@@ -7,6 +7,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { RetroactivosService } from '../../../services/retroactivos.service';
 import { AuthService } from '../../../services/auth.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 // Interfaz para el buscador
 interface SugerenciaCliente {
@@ -59,7 +61,7 @@ interface DatosRetroactivo {
 @Component({
   selector: 'app-caratula-retroactivos',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './caratula-retroactivos.component.html',
   styleUrl: './caratula-retroactivos.component.css'
 })
@@ -85,6 +87,11 @@ export class CaratulaRetroactivosComponent implements OnInit {
   mensajeCierre: string | null = null;
   errorCierre: string | null = null;
 
+  temporadasDisponibles: string[] = [];
+  modoHistorico = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+  private datosHistorico: DatosRetroactivo[] = [];
+
   constructor(
     private retroactivosService: RetroactivosService,
     private authService: AuthService
@@ -94,6 +101,57 @@ export class CaratulaRetroactivosComponent implements OnInit {
     this.isAdmin = this.authService.isAdmin();
     this.cargarCacheClientes();
     this.configurarBuscador();
+    this.cargarTemporadasDisponibles();
+  }
+
+  cargarTemporadasDisponibles(): void {
+    this.retroactivosService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
+    });
+  }
+
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+    const claveActual = this.datosCliente?.CLAVE || this.terminoBusqueda.trim();
+
+    this.modoHistorico = true;
+    this.temporadaHistoricaSeleccionada = temporada;
+    this.mostrarSugerencias = false;
+    this.error = null;
+
+    this.retroactivosService.getRetroactivosHistorico(temporada).subscribe({
+      next: (data) => {
+        this.datosHistorico = data;
+        this.allClientes = data.map(item => ({ CLAVE: item.CLAVE, CLIENTE: item.CLIENTE }));
+        if (claveActual) {
+          this.terminoBusqueda = claveActual;
+          this.buscarCliente(claveActual);
+        }
+      },
+      error: (err) => console.error('Error cargando temporada histórica:', err)
+    });
+  }
+
+  volverATemporadaActual(): void {
+    const claveActual = this.datosCliente?.CLAVE || this.terminoBusqueda.trim();
+
+    this.modoHistorico = false;
+    this.temporadaHistoricaSeleccionada = null;
+    this.datosHistorico = [];
+    this.mostrarSugerencias = false;
+    this.error = null;
+    this.cargarCacheClientes();
+
+    if (claveActual) {
+      this.terminoBusqueda = claveActual;
+      this.buscarCliente(claveActual);
+    } else {
+      this.datosCliente = null;
+    }
   }
 
   private cargarCacheClientes() {
@@ -194,6 +252,20 @@ export class CaratulaRetroactivosComponent implements OnInit {
     this.error = null;
     this.datosCliente = null;
     this.mostrarSugerencias = false;
+
+    if (this.modoHistorico) {
+      const idLower = identificador.toLowerCase();
+      const encontrado = this.datosHistorico.find(d =>
+        d.CLAVE?.toLowerCase() === idLower || d.CLIENTE?.toLowerCase().includes(idLower)
+      );
+      this.isLoading = false;
+      if (encontrado) {
+        this.datosCliente = encontrado;
+      } else {
+        this.error = 'No se encontró información para este cliente en esa temporada.';
+      }
+      return;
+    }
 
     this.retroactivosService.getRetroactivoCliente(identificador).subscribe({
       next: (data) => {

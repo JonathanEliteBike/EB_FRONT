@@ -295,4 +295,34 @@ export class CaratulasService {
   verificarGrupoCliente(clave: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/verificar_grupo_cliente`, { params: { clave } });
   }
+
+  getTemporadasDisponibles(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/temporadas_disponibles`);
+  }
+
+  getTemporadas(): Observable<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]> {
+    return this.http.get<any>(`${this.apiUrl}/temporadas`);
+  }
+
+  getDatosPrevioHistorico(temporada: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/datos_previo_historico`, { params: { temporada } });
+  }
+
+  getDatosEvacAHistorico(temporada: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/datos_evac_a_historico`, { params: { temporada } });
+  }
+
+  getDatosEvacBHistorico(temporada: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/datos_evac_b_historico`, { params: { temporada } });
+  }
+
+  /** Ventas de `monitor` sin cliente registrado (ni por clave ni por nombre),
+   * clasificadas por marca. Carátula Global las suma a sus totales para que
+   * las ventas reales cuenten aunque el cliente aún no tenga alta formal. */
+  getVentasNoRegistradas(fechaDesde?: string, fechaHasta?: string): Observable<any> {
+    const params: any = {};
+    if (fechaDesde) params.fecha_desde = fechaDesde;
+    if (fechaHasta) params.fecha_hasta = fechaHasta;
+    return this.http.get<any>(`${this.apiUrl}/ventas_no_registradas`, { params });
+  }
 }

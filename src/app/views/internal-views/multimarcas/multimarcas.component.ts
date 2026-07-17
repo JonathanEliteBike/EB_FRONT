@@ -9,11 +9,13 @@ import { finalize } from 'rxjs/operators';
 import { RouterModule } from '@angular/router';
 import { FiltroPrevioComponent } from '../../../components/filtro-previo/filtro-previo.component';
 import * as XLSX from 'xlsx';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 @Component({
   selector: 'app-multimarcas',
   standalone: true,
-  imports: [CommonModule, FormsModule, HomeBarComponent, RouterModule, FiltroPrevioComponent],
+  imports: [CommonModule, FormsModule, HomeBarComponent, RouterModule, FiltroPrevioComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './multimarcas.component.html',
   styleUrls: ['./multimarcas.component.css']
 })
@@ -23,6 +25,61 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
   clientesOriginales: any[] = [];
   facturasOriginales: any[] = [];
   cargando: boolean = false;
+
+  // Rango de la temporada ACTUALMENTE abierta -- se llena dinamicamente desde
+  // /temporadas antes de calcular avances, en vez de fechas fijas de MY26.
+  temporadaActualInicio: string = '2026-07-01';
+  temporadaActualFin: string = '2027-06-30';
+
+  temporadasDisponibles: string[] = [];
+  modoHistorico: boolean = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+  private temporadaHistoricaInicio: string | null = null;
+  private todasLasTemporadas: { etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[] = [];
+
+  private readonly NOMBRES_MESES_TEMPORADA = [
+    'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE',
+    'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO'
+  ];
+
+  // Rango [primer dia, ultimo dia] del mes N (0=primer mes de la temporada,
+  // ej. julio; 11=ultimo mes, ej. junio) de la temporada ACTUAL -- calculado
+  // dinamicamente, ya no fechas fijas de MY26. Parsea el string de fecha
+  // directo para evitar corrimientos de un dia por zona horaria.
+  private rangoMesTemporada(offset: number): { inicio: Date; fin: Date } {
+    const [anioStr, mesStr] = this.temporadaActualInicio.split('-');
+    let anio = parseInt(anioStr, 10);
+    let mes = parseInt(mesStr, 10) - 1; // 0-indexado para Date
+
+    mes += offset;
+    anio += Math.floor(mes / 12);
+    mes = ((mes % 12) + 12) % 12;
+
+    const inicio = new Date(anio, mes, 1);
+    const fin = new Date(anio, mes + 1, 0); // dia 0 del mes siguiente = ultimo dia de este mes
+    return { inicio, fin };
+  }
+
+  // Etiquetas de columna (ej. "JULIO 25") calculadas a partir del inicio de
+  // la temporada que se este mostrando -- ya no fijas a MY26. Parsea el
+  // string de fecha directo (sin pasar por Date) para evitar corrimientos de
+  // un dia por zona horaria.
+  get etiquetasMeses(): string[] {
+    const fechaInicioStr = (this.modoHistorico && this.temporadaHistoricaInicio)
+      ? this.temporadaHistoricaInicio
+      : this.temporadaActualInicio;
+
+    const [anioStr, mesStr] = fechaInicioStr.split('-');
+    let anio = parseInt(anioStr, 10);
+    let mes = parseInt(mesStr, 10); // 1-indexado
+
+    return this.NOMBRES_MESES_TEMPORADA.map(nombre => {
+      const etiqueta = `${nombre} ${String(anio).slice(-2)}`;
+      mes++;
+      if (mes > 12) { mes = 1; anio++; }
+      return etiqueta;
+    });
+  }
 
   // Opciones para los filtros
   opcionesClave: { value: string; selected: boolean; }[] = [];
@@ -43,10 +100,36 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.cargarDatos();
+    this.cargarTemporadaActualYDatos();
+    this.cargarTemporadasDisponibles();
 
     this.filtroService.filtroAbierto$.subscribe(filtroId => {
       this.filtroActivo = filtroId;
+    });
+  }
+
+  private cargarTemporadaActualYDatos(): void {
+    this.multimarcasService.getTemporadas().subscribe({
+      next: (temporadas) => {
+        this.todasLasTemporadas = temporadas;
+        const abierta = temporadas.find(t => t.estado === 'abierta');
+        if (abierta) {
+          this.temporadaActualInicio = abierta.fecha_inicio;
+          this.temporadaActualFin = abierta.fecha_fin;
+        }
+        this.cargarDatos();
+      },
+      error: (err) => {
+        console.error('Error cargando temporada actual, usando default:', err);
+        this.cargarDatos();
+      }
+    });
+  }
+
+  cargarTemporadasDisponibles(): void {
+    this.multimarcasService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
     });
   }
 
@@ -91,6 +174,13 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     // Cargamos primero los clientes
     this.multimarcasService.getMultimarcas().subscribe({
       next: (clientes) => {
+        // Guardia contra condicion de carrera: si el usuario ya cambio a
+        // modo historico mientras esta respuesta (lenta, en vivo) seguia en
+        // curso, no pisar los datos historicos que ya se cargaron.
+        if (this.modoHistorico) {
+          return;
+        }
+
         this.clientesOriginales = [...clientes];
         this.clientesPaginados = [...clientes];
         this.generarOpcionesFiltros();
@@ -100,6 +190,9 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
           finalize(() => this.cargando = false)
         ).subscribe({
           next: (facturas) => {
+            if (this.modoHistorico) {
+              return;
+            }
             this.facturasOriginales = facturas;
             this.recalcularAvances();
             this.actualizarDatosEnBackend();
@@ -114,6 +207,39 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
         console.error('Error al cargar clientes:', error);
       }
     });
+  }
+
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+
+    this.modoHistorico = true;
+    this.temporadaHistoricaSeleccionada = temporada;
+    this.temporadaHistoricaInicio = this.todasLasTemporadas.find(t => t.etiqueta === temporada)?.fecha_inicio ?? null;
+    this.cargando = true;
+
+    this.multimarcasService.getDatosMultimarcasHistorico(temporada).subscribe({
+      next: (datos) => {
+        this.clientesOriginales = [...datos];
+        this.clientesPaginados = [...datos];
+        this.generarOpcionesFiltros();
+        this.aplicarFiltros();
+        this.cargando = false;
+      },
+      error: (error) => {
+        console.error('Error cargando temporada historica de multimarcas:', error);
+        this.cargando = false;
+      }
+    });
+  }
+
+  volverATemporadaActual(): void {
+    this.modoHistorico = false;
+    this.temporadaHistoricaSeleccionada = null;
+    this.temporadaHistoricaInicio = null;
+    this.cargarDatos();
   }
 
   generarOpcionesFiltros() {
@@ -213,6 +339,14 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
 
   // Nueva función para recalcular todos los avances
   recalcularAvances() {
+    // Guardia contra condicion de carrera: la cadena de carga en vivo
+    // (clientes -> facturas -> recalcular -> guardar en backend -> recargar)
+    // tarda varios segundos. Si el usuario ya cambio a modo historico
+    // mientras esa cadena seguia en curso, no debe sobreescribir los datos
+    // historicos que ya se cargaron.
+    if (this.modoHistorico) {
+      return;
+    }
     this.calcularAvanceGlobalScott();
     this.calcularAvanceGlobalSyncros();
     this.calcularAvanceGlobalApparel();
@@ -233,6 +367,14 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
   }
 
   actualizarDatosEnBackend() {
+    // Misma guardia que recalcularAvances(): si el usuario ya esta viendo una
+    // temporada historica, no se debe reescribir la tabla `multimarcas` en
+    // vivo con lo que haya en clientesPaginados en este momento (podrian ser
+    // los datos historicos que se acaban de cargar).
+    if (this.modoHistorico) {
+      return;
+    }
+
     this.cargando = true;
 
     // Primero recalcula todos los avances para asegurar datos actualizados
@@ -281,8 +423,8 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasFiltradas = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const fechaInicio = new Date('2025-07-01');
-        const fechaFin = new Date('2026-06-30');
+        const fechaInicio = new Date(this.temporadaActualInicio);
+        const fechaFin = new Date(this.temporadaActualFin);
 
         return factura.marca === 'SCOTT' &&
           factura.apparel === 'NO' &&
@@ -340,8 +482,8 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasFiltradas = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const fechaInicio = new Date('2025-07-01');
-        const fechaFin = new Date('2026-06-30');
+        const fechaInicio = new Date(this.temporadaActualInicio);
+        const fechaFin = new Date(this.temporadaActualFin);
 
         return factura.marca === 'SYNCROS' &&
           fechaFactura >= fechaInicio &&
@@ -398,8 +540,8 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasFiltradas = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const fechaInicio = new Date('2025-07-01');
-        const fechaFin = new Date('2026-06-30');
+        const fechaInicio = new Date(this.temporadaActualInicio);
+        const fechaFin = new Date(this.temporadaActualFin);
 
         return factura.apparel === 'SI' &&
           factura.marca === 'SCOTT' &&
@@ -464,8 +606,8 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasFiltradas = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const fechaInicio = new Date('2025-07-01');
-        const fechaFin = new Date('2026-06-30');
+        const fechaInicio = new Date(this.temporadaActualInicio);
+        const fechaFin = new Date(this.temporadaActualFin);
 
         return factura.marca === 'VITTORIA' &&
           fechaFactura >= fechaInicio &&
@@ -522,8 +664,8 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasFiltradas = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const fechaInicio = new Date('2025-07-01');
-        const fechaFin = new Date('2026-06-30');
+        const fechaInicio = new Date(this.temporadaActualInicio);
+        const fechaFin = new Date(this.temporadaActualFin);
 
         return factura.marca === 'BOLD' &&
           fechaFactura >= fechaInicio &&
@@ -580,8 +722,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasJulio = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioJulio = new Date('2025-07-01');
-        const finJulio = new Date('2025-07-31');
+        const { inicio: inicioJulio, fin: finJulio } = this.rangoMesTemporada(0);
 
         return fechaFactura >= inicioJulio &&
           fechaFactura <= finJulio;
@@ -637,8 +778,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasAgosto = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioAgosto = new Date('2025-08-01');
-        const finAgosto = new Date('2025-08-31');
+        const { inicio: inicioAgosto, fin: finAgosto } = this.rangoMesTemporada(1);
 
         return fechaFactura >= inicioAgosto &&
           fechaFactura <= finAgosto;
@@ -694,8 +834,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasSeptiembre = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioSeptiembre = new Date('2025-09-01');
-        const finSeptiembre = new Date('2025-09-30');
+        const { inicio: inicioSeptiembre, fin: finSeptiembre } = this.rangoMesTemporada(2);
 
         return fechaFactura >= inicioSeptiembre &&
           fechaFactura <= finSeptiembre;
@@ -751,8 +890,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasOctubre = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioOctubre = new Date('2025-10-01');
-        const finOctubre = new Date('2025-10-31');
+        const { inicio: inicioOctubre, fin: finOctubre } = this.rangoMesTemporada(3);
 
         return fechaFactura >= inicioOctubre &&
           fechaFactura <= finOctubre;
@@ -808,8 +946,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasNoviembre = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioNoviembre = new Date('2025-11-01');
-        const finNoviembre = new Date('2025-11-30');
+        const { inicio: inicioNoviembre, fin: finNoviembre } = this.rangoMesTemporada(4);
 
         return fechaFactura >= inicioNoviembre &&
           fechaFactura <= finNoviembre;
@@ -865,8 +1002,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasDiciembre = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioDiciembre = new Date('2025-12-01');
-        const finDiciembre = new Date('2025-12-31');
+        const { inicio: inicioDiciembre, fin: finDiciembre } = this.rangoMesTemporada(5);
 
         return fechaFactura >= inicioDiciembre &&
           fechaFactura <= finDiciembre;
@@ -922,8 +1058,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasEnero = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioEnero = new Date('2026-01-01');
-        const finEnero = new Date('2026-01-31');
+        const { inicio: inicioEnero, fin: finEnero } = this.rangoMesTemporada(6);
 
         return fechaFactura >= inicioEnero &&
           fechaFactura <= finEnero;
@@ -979,8 +1114,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasFebrero = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioFebrero = new Date('2026-02-01');
-        const finFebrero = new Date('2026-02-28');
+        const { inicio: inicioFebrero, fin: finFebrero } = this.rangoMesTemporada(7);
 
         return fechaFactura >= inicioFebrero &&
           fechaFactura <= finFebrero;
@@ -1036,8 +1170,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasMarzo = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioMarzo = new Date('2026-03-01');
-        const finMarzo = new Date('2026-03-31');
+        const { inicio: inicioMarzo, fin: finMarzo } = this.rangoMesTemporada(8);
 
         return fechaFactura >= inicioMarzo &&
           fechaFactura <= finMarzo;
@@ -1093,8 +1226,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasAbril = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioAbril = new Date('2026-04-01');
-        const finAbril = new Date('2026-04-30');
+        const { inicio: inicioAbril, fin: finAbril } = this.rangoMesTemporada(9);
 
         return fechaFactura >= inicioAbril &&
           fechaFactura <= finAbril;
@@ -1150,8 +1282,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasMayo = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioMayo = new Date('2026-05-01');
-        const finMayo = new Date('2026-05-31');
+        const { inicio: inicioMayo, fin: finMayo } = this.rangoMesTemporada(10);
 
         return fechaFactura >= inicioMayo &&
           fechaFactura <= finMayo;
@@ -1207,8 +1338,7 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     const facturasJunio = this.facturasOriginales.filter(factura => {
       try {
         const fechaFactura = new Date(factura.fecha_factura);
-        const inicioJunio = new Date('2026-06-01');
-        const finJunio = new Date('2026-06-30');
+        const { inicio: inicioJunio, fin: finJunio } = this.rangoMesTemporada(11);
 
         return fechaFactura >= inicioJunio &&
           fechaFactura <= finJunio;

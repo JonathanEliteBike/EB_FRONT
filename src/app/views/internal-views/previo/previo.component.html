@@ -12,9 +12,17 @@
     <button class="btn btn-export" (click)="exportarAExcel()" [disabled]="cargando">
       <i class="fas fa-file-excel"></i> Exportar Excel
     </button>
+
+    <app-temporada-selector *ngIf="temporadasDisponibles.length"
+      [temporadas]="temporadasDisponibles"
+      [seleccionada]="temporadaHistoricaSeleccionada"
+      (cambio)="verTemporadaPasada($event)">
+    </app-temporada-selector>
   </div>
 
-  <app-fecha-actualizacion></app-fecha-actualizacion>
+  <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada" (volver)="volverATemporadaActual()"></app-aviso-historico>
+
+  <app-fecha-actualizacion *ngIf="!modoHistorico"></app-fecha-actualizacion>
 
   <div class="compliance-legend">
     <div class="legend-item">

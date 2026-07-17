@@ -12,6 +12,8 @@ import * as XLSX from 'xlsx';
 import { FechaActualizacionComponent } from '../../../components/fecha-actualizacion/fecha-actualizacion.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 interface Cliente {
   clave: string;
@@ -112,7 +114,7 @@ interface ClienteConAcumulado extends Cliente {
   selector: 'app-previo',
   standalone: true,
   imports: [HomeBarComponent, RouterModule, CommonModule, FormsModule,
-    FiltroPrevioComponent, TooltipComponent, FechaActualizacionComponent],
+    FiltroPrevioComponent, TooltipComponent, FechaActualizacionComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './previo.component.html',
   styleUrl: './previo.component.css'
 })
@@ -208,6 +210,10 @@ export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
 
   filtroActivo: string | null = null;
 
+  temporadasDisponibles: string[] = [];
+  modoHistorico: boolean = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+
   totales: {
     acumulado_anticipado: number;
     compra_minima_anual: number;
@@ -301,10 +307,69 @@ export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cargando = true;
 
     this.cargarDatosPrevioConRecalculo();
+    this.cargarTemporadasDisponibles();
 
     this.filtroService.filtroAbierto$.subscribe(filtroId => {
       this.filtroActivo = filtroId;
     });
+  }
+
+  cargarTemporadasDisponibles(): void {
+    this.previoService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
+    });
+  }
+
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+
+    this.modoHistorico = true;
+    this.temporadaHistoricaSeleccionada = temporada;
+    this.cargando = true;
+    this.tablaLista = false;
+
+    this.previoService.getDatosPrevioHistorico(temporada).subscribe({
+      next: (datosBackend) => {
+        const datos = this.procesarDatosDelEndpoint(datosBackend || []).map(c => ({
+          ...c,
+          esIntegral: c['es_integral'] === 1 || c['es_integral'] === true,
+          grupoIntegral: c['grupo_integral']
+        }));
+
+        this.todosLosDatos = datos;
+        this.clientesOriginal = datos.filter(c => !c.esIntegral);
+        this.integralesOriginal = datos.filter(c => c.esIntegral);
+
+        this.combinarDatos();
+        this.inicializarOpcionesFiltro();
+        this.aplicarFiltros();
+
+        this.cargando = false;
+        this.cd.detectChanges();
+
+        setTimeout(() => {
+          this.tablaLista = true;
+          this.cd.detectChanges();
+          setTimeout(() => this.sincronizarRenderTabla(), 50);
+        }, 0);
+      },
+      error: (error) => {
+        console.error('Error cargando temporada historica:', error);
+        this.cargando = false;
+        this.tablaLista = false;
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  volverATemporadaActual(): void {
+    this.modoHistorico = false;
+    this.temporadaHistoricaSeleccionada = null;
+    this.cargarDatosPrevioConRecalculo();
   }
 
   ngAfterViewInit(): void {

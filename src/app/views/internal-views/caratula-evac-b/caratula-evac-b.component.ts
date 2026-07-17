@@ -2,11 +2,12 @@ import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CaratulasService } from '../../../services/caratulas.service';
 import { HomeBarComponent } from "../../../components/home-bar/home-bar.component";
-import { MonitorOdooService } from '../../../services/monitor-odoo.service';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
 import { FiltroOrdenComponent, OrdenDirection } from '../../../components/filtro-orden/filtro-orden.component';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 
 interface Cliente {
@@ -44,7 +45,7 @@ interface Cliente {
 @Component({
   selector: 'app-caratula-evac-b',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent, FiltroComponent, FiltroOrdenComponent],
+  imports: [CommonModule, RouterModule, HomeBarComponent, FiltroComponent, FiltroOrdenComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './caratula-evac-b.component.html',
   styleUrl: './caratula-evac-b.component.css'
 })
@@ -72,11 +73,6 @@ export class CaratulaEvacBComponent implements OnInit {
   avance_proyectado_scott = 0;
   avance_proyectado_apparel = 0;
 
-  facturas: any[] = [];
-
-  acumuladoTotalCalculado: string = '$0.00';
-  facturasLoaded: boolean = false;
-
   clientesFiltrados: any[] = [];
 
   filtroOpciones = {
@@ -89,15 +85,60 @@ export class CaratulaEvacBComponent implements OnInit {
     nivel: [] as string[]
   };
 
+  temporadasDisponibles: string[] = [];
+  modoHistorico = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+  private clientesEnVivo: any[] = [];
+
   constructor(private caratulasService: CaratulasService,
-    private router: Router,
-    private monitorOdooService: MonitorOdooService) { }
+    private router: Router) { }
 
   ngOnInit(): void {
     this.cargarClientes();
-    this.cargarFacturas();
     this.calcularMontos();
+    this.cargarTemporadasDisponibles();
     this.onInit.emit();
+  }
+
+  cargarTemporadasDisponibles(): void {
+    this.caratulasService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
+    });
+  }
+
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+    this.loading = true;
+    const clavesExcluidas = new Set(['EC216', 'JC539', 'LC625', 'LC627', 'LC626']);
+    this.caratulasService.getDatosPrevioHistorico(temporada).subscribe({
+      next: (datos: any[]) => {
+        this.modoHistorico = true;
+        this.temporadaHistoricaSeleccionada = temporada;
+        this.clientes = datos.filter(d => d.evac === 'B' && !clavesExcluidas.has(d.clave));
+        this.prepararOpcionesFiltros();
+        this.filtrarClientes();
+        this.calcularMontos();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error cargando temporada historica:', err);
+        this.error = 'Error al cargar la temporada histórica';
+        this.loading = false;
+      }
+    });
+  }
+
+  volverATemporadaActual(): void {
+    this.modoHistorico = false;
+    this.temporadaHistoricaSeleccionada = null;
+    this.clientes = this.clientesEnVivo;
+    this.prepararOpcionesFiltros();
+    this.filtrarClientes();
+    this.calcularMontos();
   }
 
   toggleCliente(cliente: Cliente): void {
@@ -210,20 +251,6 @@ export class CaratulaEvacBComponent implements OnInit {
       });
     }
 
-  cargarFacturas(): void {
-    this.monitorOdooService.getFacturas().subscribe({
-      next: (facturas) => {
-        this.facturas = facturas;
-        this.facturasLoaded = true;
-        this.acumuladoTotalCalculado = this.obtenerAcumuladoTotal();
-      },
-      error: (error) => {
-        console.error('Error al cargar facturas:', error);
-        this.facturasLoaded = true; // Asegurar que no quede en estado de carga
-      }
-    });
-  }
-
   cargarClientes(): void {
     this.loading = true;
     this.error = null;
@@ -248,6 +275,7 @@ export class CaratulaEvacBComponent implements OnInit {
         });
 
         this.clientes = clientesFiltrados;
+        this.clientesEnVivo = clientesFiltrados;
 
         this.loading = false;
 
@@ -401,14 +429,17 @@ export class CaratulaEvacBComponent implements OnInit {
     return semanaActual - semanaInicioTemporada;
   }
 
+  /** Fracción de la temporada usada para "avance proyectado". Una temporada
+   * cerrada ya no tiene proyección semanal en curso -- el proyectado es
+   * simplemente el 100% de la meta, igual que en Carátula Global. */
+  private factorProyeccion(): number {
+    return this.modoHistorico ? 1 : this.obtenerSemanasTranscurridas() / 52;
+  }
+
   calcularAvanceProyectadoMonto1(): void {
-    const semanaActual = this.obtenerSemanaISO();
     if (this.my25_monto1 === 0) return;
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
-    this.avance_proyectado_monto1 = (semanasTranscurridas / semanasEnTemporada) * this.my25_monto1;
+    this.avance_proyectado_monto1 = this.factorProyeccion() * this.my25_monto1;
 
     this.avance_proyectado_monto1 = Math.round(this.avance_proyectado_monto1 * 100) / 100;
   }
@@ -416,10 +447,7 @@ export class CaratulaEvacBComponent implements OnInit {
   calcularAvanceProyectadoMonto2(): void {
     if (this.my25_monto2 === 0) return;
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
-    this.avance_proyectado_monto2 = (semanasTranscurridas / semanasEnTemporada) * this.my25_monto2;
+    this.avance_proyectado_monto2 = this.factorProyeccion() * this.my25_monto2;
 
     this.avance_proyectado_monto2 = Math.round(this.avance_proyectado_monto2 * 100) / 100;
   }
@@ -427,22 +455,16 @@ export class CaratulaEvacBComponent implements OnInit {
   calcularAvanceProyectadoScott(): void {
     if (!this.montoCompromisoScott) return;
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
     // Avance proyectado BASADO ÚNICAMENTE EN EL COMPROMISO SCOTT
-    this.avance_proyectado_scott = (semanasTranscurridas / semanasEnTemporada) * this.montoCompromisoScott;
+    this.avance_proyectado_scott = this.factorProyeccion() * this.montoCompromisoScott;
     this.avance_proyectado_scott = Math.round(this.avance_proyectado_scott * 100) / 100;
   }
 
   calcularAvanceProyectadoApparel(): void {
     if (!this.montoCompromisoApparel) return;
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
     // Cálculo basado en el compromiso Apparel (igual que con Scott)
-    this.avance_proyectado_apparel = (semanasTranscurridas / semanasEnTemporada) * this.montoCompromisoApparel;
+    this.avance_proyectado_apparel = this.factorProyeccion() * this.montoCompromisoApparel;
     this.avance_proyectado_apparel = Math.round(this.avance_proyectado_apparel * 100) / 100;
   }
 
@@ -468,10 +490,7 @@ export class CaratulaEvacBComponent implements OnInit {
   calcularAvanceProyectadoCliente(compraMinimaAnual: number): number {
     if (!compraMinimaAnual) return 0;
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
-    const avanceProyectado = (semanasTranscurridas / semanasEnTemporada) * compraMinimaAnual;
+    const avanceProyectado = this.factorProyeccion() * compraMinimaAnual;
     return Math.round(avanceProyectado * 100) / 100;
   }
 
@@ -645,11 +664,8 @@ export class CaratulaEvacBComponent implements OnInit {
 
     if (metaTotal === 0) return;
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
     // Calcular el avance proyectado total
-    const avanceProyectadoTotal = (semanasTranscurridas / semanasEnTemporada) * metaTotal;
+    const avanceProyectadoTotal = this.factorProyeccion() * metaTotal;
 
     // Redondear a 2 decimales
     const avanceProyectadoTotalRedondeado = Math.round(avanceProyectadoTotal * 100) / 100;
@@ -669,10 +685,7 @@ export class CaratulaEvacBComponent implements OnInit {
 
     if (metaTotal === 0) return this.formatearMoneda(0);
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
-    const avanceProyectadoTotal = (semanasTranscurridas / semanasEnTemporada) * metaTotal;
+    const avanceProyectadoTotal = this.factorProyeccion() * metaTotal;
     const avanceProyectadoTotalRedondeado = Math.round(avanceProyectadoTotal * 100) / 100;
 
     return this.formatearMoneda(avanceProyectadoTotalRedondeado);
@@ -745,10 +758,7 @@ export class CaratulaEvacBComponent implements OnInit {
   calcularYFormatearAvanceProyectado(metaValor: number): string {
     if (metaValor === 0) return this.formatearMoneda(0);
 
-    const semanasTranscurridas = this.obtenerSemanasTranscurridas();
-    const semanasEnTemporada = 52;
-
-    const avanceProyectado = (semanasTranscurridas / semanasEnTemporada) * metaValor;
+    const avanceProyectado = this.factorProyeccion() * metaValor;
     const avanceProyectadoRedondeado = Math.round(avanceProyectado * 100) / 100;
 
     return this.formatearMoneda(avanceProyectadoRedondeado);
@@ -760,47 +770,7 @@ export class CaratulaEvacBComponent implements OnInit {
   }
 
   obtenerAcumuladoTotal(): string {
-    if (!this.facturasLoaded || this.facturas.length === 0) {
-      return this.formatearMoneda(this.my25_monto3 + this.my25_monto4);
-    }
-
-    try {
-      const facturasFiltradas = this.facturas.filter((factura: any) => {
-        // Verificación más robusta de EVAC
-        if (!factura.evac || factura.evac.toString().trim() !== 'B Multimarcas') {
-          return false;
-        }
-
-        // Manejo seguro de fechas
-        let fechaFactura: Date;
-        try {
-          fechaFactura = new Date(factura.fecha_factura);
-          if (isNaN(fechaFactura.getTime())) {
-            console.warn('Fecha inválida:', factura.fecha_factura);
-            return false;
-          }
-        } catch (e) {
-          console.warn('Error al parsear fecha:', factura.fecha_factura, e);
-          return false;
-        }
-
-        const fechaInicio = new Date('2025-07-01T00:00:00');
-        const fechaFin = new Date('2026-06-30T23:59:59');
-
-        return fechaFactura >= fechaInicio && fechaFactura <= fechaFin;
-      });
-
-      const sumaVentaTotal = facturasFiltradas.reduce((suma: number, factura: any) => {
-        return suma + (parseFloat(factura.venta_total) || 0);
-      }, 0);
-
-      const total = this.my25_monto3 + this.my25_monto4 + sumaVentaTotal;
-      return this.formatearMoneda(total);
-
-    } catch (error) {
-      console.error('Error al calcular acumulado:', error);
-      return this.formatearMoneda(this.my25_monto3 + this.my25_monto4);
-    }
+    return this.formatearMoneda(this.my25_monto3 + this.my25_monto4);
   }
 
   formatearMoneda(valor: number): string {
@@ -814,5 +784,12 @@ export class CaratulaEvacBComponent implements OnInit {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(valor);
+  }
+
+  fechaCierreClienteFormateada(cliente: any): string {
+    const f = cliente?.fecha_cierre_temporada;
+    if (!f) return '';
+    const [year, month, day] = String(f).split('-');
+    return `${day}/${month}/${year}`;
   }
 }

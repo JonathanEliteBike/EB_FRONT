@@ -50,4 +50,16 @@ export class MultimarcasService {
     return this.http.get<any>(`${this.apiUrl}/clientes_multimarcas_buscar?q=${encodeURIComponent(termino)}`);
   }
 
+  getTemporadas(): Observable<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]> {
+    return this.http.get<any>(`${this.apiUrl}/temporadas`);
+  }
+
+  getTemporadasDisponibles(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/temporadas_disponibles`);
+  }
+
+  getDatosMultimarcasHistorico(temporada: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/datos_multimarcas_historico`, { params: { temporada } });
+  }
+
 }

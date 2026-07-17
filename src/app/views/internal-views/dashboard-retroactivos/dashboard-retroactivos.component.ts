@@ -4,6 +4,8 @@ import { RouterModule } from '@angular/router';
 import { RetroactivosService } from '../../../services/retroactivos.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 import { switchMap } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -16,7 +18,7 @@ interface FiltroOption {
 @Component({
   selector: 'app-dashboard-retroactivos',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent, FiltroComponent],
+  imports: [CommonModule, RouterModule, HomeBarComponent, FiltroComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './dashboard-retroactivos.component.html',
   styleUrl: './dashboard-retroactivos.component.css'
 })
@@ -68,10 +70,58 @@ export class DashboardRetroactivosComponent implements OnInit {
   @ViewChild('dummyScroll') dummyScroll!: ElementRef;
   @ViewChild('tabla') tabla!: ElementRef;
 
+  temporadasDisponibles: string[] = [];
+  modoHistorico = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+
   constructor(private retroactivosService: RetroactivosService) { }
 
   ngOnInit(): void {
     this.cargarDatos();
+    this.cargarTemporadasDisponibles();
+  }
+
+  cargarTemporadasDisponibles(): void {
+    this.retroactivosService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
+    });
+  }
+
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+    this.cargando = true;
+    this.modoHistorico = true;
+    this.temporadaHistoricaSeleccionada = temporada;
+    this.limpiarTodosLosFiltros();
+
+    this.retroactivosService.getRetroactivosHistorico(temporada).subscribe({
+      next: (data) => {
+        this.retroactivosOriginales = data;
+        this.retroactivos = [...data];
+        this.extraerOpcionesFiltros();
+        this.calcularTotales();
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error('Error cargando temporada histórica:', err);
+        this.cargando = false;
+      }
+    });
+  }
+
+  volverATemporadaActual(): void {
+    this.modoHistorico = false;
+    this.temporadaHistoricaSeleccionada = null;
+    this.limpiarTodosLosFiltros();
+    this.cargarDatos();
+  }
+
+  private limpiarTodosLosFiltros(): void {
+    this.filtrosActivos = { claves: [], zonas: [], clientes: [], categorias: [] };
   }
 
   actualizarDatos(): void {

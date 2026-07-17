@@ -56,4 +56,12 @@ export class PrevioService {
   limpiarCachePrevio(): void {
     this.previoCache.next(null);
   }
+
+  getTemporadasDisponibles(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/temporadas_disponibles`);
+  }
+
+  getDatosPrevioHistorico(temporada: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/datos_previo_historico`, { params: { temporada } });
+  }
 }

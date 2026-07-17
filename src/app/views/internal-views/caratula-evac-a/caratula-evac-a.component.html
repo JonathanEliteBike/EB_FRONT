@@ -7,7 +7,16 @@
         <button class="btn btn-secondary" [routerLink]="['/inicio-caratulas']">
             <i class="fas fa-arrow-left"></i> Volver
         </button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div class="caratula-content">
         <!-- Fecha en la esquina superior derecha -->
@@ -173,6 +182,10 @@
                     </div>
 
                     <div class="fila-detalle" *ngIf="cliente.expanded">
+                        <div class="banner-cliente-cerrado" *ngIf="modoHistorico && cliente.temporada_cerrada">
+                            <i class="fas fa-lock"></i>
+                            TEMPORADA CERRADA EL {{ fechaCierreClienteFormateada(cliente) }}
+                        </div>
                         <div class="detalle-grid">
                             <div class="detalle-card scott">
                                 <div class="detalle-titulo">Faltante SCOTT (Acumulado)</div>

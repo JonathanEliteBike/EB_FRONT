@@ -19,7 +19,18 @@
         <button class="btn btn-secondary" (click)="abrirModalEmail()" [disabled]="!datosCliente">
             <i class="fas fa-envelope"></i> Enviar por Email
         </button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            [disabled]="!datosClienteEnVivo"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        [detalle]="'para ' + datosCliente?.clave"
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <app-fecha-actualizacion></app-fecha-actualizacion>
 
@@ -78,7 +89,12 @@
 
             <div class="titulo" style="display: flex; align-items: center; gap: 12px;">
                 <img src="assets/logo_elite_2.png" alt="Elite Logo" style="height: 60px;">
-                <h1>Avance MY26</h1>
+                <h1>Avance {{ modoHistorico ? temporadaHistoricaSeleccionada : etiquetaTemporadaActual }}</h1>
+            </div>
+
+            <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada">
+                <i class="fas fa-lock"></i>
+                TEMPORADA CERRADA EL {{ fechaCierreFormateada }}
             </div>
 
             <div class="client-info">

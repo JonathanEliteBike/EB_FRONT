@@ -39,4 +39,12 @@ export class RetroactivosService {
       fecha_cierre: fechaCierre
     });
   }
+
+  getTemporadasDisponibles(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/retroactivos_temporadas_disponibles`);
+  }
+
+  getRetroactivosHistorico(temporada: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/retroactivos_historico`, { params: { temporada } });
+  }
 }

@@ -10,7 +10,16 @@
         <button class="btn" (click)="exportarAExcel()"><i class="fas fa-file-excel"></i> Exportar a Excel</button>
         <button class="btn" [routerLink]="['/distribuidores-multimarcas']"><i class="fas fa-users"></i> Distribuidores
             Multimarcas</button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div *ngIf="cargando" class="cargando-spinner">
         <div class="spinner"></div>
@@ -63,18 +72,7 @@
                     <th style="min-width: 140px;">Avance GLOBAL APPAREL</th>
                     <th style="min-width: 140px;">Avance GLOBAL VITTORIA</th>
                     <th style="min-width: 120px;">BOLD Acumulado</th>
-                    <th style="min-width: 100px;">JULIO 25</th>
-                    <th style="min-width: 100px;">AGOSTO 25</th>
-                    <th style="min-width: 100px;">SEPTIEMBRE 25</th>
-                    <th style="min-width: 100px;">OCTUBRE 25</th>
-                    <th style="min-width: 100px;">NOVIEMBRE 25</th>
-                    <th style="min-width: 100px;">DICIEMBRE 25</th>
-                    <th style="min-width: 100px;">ENERO 26</th>
-                    <th style="min-width: 100px;">FEBRERO 26</th>
-                    <th style="min-width: 100px;">MARZO 26</th>
-                    <th style="min-width: 100px;">ABRIL 26</th>
-                    <th style="min-width: 100px;">MAYO 26</th>
-                    <th style="min-width: 100px;">JUNIO 26</th>
+                    <th style="min-width: 100px;" *ngFor="let etiqueta of etiquetasMeses">{{ etiqueta }}</th>
                 </tr>
             </thead>
             <tbody>

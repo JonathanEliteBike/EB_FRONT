@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { RetroactivosService } from '../../../services/retroactivos.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 interface DatosRetroactivo {
   CLAVE: string;
@@ -44,7 +46,7 @@ interface DatosRetroactivo {
 @Component({
   selector: 'app-caratula-retroactivos-usuario',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent],
+  imports: [CommonModule, RouterModule, HomeBarComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './caratula-retroactivos-usuarios.component.html',
   styleUrl: './caratula-retroactivos-usuarios.component.css'
 })
@@ -54,9 +56,60 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
   error: string | null = null;
   datosCliente: DatosRetroactivo | null = null;
 
+  temporadasDisponibles: string[] = [];
+  modoHistorico = false;
+  temporadaHistoricaSeleccionada: string | null = null;
+  private claveUsuario: string | null = null;
+
   constructor(private retroactivosService: RetroactivosService) { }
 
   ngOnInit(): void {
+    this.cargarDatosUsuarioActual();
+    this.cargarTemporadasDisponibles();
+  }
+
+  cargarTemporadasDisponibles(): void {
+    this.retroactivosService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
+    });
+  }
+
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+    if (!this.claveUsuario) return;
+
+    this.isLoading = true;
+    this.error = null;
+    this.modoHistorico = true;
+    this.temporadaHistoricaSeleccionada = temporada;
+
+    this.retroactivosService.getRetroactivosHistorico(temporada).subscribe({
+      next: (data) => {
+        const claveLower = this.claveUsuario!.toLowerCase();
+        const encontrado = data.find(d => d.CLAVE?.toLowerCase() === claveLower);
+        this.isLoading = false;
+        if (encontrado) {
+          this.datosCliente = encontrado;
+        } else {
+          this.datosCliente = null;
+          this.error = 'No se encontró información de retroactivos para tu cuenta en esa temporada.';
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+        this.error = 'Error al cargar la temporada histórica.';
+      }
+    });
+  }
+
+  volverATemporadaActual(): void {
+    this.modoHistorico = false;
+    this.temporadaHistoricaSeleccionada = null;
     this.cargarDatosUsuarioActual();
   }
 
@@ -95,6 +148,8 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
         this.isLoading = false;
         return;
       }
+
+      this.claveUsuario = claveParaBuscar;
 
       this.retroactivosService.getRetroactivoCliente(claveParaBuscar).subscribe({
         next: (data) => {

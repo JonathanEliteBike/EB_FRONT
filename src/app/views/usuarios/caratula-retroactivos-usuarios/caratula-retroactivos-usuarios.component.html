@@ -6,7 +6,16 @@
         <button class="btn-volver-sm" [routerLink]="['/usuarios/inicio']">
             <i class="fas fa-arrow-left"></i> Volver al Inicio
         </button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div *ngIf="isLoading" class="loading-message">
         <i class="fas fa-spinner fa-spin"></i> Cargando tu Estado de Cuenta...

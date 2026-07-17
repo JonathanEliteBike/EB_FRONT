@@ -7,7 +7,17 @@
         <button class="btn btn-secondary" [routerLink]="['/inicio-caratulas']">
             <i class="fas fa-arrow-left"></i> Volver
         </button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        detalle='. "Acumulado Real" (General y Específico) ya corresponde a esta temporada, y "Avance Proyectado" se muestra al 100% de la Meta (una temporada cerrada ya no tiene una proyección semanal en curso). La columna "Meta" sigue siendo la de la temporada actual (no hay histórico de metas por temporada); Multimarcas no aplica a temporadas cerradas.'
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div class="caratula-content">
 
@@ -102,7 +112,9 @@
                         </tr>
 
                         <tr>
-                            <td></td>
+                            <td class="font-bold text-info">
+                                Meta Cumplimiento Categoría Distribuidor
+                            </td>
 
                             <td class="text-center">
                                 {{ totalMetaMY25_2 | currency:'USD':'$':'1.2-2' }}

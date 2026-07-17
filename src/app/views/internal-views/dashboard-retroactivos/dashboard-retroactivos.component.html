@@ -16,7 +16,7 @@
             <i class="fas  fa-calculator"></i> Simular retroactivos
         </button>
 
-        <button class="btn btn-actualizar" (click)="actualizarDatos()" [disabled]="cargando">
+        <button class="btn btn-actualizar" (click)="actualizarDatos()" [disabled]="cargando || modoHistorico">
             <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i>
             {{ cargando ? 'Sincronizando...' : 'Actualizar Odoo' }}
         </button>
@@ -24,7 +24,16 @@
         <button class="btn btn-excel" (click)="exportarExcel()" [disabled]="cargando || retroactivos.length === 0">
             <i class="fas fa-file-excel"></i> Exportar Excel
         </button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div *ngIf="cargando" class="cargando-spinner">
         <div class="spinner"></div>
