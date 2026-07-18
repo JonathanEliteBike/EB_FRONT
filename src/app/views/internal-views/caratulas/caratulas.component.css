@@ -36,6 +36,17 @@ body {
     border-left: 6px solid #dc2626;
 }
 
+.banner-split-scott {
+    background-color: #1a1a2e;
+    border-left: 6px solid #EB5E28;
+    margin-bottom: 6px;
+}
+
+.banner-split-apparel {
+    background-color: #0f3460;
+    border-left: 6px solid #4fc3f7;
+}
+
 .titulo {
   display: flex;
   justify-content: center;

@@ -31,6 +31,7 @@ interface DatosCliente {
   nivel: string;
   temporada_cerrada?: boolean;
   fecha_cierre_temporada?: string | null;
+  fecha_cierre_apparel?: string | null;
   compra_minima_anual: number;
   compromiso_scott: number;
   avance_global_scott: number;
@@ -688,6 +689,7 @@ export class CaratulasComponent implements OnInit {
       nivel: datos.nivel || '',
       temporada_cerrada: !!datos.temporada_cerrada,
       fecha_cierre_temporada: datos.fecha_cierre_temporada || null,
+      fecha_cierre_apparel: datos.fecha_cierre_apparel || null,
       compra_minima_anual: this.parseNumber(datos.compra_minima_anual || totalMeta || '0'),
       compromiso_scott: metaScott,
       avance_global_scott: avanceScott,
@@ -754,6 +756,13 @@ export class CaratulasComponent implements OnInit {
   get fechaCierreFormateada(): string {
     const f = this.datosCliente?.fecha_cierre_temporada;
     if (!f) return '';
+    const [year, month, day] = f.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  get fechaCierreApparel(): string | null {
+    const f = this.datosCliente?.fecha_cierre_apparel;
+    if (!f) return null;
     const [year, month, day] = f.split('-');
     return `${day}/${month}/${year}`;
   }

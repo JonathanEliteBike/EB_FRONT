@@ -63,6 +63,11 @@ export class CaratulaGlobalComponent implements OnInit {
   modoHistorico = false;
   temporadaHistoricaSeleccionada: string | null = null;
 
+  /** Inicio real de la temporada actualmente abierta -- se sobreescribe en
+   * ngOnInit con el valor real de /temporadas (estado='abierta'). El valor
+   * aqui es solo un fallback por si esa consulta falla. */
+  private fechaInicioTemporadaActual: Date = new Date(2025, 6, 1);
+
   constructor(
     private caratulasService: CaratulasService,
     private router: Router,
@@ -70,6 +75,23 @@ export class CaratulaGlobalComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.caratulasService.getTemporadas().subscribe({
+      next: (temporadas) => {
+        const abierta = temporadas.find(t => t.estado === 'abierta');
+        if (abierta) {
+          const [y, m, d] = abierta.fecha_inicio.split('-').map(Number);
+          this.fechaInicioTemporadaActual = new Date(y, m - 1, d);
+        }
+        this.inicializarCalculos();
+      },
+      error: (err) => {
+        console.error('Error cargando temporada actual, usando fallback:', err);
+        this.inicializarCalculos();
+      }
+    });
+  }
+
+  private inicializarCalculos(): void {
     this.semanasTranscurridas = this.obtenerSemanasTranscurridas();
 
     this.calculateTotalMeta();
@@ -391,11 +413,14 @@ export class CaratulaGlobalComponent implements OnInit {
    * [0, 52] para que el proyectado nunca exceda la meta una vez terminada
    * la duracion normal de una temporada. */
   obtenerSemanasTranscurridas(): number {
-    const FECHA_INICIO_TEMPORADA = new Date(2025, 6, 1); // 1 jul 2025
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const dias = Math.floor((hoy.getTime() - FECHA_INICIO_TEMPORADA.getTime()) / 86400000);
-    return Math.max(0, Math.min(52, Math.floor(dias / 7)));
+    const dias = Math.floor((hoy.getTime() - this.fechaInicioTemporadaActual.getTime()) / 86400000);
+    if (dias < 0) return 0;
+    // Numero de semana ACTUAL (1-indexado), no semanas completas transcurridas:
+    // el dia 16 (17 jul, temporada inicia 1 jul) cae en la semana 3 (dias 14-20),
+    // asi que el proyectado debe multiplicar por 3, no por floor(16/7)=2.
+    return Math.min(52, Math.floor(dias / 7) + 1);
   }
 
   calcularProyectadoMonto1(): void {

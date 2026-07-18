@@ -90,14 +90,35 @@ export class CaratulaEvacBComponent implements OnInit {
   temporadaHistoricaSeleccionada: string | null = null;
   private clientesEnVivo: any[] = [];
 
+  /** Inicio real de la temporada actualmente abierta -- se sobreescribe en
+   * ngOnInit con el valor real de /temporadas (estado='abierta'). El valor
+   * aqui es solo un fallback por si esa consulta falla. */
+  private fechaInicioTemporadaActual: Date = new Date(2025, 6, 1);
+
   constructor(private caratulasService: CaratulasService,
     private router: Router) { }
 
   ngOnInit(): void {
-    this.cargarClientes();
-    this.calcularMontos();
-    this.cargarTemporadasDisponibles();
-    this.onInit.emit();
+    this.caratulasService.getTemporadas().subscribe({
+      next: (temporadas) => {
+        const abierta = temporadas.find(t => t.estado === 'abierta');
+        if (abierta) {
+          const [y, m, d] = abierta.fecha_inicio.split('-').map(Number);
+          this.fechaInicioTemporadaActual = new Date(y, m - 1, d);
+        }
+        this.cargarClientes();
+        this.calcularMontos();
+        this.cargarTemporadasDisponibles();
+        this.onInit.emit();
+      },
+      error: (err) => {
+        console.error('Error cargando temporada actual, usando fallback:', err);
+        this.cargarClientes();
+        this.calcularMontos();
+        this.cargarTemporadasDisponibles();
+        this.onInit.emit();
+      }
+    });
   }
 
   cargarTemporadasDisponibles(): void {
@@ -425,11 +446,12 @@ export class CaratulaEvacBComponent implements OnInit {
    * aunque la temporada llevara +50 semanas corriendo. Acotado a [0, 52]
    * para que el proyectado nunca exceda la meta tras la duracion normal. */
   obtenerSemanasTranscurridas(): number {
-    const FECHA_INICIO_TEMPORADA = new Date(2025, 6, 1); // 1 jul 2025
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const dias = Math.floor((hoy.getTime() - FECHA_INICIO_TEMPORADA.getTime()) / 86400000);
-    return Math.max(0, Math.min(52, Math.floor(dias / 7)));
+    const dias = Math.floor((hoy.getTime() - this.fechaInicioTemporadaActual.getTime()) / 86400000);
+    if (dias < 0) return 0;
+    // Numero de semana ACTUAL (1-indexado), no semanas completas transcurridas.
+    return Math.min(52, Math.floor(dias / 7) + 1);
   }
 
   /** Fracción de la temporada usada para "avance proyectado". Una temporada

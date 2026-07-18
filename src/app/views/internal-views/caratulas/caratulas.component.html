@@ -92,7 +92,18 @@
                 <h1>Avance {{ modoHistorico ? temporadaHistoricaSeleccionada : etiquetaTemporadaActual }}</h1>
             </div>
 
-            <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada">
+            <ng-container *ngIf="temporadaCerrada && fechaCierreApparel">
+                <div class="banner-temporada-cerrada banner-split-scott">
+                    <i class="fas fa-lock"></i>
+                    SCOTT / BICICLETAS cerradas el {{ fechaCierreFormateada }}
+                </div>
+                <div class="banner-temporada-cerrada banner-split-apparel">
+                    <i class="fas fa-lock"></i>
+                    APPAREL / SYNCROS / VITTORIA cerradas el {{ fechaCierreApparel }}
+                </div>
+            </ng-container>
+
+            <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada && !fechaCierreApparel">
                 <i class="fas fa-lock"></i>
                 TEMPORADA CERRADA EL {{ fechaCierreFormateada }}
             </div>
