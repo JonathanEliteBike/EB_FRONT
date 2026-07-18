@@ -80,7 +80,7 @@
                 </div>
                 <span class="cerrar-label-desc">
                     Selecciona la fecha de corte. Las compras posteriores a esa fecha
-                    <strong style="color:#EB5E28">no contarán para MY26.</strong>
+                    <strong style="color:#EB5E28">no contarán para MY27.</strong>
                     Esta acción es irreversible.
                 </span>
             </div>
@@ -90,8 +90,8 @@
                         type="date"
                         [(ngModel)]="fechaCierreInput"
                         class="input-fecha-cierre"
-                        min="2025-06-01"
-                        max="2026-06-30"
+                        min="2026-06-01"
+                        max="2027-06-30"
                         [disabled]="cerrando">
                     <button
                         class="btn-cerrar-temporada"
@@ -113,7 +113,7 @@
                 <img src="assets/logo_elite_2.png" alt="Logo Elite" class="logo-img">
             </div>
             <div class="header-text">
-                <h1>Retroactivos MY26</h1>
+                <h1>Retroactivos MY27</h1>
                 <p class="subtitle text-orange">ESTADO DE CUENTA DEL DISTRIBUIDOR</p>
             </div>
         </div>
@@ -154,7 +154,7 @@
                 <tr>
                     <td class="fw-bold text-dark text-left ps-4">
                         GENERAL - CATEGORÍA
-                        <span class="formula-text-dark">* Meta anual pactada según contrato MY26.</span>
+                        <span class="formula-text-dark">* Meta anual pactada según contrato MY27.</span>
                     </td>
                     <td class="text-center">
                         {{ datosCliente.COMPRA_MINIMA_ANUAL | currency:'USD':'$':'1.2-2' }}
@@ -327,7 +327,7 @@
 
         <div class="nota-footer">
             <strong>Nota de transparencia:</strong> Los datos presentados son sincronizados directamente desde Odoo ERP.
-            Las deducciones corresponden a documentos registrados en el periodo fiscal MY26.
+            Las deducciones corresponden a documentos registrados en el periodo fiscal MY27.
             El <strong>Importe Final Base</strong> es el monto neto tras descontar artículos que ya cuentan con
             promociones de liquidación o apoyos especiales.
         </div>
