@@ -9,6 +9,12 @@
         <button class="btn btn-secondary" [routerLink]="['/usuarios/dashboard']">
             <i class="fas fa-arrow-left"></i> Volver
         </button>
+
+        <app-temporada-selector *ngIf="temporadasDisponibles.length"
+            [temporadas]="temporadasDisponibles"
+            [seleccionada]="temporadaHistoricaSeleccionada"
+            (cambio)="verTemporadaPasada($event)">
+        </app-temporada-selector>
         <button class="btn btn-secondary" (click)="generarPDF()" [disabled]="exportandoPDF || !datosCliente">
             <i class="fas fa-spinner fa-spin" *ngIf="exportandoPDF"></i>
             <i class="fas fa-file-pdf" *ngIf="!exportandoPDF"></i>
@@ -18,7 +24,7 @@
             <i class="fas fa-print"></i> Detalle de Compras
         </button>
 
-        <app-facturas-cliente [isOpen]="mostrarFacturas" (onClose)="mostrarFacturas = false" [idGrupo]="idDelGrupo" [clienteClave]="clienteClaveModal" [claveExacta]="claveExactaModal" [idGrupoOdoo]="idGrupoOdooModal">
+        <app-facturas-cliente [isOpen]="mostrarFacturas" (onClose)="mostrarFacturas = false" [idGrupo]="idDelGrupo" [clienteClave]="clienteClaveModal" [claveExacta]="claveExactaModal" [idGrupoOdoo]="idGrupoOdooModal" [temporadaSeleccionada]="temporadaHistoricaSeleccionada" [temporadaActualEtiqueta]="temporadaActualEtiqueta">
         </app-facturas-cliente>
 
         <!-- Modal selector: Vista Global vs Mis Pedidos (solo usuarios integrales) -->
@@ -45,6 +51,9 @@
             </div>
         </div>
     </div>
+
+    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <app-fecha-actualizacion></app-fecha-actualizacion>
 

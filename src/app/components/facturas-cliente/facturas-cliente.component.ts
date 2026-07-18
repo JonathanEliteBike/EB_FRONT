@@ -91,6 +91,14 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
    * matches parciales por nombre o referencia parecida.
    */
   @Input() claveExacta = false;
+  /**
+   * Etiqueta de temporada histórica seleccionada en la carátula padre (ej. "2025-2026").
+   * Cuando está presente, el modal muestra los pedidos de esa temporada pasada
+   * (acotados a su rango fijo) en vez de la temporada actual del cliente.
+   */
+  @Input() temporadaSeleccionada: string | null = null;
+  /** Etiqueta de la temporada actualmente abierta (ej. "2026-2027"), para mostrar "Temporada MYxx" cuando no hay temporada histórica seleccionada. */
+  @Input() temporadaActualEtiqueta: string | null = null;
 
   /** Lista completa de líneas de orden recibidas del backend. */
   facturas: Factura[] = [];
@@ -229,7 +237,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     // ── RUTA 0: Vista Global integral ← prioridad más alta ───────────────────────
     if (this.idGrupoOdoo) {
       this.clientesService.getDetalleComprasCliente(
-        undefined, undefined, undefined, undefined, false, this.idGrupoOdoo, forceRefresh
+        undefined, undefined, undefined, undefined, false, this.idGrupoOdoo, forceRefresh, this.temporadaSeleccionada
       ).subscribe({
         next: (response: any) => {
           if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
@@ -326,7 +334,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
       if (clienteParam) {
         this.infoCliente = { nombre_cliente: clienteParam };
         // Sin límite: traer todos los registros; la paginación local se encarga de mostrarlos por páginas
-        this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam, this.claveExacta, undefined, forceRefresh).subscribe({
+        this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam, this.claveExacta, undefined, forceRefresh, this.temporadaSeleccionada).subscribe({
             next: (response: any) => {
             if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.fechaInicioTemporada = response.meta?.fecha_inicio_temporada ?? null;
@@ -417,7 +425,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
               this.cargando = false;
               return;
             }
-            this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam2, this.claveExacta).subscribe({
+            this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam2, this.claveExacta, undefined, false, this.temporadaSeleccionada).subscribe({
               next: (response: any) => {
                 if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
                 this.error = null;
@@ -922,10 +930,24 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
 
   /** Formatea 'YYYY-MM-DD' a texto corto como '11 jun 2025' para mostrar en el resumen. */
   get fechaInicioFormateada(): string {
-    if (!this.fechaInicioTemporada) return 'MY26';
+    if (!this.fechaInicioTemporada) return '';
     const [y, m, d] = this.fechaInicioTemporada.split('-').map(Number);
     const fecha = new Date(y, m - 1, d);
     return fecha.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  /** Convierte una etiqueta de temporada ("2026-2027") a su nombre corto ("MY27"). */
+  private etiquetaAMY(etiqueta: string | null | undefined): string | null {
+    if (!etiqueta) return null;
+    const anioFin = etiqueta.split('-')[1];
+    return anioFin ? `MY${anioFin.slice(-2)}` : null;
+  }
+
+  /** Etiqueta de temporada a mostrar en el resumen: la histórica seleccionada, o la temporada actual. */
+  get etiquetaTemporadaMostrada(): string {
+    return this.etiquetaAMY(this.temporadaSeleccionada)
+      ?? this.etiquetaAMY(this.temporadaActualEtiqueta)
+      ?? '';
   }
 
   /** Suma total de piezas pedidas en la vista filtrada activa. */

@@ -9,6 +9,8 @@ import { AlertaService } from '../../../services/alerta.service';
 import { AlertaComponent } from '../../../components/alerta/alerta.component';
 
 import { FechaActualizacionComponent } from '../../../components/fecha-actualizacion/fecha-actualizacion.component';
+import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
+import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 interface DatosCliente {
   clave: string;
@@ -75,7 +77,8 @@ interface DatosCliente {
   selector: 'app-caratula-usuarios',
   standalone: true,
   imports: [RouterModule, CommonModule, TopBarUsuariosComponent,
-    FormsModule, FacturasClienteComponent, AlertaComponent, FechaActualizacionComponent],
+    FormsModule, FacturasClienteComponent, AlertaComponent, FechaActualizacionComponent,
+    TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './caratula-usuarios.component.html',
   styleUrls: ['./caratula-usuarios.component.css']
 })
@@ -120,6 +123,15 @@ export class CaratulaUsuariosComponent implements OnInit {
    */
   idGrupoOdooModal: number | null = null;
 
+  // ── Selector de temporadas históricas ─────────────────────────────────────
+  temporadasDisponibles: string[] = [];
+  temporadaHistoricaSeleccionada: string | null = null;
+  /** Etiqueta de la temporada actualmente abierta (ej. "2026-2027"), para pasarla a facturas-cliente. */
+  temporadaActualEtiqueta: string | null = null;
+  /** Clave o nombre usado en la última búsqueda, para poder repetirla al consultar una temporada histórica. */
+  private claveBusquedaActual = '';
+  private nombreBusquedaActual = '';
+
   constructor(
     private caratulasService: CaratulasService,
     private router: Router,
@@ -133,6 +145,65 @@ export class CaratulaUsuariosComponent implements OnInit {
     } else {
       this.error = 'No se encontró información de usuario. Por favor inicie sesión nuevamente.';
     }
+    this.cargarTemporadasDisponibles();
+    this.cargarTemporadaActual();
+  }
+
+  private cargarTemporadasDisponibles(): void {
+    this.caratulasService.getTemporadasDisponibles().subscribe({
+      next: (temporadas) => this.temporadasDisponibles = temporadas,
+      error: (err) => console.error('Error cargando temporadas disponibles:', err)
+    });
+  }
+
+  private cargarTemporadaActual(): void {
+    this.caratulasService.getTemporadas().subscribe({
+      next: (temporadas) => {
+        const abierta = temporadas.find(t => t.estado === 'abierta');
+        this.temporadaActualEtiqueta = abierta?.etiqueta ?? null;
+      },
+      error: (err) => console.error('Error cargando temporada actual:', err)
+    });
+  }
+
+  /** Consulta el Avance de una temporada histórica (previo_historico) para el cliente/grupo actual. */
+  verTemporadaPasada(temporada: string): void {
+    if (!temporada) {
+      this.volverATemporadaActual();
+      return;
+    }
+
+    this.isLoading = true;
+    this.error = null;
+    this.temporadaHistoricaSeleccionada = temporada;
+
+    this.caratulasService.getDatosPrevioHistorico(temporada).subscribe({
+      next: (data: any[]) => {
+        const claveLower = this.claveBusquedaActual?.toLowerCase();
+        const encontrado = data.find(d =>
+          (claveLower && d.clave?.toLowerCase() === claveLower) ||
+          (this.nombreBusquedaActual && d.nombre_cliente?.toLowerCase().includes(this.nombreBusquedaActual.toLowerCase()))
+        );
+        this.isLoading = false;
+        if (encontrado) {
+          this.datosCliente = this.procesarDatosCliente(encontrado);
+          this.error = null;
+        } else {
+          this.datosCliente = null;
+          this.error = 'No se encontró información para tu cuenta en esa temporada.';
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar temporada histórica:', err);
+        this.isLoading = false;
+        this.error = 'Error al cargar la temporada histórica.';
+      }
+    });
+  }
+
+  volverATemporadaActual(): void {
+    this.temporadaHistoricaSeleccionada = null;
+    this.buscarAutomaticamente();
   }
 
   private obtenerDatosToken() {
@@ -232,6 +303,8 @@ export class CaratulaUsuariosComponent implements OnInit {
   }
 
   private realizarBusqueda(clave: string, nombreCliente: string) {
+    this.claveBusquedaActual = clave;
+    this.nombreBusquedaActual = nombreCliente;
     this.caratulasService.buscarCaratulas(clave, nombreCliente).subscribe({
       next: (response: any) => {
         let datos: any = null;
