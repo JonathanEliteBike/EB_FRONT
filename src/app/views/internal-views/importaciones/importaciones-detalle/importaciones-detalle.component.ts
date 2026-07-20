@@ -323,7 +323,12 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
         }
       }
       if (applied && draft.seccion) this.seccionActiva = draft.seccion;
-      if (applied) this._recalcularCamposLocales();
+      if (applied) {
+        this._recalcularCamposLocales();
+        // Persistir el borrador recuperado a columnas reales para que sea
+        // visible a otros usuarios en vivo (no depender del clic de guardar).
+        this._programarAutoguardado();
+      }
     } catch {}
   }
 
