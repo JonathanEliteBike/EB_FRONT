@@ -36,7 +36,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   hayActualizacionExterna = false;
   private _pollSub?: Subscription;
   private _embarqueId = 0;
-  private readonly POLL_INTERVAL_MS = 30_000;
+  private readonly POLL_INTERVAL_MS = 10_000;
 
   // Auto-guardado silencioso
   autoguardandoOk = false;
@@ -261,23 +261,17 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       switchMap(() => this.svc.obtener(id))
     ).subscribe({
       next: (data) => {
-        // Si no hay cambios pendientes: aplicar silenciosamente
-        if (!this.hayCambios()) {
-          this.embarque = data;
-          for (const campo of (this.embarque.campos_na || [])) {
-            this.camposNA.add(campo);
-          }
-          this._aplicarBorradores();
-          this._recalcularCamposLocales();
-          this.hayActualizacionExterna = false;
-        } else {
-          // Hay cambios en curso: solo avisar si el servidor tiene algo más nuevo
-          const remoteUpdated = data.updated_at;
-          const localUpdated  = this.embarque?.updated_at;
-          if (remoteUpdated && localUpdated && remoteUpdated > localUpdated) {
-            this.hayActualizacionExterna = true;
-          }
+        if (!this.embarque) return;
+        // Merge inteligente: actualiza campos del servidor EXCEPTO los que el
+        // usuario está editando en este momento (que están en cambiosPendientes).
+        const camposEnEdicion = new Set(Object.keys(this.cambiosPendientes));
+        const merged: any = { ...data };
+        for (const campo of camposEnEdicion) {
+          merged[campo] = (this.embarque as any)[campo]; // preservar versión local
         }
+        this.embarque = merged;
+        this._recalcularCamposLocales();
+        this.hayActualizacionExterna = false;
       },
       error: () => { /* silencioso — no interrumpir al usuario */ }
     });
@@ -408,17 +402,20 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     if (this._autoguardadoTimer) clearTimeout(this._autoguardadoTimer);
     this._autoguardadoTimer = setTimeout(() => {
       if (!this.embarque || !this.hayCambios() || this.guardando) return;
-      const naPayload: any = {};
-      for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
-      const payload: any = { _borrador_seccion: this.seccionActiva, ...naPayload, ...this.cambiosPendientes };
+      // Guardar directo a columnas reales (sin _borrador_seccion) para que
+      // otros usuarios vean los datos al instante vía polling.
+      const payload: any = { ...this.cambiosPendientes };
+      for (const campo of this.camposNA) { payload[campo] = '__NA__'; }
       this.svc.actualizar(this.embarque.id, payload).subscribe({
         next: () => {
           this.autoguardandoOk = true;
+          // Actualizar updated_at local para que el polling no genere falsa alerta
+          if (this.embarque) this.embarque.updated_at = new Date().toISOString();
           setTimeout(() => { this.autoguardandoOk = false; }, 2000);
         },
         error: () => {}
       });
-    }, 15_000);
+    }, 5_000);
   }
 
   private _diffDias(a: string | null, b: string | null): number | null {
