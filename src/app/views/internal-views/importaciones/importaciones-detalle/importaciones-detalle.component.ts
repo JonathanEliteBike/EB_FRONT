@@ -38,6 +38,10 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   private _embarqueId = 0;
   private readonly POLL_INTERVAL_MS = 30_000;
 
+  // Auto-guardado silencioso
+  autoguardandoOk = false;
+  private _autoguardadoTimer?: ReturnType<typeof setTimeout>;
+
   readonly tabs: { key: Seccion; label: string; icon: string }[] = [
     { key: 'logistica',   label: 'Logística',   icon: 'fa-ship' },
     { key: 'importacion', label: 'Importación',  icon: 'fa-file-alt' },
@@ -240,6 +244,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this._pollSub?.unsubscribe();
+    if (this._autoguardadoTimer) clearTimeout(this._autoguardadoTimer);
     if (!this.embarque) return;
     const tieneCambios = Object.keys(this.cambiosPendientes).length > 0;
     if (!tieneCambios) return;
@@ -396,6 +401,24 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       if (this.camposConError.size === 0) this.validacionError = [];
     }
     this._recalcularCamposLocales();
+    this._programarAutoguardado();
+  }
+
+  private _programarAutoguardado(): void {
+    if (this._autoguardadoTimer) clearTimeout(this._autoguardadoTimer);
+    this._autoguardadoTimer = setTimeout(() => {
+      if (!this.embarque || !this.hayCambios() || this.guardando) return;
+      const naPayload: any = {};
+      for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
+      const payload: any = { _borrador_seccion: this.seccionActiva, ...naPayload, ...this.cambiosPendientes };
+      this.svc.actualizar(this.embarque.id, payload).subscribe({
+        next: () => {
+          this.autoguardandoOk = true;
+          setTimeout(() => { this.autoguardandoOk = false; }, 2000);
+        },
+        error: () => {}
+      });
+    }, 15_000);
   }
 
   private _diffDias(a: string | null, b: string | null): number | null {

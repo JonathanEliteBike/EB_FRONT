@@ -12,6 +12,17 @@
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* ── Indicador auto-guardado ── */
+.autoguardado-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  font-weight: 600;
+  color: #22c55e;
+  animation: fadeDown .2s ease;
+}
+
 /* ── Banner actualización concurrente ── */
 .banner-actualizacion {
   display: flex;

@@ -46,6 +46,10 @@
           </div>
           <span class="prog-lbl">Completado</span>
         </div>
+        <!-- Indicador auto-guardado -->
+        <span class="autoguardado-ok" *ngIf="autoguardandoOk">
+          <i class="fas fa-check-circle"></i> Auto-guardado
+        </span>
         <!-- Borrador -->
         <button class="btn-borrador" (click)="guardarBorrador()"
           [disabled]="!hayCambios() || guardando"
