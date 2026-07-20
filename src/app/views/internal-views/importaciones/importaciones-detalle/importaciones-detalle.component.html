@@ -14,6 +14,16 @@
     <button (click)="volver()">Regresar</button>
   </div>
 
+  <!-- ── Banner: actualización de otro usuario ── -->
+  <div class="banner-actualizacion" *ngIf="hayActualizacionExterna && !cargando">
+    <i class="fas fa-users"></i>
+    <span>Otro usuario guardó cambios en este embarque.</span>
+    <button class="btn-recargar" (click)="recargarDesdeServidor()">
+      <i class="fas fa-sync-alt"></i> Ver cambios (se perderán tus cambios actuales)
+    </button>
+    <button class="btn-ignorar" (click)="hayActualizacionExterna = false">Ignorar</button>
+  </div>
+
   <ng-container *ngIf="!cargando && embarque">
 
     <!-- ── Encabezado ── -->

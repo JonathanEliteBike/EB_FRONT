@@ -12,6 +12,46 @@
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* ── Banner actualización concurrente ── */
+.banner-actualizacion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(245,158,11,.12);
+  border-bottom: 1px solid rgba(245,158,11,.3);
+  color: #fbbf24;
+  font-size: .8rem;
+  font-weight: 500;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 64px;
+  z-index: 30;
+  animation: fadeDown .25s ease;
+}
+.banner-actualizacion i.fa-users { font-size: .9rem; flex-shrink: 0; }
+.banner-actualizacion span { flex: 1; min-width: 0; }
+.btn-recargar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(245,158,11,.4);
+  background: rgba(245,158,11,.15); color: #fbbf24;
+  font-size: .75rem; font-weight: 600; cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+}
+.btn-recargar:hover { background: rgba(245,158,11,.25); }
+.btn-ignorar {
+  padding: 5px 10px; border-radius: 6px; border: none;
+  background: transparent; color: #94a3b8;
+  font-size: .75rem; cursor: pointer;
+  transition: color .15s;
+}
+.btn-ignorar:hover { color: #e2e8f0; }
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Keyframes ── */
 @keyframes sectionIn {
   from { opacity: 0; transform: translateY(7px); }
