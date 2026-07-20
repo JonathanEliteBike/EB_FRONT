@@ -415,7 +415,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
         },
         error: () => {}
       });
-    }, 5_000);
+    }, 1_000);
   }
 
   private _diffDias(a: string | null, b: string | null): number | null {
