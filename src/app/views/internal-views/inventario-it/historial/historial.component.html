@@ -1,0 +1,435 @@
+<section class="historial-page">
+
+  <!-- ENCABEZADO -->
+
+  <header class="page-header">
+    <button type="button" class="back-btn" routerLink="/inventario-it">
+      ← Volver
+    </button>
+
+    <div class="title-block">
+      <p class="eyebrow">INVENTARIO IT · ELITE BIKE</p>
+
+      <h1>Historial de Movimientos</h1>
+
+      <p>
+        Consulta la trazabilidad completa de asignaciones, devoluciones y cambios realizados sobre los equipos tecnológicos.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="export-btn"
+      [disabled]="exportando"
+      (click)="exportarHistorial()">
+      {{ exportando ? 'Exportando...' : 'Exportar historial' }}
+    </button>
+  </header>
+
+
+  <!-- ESTADÍSTICAS -->
+
+  <section class="stats-grid">
+    <article class="stat-card total-card">
+      <span>Total de movimientos</span>
+      <strong>{{ estadisticas.total }}</strong>
+      <small>Registros de trazabilidad</small>
+    </article>
+
+    <article class="stat-card asignacion-card">
+      <span>Asignaciones</span>
+      <strong>{{ estadisticas.asignaciones }}</strong>
+      <small>Equipos entregados</small>
+    </article>
+
+    <article class="stat-card devolucion-card">
+      <span>Devoluciones</span>
+      <strong>{{ estadisticas.devoluciones }}</strong>
+      <small>Equipos regresados</small>
+    </article>
+
+    <article class="stat-card otros-card">
+      <span>Otros cambios</span>
+      <strong>{{ estadisticas.otros }}</strong>
+      <small>Ediciones, bajas y estados</small>
+    </article>
+  </section>
+
+
+  <!-- MENSAJES -->
+
+  <div class="alert success" *ngIf="mensajeExito">
+    {{ mensajeExito }}
+  </div>
+
+  <div class="alert error" *ngIf="errorCarga">
+    {{ errorCarga }}
+  </div>
+
+  <div class="alert error" *ngIf="errorAccion && !mostrarDetalle">
+    {{ errorAccion }}
+  </div>
+
+
+  <!-- FILTROS -->
+
+  <section class="filters-panel">
+    <div class="search-row">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+
+        <input
+          type="text"
+          [(ngModel)]="terminoBusqueda"
+          (keyup.enter)="buscar()"
+          placeholder="Buscar por movimiento, equipo, inventario, responsable, descripción o usuario..."
+        />
+
+        <button type="button" class="search-btn" [disabled]="cargando" (click)="buscar()">
+          {{ cargando ? 'Buscando...' : 'Buscar' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="type-filter">
+      <span class="filter-label">Tipo de movimiento:</span>
+
+      <div class="chips">
+        <button
+          *ngFor="let tipo of tiposFiltro"
+          type="button"
+          class="filter-chip"
+          [class.active]="filtroTipo === tipo"
+          [disabled]="cargando"
+          (click)="seleccionarTipo(tipo)">
+          {{ tipo }}
+        </button>
+      </div>
+    </div>
+
+    <div class="advanced-filters">
+      <label>
+        Empresa
+
+        <select [(ngModel)]="filtroEmpresa">
+          <option *ngFor="let empresa of empresasFiltro" [value]="empresa">
+            {{ empresa }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Fecha inicial
+
+        <input type="date" [(ngModel)]="fechaInicio" />
+      </label>
+
+      <label>
+        Fecha final
+
+        <input type="date" [(ngModel)]="fechaFin" />
+      </label>
+
+      <button type="button" class="apply-btn" [disabled]="cargando" (click)="aplicarFiltros()">
+        Aplicar filtros
+      </button>
+
+      <button
+        type="button"
+        class="clear-btn"
+        *ngIf="tieneFiltrosActivos()"
+        [disabled]="cargando"
+        (click)="limpiarFiltros()">
+        Limpiar
+      </button>
+    </div>
+
+    <p class="results-text">
+      Mostrando <strong>{{ movimientos.length }}</strong> movimientos registrados.
+    </p>
+  </section>
+
+
+  <!-- CARGA -->
+
+  <div class="loading-message" *ngIf="cargando">
+    Cargando historial desde el backend...
+  </div>
+
+
+  <!-- TABLA -->
+
+  <section class="table-card">
+    <div class="table-header">
+      <div>
+        <h2>Registro de movimientos</h2>
+
+        <p>
+          Cada movimiento conserva la información del equipo, los responsables involucrados, la fecha y el usuario que realizó la acción.
+        </p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Movimiento</th>
+            <th>Equipo</th>
+            <th>Responsable anterior</th>
+            <th>Responsable nuevo</th>
+            <th>Fecha del cambio</th>
+            <th>Tipo</th>
+            <th>Registró</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let movimiento of movimientos">
+
+            <td class="folio-cell">
+              {{ movimiento.folio }}
+            </td>
+
+            <td class="equipment-cell">
+              <strong>{{ movimiento.equipo.nombre || 'Equipo sin descripción' }}</strong>
+
+              <small>
+                {{ movimiento.equipo.inventario || 'Sin número de inventario' }}
+              </small>
+
+              <small>
+                {{ movimiento.equipo.marca || 'Sin marca' }}
+                ·
+                {{ movimiento.equipo.modelo || 'Sin modelo' }}
+              </small>
+            </td>
+
+            <td>
+              <div class="person" *ngIf="movimiento.responsableAnterior; else sinAnterior">
+                <span class="avatar old-avatar">
+                  {{ obtenerIniciales(movimiento.responsableAnterior) }}
+                </span>
+
+                <div>
+                  <strong>{{ movimiento.responsableAnterior }}</strong>
+                  <small>Responsable anterior</small>
+                </div>
+              </div>
+
+              <ng-template #sinAnterior>
+                <span class="empty-value">Sin responsable anterior</span>
+              </ng-template>
+            </td>
+
+            <td>
+              <div class="person" *ngIf="movimiento.responsableNuevo; else sinNuevo">
+                <span class="avatar new-avatar">
+                  {{ obtenerIniciales(movimiento.responsableNuevo) }}
+                </span>
+
+                <div>
+                  <strong>{{ movimiento.responsableNuevo }}</strong>
+                  <small>Responsable nuevo</small>
+                </div>
+              </div>
+
+              <ng-template #sinNuevo>
+                <span class="empty-value">Sin nuevo responsable</span>
+              </ng-template>
+            </td>
+
+            <td class="date-cell">
+              {{ formatearFecha(movimiento.fechaMovimiento) }}
+            </td>
+
+            <td>
+              <span class="movement-type" [ngClass]="tipoClase(movimiento.tipoMovimiento)">
+                {{ movimiento.tipoMovimiento }}
+              </span>
+            </td>
+
+            <td>
+              <div class="person compact-person">
+                <span class="avatar user-avatar">
+                  {{ obtenerIniciales(movimiento.usuarioRegistro) }}
+                </span>
+
+                <div>
+                  <strong>{{ movimiento.usuarioRegistro || 'Sistema' }}</strong>
+                </div>
+              </div>
+            </td>
+
+            <td class="actions-cell">
+              <button type="button" class="view-btn" (click)="verDetalle(movimiento)">
+                Ver detalle
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="!cargando && movimientos.length === 0">
+            <td colspan="8" class="empty-state">
+              No se encontraron movimientos con los filtros seleccionados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- MODAL DE DETALLE -->
+
+  <ng-container *ngIf="movimientoSeleccionado as seleccionado">
+    <div class="modal-overlay" *ngIf="mostrarDetalle">
+      <div class="detail-modal">
+
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">{{ seleccionado.folio }}</p>
+            <h2>Detalle del movimiento</h2>
+          </div>
+
+          <button type="button" class="close-btn" (click)="cerrarDetalle()">
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="detail-loading" *ngIf="cargandoDetalle">
+            Cargando detalle completo...
+          </div>
+
+          <div class="alert error" *ngIf="errorAccion">
+            {{ errorAccion }}
+          </div>
+
+
+          <section class="detail-section">
+            <h3>Información del movimiento</h3>
+
+            <div class="detail-grid">
+              <div>
+                <label>Folio</label>
+                <p>{{ seleccionado.folio }}</p>
+              </div>
+
+              <div>
+                <label>Tipo de movimiento</label>
+
+                <p>
+                  <span class="movement-type" [ngClass]="tipoClase(seleccionado.tipoMovimiento)">
+                    {{ seleccionado.tipoMovimiento }}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <label>Fecha y hora</label>
+                <p>{{ formatearFecha(seleccionado.fechaMovimiento) }}</p>
+              </div>
+
+              <div>
+                <label>Usuario que registró</label>
+                <p>{{ seleccionado.usuarioRegistro || 'Sistema' }}</p>
+              </div>
+
+              <div class="wide">
+                <label>Descripción</label>
+                <p>{{ seleccionado.descripcion || 'Sin descripción registrada' }}</p>
+              </div>
+            </div>
+          </section>
+
+
+          <section class="detail-section">
+            <h3>Datos del equipo</h3>
+
+            <div class="detail-grid">
+              <div>
+                <label>No. de inventario</label>
+                <p>{{ seleccionado.equipo.inventario || 'Sin registro' }}</p>
+              </div>
+
+              <div>
+                <label>Equipo</label>
+                <p>{{ seleccionado.equipo.nombre || 'Sin descripción' }}</p>
+              </div>
+
+              <div>
+                <label>Categoría</label>
+                <p>{{ seleccionado.equipo.categoria || 'Sin categoría' }}</p>
+              </div>
+
+              <div>
+                <label>Empresa</label>
+                <p>{{ seleccionado.equipo.empresa || 'Sin empresa' }}</p>
+              </div>
+
+              <div>
+                <label>Marca</label>
+                <p>{{ seleccionado.equipo.marca || 'Sin marca' }}</p>
+              </div>
+
+              <div>
+                <label>Modelo</label>
+                <p>{{ seleccionado.equipo.modelo || 'Sin modelo' }}</p>
+              </div>
+
+              <div>
+                <label>Número de serie</label>
+                <p>{{ seleccionado.equipo.serie || 'Sin número de serie' }}</p>
+              </div>
+
+              <div>
+                <label>Funcionamiento actual</label>
+                <p>{{ seleccionado.equipo.funcionamiento || 'Sin información' }}</p>
+              </div>
+
+              <div>
+                <label>Estado actual</label>
+                <p>{{ seleccionado.equipo.estadoActual || 'Sin estado' }}</p>
+              </div>
+
+              <div>
+                <label>Ubicación actual</label>
+                <p>{{ seleccionado.equipo.ubicacion || 'Sin ubicación' }}</p>
+              </div>
+            </div>
+          </section>
+
+
+          <section class="detail-section">
+            <h3>Cambio de responsable</h3>
+
+            <div class="responsible-change">
+              <article>
+                <span>Responsable anterior</span>
+                <strong>{{ seleccionado.responsableAnterior || 'Sin responsable anterior' }}</strong>
+              </article>
+
+              <div class="change-arrow">→</div>
+
+              <article>
+                <span>Responsable nuevo</span>
+                <strong>{{ seleccionado.responsableNuevo || 'Sin nuevo responsable' }}</strong>
+              </article>
+            </div>
+          </section>
+
+
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" (click)="cerrarDetalle()">
+              Cerrar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</section>

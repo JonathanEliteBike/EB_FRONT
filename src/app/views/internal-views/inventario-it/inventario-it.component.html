@@ -42,14 +42,23 @@
     <article class="module-card">
       <h3>Responsivas</h3>
       <p>Gestiona documentos de asignación.</p>
-      <button type="button">Ir a Responsivas</button>
-    </article>
+     <button
+      type="button"routerLink="/inventario-it/responsivas"> Ir Responsivas</button>
+</article>
 
     <article class="module-card">
-      <h3>Historial</h3>
-      <p>Movimientos y cambios de equipos.</p>
-      <button type="button">Ir a Historial</button>
-    </article>
+  <h3>Historial</h3>
+
+  <p>
+    Consulta la trazabilidad y los cambios realizados sobre cada equipo.
+  </p>
+
+  <button
+    type="button"
+    [routerLink]="['/inventario-it/historial']">
+    Ir a Historial
+  </button>
+</article>
 
     <article class="module-card">
       <h3>Auditorías</h3>

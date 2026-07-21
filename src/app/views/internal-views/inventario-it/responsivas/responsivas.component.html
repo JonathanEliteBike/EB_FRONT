@@ -1,0 +1,656 @@
+<section class="responsivas-page">
+
+  <!-- =========================================================
+       ENCABEZADO
+  ========================================================== -->
+
+  <header class="page-header">
+    <button type="button" class="back-btn" routerLink="/inventario-it">
+      ← Volver
+    </button>
+
+    <div class="title-block">
+      <p class="eyebrow">INVENTARIO IT · ELITE BIKE</p>
+
+      <h1>Responsivas</h1>
+
+      <p>
+        Consulta, descarga, firma y seguimiento de los documentos asociados con la entrega de equipos tecnológicos.
+      </p>
+    </div>
+
+    <div class="header-space"></div>
+  </header>
+
+
+  <!-- =========================================================
+       ESTADÍSTICAS
+  ========================================================== -->
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Total de responsivas</span>
+      <strong>{{ estadisticas.total }}</strong>
+    </article>
+
+    <article class="stat-card pendiente-card">
+      <span>Pendientes</span>
+      <strong>{{ estadisticas.pendientes }}</strong>
+    </article>
+
+    <article class="stat-card firmada-card">
+      <span>Firmadas</span>
+      <strong>{{ estadisticas.firmadas }}</strong>
+    </article>
+
+    <article class="stat-card anulada-card">
+      <span>Anuladas</span>
+      <strong>{{ estadisticas.anuladas }}</strong>
+    </article>
+  </section>
+
+
+  <!-- =========================================================
+       MENSAJES GENERALES
+  ========================================================== -->
+
+  <div
+    class="alert success"
+    *ngIf="mensajeExito && !mostrarDetalle && !mostrarFirma && !mostrarAnulacion">
+    {{ mensajeExito }}
+  </div>
+
+  <div class="alert error" *ngIf="errorCarga">
+    {{ errorCarga }}
+  </div>
+
+
+  <!-- =========================================================
+       BUSCADOR Y FILTROS
+  ========================================================== -->
+
+  <section class="filters-panel">
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="text"
+        [(ngModel)]="terminoBusqueda"
+        (keyup.enter)="buscar()"
+        placeholder="Buscar por folio, colaborador, inventario, equipo, marca, modelo o número de serie..."
+      />
+
+      <button type="button" class="search-btn" [disabled]="cargando" (click)="buscar()">
+        {{ cargando ? 'Buscando...' : 'Buscar' }}
+      </button>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <span class="filter-label">Estado:</span>
+
+        <div class="chips">
+          <button
+            *ngFor="let estado of estadosFiltro"
+            type="button"
+            class="filter-chip"
+            [class.active]="filtroEstado === estado"
+            [disabled]="cargando"
+            (click)="seleccionarEstado(estado)">
+            {{ estado }}
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="clear-btn"
+        *ngIf="terminoBusqueda || filtroEstado !== 'Todos'"
+        [disabled]="cargando"
+        (click)="limpiarFiltros()">
+        Limpiar filtros
+      </button>
+    </div>
+
+    <p class="results-text">
+      Mostrando <strong>{{ responsivas.length }}</strong> responsivas registradas.
+    </p>
+  </section>
+
+
+  <!-- =========================================================
+       CARGA
+  ========================================================== -->
+
+  <div class="loading-message" *ngIf="cargando">
+    Cargando responsivas desde el backend...
+  </div>
+
+
+  <!-- =========================================================
+       TABLA
+  ========================================================== -->
+
+  <section class="table-card">
+    <div class="table-header">
+      <div>
+        <h2>Listado de responsivas</h2>
+
+        <p>
+          Documentos generados automáticamente a partir de las asignaciones de equipos tecnológicos.
+        </p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Colaborador</th>
+            <th>Equipo</th>
+            <th>No. inventario</th>
+            <th>Fecha de generación</th>
+            <th>Estado</th>
+            <th>Documento firmado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let responsiva of responsivas">
+
+            <td class="folio-cell">
+              {{ responsiva.folio }}
+            </td>
+
+            <td class="person-cell">
+              <strong>
+                {{
+                  responsiva.colaborador.nombreCompleto ||
+                  responsiva.responsable ||
+                  'Sin colaborador'
+                }}
+              </strong>
+
+              <small>
+                {{ responsiva.colaborador.puesto || 'Sin puesto registrado' }}
+              </small>
+            </td>
+
+            <td class="equipment-cell">
+              <strong>
+                {{ responsiva.equipo.nombre || 'Sin descripción' }}
+              </strong>
+
+              <small>
+                {{ responsiva.equipo.marca || 'Sin marca' }}
+                ·
+                {{ responsiva.equipo.modelo || 'Sin modelo' }}
+              </small>
+            </td>
+
+            <td class="inventory-cell">
+              {{ responsiva.equipo.inventario || 'Sin número' }}
+            </td>
+
+            <td class="date-cell">
+              {{ formatearFecha(responsiva.fechaGeneracion) }}
+            </td>
+
+            <td>
+              <span class="status" [ngClass]="estadoClase(responsiva.estado)">
+                {{ responsiva.estado }}
+              </span>
+            </td>
+
+            <td>
+              <button
+                *ngIf="responsiva.archivoPdf"
+                type="button"
+                class="document-btn"
+                (click)="abrirDocumento(responsiva.archivoPdf)">
+                Abrir firmado
+              </button>
+
+              <span class="without-document" *ngIf="!responsiva.archivoPdf">
+                Sin documento
+              </span>
+            </td>
+
+            <td class="actions-cell">
+              <div class="actions">
+                <button type="button" class="action-btn view-btn" (click)="verDetalle(responsiva)">
+                  Ver
+                </button>
+
+                <button
+                  *ngIf="responsiva.estado === 'Pendiente'"
+                  type="button"
+                  class="action-btn sign-btn"
+                  (click)="abrirFirma(responsiva)">
+                  Firmar
+                </button>
+
+                <button
+                  *ngIf="responsiva.estado !== 'Anulada'"
+                  type="button"
+                  class="action-btn cancel-btn"
+                  (click)="abrirAnulacion(responsiva)">
+                  Anular
+                </button>
+              </div>
+            </td>
+
+          </tr>
+
+          <tr *ngIf="!cargando && responsivas.length === 0">
+            <td colspan="8" class="empty-state">
+              No se encontraron responsivas con los filtros seleccionados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- =========================================================
+       MODAL DE DETALLE
+       El alias "seleccionada" evita el error:
+       Object is possibly null
+  ========================================================== -->
+
+  <ng-container *ngIf="responsivaSeleccionada as seleccionada">
+    <div class="modal-overlay" *ngIf="mostrarDetalle">
+      <div class="modal large-modal">
+
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">{{ seleccionada.folio }}</p>
+            <h2>Detalle de responsiva</h2>
+          </div>
+
+          <button
+            type="button"
+            class="close-btn"
+            [disabled]="descargandoId !== null"
+            (click)="cerrarDetalle()">
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- DATOS DEL COLABORADOR -->
+
+          <section class="detail-section">
+            <h3>Datos del colaborador</h3>
+
+            <div class="detail-grid">
+              <div>
+                <label>Nombre</label>
+
+                <p>
+                  {{
+                    seleccionada.colaborador.nombreCompleto ||
+                    seleccionada.responsable ||
+                    'Sin nombre registrado'
+                  }}
+                </p>
+              </div>
+
+              <div>
+                <label>Puesto</label>
+
+                <p>
+                  {{ seleccionada.colaborador.puesto || 'Sin puesto registrado' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Empresa</label>
+
+                <p>
+                  {{
+                    seleccionada.colaborador.empresa ||
+                    seleccionada.equipo.empresa ||
+                    'ELITE BIKE'
+                  }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- DATOS DEL EQUIPO -->
+
+          <section class="detail-section">
+            <h3>Datos del equipo</h3>
+
+            <div class="detail-grid">
+              <div>
+                <label>No. de inventario</label>
+
+                <p>
+                  {{ seleccionada.equipo.inventario || 'Sin número de inventario' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Equipo</label>
+
+                <p>
+                  {{ seleccionada.equipo.nombre || 'Sin descripción' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Categoría</label>
+
+                <p>
+                  {{ seleccionada.equipo.categoria || 'Sin categoría' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Marca</label>
+
+                <p>
+                  {{ seleccionada.equipo.marca || 'Sin marca' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Modelo</label>
+
+                <p>
+                  {{ seleccionada.equipo.modelo || 'Sin modelo' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Número de serie</label>
+
+                <p>
+                  {{ seleccionada.equipo.serie || 'Sin número de serie' }}
+                </p>
+              </div>
+
+              <div>
+                <label>Funcionamiento</label>
+
+                <p>
+                  {{ seleccionada.equipo.funcionamiento || 'Sin información' }}
+                </p>
+              </div>
+
+              <div class="wide">
+                <label>Accesorios y extras</label>
+
+                <p>
+                  {{ seleccionada.equipo.extras || 'Sin accesorios registrados' }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- INFORMACIÓN DEL DOCUMENTO -->
+
+          <section class="detail-section">
+            <h3>Información del documento</h3>
+
+            <div class="detail-grid">
+              <div>
+                <label>Folio</label>
+                <p>{{ seleccionada.folio }}</p>
+              </div>
+
+              <div>
+                <label>Estado</label>
+
+                <p>
+                  <span class="status" [ngClass]="estadoClase(seleccionada.estado)">
+                    {{ seleccionada.estado }}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <label>Fecha de generación</label>
+                <p>{{ formatearFecha(seleccionada.fechaGeneracion) }}</p>
+              </div>
+
+              <div>
+                <label>Fecha de firma</label>
+                <p>{{ formatearFecha(seleccionada.fechaFirma) }}</p>
+              </div>
+
+              <div>
+                <label>Fecha de anulación</label>
+                <p>{{ formatearFecha(seleccionada.fechaAnulacion) }}</p>
+              </div>
+
+              <div>
+                <label>Estado de la asignación</label>
+                <p>{{ seleccionada.asignacion.estado || 'Sin información' }}</p>
+              </div>
+
+              <div class="wide">
+                <label>Observaciones</label>
+
+                <p>
+                  {{ seleccionada.observaciones || 'Sin observaciones registradas' }}
+                </p>
+              </div>
+
+              <div class="wide" *ngIf="seleccionada.estado === 'Anulada'">
+                <label>Motivo de anulación</label>
+
+                <p>
+                  {{ seleccionada.motivoAnulacion || 'Sin motivo registrado' }}
+                </p>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- MENSAJES DEL MODAL -->
+
+          <div class="alert error modal-alert" *ngIf="errorAccion">
+            {{ errorAccion }}
+          </div>
+
+          <div class="alert success modal-alert" *ngIf="mensajeExito">
+            {{ mensajeExito }}
+          </div>
+
+
+          <!-- ACCIONES DEL MODAL -->
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-btn"
+              [disabled]="descargandoId !== null"
+              (click)="cerrarDetalle()">
+              Cerrar
+            </button>
+
+            <button
+              type="button"
+              class="download-btn"
+              [disabled]="descargandoId === seleccionada.id"
+              (click)="descargarResponsiva(seleccionada.id, seleccionada.folio)">
+              {{
+                descargandoId === seleccionada.id
+                  ? 'Descargando PDF...'
+                  : 'Descargar responsiva'
+              }}
+            </button>
+
+            <button
+              *ngIf="seleccionada.archivoPdf"
+              type="button"
+              class="primary-btn"
+              [disabled]="descargandoId !== null"
+              (click)="abrirDocumento(seleccionada.archivoPdf)">
+              Abrir responsiva firmada
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+
+  <!-- =========================================================
+       MODAL DE FIRMA
+  ========================================================== -->
+
+  <ng-container *ngIf="responsivaSeleccionada as seleccionadaFirma">
+    <div class="modal-overlay" *ngIf="mostrarFirma">
+      <div class="modal">
+
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">{{ seleccionadaFirma.folio }}</p>
+            <h2>Registrar responsiva firmada</h2>
+          </div>
+
+          <button
+            type="button"
+            class="close-btn"
+            [disabled]="procesando"
+            (click)="cerrarFirma()">
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-description">
+            Después de imprimir y firmar la responsiva, sube el documento escaneado a Google Drive y registra su enlace en este formulario.
+          </p>
+
+          <label class="form-label">
+            URL del documento firmado *
+
+            <input
+              type="url"
+              [(ngModel)]="formularioFirma.archivoPdf"
+              placeholder="https://drive.google.com/..."
+            />
+          </label>
+
+          <label class="form-label">
+            Observaciones
+
+            <textarea
+              [(ngModel)]="formularioFirma.observaciones"
+              placeholder="Agrega comentarios relacionados con la entrega o la firma del documento">
+            </textarea>
+          </label>
+
+          <div class="alert error" *ngIf="errorAccion">
+            {{ errorAccion }}
+          </div>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-btn"
+              [disabled]="procesando"
+              (click)="cerrarFirma()">
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              class="primary-btn"
+              [disabled]="procesando"
+              (click)="guardarFirma()">
+              {{
+                procesando
+                  ? 'Guardando información...'
+                  : 'Marcar como firmada'
+              }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+
+
+  <!-- =========================================================
+       MODAL DE ANULACIÓN
+  ========================================================== -->
+
+  <ng-container *ngIf="responsivaSeleccionada as seleccionadaAnulacion">
+    <div class="modal-overlay" *ngIf="mostrarAnulacion">
+      <div class="modal">
+
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">{{ seleccionadaAnulacion.folio }}</p>
+            <h2>Anular responsiva</h2>
+          </div>
+
+          <button
+            type="button"
+            class="close-btn"
+            [disabled]="procesando"
+            (click)="cerrarAnulacion()">
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="warning-text">
+            La responsiva quedará marcada como anulada, pero permanecerá registrada en el historial para conservar la trazabilidad.
+          </p>
+
+          <label class="form-label">
+            Motivo de anulación *
+
+            <textarea
+              [(ngModel)]="motivoAnulacion"
+              placeholder="Describe por qué se está anulando esta responsiva">
+            </textarea>
+          </label>
+
+          <div class="alert error" *ngIf="errorAccion">
+            {{ errorAccion }}
+          </div>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="secondary-btn"
+              [disabled]="procesando"
+              (click)="cerrarAnulacion()">
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              class="danger-btn"
+              [disabled]="procesando"
+              (click)="confirmarAnulacion()">
+              {{
+                procesando
+                  ? 'Anulando responsiva...'
+                  : 'Confirmar anulación'
+              }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+
+</section>
