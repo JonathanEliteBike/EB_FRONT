@@ -89,7 +89,7 @@
 
             <div class="titulo" style="display: flex; align-items: center; gap: 12px;">
                 <img src="assets/logo_elite_2.png" alt="Elite Logo" style="height: 60px;">
-                <h1>Avance {{ modoHistorico ? temporadaHistoricaSeleccionada : etiquetaTemporadaActual }}</h1>
+                <h1>Avance {{ etiquetaAMY(modoHistorico ? temporadaHistoricaSeleccionada : etiquetaTemporadaActual) }}</h1>
             </div>
 
             <ng-container *ngIf="temporadaCerrada && fechaCierreApparel">

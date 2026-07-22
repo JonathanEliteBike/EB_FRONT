@@ -1053,6 +1053,9 @@ export class CaratulasComponent implements OnInit {
   }
 
   getEstadoPeriodo(periodo: string): string {
+    // Si la temporada está cerrada, todos sus periodos están cerrados
+    if (this.temporadaCerrada) return 'Cerrado';
+
     const mesActual = this.getMesActual();
 
     const periodos = {
@@ -1067,12 +1070,20 @@ export class CaratulasComponent implements OnInit {
     const data = periodos[periodo as keyof typeof periodos];
     if (!data) return 'Sin definir';
 
-    // Si estamos en 2026 (mes 1-6), los de 2025 ya cerraron
+    // Si estamos en mes 1-6 (segunda mitad del año fiscal), los bimestres Jul-Dic ya cerraron
     if (mesActual <= 6 && data.inicio >= 7) return 'Cerrado';
 
     if (mesActual < data.inicio) return 'Sin iniciar';
     if (mesActual > data.fin) return 'Cerrado';
     return 'En curso';
+  }
+
+  etiquetaAMY(etiqueta: string | null): string {
+    if (!etiqueta) return '';
+    // "2025-2026" → "MY26", "2026-2027" → "MY27"
+    const partes = etiqueta.split('-');
+    if (partes.length === 2) return 'MY' + partes[1].slice(-2);
+    return etiqueta;
   }
 
   getCompromisoAcumuladoScott(): number {
