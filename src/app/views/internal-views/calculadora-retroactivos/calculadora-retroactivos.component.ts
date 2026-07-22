@@ -165,6 +165,7 @@ export class CalculadoraRetroactivosComponent {
 
   totalCompraMinimaAnualPrimerSemestre: number = 0;
   totalCompraMinimaAnualSegundoSemestre: number = 0;
+  totalCompraMontoInicial: number = 0;
 
   // Variables de primer semestre detalle
   detallePorcentajePrimerSemestreJulAgo = 0;
@@ -363,24 +364,25 @@ export class CalculadoraRetroactivosComponent {
   calcularDetalleRetroActivo(){
     if (this.validarDatos()){
       
-      let redondeoBiciMinimaCompraLinea = this.clasificacionSeleccionada.id === 2 ? 5000 : 10000;
-      let redondeoBiciMultimarcaCompraInicial = this.clasificacionSeleccionada.id === 4 ? 500 : 5000;
+      let redondeoBiciMinimaCompraLinea = this.clasificacionSeleccionada.id === 2 ? 5000 : 10000; //Nivel Patner
+      //let redondeoBiciMultimarcaCompraInicial = this.clasificacionSeleccionada.id === 4 ? 500 : 5000;
 
       //Detalle Retroactivo resumen
       this.bicicletaPorcentajeInicial = this.clasificacionSeleccionada.bicicleta_porcentaje_compra_inicial;
       this.bicicletaMinimaCompraInicialLinea = Math.ceil((this.clasificacionSeleccionada.bicicleta_compra_minima_anual * (this.sucursalSeleccionada?.multiplo)) / redondeoBiciMinimaCompraLinea) * redondeoBiciMinimaCompraLinea;
-      this.bicicletaMinimaCompraInicial = Math.floor(((this.bicicletaPorcentajeInicial * this.bicicletaMinimaCompraInicialLinea) / 100) / redondeoBiciMultimarcaCompraInicial) * redondeoBiciMultimarcaCompraInicial;
+      this.bicicletaMinimaCompraInicial = Math.floor(((this.bicicletaPorcentajeInicial * this.bicicletaMinimaCompraInicialLinea) / 100))
       
       this.multimarcaPorcentajeInicial = this.clasificacionSeleccionada.multimarca_porcentaje_compra_inicial;
       this.multimarcaMinimaCompraInicialLinea = Math.ceil((this.clasificacionSeleccionada.multimarca_compra_minima_anual * (this.sucursalSeleccionada.multiplo)) / 10000) * 10000;
-      this.multimarcaMinimaCompraInicial = Math.floor(((this.multimarcaPorcentajeInicial * this.multimarcaMinimaCompraInicialLinea) / 100) / 5000) * 5000;
-      
+      this.multimarcaMinimaCompraInicial = Math.floor((this.multimarcaPorcentajeInicial * this.multimarcaMinimaCompraInicialLinea) / 100);
+
       this.segundoSemestreMinimaBicicletaPorcentajeInicial = Math.round((1 - (this.bicicletaPorcentajeInicial / 100)) * 100);
       this.segundoSemestreMinimaBicicletaCompraInicial = (this.bicicletaMinimaCompraInicialLinea * this.segundoSemestreMinimaBicicletaPorcentajeInicial) / 100;
-      this.segundoSemestreMinimaBicicletaCompraInicial = this.clasificacionSeleccionada.id === 3 ? this.segundoSemestreMinimaBicicletaCompraInicial : Math.ceil(((this.bicicletaMinimaCompraInicialLinea * this.segundoSemestreMinimaBicicletaPorcentajeInicial) / 100) / 10000) * 10000;
-      
+      this.segundoSemestreMinimaBicicletaCompraInicial = this.clasificacionSeleccionada.id === 4 ? this.segundoSemestreMinimaBicicletaCompraInicial : Math.ceil((this.bicicletaMinimaCompraInicialLinea * this.segundoSemestreMinimaBicicletaPorcentajeInicial) / 100);
+
       this.totalCompraMinimaAnualPrimerSemestre = this.bicicletaMinimaCompraInicialLinea + this.multimarcaMinimaCompraInicialLinea;
-      this.totalCompraMinimaAnualSegundoSemestre = this.bicicletaMinimaCompraInicial + this.multimarcaMinimaCompraInicial;
+      this.totalCompraMontoInicial = this.bicicletaMinimaCompraInicial + this.multimarcaMinimaCompraInicial;
+      this.totalCompraMinimaAnualSegundoSemestre = this.segundoSemestreMinimaBicicletaCompraInicial + this.multimarcaMinimaCompraInicial
 
       // Detalle retroactivos
       this.detallePorcentajePrimerSemestreJulAgo = (this.porcentajeSemestreJulAgo * this.bicicletaPorcentajeInicial) / 100;
@@ -426,18 +428,15 @@ export class CalculadoraRetroactivosComponent {
       if (bonoPorCumplimiento){
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
         bonoPorCumplimiento.map(item => {
-          descuentoRetroActivo += item.descuento
+          if (item.id === 1){
+            item.descuento = this.clasificacionSugerida().valor < this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
+          }
+
+          descuentoRetroActivo += item.descuento 
         });
       }
     }
     
-    if (this.clasificacionSeleccionada.valor === 1){
-      bonoPorCumplimiento = this.anualPorCumplimiento.find(item => item.id === 3);
-      if (bonoPorCumplimiento?.seleccionado){
-        descuentoRetroActivo += bonoPorCumplimiento.descuento
-      }
-    }
-
     if ((this.clasificacionSeleccionada.valor === 2)){
       bonoPorCumplimiento = this.anualPorCumplimiento
       .filter(item => item.id === 2 || item.id === 3)
@@ -445,9 +444,22 @@ export class CalculadoraRetroactivosComponent {
 
       if (bonoPorCumplimiento){
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
-        bonoPorCumplimiento.map(item => { descuentoRetroActivo += item.descuento });
+        bonoPorCumplimiento.map(item => { 
+           if (item.id === 1){
+            descuentoRetroActivo = this.clasificacionSugerida().valor < this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
+          }
+          descuentoRetroActivo += item.descuento 
+        });
       }
     }
+
+    if (this.clasificacionSeleccionada.valor === 1){
+      bonoPorCumplimiento = this.anualPorCumplimiento.find(item => item.id === 3);
+      if (bonoPorCumplimiento?.seleccionado){
+        descuentoRetroActivo += bonoPorCumplimiento.descuento
+      }
+    }
+
 
     this.listaCalculoMargenesRetroactivos.update(listaActual => 
     listaActual.map(item => {
@@ -513,17 +525,16 @@ export class CalculadoraRetroactivosComponent {
 
   buscarPoligonoExclusivoPorNivel(){
     if (this.clasificacionSugerida().valor >0 ){
-      let valorPoligonoExclusivo = this.clasificacionSugerida().valor === this.clasificacionSeleccionada.valor ? "SI" : "NO"
+      //let valorPoligonoExclusivo = this.clasificacionSugerida().valor === this.clasificacionSeleccionada.valor ? "SI" : "NO"
+      let poligonExclusivo = this.clasificacionSeleccionada.valor >= 2 ? "SI" : "NO";
 
       this.clasificacionSeleccionada.beneficios_dinamicos = [
         ...this.clasificacionSeleccionada.beneficios_dinamicos.filter(item => item.descripcion != "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO"),
-        { descripcion: "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO", valor: valorPoligonoExclusivo }
+        { descripcion: "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO", valor: poligonExclusivo }
       ];
     }
-
-    if (this.validarDatos()){
-      this.calcularDetalleRetroActivo();
-    }
+    
+    this.calcularDetalleRetroActivo();
   }
 
   obtenerBeneficios(){

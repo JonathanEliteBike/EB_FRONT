@@ -6,22 +6,22 @@ export interface RestriccionPrograma{
 export const LISTA_RESTRICCIONES_PROGRAMA: RestriccionPrograma[] = [
     { 
         descripcion: "CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL INFERIOR" , 
-        valor: "Si por motivo de incumplimiento o por deseo del distribuidor se cambia de Nivel hacia un Nivel inferior, y dicho cambio es posterior a finalizar el primer bloque, el Distribuidor pierde los derechos de obtener retroactivos anuales, si dicho cambio se efectúa antes de finalizar el primer bloque, deberá cumplir con los requisitos de la categoría a la que se está cambiando."
+        valor: "SI, POR MOTIVO DE INCUMPLIMIENTO O POR DESEO DEL DISTRIBUIDOR, SE CAMBIA A UN NIVEL INFERIOR Y DICHO CAMBIO ES POSTERIOR A LA FINALIZACIÓN DEL PRIMER BLOQUE, EL DISTRIBUIDOR PIERDE EL DERECHO A OBTENER LOS DESCUENTOS RETROACTIVOS ANUALES. SI EL CAMBIO SE EFECTÚA ANTES DE FINALIZAR EL PRIMER BLOQUE, DEBERÁ CUMPLIR CON LOS REQUISITOS DE LA CATEGORÍA A LA QUE SE ESTÁ CAMBIANDO."
     },
     { 
         descripcion: "CAMBIO DE NIVEL DE DISTRIBUCIÓN A UN NIVEL SUPERIOR:" , 
-        valor: "En los casos que el Distribuidor decide cambiar a un nivel superior, lo podrá hacer en cualquier momento, y deberá cumplir los requisitos de la categoría superior para acceder a los descuentos retroactivos."
+        valor: "EN LOS CASOS EN QUE EL DISTRIBUIDOR DECIDA CAMBIAR A UN NIVEL SUPERIOR, PODRÁ HACERLO EN CUALQUIER MOMENTO Y DEBERÁ CUMPLIR CON LOS REQUISITOS DE LA CATEGORÍA SUPERIOR PARA ACCEDER A LOS DESCUENTOS RETROACTIVOS."
     },
     { 
-        descripcion: "PRECIOS DE LAS PAQUETERIAS:" , 
-        valor: "Las tarifas de las paqueterías, normalmente se negocian con las mismas a principios de cada temporada, y casi siempre permanecen por todo el periodo, en los últimos meses, esta situación ha cambiado, y en ocasiones los costos se incrementaron considerablemente, por lo tanto, en el caso de sufrir un aumento considerable tendremos que impactarlo en los precios cobrados, sin dejar de lado que el objeto del programa de subsidio a los costos de los fletes es con el objeto de mejorar nuestra oferta de negocio y lograr que la rentabilidad que ofrece Elite Bike sea cada temporada mejor."
+        descripcion: "PRECIOS DE LAS PAQUETERÍAS:",
+        valor: "LAS TARIFAS DE LAS PAQUETERÍAS NORMALMENTE SE NEGOCIAN A PRINCIPIOS DE CADA TEMPORADA Y, POR LO GENERAL, PERMANECEN VIGENTES DURANTE TODO EL PERIODO. SIN EMBARGO, EN LOS ÚLTIMOS MESES ESTA SITUACIÓN HA CAMBIADO Y, EN OCASIONES, LOS COSTOS SE HAN INCREMENTADO CONSIDERABLEMENTE. POR LO TANTO, EN CASO DE PRESENTARSE UN AUMENTO IMPORTANTE, TENDREMOS QUE REFLEJARLO EN LOS PRECIOS COBRADOS. EL OBJETIVO DEL PROGRAMA DE SUBSIDIO A LOS COSTOS DE LOS FLETES ES MEJORAR NUESTRA OFERTA DE NEGOCIO Y LOGRAR QUE LA RENTABILIDAD QUE OFRECE ELITE BIKE SEA CADA TEMPORADA MAYOR." 
     },
     { 
-        descripcion: "SUBSIDIO A SEGURO DE TRANSPORTE:" , 
-        valor: "En la presente temporada en algunos niveles de distribución se subsidia al 100% el costo cobrado por concepto de seguro de transporte, para revisar las condiciones de los riesgos de tránsito, debes revisar nuestras políticas de venta."
+        descripcion: "SUBSIDIO A SEGURO DE TRANSPORTE:", 
+        valor: "EN LA PRESENTE TEMPORADA, EN ALGUNOS NIVELES DE DISTRIBUCIÓN, SE SUBSIDIA AL 100 % EL COSTO COBRADO POR CONCEPTO DE SEGURO DE TRANSPORTE. PARA CONOCER LAS CONDICIONES RELACIONADAS CON LOS RIESGOS DE TRÁNSITO, DEBES CONSULTAR NUESTRAS POLÍTICAS DE VENTA."
     },
     { 
-        descripcion: "DESCUENTO POR PRE-PAGO O PAGO DE CONTADO:" , 
-        valor: "Este descuento se efectúa mediante nota de crédito, días después de haber hecho la compra o pago, no es parte de los descuentos retroactivos."
+        descripcion: "DESCUENTO POR PRE-PAGO O PAGO DE CONTADO:", 
+        valor: "ESTE DESCUENTO SE OTORGA MEDIANTE UNA NOTA DE CRÉDITO, DÍAS DESPUÉS DE HABER REALIZADO LA COMPRA O EL PAGO. NO FORMA PARTE DE LOS DESCUENTOS RETROACTIVOS."
     },
 ]
