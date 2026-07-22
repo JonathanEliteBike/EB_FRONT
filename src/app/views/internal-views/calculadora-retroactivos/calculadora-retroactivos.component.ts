@@ -7,7 +7,7 @@ import { HomeBarComponent } from "../../../components/home-bar/home-bar.componen
 
 //Modelos
 import { Poligono, LISTA_POLIGONOS } from './models/poligono.model';
-import { Clasificacion } from './models/clasificacion-model';
+import { Clasificacion, LISTA_CLASIFICACIONES } from './models/clasificacion-model';
 import { ClasificacionAnualPorNivel } from './models/clasificacion-anual-por-nivel.mode';
 import { Sucursal, SUCURSAL} from './models/sucursal.model';
 import { CalculoMargenesRetroactivos } from './models/calculo-margen-retroactivo.model';
@@ -30,6 +30,8 @@ const clasificacionVacia = (): Clasificacion => ({
   multimarca_porcentaje_compra_inicial: 0,
   bicicleta_compra_minima_anual: 0,
   multimarca_compra_minima_anual: 0,
+  bicicleta_compra_minima_anual_multiplo: 0,
+  multimarca_compra_minima_anual_multiplo: 0,
   precio_actual_bici_cn: 0, 
   precio_actual_bici_tw: 0, 
   precio_actual_ebike: 0,
@@ -75,25 +77,17 @@ const anualPorCumpimientoVacio = (): AnualPorCumplimiento => ({
 });
 
 const anualAdicionalPorNivelCantidadBase = (): AnualAdicionalPorNivelCantidad[] => [
-  { valor: 800000, valor_calculado: 0, descuento_retroactivo: 1,}, 
-  { valor: 2000000, valor_calculado: 0, descuento_retroactivo:2 }, 
-  { valor: 5000000, valor_calculado: 0, descuento_retroactivo: 4.5 }, 
+  { valor: 920000, valor_calculado: 0, descuento_retroactivo: 1,}, 
+  { valor: 2300000, valor_calculado: 0, descuento_retroactivo: 2 }, 
+  { valor: 5750000, valor_calculado: 0, descuento_retroactivo: 4.5 }, 
   { valor: 0, valor_calculado: 0, descuento_retroactivo: 0 },
-];
-
-const clasificacionesBase = (): Clasificacion[] => [
-  { id: 4, descripcion: "Partner Elite Plus", valor: 4, descuento_retroactivo_por_logro: 1, importe_compra_minimo_anual_adicional_iva_incluido: 800000, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 6.5, bicicleta_porcentaje_compra_inicial: 65, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 6000000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 60, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0, poligono_exclusivo: "SI", plazo_pago: "90 y 120 Días", beneficios_dinamicos: [{descripcion: "Politica de Garantía de Buena Voluntad	", valor: "SI" }]},
-  { id: 3, descripcion: "Partner Elite", valor: 3, descuento_retroactivo_por_logro: 2, importe_compra_minimo_anual_adicional_iva_incluido: 2000000, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 4.5, bicicleta_porcentaje_compra_inicial: 65, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 2200000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 30, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0, poligono_exclusivo: "SI", plazo_pago: "90 Días", beneficios_dinamicos: [{ descripcion: "ACCESO A PEDIDOS EN TRANSITO", valor: "SI"}, { descripcion: "GARANTIA DE CONFIANZA", valor: "SI" }]},
-  { id: 2, descripcion: "Partner", valor: 2, descuento_retroactivo_por_logro: 4.5, importe_compra_minimo_anual_adicional_iva_incluido: 5000000, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 2.0, bicicleta_porcentaje_compra_inicial: 65, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 1500000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 0, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0,poligono_exclusivo: "", plazo_pago: "60 Días", beneficios_dinamicos: [{ descripcion: "SEGURO DE INVERSION (Descuento retroactivo en caso de disminución de precios***)", valor: "0" }, { descripcion: "ACCESO TIENDAS ELITE (Pedidos en Transito Con preferencia de acceso nuevo producto)", valor: "SI"}]},
-  { id: 1, descripcion: "Distribuidor", valor: 1, descuento_retroactivo_por_logro: 0, importe_compra_minimo_anual_adicional_iva_incluido: 0, importe_compra_al_minimo_anual_adicional_iva_incluido: 0, margen_inicial_adicional_distribuidor: 0, bicicleta_porcentaje_compra_inicial: 70, multimarca_porcentaje_compra_inicial: 50, bicicleta_compra_minima_anual: 350000, multimarca_compra_minima_anual: 0, precio_actual_bici_cn: 355, precio_actual_bici_tw: 520, precio_actual_ebike: 810, precio_actual_caja_acc: 255, porcentaje_subsidio: 0, precio_pagar_temporada_bici_cn: 0, precio_pagar_temporada_bici_tw: 0, precio_pagar_temporada_ebike: 0, precio_pagar_temporada_caja_acc: 0, seguro_transporte_bici_cn: 0, seguro_transporte_bici_tw: 0, seguro_transporte_ebike: 0, seguro_transporte_caja_acc: 0, poligono_exclusivo: "", plazo_pago: "30 Días", beneficios_dinamicos: [{ descripcion: "ACCESO TIENDAS ELITE (Pedidos en Transito Con preferencia de acceso nuevo producto)", valor: "SI" }]}
 ];
 
 const calculoMargenesRetroactivosBase = (): CalculoMargenesRetroactivos[] => [
   { id: 1, descripcion: "BICICLETAS", margen_precio_distribuidor: 24, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0},
-  { id: 2, descripcion: "BICICLETAS ELECTRICAS", margen_precio_distribuidor: 24, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0},
-  { id: 3, descripcion: "BOLD BICI Y CUADROS", margen_precio_distribuidor: 24, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0},
-  { id: 4, descripcion: "ACCESORIOS Y COMPONENTES", margen_precio_distribuidor: 30, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0},
-  { id: 5, descripcion: "APPAREL", margen_precio_distribuidor: 30, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0}
+  { id: 2, descripcion: "BICICLETAS MATCH POINT", margen_precio_distribuidor: 19, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0},
+  { id: 3, descripcion: "ACCESORIOS Y COMPONENTES", margen_precio_distribuidor: 30, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0},
+  { id: 4, descripcion: "APPAREL", margen_precio_distribuidor: 30, margen_inicio_temporada: 0, nivel_elegido: "", suma_descuento_retroactivo: 0, margen_con_descuento_retroactivo: 0}
 ]
 
 @Component({
@@ -108,6 +102,8 @@ export class CalculadoraRetroactivosComponent {
   listaSucursales = SUCURSAL;
   listaProgramaEspecialImpulso = LISTA_PROGRAMA_ESPECIAL_IMPULSO;
   listaRestriccionesPrograma = LISTA_RESTRICCIONES_PROGRAMA;
+  listaClasificaciones = LISTA_CLASIFICACIONES;
+  listaClasificacionesSimulador = LISTA_CLASIFICACIONES;
 
   listaAnualAdicional: ClasificacionAnualPorNivel[] = [
     { clasifiacionId: 1, adicional_minimo_total_anual_iva: 0, adicional_total_compra_anual_minimo_iva: 0 },
@@ -125,9 +121,9 @@ export class CalculadoraRetroactivosComponent {
   ]);
   
   listaAnualPorCumplimiento: AnualPorCumplimiento[] = [
-    { id: 1, descripcion: "Compra Minima de Apparel Y Syncros y (Niveles Partner Elite y Partner Elite Plus)", descuento: 2.5, seleccionado: false},
-    { id: 2, descripcion: "Compra Minima de Apparel Y Syncros y (Nivel Partner)", descuento: 1.5, seleccionado: false},
-    { id: 3, descripcion: "Pre-Pago o pago de Contado***", descuento: 2.0, seleccionado: false},
+    { id: 1, descripcion: "Compra Minima de Apparel, Syncros y Vittoria (Niveles Partner Elite y Partner Elite Plus)", descuento: 2.5, seleccionado: false},
+    { id: 2, descripcion: "Compra Minima de Apparel, Syncros y Vittoria (Nivel Partner)", descuento: 2.5, seleccionado: false},
+    { id: 3, descripcion: "Pre-Pago o pago de Contado****", descuento: 2.0, seleccionado: false},
   ]
   
   listaAnualAdicionalPorNivelCantidad = signal<AnualAdicionalPorNivelCantidad[]>(anualAdicionalPorNivelCantidadBase());
@@ -135,9 +131,6 @@ export class CalculadoraRetroactivosComponent {
 
   listaCalculoMargenesRetroactivos = signal<CalculoMargenesRetroactivos[]>(calculoMargenesRetroactivosBase());
   listaCalculoMargenesRetroActivosSimulador = signal<CalculoMargenesRetroactivos[]>(calculoMargenesRetroactivosBase());
-
-  listaClasificaciones = clasificacionesBase();
-  listaClasificacionesSimulador = clasificacionesBase();
 
   //Inicializacion de objetos
   poligonoSeleccionado: Poligono = poligonoVacio();
@@ -148,7 +141,6 @@ export class CalculadoraRetroactivosComponent {
 
   clasificacionSeleccionadaSimulador: Clasificacion = clasificacionVacia();
   sucursalSeleccionadaSimulador: Sucursal = sucursalVacia();
-  // listaSimuladorRetroactivo: SimuladorRetroactivo[] = [simuladorRetroactivoVacio()];
   
   clasificacionSugerida = signal<Clasificacion>(clasificacionVacia());
   
@@ -266,7 +258,7 @@ export class CalculadoraRetroactivosComponent {
 
   obtenerTotalMargenCalculado() {            
     let margenBicicleta = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 1) //margn de bicicletas   
-    let margenAparel = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 5); //margn de bicicletas
+    let margenAparel = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 4); //margn de apparel
     // let sumaPorcentajes = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.porcentaje, 0);
     let sumaCantidadIngresada = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.cantidadIngresada, 0);
     
@@ -521,7 +513,8 @@ export class CalculadoraRetroactivosComponent {
 
   buscarPoligonoExclusivoPorNivel(){
     if (this.clasificacionSugerida().valor >0 ){
-      let valorPoligonoExclusivo = this.clasificacionSugerida().valor <= this.clasificacionSeleccionada.valor ? "SI" : "NO"
+      let valorPoligonoExclusivo = this.clasificacionSugerida().valor === this.clasificacionSeleccionada.valor ? "SI" : "NO"
+
       this.clasificacionSeleccionada.beneficios_dinamicos = [
         ...this.clasificacionSeleccionada.beneficios_dinamicos.filter(item => item.descripcion != "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO"),
         { descripcion: "EXCLUSIVIDAD EN POLIGONO GEOGRAFICO DESIGNADO", valor: valorPoligonoExclusivo }
@@ -547,10 +540,14 @@ export class CalculadoraRetroactivosComponent {
 
   obtenerMultimarcaCompraMinimaAnual(){
     this.listaClasificaciones = this.listaClasificaciones.map( item => {
-      const factorPorcentaje = (item.valor === 4) ? 0.11 : 0.15;
+      //const factorPorcentaje = (item.valor === 4) ? 0.11 : 0.15;
+      let bicicletaCompraMinimaAnual = Math.ceil(item.bicicleta_compra_minima_anual * item.bicicleta_compra_minima_anual_multiplo);
+      let compraMinimaAnual = Math.ceil((bicicletaCompraMinimaAnual * item.multimarca_compra_minima_anual_multiplo) / 5000) * 5000;
+
       return {
         ...item,
-        multimarca_compra_minima_anual: Math.ceil((item.bicicleta_compra_minima_anual * factorPorcentaje) / 5000) * 5000
+        bicicleta_compra_minima_anual: bicicletaCompraMinimaAnual,
+        multimarca_compra_minima_anual: compraMinimaAnual
       };
     })
   }
