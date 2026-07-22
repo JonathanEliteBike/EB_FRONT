@@ -429,7 +429,7 @@ export class CalculadoraRetroactivosComponent {
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
         bonoPorCumplimiento.map(item => {
           if (item.id === 1){
-            item.descuento = this.clasificacionSugerida().valor < this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
+            item.descuento = this.clasificacionSugerida().valor > this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
           }
 
           descuentoRetroActivo += item.descuento 
@@ -445,8 +445,8 @@ export class CalculadoraRetroactivosComponent {
       if (bonoPorCumplimiento){
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
         bonoPorCumplimiento.map(item => { 
-           if (item.id === 1){
-            descuentoRetroActivo = this.clasificacionSugerida().valor < this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
+           if (item.id === 2){
+            item.descuento = this.clasificacionSugerida().valor > this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
           }
           descuentoRetroActivo += item.descuento 
         });
