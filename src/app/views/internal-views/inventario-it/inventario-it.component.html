@@ -60,11 +60,19 @@
   </button>
 </article>
 
-    <article class="module-card">
-      <h3>Auditorías</h3>
-      <p>Verifica el inventario físico.</p>
-      <button type="button">Ir a Auditorías</button>
-    </article>
+<article class="module-card">
+  <h3>Auditorías</h3>
+
+  <p>
+    Realiza revisiones físicas, registra diferencias y da seguimiento a las correcciones del inventario.
+  </p>
+
+  <button
+    type="button"
+    [routerLink]="['/inventario-it/auditorias']">
+    Ir a Auditorías
+  </button>
+</article>
 
     <article class="module-card">
       <h3>Reportes</h3>

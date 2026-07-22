@@ -1,0 +1,1841 @@
+<section class="auditorias-page">
+
+  <!-- =========================================================
+       ENCABEZADO
+  ========================================================== -->
+
+  <header class="page-header">
+    <button
+      type="button"
+      class="back-btn"
+      routerLink="/inventario-it">
+      ← Volver
+    </button>
+
+    <div class="title-block">
+      <p class="eyebrow">INVENTARIO IT · ELITE BIKE</p>
+
+      <h1>Auditorías de Inventario</h1>
+
+      <p>
+        Planea revisiones físicas, compara lo registrado contra lo
+        encontrado y documenta las diferencias detectadas.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-btn"
+      (click)="abrirNuevaAuditoria()">
+      + Nueva auditoría
+    </button>
+  </header>
+
+
+  <!-- =========================================================
+       ESTADÍSTICAS
+  ========================================================== -->
+
+  <section class="stats-grid">
+    <article class="stat-card total">
+      <span>Total</span>
+      <strong>{{ estadisticas.total }}</strong>
+    </article>
+
+    <article class="stat-card planeada">
+      <span>Planeadas</span>
+      <strong>{{ estadisticas.planeadas }}</strong>
+    </article>
+
+    <article class="stat-card proceso">
+      <span>En proceso</span>
+      <strong>{{ estadisticas.enProceso }}</strong>
+    </article>
+
+    <article class="stat-card finalizada">
+      <span>Finalizadas</span>
+      <strong>{{ estadisticas.finalizadas }}</strong>
+    </article>
+
+    <article class="stat-card cancelada">
+      <span>Canceladas</span>
+      <strong>{{ estadisticas.canceladas }}</strong>
+    </article>
+  </section>
+
+
+  <!-- =========================================================
+       MENSAJES GENERALES
+  ========================================================== -->
+
+  <div
+    class="alert success"
+    *ngIf="mensajeExito">
+    {{ mensajeExito }}
+  </div>
+
+  <div
+    class="alert error"
+    *ngIf="errorCarga">
+    {{ errorCarga }}
+  </div>
+
+  <div
+    class="alert error"
+    *ngIf="
+      errorAccion &&
+      !mostrarFormulario &&
+      !mostrarDetalle &&
+      !mostrarRevision &&
+      !mostrarFinalizacion &&
+      !mostrarCancelacion
+    ">
+    {{ errorAccion }}
+  </div>
+
+
+  <!-- =========================================================
+       FILTROS
+  ========================================================== -->
+
+  <section class="filters-panel">
+
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+
+      <input
+        type="text"
+        [(ngModel)]="terminoBusqueda"
+        (keyup.enter)="buscar()"
+        placeholder="Buscar por folio, nombre, auditor, empresa, departamento, ubicación o usuario..."
+      />
+
+      <button
+        type="button"
+        class="search-btn"
+        [disabled]="cargando"
+        (click)="buscar()">
+        {{ cargando ? 'Buscando...' : 'Buscar' }}
+      </button>
+    </div>
+
+
+    <div class="status-row">
+      <span class="filter-label">Estado:</span>
+
+      <div class="chips">
+        <button
+          *ngFor="let estado of estados"
+          type="button"
+          class="filter-chip"
+          [class.active]="filtroEstado === estado"
+          [disabled]="cargando"
+          (click)="seleccionarEstado(estado)">
+          {{ estado }}
+        </button>
+      </div>
+    </div>
+
+
+    <div class="advanced-filters">
+
+      <label>
+        Tipo
+
+        <select [(ngModel)]="filtroTipo">
+          <option value="Todos">Todos</option>
+
+          <option
+            *ngFor="let tipo of tipos"
+            [value]="tipo">
+            {{ tipo }}
+          </option>
+        </select>
+      </label>
+
+
+      <label>
+        Empresa
+
+        <select [(ngModel)]="filtroEmpresa">
+          <option value="Todas">Todas</option>
+
+          <option
+            *ngFor="let empresa of empresas"
+            [value]="empresa">
+            {{ empresa }}
+          </option>
+        </select>
+      </label>
+
+
+      <label>
+        Fecha inicial
+
+        <input
+          type="date"
+          [(ngModel)]="fechaInicio"
+        />
+      </label>
+
+
+      <label>
+        Fecha final
+
+        <input
+          type="date"
+          [(ngModel)]="fechaFin"
+        />
+      </label>
+
+
+      <button
+        type="button"
+        class="apply-btn"
+        [disabled]="cargando"
+        (click)="aplicarFiltros()">
+        Aplicar
+      </button>
+
+
+      <button
+        type="button"
+        class="clear-btn"
+        *ngIf="tieneFiltrosActivos()"
+        [disabled]="cargando"
+        (click)="limpiarFiltros()">
+        Limpiar
+      </button>
+
+    </div>
+
+
+    <p class="results-text">
+      Mostrando
+      <strong>{{ auditorias.length }}</strong>
+      auditorías.
+    </p>
+  </section>
+
+
+  <!-- =========================================================
+       CARGA
+  ========================================================== -->
+
+  <div
+    class="loading-message"
+    *ngIf="cargando && !mostrarDetalle">
+    Cargando auditorías...
+  </div>
+
+
+  <!-- =========================================================
+       TABLA PRINCIPAL
+  ========================================================== -->
+
+  <section class="table-card">
+
+    <div class="table-header">
+      <div>
+        <h2>Programa de auditorías</h2>
+
+        <p>
+          Control del alcance, avance, hallazgos y acciones
+          correctivas de cada revisión física.
+        </p>
+      </div>
+    </div>
+
+
+    <div class="table-wrapper">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Auditoría</th>
+            <th>Alcance</th>
+            <th>Fecha</th>
+            <th>Auditor</th>
+            <th>Progreso</th>
+            <th>Hallazgos</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+
+        <tbody>
+
+          <tr *ngFor="let auditoria of auditorias">
+
+            <td class="folio-cell">
+              {{ auditoria.folio }}
+            </td>
+
+
+            <td class="name-cell">
+              <strong>
+                {{ auditoria.nombre }}
+              </strong>
+
+              <small>
+                Creada por
+                {{ auditoria.usuarioRegistro || 'Sistema' }}
+              </small>
+            </td>
+
+
+            <td>
+              <strong>
+                {{ auditoria.tipo }}
+              </strong>
+
+              <small *ngIf="auditoria.empresa">
+                {{ auditoria.empresa }}
+              </small>
+
+              <small *ngIf="auditoria.departamento">
+                {{ auditoria.departamento }}
+              </small>
+
+              <small *ngIf="auditoria.ubicacion">
+                {{ auditoria.ubicacion }}
+              </small>
+
+              <small *ngIf="auditoria.tipo === 'General'">
+                Todos los equipos aplicables
+              </small>
+
+              <small *ngIf="auditoria.tipo === 'Muestra'">
+                Selección manual de equipos
+              </small>
+            </td>
+
+
+            <td>
+              {{ formatearFecha(auditoria.fechaProgramada) }}
+            </td>
+
+
+            <td>
+              {{ auditoria.auditorResponsable }}
+            </td>
+
+
+            <td class="progress-cell">
+
+              <div class="progress-label">
+                <span>
+                  {{ auditoria.resumen.revisados }}
+                  /
+                  {{ auditoria.resumen.totalEquipos }}
+                </span>
+
+                <strong>
+                  {{ auditoria.resumen.porcentaje }}%
+                </strong>
+              </div>
+
+              <div class="progress-track">
+                <span
+                  [style.width.%]="
+                    porcentajeSeguro(
+                      auditoria.resumen.porcentaje
+                    )
+                  ">
+                </span>
+              </div>
+
+            </td>
+
+
+            <td class="findings-cell">
+
+              <span class="finding difference">
+                {{ auditoria.resumen.conDiferencia }}
+                diferencias
+              </span>
+
+              <span class="finding missing">
+                {{ auditoria.resumen.noLocalizados }}
+                no localizados
+              </span>
+
+            </td>
+
+
+            <td>
+              <span
+                class="status"
+                [ngClass]="estadoClase(auditoria.estado)">
+                {{ auditoria.estado }}
+              </span>
+            </td>
+
+
+            <td class="actions-cell">
+
+              <div class="actions">
+
+                <button
+                  type="button"
+                  class="action-btn view"
+                  (click)="verAuditoria(auditoria)">
+                  Ver
+                </button>
+
+
+                <button
+                  *ngIf="auditoria.estado === 'Planeada'"
+                  type="button"
+                  class="action-btn edit"
+                  (click)="abrirEdicion(auditoria)">
+                  Editar
+                </button>
+
+
+                <button
+                  *ngIf="auditoria.estado === 'Planeada'"
+                  type="button"
+                  class="action-btn start"
+                  [disabled]="procesando"
+                  (click)="iniciarAuditoria(auditoria)">
+                  Iniciar
+                </button>
+
+
+                <button
+                  *ngIf="auditoria.estado === 'En proceso'"
+                  type="button"
+                  class="action-btn finish"
+                  (click)="abrirFinalizacion(auditoria)">
+                  Finalizar
+                </button>
+
+
+                <button
+                  *ngIf="auditoria.estado !== 'Cancelada'"
+                  type="button"
+                  class="action-btn export"
+                  [disabled]="exportandoId !== null"
+                  (click)="exportarAuditoria(auditoria)">
+                  {{
+                    exportandoId === auditoria.id
+                      ? 'Exportando...'
+                      : 'Exportar'
+                  }}
+                </button>
+
+
+                <button
+                  *ngIf="
+                    auditoria.estado === 'Planeada' ||
+                    auditoria.estado === 'En proceso'
+                  "
+                  type="button"
+                  class="action-btn cancel"
+                  (click)="abrirCancelacion(auditoria)">
+                  Cancelar
+                </button>
+
+
+                <button
+                  *ngIf="auditoria.estado === 'Planeada'"
+                  type="button"
+                  class="action-btn delete"
+                  (click)="eliminarAuditoria(auditoria)">
+                  Eliminar
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+
+          <tr *ngIf="!cargando && auditorias.length === 0">
+            <td
+              colspan="9"
+              class="empty-state">
+              No hay auditorías que coincidan con los filtros.
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================================
+       MODAL: CREAR O EDITAR AUDITORÍA
+  ========================================================== -->
+
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarFormulario">
+
+    <div class="modal large-modal">
+
+      <div class="modal-header">
+
+        <div>
+          <p class="modal-eyebrow">
+            {{
+              modoEdicion
+                ? 'ACTUALIZAR'
+                : 'NUEVA AUDITORÍA'
+            }}
+          </p>
+
+          <h2>
+            {{
+              modoEdicion
+                ? 'Editar auditoría planeada'
+                : 'Programar auditoría'
+            }}
+          </h2>
+        </div>
+
+
+        <button
+          type="button"
+          class="close-btn"
+          [disabled]="procesando"
+          (click)="cerrarFormulario()">
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="modal-body">
+
+        <div class="form-grid">
+
+          <label class="wide">
+            Nombre de la auditoría *
+
+            <input
+              type="text"
+              [(ngModel)]="formulario.nombre"
+              placeholder="Ej. Auditoría general de Inventario IT"
+            />
+          </label>
+
+
+          <label>
+            Tipo *
+
+            <select
+              [(ngModel)]="formulario.tipo"
+              [disabled]="modoEdicion">
+
+              <option
+                *ngFor="let tipo of tipos"
+                [value]="tipo">
+                {{ tipo }}
+              </option>
+
+            </select>
+          </label>
+
+
+          <label>
+            Fecha programada *
+
+            <input
+              type="date"
+              [(ngModel)]="formulario.fechaProgramada"
+            />
+          </label>
+
+
+          <label>
+            Auditor responsable *
+
+            <input
+              type="text"
+              [(ngModel)]="formulario.auditorResponsable"
+              placeholder="Nombre o puesto del auditor"
+            />
+          </label>
+
+
+          <label>
+            Usuario que registra
+
+            <input
+              type="text"
+              [(ngModel)]="formulario.usuarioRegistro"
+              [disabled]="modoEdicion"
+              placeholder="Usuario del sistema"
+            />
+          </label>
+
+
+          <label *ngIf="formulario.tipo === 'Empresa'">
+            Empresa *
+
+            <select
+              [(ngModel)]="formulario.empresa"
+              [disabled]="modoEdicion">
+
+              <option value="">
+                Selecciona una empresa
+              </option>
+
+              <option
+                *ngFor="let empresa of empresas"
+                [value]="empresa">
+                {{ empresa }}
+              </option>
+
+            </select>
+          </label>
+
+
+          <label *ngIf="formulario.tipo === 'Departamento'">
+            Departamento *
+
+            <select
+              [(ngModel)]="formulario.departamento"
+              [disabled]="modoEdicion">
+
+              <option value="">
+                Selecciona un departamento
+              </option>
+
+              <option
+                *ngFor="let departamento of departamentos"
+                [value]="departamento">
+                {{ departamento }}
+              </option>
+
+            </select>
+          </label>
+
+
+          <label *ngIf="formulario.tipo === 'Ubicación'">
+            Ubicación *
+
+            <select
+              [(ngModel)]="formulario.ubicacion"
+              [disabled]="modoEdicion">
+
+              <option value="">
+                Selecciona una ubicación
+              </option>
+
+              <option
+                *ngFor="let ubicacion of ubicaciones"
+                [value]="ubicacion">
+                {{ ubicacion }}
+              </option>
+
+            </select>
+          </label>
+
+
+          <label
+            class="checkbox-label"
+            *ngIf="!modoEdicion">
+
+            <input
+              type="checkbox"
+              [(ngModel)]="formulario.incluirBajas"
+            />
+
+            Incluir equipos dados de baja
+          </label>
+
+
+          <label class="wide">
+            Observaciones
+
+            <textarea
+              [(ngModel)]="formulario.observaciones"
+              placeholder="Objetivo, indicaciones o notas previas de la auditoría">
+            </textarea>
+          </label>
+
+        </div>
+
+
+        <!-- SELECCIÓN PARA AUDITORÍA POR MUESTRA -->
+
+        <section
+          class="sample-section"
+          *ngIf="
+            formulario.tipo === 'Muestra' &&
+            !modoEdicion
+          ">
+
+          <div class="section-title">
+
+            <div>
+              <h3>Equipos de la muestra</h3>
+
+              <p>
+                Selecciona los equipos que formarán parte
+                de esta auditoría.
+              </p>
+            </div>
+
+            <strong>
+              {{ formulario.equipoIds?.length || 0 }}
+              seleccionados
+            </strong>
+
+          </div>
+
+
+          <div class="sample-list">
+
+            <button
+              *ngFor="let equipo of equiposCatalogo"
+              type="button"
+              class="sample-item"
+              [class.selected]="
+                equipoSeleccionado(equipo.id)
+              "
+              (click)="
+                alternarEquipoMuestra(equipo.id)
+              ">
+
+              <span class="sample-check">
+                {{
+                  equipoSeleccionado(equipo.id)
+                    ? '✓'
+                    : '+'
+                }}
+              </span>
+
+              <span>
+                <strong>
+                  {{ equipo.inventario }}
+                  ·
+                  {{ equipo.nombre }}
+                </strong>
+
+                <small>
+                  {{ equipo.empresa || 'Sin empresa' }}
+                  ·
+                  {{ equipo.estado }}
+                </small>
+              </span>
+
+            </button>
+
+          </div>
+
+        </section>
+
+
+        <div
+          class="alert error"
+          *ngIf="errorAccion">
+          {{ errorAccion }}
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="procesando"
+            (click)="cerrarFormulario()">
+            Cancelar
+          </button>
+
+
+          <button
+            type="button"
+            class="primary-btn modal-primary"
+            [disabled]="procesando"
+            (click)="guardarAuditoria()">
+            {{
+              procesando
+                ? 'Guardando...'
+                : (
+                    modoEdicion
+                      ? 'Guardar cambios'
+                      : 'Crear auditoría'
+                  )
+            }}
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       MODAL: DETALLE DE AUDITORÍA
+  ========================================================== -->
+
+  <ng-container *ngIf="auditoriaSeleccionada as seleccionada">
+
+    <div
+      class="modal-overlay"
+      *ngIf="mostrarDetalle">
+
+      <div class="modal detail-modal">
+
+        <div class="modal-header sticky">
+
+          <div>
+            <p class="modal-eyebrow">
+              {{ seleccionada.folio }}
+            </p>
+
+            <h2>
+              {{ seleccionada.nombre }}
+            </h2>
+          </div>
+
+
+          <button
+            type="button"
+            class="close-btn"
+            [disabled]="procesando"
+            (click)="cerrarDetalle()">
+            ×
+          </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+          <!-- RESUMEN GENERAL -->
+
+          <section class="audit-summary">
+
+            <article>
+              <span>Estado</span>
+
+              <strong
+                class="status"
+                [ngClass]="estadoClase(seleccionada.estado)">
+                {{ seleccionada.estado }}
+              </strong>
+            </article>
+
+
+            <article>
+              <span>Auditor</span>
+
+              <strong>
+                {{ seleccionada.auditorResponsable }}
+              </strong>
+            </article>
+
+
+            <article>
+              <span>Alcance</span>
+
+              <strong>
+                {{ seleccionada.tipo }}
+              </strong>
+            </article>
+
+
+            <article>
+              <span>Programada</span>
+
+              <strong>
+                {{
+                  formatearFecha(
+                    seleccionada.fechaProgramada
+                  )
+                }}
+              </strong>
+            </article>
+
+          </section>
+
+
+          <!-- ESTADÍSTICAS DEL DETALLE -->
+
+          <section class="summary-grid">
+
+            <article>
+              <span>Total</span>
+              <strong>
+                {{ seleccionada.resumen.totalEquipos }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Pendientes</span>
+              <strong>
+                {{ seleccionada.resumen.pendientes }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Conformes</span>
+              <strong>
+                {{ seleccionada.resumen.conformes }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Diferencias</span>
+              <strong>
+                {{ seleccionada.resumen.conDiferencia }}
+              </strong>
+            </article>
+
+            <article>
+              <span>No localizados</span>
+              <strong>
+                {{ seleccionada.resumen.noLocalizados }}
+              </strong>
+            </article>
+
+          </section>
+
+
+          <!-- FILTROS DEL DETALLE -->
+
+          <div class="detail-toolbar">
+
+            <div class="detail-search">
+
+              <input
+                type="text"
+                [(ngModel)]="busquedaDetalle"
+                (keyup.enter)="cargarDetalle()"
+                placeholder="Buscar equipo, serie, responsable u observación..."
+              />
+
+              <button
+                type="button"
+                (click)="cargarDetalle()">
+                Buscar
+              </button>
+
+            </div>
+
+
+            <select
+              [(ngModel)]="filtroResultadoDetalle"
+              (change)="cargarDetalle()">
+
+              <option
+                *ngFor="let resultado of resultadosDetalle"
+                [value]="resultado">
+                {{ resultado }}
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div
+            class="alert error"
+            *ngIf="errorAccion">
+            {{ errorAccion }}
+          </div>
+
+
+          <div
+            class="loading-message"
+            *ngIf="cargando">
+            Cargando detalle de la auditoría...
+          </div>
+
+
+          <!-- LISTA DE EQUIPOS -->
+
+          <div class="detail-list">
+
+            <article
+              class="equipment-review"
+              *ngFor="let detalle of seleccionada.detalles">
+
+              <div class="equipment-main">
+
+                <div>
+                  <p class="inventory">
+                    {{ detalle.esperado.inventario }}
+                  </p>
+
+                  <h3>
+                    {{
+                      detalle.esperado.descripcion ||
+                      'Equipo sin descripción'
+                    }}
+                  </h3>
+
+                  <p>
+                    {{
+                      detalle.esperado.marca ||
+                      'Sin marca'
+                    }}
+                    ·
+                    {{
+                      detalle.esperado.modelo ||
+                      'Sin modelo'
+                    }}
+                  </p>
+                </div>
+
+
+                <span
+                  class="result-badge"
+                  [ngClass]="
+                    resultadoClase(detalle.resultado)
+                  ">
+                  {{ detalle.resultado }}
+                </span>
+
+              </div>
+
+
+              <div class="expected-grid">
+
+                <div>
+                  <span>Responsable esperado</span>
+
+                  <strong>
+                    {{
+                      detalle.esperado.responsable ||
+                      'Sin responsable'
+                    }}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Ubicación esperada</span>
+
+                  <strong>
+                    {{
+                      detalle.esperado.ubicacion ||
+                      'Sin ubicación'
+                    }}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Estado esperado</span>
+
+                  <strong>
+                    {{
+                      detalle.esperado.estado ||
+                      'Sin estado'
+                    }}
+                  </strong>
+                </div>
+
+
+                <div>
+                  <span>Serie esperada</span>
+
+                  <strong>
+                    {{
+                      detalle.esperado.serie ||
+                      'Sin serie'
+                    }}
+                  </strong>
+                </div>
+
+              </div>
+
+
+              <div
+                class="finding-note"
+                *ngIf="detalle.tipoDiferencia">
+
+                <strong>Diferencia:</strong>
+
+                {{ detalle.tipoDiferencia }}
+              </div>
+
+
+              <div class="review-footer">
+
+                <div>
+                  <small *ngIf="detalle.fechaRevision">
+                    Revisado por
+                    {{ detalle.revisadoPor || 'Sistema' }}
+                    ·
+                    {{
+                      formatearFecha(
+                        detalle.fechaRevision
+                      )
+                    }}
+                  </small>
+                </div>
+
+
+                <div class="review-actions">
+
+                  <button
+                    *ngIf="detalle.evidenciaUrl"
+                    type="button"
+                    class="evidence-btn"
+                    (click)="
+                      abrirEvidencia(
+                        detalle.evidenciaUrl
+                      )
+                    ">
+                    Evidencia
+                  </button>
+
+
+                  <button
+                    *ngIf="seleccionada.estado === 'En proceso'"
+                    type="button"
+                    class="review-btn"
+                    (click)="abrirRevision(detalle)">
+                    {{
+                      detalle.resultado === 'Pendiente'
+                        ? 'Revisar'
+                        : 'Actualizar revisión'
+                    }}
+                  </button>
+
+                </div>
+
+              </div>
+
+            </article>
+
+
+            <div
+              class="empty-state"
+              *ngIf="
+                !cargando &&
+                (
+                  !seleccionada.detalles ||
+                  seleccionada.detalles.length === 0
+                )
+              ">
+              No hay equipos que coincidan con el filtro
+              del detalle.
+            </div>
+
+          </div>
+
+
+          <!-- ACCIONES DEL DETALLE -->
+
+          <div class="modal-actions">
+
+            <button
+              type="button"
+              class="secondary-btn"
+              (click)="cerrarDetalle()">
+              Cerrar
+            </button>
+
+
+            <button
+              *ngIf="seleccionada.estado === 'Planeada'"
+              type="button"
+              class="start-detail-btn"
+              [disabled]="procesando"
+              (click)="iniciarAuditoria(seleccionada)">
+              Iniciar auditoría
+            </button>
+
+
+            <button
+              *ngIf="seleccionada.estado === 'En proceso'"
+              type="button"
+              class="finish-detail-btn"
+              [disabled]="procesando"
+              (click)="abrirFinalizacion(seleccionada)">
+              Finalizar auditoría
+            </button>
+
+
+            <button
+              type="button"
+              class="export-detail-btn"
+              [disabled]="exportandoId !== null"
+              (click)="exportarAuditoria(seleccionada)">
+              {{
+                exportandoId === seleccionada.id
+                  ? 'Exportando...'
+                  : 'Exportar CSV'
+              }}
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+
+  <!-- =========================================================
+       MODAL: REVISIÓN FÍSICA
+  ========================================================== -->
+
+  <ng-container *ngIf="detalleSeleccionado as detalle">
+
+    <div
+      class="modal-overlay"
+      *ngIf="mostrarRevision">
+
+      <div class="modal large-modal">
+
+        <div class="modal-header">
+
+          <div>
+            <p class="modal-eyebrow">
+              {{ detalle.esperado.inventario }}
+            </p>
+
+            <h2>Revisión física del equipo</h2>
+          </div>
+
+
+          <button
+            type="button"
+            class="close-btn"
+            [disabled]="procesando"
+            (click)="cerrarRevision()">
+            ×
+          </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+          <!-- DATOS PRINCIPALES -->
+
+          <section class="comparison-header">
+
+            <div>
+              <span>Equipo</span>
+
+              <strong>
+                {{
+                  detalle.esperado.descripcion ||
+                  'Sin descripción'
+                }}
+              </strong>
+            </div>
+
+
+            <div>
+              <span>Marca / modelo</span>
+
+              <strong>
+                {{
+                  detalle.esperado.marca ||
+                  'Sin marca'
+                }}
+                ·
+                {{
+                  detalle.esperado.modelo ||
+                  'Sin modelo'
+                }}
+              </strong>
+            </div>
+
+
+            <div>
+              <span>Serie registrada</span>
+
+              <strong>
+                {{
+                  detalle.esperado.serie ||
+                  'Sin serie'
+                }}
+              </strong>
+            </div>
+
+          </section>
+
+
+          <!-- OPCIONES DE LOCALIZACIÓN -->
+
+          <div class="review-options">
+
+            <label class="toggle-option">
+
+              <input
+                type="checkbox"
+                [(ngModel)]="formularioRevision.encontrado"
+                (change)="cambiarEncontrado()"
+              />
+
+              <span>
+                El equipo fue localizado físicamente
+              </span>
+
+            </label>
+
+
+            <button
+              type="button"
+              class="not-applicable-btn"
+              (click)="marcarNoAplica()">
+              Marcar como no aplica
+            </button>
+
+          </div>
+
+
+          <!-- INFORMACIÓN ENCONTRADA -->
+
+          <div
+            class="form-grid"
+            *ngIf="
+              formularioRevision.encontrado &&
+              formularioRevision.resultado !== 'No aplica'
+            ">
+
+            <label>
+              Código de barras encontrado
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.codigoBarrasEncontrado
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.codigoBarras ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Número de serie encontrado
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.numeroSerieEncontrado
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.serie ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Empresa encontrada
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.empresaEncontrada
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.empresa ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Departamento encontrado
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.departamentoEncontrado
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.departamento ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Responsable encontrado
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.responsableEncontrado
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.responsable ||
+                  'Sin responsable'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Estado encontrado
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.estadoEncontrado
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.estado ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Ubicación encontrada
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.ubicacionEncontrada
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.ubicacion ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label>
+              Funcionamiento encontrado
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.funcionamientoEncontrado
+                "
+              />
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.funcionamiento ||
+                  'Sin dato'
+                }}
+              </small>
+            </label>
+
+
+            <label class="wide">
+              Extras encontrados
+
+              <textarea
+                [(ngModel)]="
+                  formularioRevision.extrasEncontrados
+                ">
+              </textarea>
+
+              <small>
+                Esperado:
+                {{
+                  detalle.esperado.extras ||
+                  'Sin extras'
+                }}
+              </small>
+            </label>
+
+          </div>
+
+
+          <!-- INFORMACIÓN COMPLEMENTARIA -->
+
+          <section class="review-extra-grid">
+
+            <label>
+              Revisado por *
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.revisadoPor
+                "
+                placeholder="Nombre del revisor"
+              />
+            </label>
+
+
+            <label>
+              Tipo de diferencia
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.tipoDiferencia
+                "
+                placeholder="Se calcula automáticamente si se deja vacío"
+              />
+            </label>
+
+
+            <label>
+              Estado de corrección
+
+              <select
+                [(ngModel)]="
+                  formularioRevision.estadoCorreccion
+                ">
+
+                <option value="No aplica">
+                  No aplica
+                </option>
+
+                <option value="Pendiente">
+                  Pendiente
+                </option>
+
+                <option value="En proceso">
+                  En proceso
+                </option>
+
+                <option value="Corregida">
+                  Corregida
+                </option>
+
+              </select>
+            </label>
+
+
+            <label>
+              URL de evidencia
+
+              <input
+                type="text"
+                [(ngModel)]="
+                  formularioRevision.evidenciaUrl
+                "
+                placeholder="Liga de Google Drive..."
+              />
+            </label>
+
+
+            <label class="wide">
+              Observaciones
+
+              <textarea
+                [(ngModel)]="
+                  formularioRevision.observaciones
+                "
+                placeholder="Comentarios relacionados con la revisión">
+              </textarea>
+            </label>
+
+
+            <label class="wide">
+              Acción requerida
+
+              <textarea
+                [(ngModel)]="
+                  formularioRevision.accionRequerida
+                "
+                placeholder="Indica qué debe corregirse o verificarse">
+              </textarea>
+            </label>
+
+          </section>
+
+
+          <!-- PREVISUALIZACIÓN DEL RESULTADO -->
+
+          <div class="result-preview">
+
+            <span>
+              El resultado será calculado por el backend:
+            </span>
+
+
+            <strong
+              *ngIf="
+                formularioRevision.resultado === 'No aplica'
+              ">
+              No aplica
+            </strong>
+
+
+            <strong
+              *ngIf="
+                formularioRevision.resultado !== 'No aplica' &&
+                !formularioRevision.encontrado
+              ">
+              No localizado
+            </strong>
+
+
+            <strong
+              *ngIf="
+                formularioRevision.resultado !== 'No aplica' &&
+                formularioRevision.encontrado
+              ">
+              Conforme o Con diferencia, según la comparación
+            </strong>
+
+          </div>
+
+
+          <div
+            class="alert error"
+            *ngIf="errorAccion">
+            {{ errorAccion }}
+          </div>
+
+
+          <div class="modal-actions">
+
+            <button
+              type="button"
+              class="secondary-btn"
+              [disabled]="procesando"
+              (click)="cerrarRevision()">
+              Cancelar
+            </button>
+
+
+            <button
+              type="button"
+              class="primary-btn modal-primary"
+              [disabled]="procesando"
+              (click)="guardarRevision()">
+              {{
+                procesando
+                  ? 'Guardando revisión...'
+                  : 'Guardar revisión'
+              }}
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+
+  <!-- =========================================================
+       MODAL: FINALIZAR AUDITORÍA
+  ========================================================== -->
+
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarFinalizacion">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <div>
+          <p class="modal-eyebrow">CIERRE</p>
+          <h2>Finalizar auditoría</h2>
+        </div>
+
+
+        <button
+          type="button"
+          class="close-btn"
+          [disabled]="procesando"
+          (click)="cerrarFinalizacion()">
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="modal-body">
+
+        <p class="modal-description">
+          La auditoría solo podrá finalizarse cuando no
+          existan equipos pendientes de revisión.
+        </p>
+
+
+        <label class="full-label">
+          Conclusiones
+
+          <textarea
+            [(ngModel)]="conclusionesFinalizacion"
+            placeholder="Resumen de resultados, hallazgos y recomendaciones">
+          </textarea>
+        </label>
+
+
+        <div
+          class="alert error"
+          *ngIf="errorAccion">
+          {{ errorAccion }}
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="procesando"
+            (click)="cerrarFinalizacion()">
+            Cancelar
+          </button>
+
+
+          <button
+            type="button"
+            class="finish-detail-btn"
+            [disabled]="procesando"
+            (click)="confirmarFinalizacion()">
+            {{
+              procesando
+                ? 'Finalizando...'
+                : 'Confirmar finalización'
+            }}
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       MODAL: CANCELAR AUDITORÍA
+  ========================================================== -->
+
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarCancelacion">
+
+    <div class="modal">
+
+      <div class="modal-header">
+
+        <div>
+          <p class="modal-eyebrow">CANCELACIÓN</p>
+          <h2>Cancelar auditoría</h2>
+        </div>
+
+
+        <button
+          type="button"
+          class="close-btn"
+          [disabled]="procesando"
+          (click)="cerrarCancelacion()">
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="modal-body">
+
+        <p class="warning-text">
+          La auditoría quedará registrada como cancelada
+          y ya no podrá continuarse.
+        </p>
+
+
+        <label class="full-label">
+          Motivo de cancelación *
+
+          <textarea
+            [(ngModel)]="motivoCancelacion"
+            placeholder="Explica por qué se cancela la auditoría">
+          </textarea>
+        </label>
+
+
+        <div
+          class="alert error"
+          *ngIf="errorAccion">
+          {{ errorAccion }}
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="procesando"
+            (click)="cerrarCancelacion()">
+            Volver
+          </button>
+
+
+          <button
+            type="button"
+            class="cancel-confirm-btn"
+            [disabled]="procesando"
+            (click)="confirmarCancelacion()">
+            {{
+              procesando
+                ? 'Cancelando...'
+                : 'Confirmar cancelación'
+            }}
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>

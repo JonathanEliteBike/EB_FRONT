@@ -74,6 +74,7 @@ import {ColaboradoresComponent } from './views/internal-views/inventario-it/cola
 import { AsignacionesComponent } from './views/internal-views/inventario-it/asignaciones/asignaciones.component';
 import { ResponsivasComponent } from './views/internal-views/inventario-it/responsivas/responsivas.component';
 import { HistorialComponent } from './views/internal-views/inventario-it/historial/historial.component';
+import { AuditoriasComponent } from './views/internal-views/inventario-it/auditorias/auditorias.component';
 
 export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
@@ -138,6 +139,7 @@ export const routes: Routes = [
   { path: 'inventario-it/asignaciones', component: AsignacionesComponent },
   { path: 'inventario-it/responsivas', component: ResponsivasComponent },
   { path: 'inventario-it/historial', component: HistorialComponent },
+  { path: 'inventario-it/auditorias', component: AuditoriasComponent },
   { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
