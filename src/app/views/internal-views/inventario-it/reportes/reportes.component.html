@@ -1,1 +1,587 @@
-<p>reportes works!</p>
+<section class="reportes-page">
+  <header class="page-header no-print">
+    <button
+      type="button"
+      class="back-btn"
+      routerLink="/inventario-it">
+      ← Volver
+    </button>
+
+    <div class="title-block">
+      <p class="eyebrow">
+        INVENTARIO IT · ELITE BIKE
+      </p>
+
+      <h1>Centro de Reportes</h1>
+
+      <p>
+        Selecciona un módulo, aplica filtros y genera información
+        tabular lista para revisión, impresión o exportación a Excel.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="export-header-btn"
+      [disabled]="exportando || cargando"
+      (click)="exportarReporte()">
+      {{ exportando ? 'Generando...' : 'Exportar Excel' }}
+    </button>
+  </header>
+
+
+  <!-- FLUJO DEL REPORTE -->
+
+  <section class="report-workflow no-print">
+    <div class="workflow-step">
+      <span>1</span>
+
+      <div>
+        <strong>Elige el reporte</strong>
+
+        <small>
+          Selecciona la información que deseas consultar.
+        </small>
+      </div>
+    </div>
+
+    <div class="workflow-line"></div>
+
+    <div class="workflow-step">
+      <span>2</span>
+
+      <div>
+        <strong>Aplica filtros</strong>
+
+        <small>
+          Acota los resultados por empresa, estado o fechas.
+        </small>
+      </div>
+    </div>
+
+    <div class="workflow-line"></div>
+
+    <div class="workflow-step">
+      <span>3</span>
+
+      <div>
+        <strong>Revisa y exporta</strong>
+
+        <small>
+          Ordena la tabla, imprime o descarga el archivo.
+        </small>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- MENSAJES -->
+
+  <div
+    class="alert success no-print"
+    *ngIf="mensajeExito">
+    {{ mensajeExito }}
+  </div>
+
+  <div
+    class="alert error no-print"
+    *ngIf="errorCarga">
+    {{ errorCarga }}
+  </div>
+
+
+  <!-- SELECTOR DE REPORTE -->
+
+  <section class="report-selector no-print">
+    <div class="section-heading">
+      <div>
+        <p class="section-kicker">
+          TIPO DE REPORTE
+        </p>
+
+        <h2>
+          ¿Qué información necesitas?
+        </h2>
+      </div>
+
+      <span class="selected-report-label">
+        Seleccionado: {{ opcionActual.titulo }}
+      </span>
+    </div>
+
+    <div class="report-options">
+      <button
+        *ngFor="let opcion of opcionesReporte"
+        type="button"
+        class="report-option"
+        [class.active]="
+          tipoReporteSeleccionado === opcion.tipo
+        "
+        (click)="seleccionarReporte(opcion.tipo)">
+
+        <span class="report-icon">
+          {{ opcion.icono }}
+        </span>
+
+        <span class="report-copy">
+          <strong>
+            {{ opcion.titulo }}
+          </strong>
+
+          <small>
+            {{ opcion.descripcion }}
+          </small>
+        </span>
+
+        <span class="selection-mark">
+          {{
+            tipoReporteSeleccionado === opcion.tipo
+              ? '✓'
+              : '›'
+          }}
+        </span>
+      </button>
+    </div>
+  </section>
+
+
+  <!-- FILTROS -->
+
+  <section class="filters-panel no-print">
+    <div class="filters-title">
+      <div>
+        <p class="section-kicker">
+          FILTROS DEL REPORTE
+        </p>
+
+        <h2>
+          {{ opcionActual.titulo }}
+        </h2>
+
+        <p>
+          {{ opcionActual.descripcion }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="clear-btn"
+        *ngIf="tieneFiltrosActivos()"
+        [disabled]="cargando"
+        (click)="limpiarFiltros()">
+        Limpiar filtros
+      </button>
+    </div>
+
+
+    <!-- BUSCADOR -->
+
+    <div class="search-row">
+      <div class="search-box">
+        <span>⌕</span>
+
+        <input
+          type="text"
+          [(ngModel)]="terminoBusqueda"
+          (keyup.enter)="buscar()"
+          placeholder="Buscar dentro del reporte seleccionado..."
+        />
+      </div>
+
+      <button
+        type="button"
+        class="search-btn"
+        [disabled]="cargando"
+        (click)="buscar()">
+        Buscar
+      </button>
+    </div>
+
+
+    <!-- CAMPOS DE FILTRO -->
+
+    <div class="filter-grid">
+      <label>
+        Empresa
+
+        <select [(ngModel)]="filtroEmpresa">
+          <option value="Todas">
+            Todas
+          </option>
+
+          <option
+            *ngFor="let empresa of empresas"
+            [value]="empresa">
+            {{ empresa }}
+          </option>
+        </select>
+      </label>
+
+
+      <label>
+        Departamento
+
+        <select [(ngModel)]="filtroDepartamento">
+          <option value="Todos">
+            Todos
+          </option>
+
+          <option
+            *ngFor="let departamento of departamentos"
+            [value]="departamento">
+            {{ departamento }}
+          </option>
+        </select>
+      </label>
+
+
+      <label *ngIf="mostrarFiltroEstado">
+        Estado
+
+        <select [(ngModel)]="filtroEstado">
+          <option
+            *ngFor="let estado of estadosDisponibles"
+            [value]="estado">
+            {{ estado }}
+          </option>
+        </select>
+      </label>
+
+
+      <label *ngIf="mostrarFiltrosFecha">
+        Fecha inicial
+
+        <input
+          type="date"
+          [(ngModel)]="fechaInicio"
+        />
+      </label>
+
+
+      <label *ngIf="mostrarFiltrosFecha">
+        Fecha final
+
+        <input
+          type="date"
+          [(ngModel)]="fechaFin"
+        />
+      </label>
+
+
+      <button
+        type="button"
+        class="apply-btn"
+        [disabled]="cargando"
+        (click)="aplicarFiltros()">
+        {{
+          cargando
+            ? 'Consultando...'
+            : 'Generar reporte'
+        }}
+      </button>
+    </div>
+
+
+    <!-- FILTROS ACTIVOS -->
+
+    <div
+      class="active-filters"
+      *ngIf="etiquetasFiltrosActivos.length">
+
+      <span class="active-filter-count">
+        {{ cantidadFiltrosActivos }} filtro(s) activo(s)
+      </span>
+
+      <span
+        class="filter-chip"
+        *ngFor="let etiqueta of etiquetasFiltrosActivos">
+        {{ etiqueta }}
+      </span>
+    </div>
+  </section>
+
+
+  <!-- RESULTADOS -->
+
+  <section class="report-results">
+    <div class="print-title">
+      <h1>
+        Reporte de {{ opcionActual.titulo }}
+      </h1>
+
+      <p>
+        Inventario IT · Elite Bike
+      </p>
+    </div>
+
+
+    <!-- ENCABEZADO DE RESULTADOS -->
+
+    <div class="results-header">
+      <div class="results-title">
+        <p class="section-kicker">
+          RESULTADOS
+        </p>
+
+        <h2>
+          Reporte de {{ opcionActual.titulo }}
+        </h2>
+
+        <p>
+          {{ opcionActual.descripcion }}
+        </p>
+      </div>
+
+      <div class="report-metadata">
+        <article>
+          <span>
+            Registros
+          </span>
+
+          <strong>
+            {{ filasReporte.length }}
+          </strong>
+        </article>
+
+        <article>
+          <span>
+            Columnas
+          </span>
+
+          <strong>
+            {{ columnasActuales.length }}
+          </strong>
+        </article>
+
+        <article>
+          <span>
+            Filtros
+          </span>
+
+          <strong>
+            {{ cantidadFiltrosActivos }}
+          </strong>
+        </article>
+      </div>
+    </div>
+
+
+    <!-- BARRA DE HERRAMIENTAS -->
+
+    <div class="results-toolbar no-print">
+      <div class="page-size-control">
+        <label for="registrosPagina">
+          Mostrar
+        </label>
+
+        <select
+          id="registrosPagina"
+          [(ngModel)]="registrosPorPagina"
+          (change)="cambiarRegistrosPorPagina()">
+
+          <option
+            *ngFor="let cantidad of opcionesPaginacion"
+            [ngValue]="cantidad">
+            {{ cantidad }}
+          </option>
+        </select>
+
+        <span>
+          registros por página
+        </span>
+      </div>
+
+      <div class="toolbar-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          (click)="imprimirReporte()">
+          Imprimir
+        </button>
+
+        <button
+          type="button"
+          class="export-btn"
+          [disabled]="exportando || cargando"
+          (click)="exportarReporte()">
+          {{
+            exportando
+              ? 'Generando Excel...'
+              : 'Descargar Excel'
+          }}
+        </button>
+      </div>
+    </div>
+
+
+    <!-- CARGANDO -->
+
+    <div
+      class="loading-state"
+      *ngIf="cargando">
+
+      <div class="spinner"></div>
+
+      <strong>
+        Generando reporte...
+      </strong>
+
+      <span>
+        Consultando la información seleccionada.
+      </span>
+    </div>
+
+
+    <!-- TABLA -->
+
+    <div
+      class="table-wrapper"
+      *ngIf="!cargando">
+
+      <table>
+        <thead>
+          <tr>
+            <th
+              *ngFor="let columna of columnasActuales"
+              (click)="ordenarPor(columna)">
+
+              <span>
+                {{ columna.titulo }}
+              </span>
+
+              <small>
+                {{ indicadorOrden(columna.clave) }}
+              </small>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="
+              let fila of filasPaginadas;
+              trackBy: trackByFila
+            ">
+
+            <td
+              *ngFor="let columna of columnasActuales">
+
+              <!-- ENLACE A DOCUMENTO -->
+
+              <button
+                *ngIf="
+                  columna.tipo === 'enlace' &&
+                  esEnlace(fila[columna.clave]);
+                  else celdaNormal
+                "
+                type="button"
+                class="document-btn no-print"
+                (click)="abrirEnlace(fila[columna.clave])">
+                Abrir documento
+              </button>
+
+              <span
+                *ngIf="
+                  columna.tipo === 'enlace' &&
+                  esEnlace(fila[columna.clave])
+                "
+                class="print-only">
+                Documento disponible
+              </span>
+
+
+              <!-- CELDA NORMAL -->
+
+              <ng-template #celdaNormal>
+                <span
+                  *ngIf="
+                    columna.tipo === 'estado';
+                    else textoCelda
+                  "
+                  class="status-badge"
+                  [ngClass]="
+                    claseEstado(
+                      fila[columna.clave]
+                    )
+                  ">
+
+                  {{
+                    formatearValor(
+                      fila[columna.clave],
+                      columna
+                    )
+                  }}
+                </span>
+
+
+                <ng-template #textoCelda>
+                  {{
+                    formatearValor(
+                      fila[columna.clave],
+                      columna
+                    )
+                  }}
+                </ng-template>
+              </ng-template>
+            </td>
+          </tr>
+
+
+          <!-- SIN RESULTADOS -->
+
+          <tr *ngIf="filasReporte.length === 0">
+            <td
+              [attr.colspan]="columnasActuales.length"
+              class="empty-state">
+
+              <strong>
+                No se encontraron registros
+              </strong>
+
+              <span>
+                Prueba modificando los filtros o seleccionando
+                otro reporte.
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
+    <!-- PAGINACIÓN -->
+
+    <footer
+      class="pagination no-print"
+      *ngIf="
+        filasReporte.length > 0 &&
+        !cargando
+      ">
+
+      <span>
+        Mostrando {{ registroInicial }}–{{ registroFinal }}
+        de {{ filasReporte.length }} registros
+      </span>
+
+      <div class="pagination-controls">
+        <button
+          type="button"
+          [disabled]="paginaActual === 1"
+          (click)="irAPagina(paginaActual - 1)">
+          ← Anterior
+        </button>
+
+        <strong>
+          Página {{ paginaActual }} de {{ totalPaginas }}
+        </strong>
+
+        <button
+          type="button"
+          [disabled]="paginaActual === totalPaginas"
+          (click)="irAPagina(paginaActual + 1)">
+          Siguiente →
+        </button>
+      </div>
+    </footer>
+  </section>
+</section>

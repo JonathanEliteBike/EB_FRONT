@@ -75,6 +75,8 @@ import { AsignacionesComponent } from './views/internal-views/inventario-it/asig
 import { ResponsivasComponent } from './views/internal-views/inventario-it/responsivas/responsivas.component';
 import { HistorialComponent } from './views/internal-views/inventario-it/historial/historial.component';
 import { AuditoriasComponent } from './views/internal-views/inventario-it/auditorias/auditorias.component';
+import { ReportesComponent } from './views/internal-views/inventario-it/reportes/reportes.component';
+import { DashboardInventarioComponent } from './views/internal-views/inventario-it/dashboard-inventario/dashboard-inventario.component';
 
 export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
@@ -140,6 +142,8 @@ export const routes: Routes = [
   { path: 'inventario-it/responsivas', component: ResponsivasComponent },
   { path: 'inventario-it/historial', component: HistorialComponent },
   { path: 'inventario-it/auditorias', component: AuditoriasComponent },
+  { path: 'inventario-it/reportes', component: ReportesComponent },
+  { path: 'inventario-it/dashboard', component: DashboardInventarioComponent },
   { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
