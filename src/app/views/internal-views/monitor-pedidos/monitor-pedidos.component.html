@@ -13,6 +13,20 @@
     <p class="mp-subtexto">Consulta el historial de compras de cualquier usuario o grupo integral</p>
   </div>
 
+  <!-- Selector de temporada -->
+  <div class="mp-temporada-bar" *ngIf="temporadasDisponibles.length > 0">
+    <app-temporada-selector
+      [temporadas]="temporadasDisponibles"
+      [seleccionada]="temporadaSeleccionada"
+      (cambio)="seleccionarTemporada($event)">
+    </app-temporada-selector>
+  </div>
+
+  <app-aviso-historico
+    [temporada]="temporadaSeleccionada"
+    (volver)="seleccionarTemporada('')">
+  </app-aviso-historico>
+
   <!-- Toggle modo -->
   <div class="mp-modo-toggle">
     <button
@@ -157,5 +171,6 @@
   [idGrupoOdoo]="modalGrupoOdoo"
   [claveExacta]="modalClaveExacta"
   [idClienteNum]="modalIdCliente"
+  [temporadaSeleccionada]="temporadaSeleccionada"
   (onClose)="cerrarModal()">
 </app-facturas-cliente>

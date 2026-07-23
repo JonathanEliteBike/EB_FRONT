@@ -51,6 +51,13 @@
   margin: 0;
 }
 
+/* ── Selector de temporada ───────────────────────────────────────────────── */
+.mp-temporada-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
 /* ── Toggle de modo ──────────────────────────────────────────────────────── */
 .mp-modo-toggle {
   display: flex;
