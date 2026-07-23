@@ -16,7 +16,11 @@ import { switchMap } from 'rxjs/operators';
 import { Chart, registerables } from 'chart.js';
 
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
-import { GarantiasService, GarantiasDashboard, GarantiaFormulario, LatenciaTicket } from '../../../services/garantias.service';
+import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../components/temporada-selector/temporada-selector.component';
+import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
+import { GarantiasService, GarantiasDashboard, GarantiaFormulario, LatenciaTicket, CuadroDetalle } from '../../../services/garantias.service';
+
+interface Temporada { etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string; }
 
 Chart.register(...registerables);
 
@@ -45,6 +49,17 @@ const COLORES_ESTATUS: Record<string, string> = {
 export interface RankItem { key: string; value: number; pct: number; color: string; }
 export type ModalKey = 'garantias_cliente' | 'latencia_cliente' | 'piezas_reemplazo' | 'ubicacion_dano';
 
+export interface ClienteResumen {
+  cliente: string;
+  total: number;
+  porEstatus: Record<string, number>;
+  latAtencionProm: number | null;
+  latCierreProm: number | null;
+}
+
+type ColKardex = 'folio' | 'marca' | 'estatus' | 'fecha_creacion' | 'lat_atencion' | 'lat_cierre';
+export type SortMode = 'valor_desc' | 'valor_asc' | 'alfa_asc' | 'alfa_desc';
+
 const MODAL_META: Record<ModalKey, { titulo: string; icono: string; label: string; sublabel: string }> = {
   garantias_cliente: { titulo: 'Garantías por Cliente',    icono: 'fa-store',         label: 'Garantías',    sublabel: 'Número de garantías registradas' },
   latencia_cliente:  { titulo: 'Latencia por Cliente',     icono: 'fa-stopwatch',      label: 'Días prom.',   sublabel: 'Promedio de días de atención' },
@@ -55,7 +70,7 @@ const MODAL_META: Record<ModalKey, { titulo: string; icono: string; label: strin
 @Component({
   selector: 'app-garantias',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent, FormsModule],
+  imports: [CommonModule, RouterModule, HomeBarComponent, FormsModule, TemporadaSelectorComponent, DatePickerComponent],
   templateUrl: './garantias.component.html',
   styleUrl: './garantias.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,15 +107,20 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
   sortColLatMod:   'folio' | 'distribuidor' | 'estatus' | 'lat_atencion' | 'lat_cierre' = 'folio';
   sortDirLatMod:   'asc' | 'desc' = 'asc';
 
-  sortDirRank: Record<ModalKey, 'asc' | 'desc'> = {
-    garantias_cliente: 'desc',
-    latencia_cliente:  'desc',
-    piezas_reemplazo:  'desc',
-    ubicacion_dano:    'desc',
+  sortModeRank: Record<ModalKey, SortMode> = {
+    garantias_cliente: 'alfa_asc',
+    latencia_cliente:  'valor_desc',
+    piezas_reemplazo:  'valor_desc',
+    ubicacion_dano:    'valor_desc',
   };
+  readonly sortModeOpciones: { value: SortMode; label: string }[] = [
+    { value: 'valor_desc', label: 'Mayor → Menor' },
+    { value: 'valor_asc',  label: 'Menor → Mayor' },
+    { value: 'alfa_asc',   label: 'A → Z' },
+    { value: 'alfa_desc',  label: 'Z → A' },
+  ];
 
   // Rankings pre-calculados — evita llamar métodos en *ngFor (causa de crashes)
-  topClientes:    RankItem[] = [];
   topLatencia:    RankItem[] = [];
   topPiezas:      RankItem[] = [];
   topUbicaciones: RankItem[] = [];
@@ -109,6 +129,31 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
   modalKey: ModalKey | null = null;
   readonly modalMeta = MODAL_META;
 
+  // ── Temporadas / rango de fechas ───────────────────────────────────────────
+  temporadas: Temporada[] = [];
+  temporadaActual: Temporada | null = null;
+  temporadaSeleccionada = ''; // '' = temporada actual (abierta); etiqueta = temporada cerrada
+  rangoDesde = '';
+  rangoHasta = '';
+
+  get temporadasCerradas(): string[] {
+    return this.temporadas.filter(t => t.estado === 'cerrada').map(t => t.etiqueta);
+  }
+
+  // ── Resumen por cliente (Garantías por Cliente + Kardex) ──────────────────
+  clientesResumen: ClienteResumen[] = [];
+  filtroEstatusCliente = '';
+
+  // ── Kardex (compartido entre Garantías por Cliente y Latencia por Cliente) ─
+  modalKardexAbierto = false;
+  kardexCliente: string | null = null;
+  sortColKardex: ColKardex = 'fecha_creacion';
+  sortDirKardex: 'asc' | 'desc' = 'desc';
+
+  // ── Cuadros por tipo de marco (desde Piezas de Reemplazo) ─────────────────
+  modalCuadrosAbierto = false;
+  cuadroTipoSeleccionado: string | null = null;
+
   private charts: Chart[] = [];
   private modalChart?: Chart;
   private autoRefreshSub?: Subscription;
@@ -116,9 +161,9 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.cargar();
+    this.cargarTemporadas();
     this.autoRefreshSub = interval(300_000)
-      .pipe(switchMap(() => this.svc.getDashboard()))
+      .pipe(switchMap(() => this.svc.getDashboard(this.rangoDesde, this.rangoHasta)))
       .subscribe({
         next: (d) => {
           this.dashboard = d;
@@ -138,11 +183,65 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
     this.autoRefreshSub?.unsubscribe();
   }
 
+  // ── Temporadas / rango de fechas ───────────────────────────────────────────
+  private cargarTemporadas(): void {
+    this.svc.getTemporadas().subscribe({
+      next: (temporadas) => {
+        this.temporadas = temporadas;
+        this.temporadaActual = temporadas.find(t => t.estado === 'abierta') ?? null;
+        if (this.temporadaActual) {
+          this.rangoDesde = this.temporadaActual.fecha_inicio;
+          this.rangoHasta = this.temporadaActual.fecha_fin;
+        }
+        this.cargar();
+      },
+      error: () => this.cargar(), // sin temporadas disponibles -> histórico completo
+    });
+  }
+
+  onTemporadaCambio(etiqueta: string): void {
+    this.temporadaSeleccionada = etiqueta;
+    if (etiqueta === TEMPORADA_HISTORICO) {
+      // Histórico completo: sin rango -> getDashboard/latenciasFiltradas ya
+      // caen a "sin filtro" cuando rangoDesde/rangoHasta vienen vacíos.
+      this.rangoDesde = '';
+      this.rangoHasta = '';
+      this.cargar();
+      return;
+    }
+    const t = etiqueta ? this.temporadas.find(x => x.etiqueta === etiqueta) : this.temporadaActual;
+    if (t) {
+      this.rangoDesde = t.fecha_inicio;
+      this.rangoHasta = t.fecha_fin;
+    }
+    this.cargar();
+  }
+
+  onRangoManual(r: { desde: string; hasta: string }): void {
+    if (!r.desde || !r.hasta) return;
+    this.rangoDesde = r.desde;
+    this.rangoHasta = r.hasta;
+    this.cargar();
+  }
+
+  private parseFechaISO(fechaDDMMYYYY: string): string | null {
+    const m = fechaDDMMYYYY?.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+  }
+
+  get latenciasFiltradas(): LatenciaTicket[] {
+    if (!this.rangoDesde || !this.rangoHasta) return this.latencias;
+    return this.latencias.filter(t => {
+      const iso = this.parseFechaISO(t.fecha_creacion);
+      return iso !== null && iso >= this.rangoDesde && iso <= this.rangoHasta;
+    });
+  }
+
   cargar(): void {
     this.cargando = true;
     this.error = '';
     this.cdr.markForCheck();
-    this.svc.getDashboard().subscribe({
+    this.svc.getDashboard(this.rangoDesde, this.rangoHasta).subscribe({
       next: (d) => {
         this.dashboard = d;
         this.cargando  = false;
@@ -158,13 +257,13 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     });
     this.svc.getLatencias().subscribe({
-      next: (l) => { this.latencias = l; this.cdr.markForCheck(); },
+      next: (l) => { this.latencias = l; this.procesarClientesResumen(); this.cdr.markForCheck(); },
       error: () => {},
     });
   }
 
   refrescarManual(): void { this.svc.refrescar().subscribe(() => this.cargar()); }
-  exportar(): void        { window.open(this.svc.getExportUrl(), '_blank'); }
+  exportar(): void        { window.open(this.svc.getExportUrl(undefined, this.rangoDesde, this.rangoHasta), '_blank'); }
 
   // ── Vista lista ──────────────────────────────────────────────────────────
   verPorKpi(kpi: 'total' | 'cerradas' | 'en_proceso' | 'enviado' | 'en_revision' | 'aprobado' | 'rechazado' | null): void {
@@ -221,30 +320,42 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get mesesDisponibles(): string[] {
     const set = new Set<string>();
-    this.todosKpiFiltrados.forEach(t => { const m = (t.fecha_creacion ?? '').slice(0, 7); if (m) set.add(m); });
+    this.todosKpiFiltrados.forEach(t => {
+      const iso = this.parseFechaISO(t.fecha_creacion ?? '');
+      if (iso) set.add(iso.slice(0, 7));
+    });
     return Array.from(set).sort((a, b) => b.localeCompare(a));
   }
 
+  private get todosEnRango(): GarantiaFormulario[] {
+    if (!this.rangoDesde || !this.rangoHasta) return this.todos;
+    return this.todos.filter(t => {
+      const iso = this.parseFechaISO(t.fecha_creacion ?? '');
+      return iso !== null && iso >= this.rangoDesde && iso <= this.rangoHasta;
+    });
+  }
+
   private get todosKpiFiltrados(): GarantiaFormulario[] {
+    const base = this.todosEnRango;
     const f = this.filtroKpi;
-    if (!f || f === 'total')    return this.todos;
-    if (f === 'cerradas')       return this.todos.filter(t => t.estatus === 'Cerrado');
-    if (f === 'en_proceso')     return this.todos.filter(t => ['Enviado','En revisión','Aprobado'].includes(t.estatus));
-    if (f === 'enviado')        return this.todos.filter(t => t.estatus === 'Enviado');
-    if (f === 'en_revision')    return this.todos.filter(t => t.estatus === 'En revisión');
-    if (f === 'aprobado')       return this.todos.filter(t => t.estatus === 'Aprobado');
-    if (f === 'rechazado')      return this.todos.filter(t => t.estatus === 'Rechazado');
-    return this.todos;
+    if (!f || f === 'total')    return base;
+    if (f === 'cerradas')       return base.filter(t => t.estatus === 'Cerrado');
+    if (f === 'en_proceso')     return base.filter(t => ['Enviado','En revisión','Aprobado'].includes(t.estatus));
+    if (f === 'enviado')        return base.filter(t => t.estatus === 'Enviado');
+    if (f === 'en_revision')    return base.filter(t => t.estatus === 'En revisión');
+    if (f === 'aprobado')       return base.filter(t => t.estatus === 'Aprobado');
+    if (f === 'rechazado')      return base.filter(t => t.estatus === 'Rechazado');
+    return base;
   }
 
   get ticketsFiltradosList(): GarantiaFormulario[] {
     let list = this.filtroMes
-      ? this.todosKpiFiltrados.filter(t => (t.fecha_creacion ?? '').startsWith(this.filtroMes))
+      ? this.todosKpiFiltrados.filter(t => (this.parseFechaISO(t.fecha_creacion ?? '') ?? '').startsWith(this.filtroMes))
       : [...this.todosKpiFiltrados];
     list.sort((a, b) => {
-      const da = new Date(a.fecha_creacion).getTime();
-      const db = new Date(b.fecha_creacion).getTime();
-      return this.ordenDesc ? db - da : da - db;
+      const da = this.parseFechaISO(a.fecha_creacion ?? '') ?? '';
+      const db = this.parseFechaISO(b.fecha_creacion ?? '') ?? '';
+      return this.ordenDesc ? db.localeCompare(da) : da.localeCompare(db);
     });
     return list;
   }
@@ -352,13 +463,19 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly estatusLatOpciones = ['Enviado', 'En revisión', 'Aprobado', 'Rechazado', 'Cerrado'];
 
-  toggleSortRank(key: ModalKey): void {
-    this.sortDirRank[key] = this.sortDirRank[key] === 'desc' ? 'asc' : 'desc';
+  setSortMode(key: ModalKey, modo: SortMode): void {
+    this.sortModeRank[key] = modo;
     this.cdr.markForCheck();
   }
 
-  rankSorted(items: RankItem[], key: ModalKey): RankItem[] {
-    return this.sortDirRank[key] === 'asc' ? [...items].reverse() : items;
+  rankOrdenado(items: RankItem[], key: ModalKey): RankItem[] {
+    const arr = [...items];
+    switch (this.sortModeRank[key]) {
+      case 'valor_asc': return arr.sort((a, b) => a.value - b.value);
+      case 'alfa_asc':  return arr.sort((a, b) => a.key.localeCompare(b.key));
+      case 'alfa_desc': return arr.sort((a, b) => b.key.localeCompare(a.key));
+      default:          return arr.sort((a, b) => b.value - a.value); // valor_desc
+    }
   }
 
   verTicketEnAdmin(id: number): void {
@@ -374,8 +491,8 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private procesarRankings(): void {
     if (!this.dashboard) return;
-    this.topClientes    = this.buildRank(this.dashboard.garantias_por_cliente, 10);
-    this.topLatencia    = this.buildRank(this.dashboard.latencia_por_cliente,  10);
+    // Latencia por Cliente ya no se limita a 10 — la tarjeta se desplaza (scroll).
+    this.topLatencia    = this.buildRank(this.dashboard.latencia_por_cliente,  999);
     this.topPiezas      = this.buildRank(this.dashboard.piezas_reemplazo,       5);
     this.topUbicaciones = this.buildRank(this.dashboard.ubicacion_dano,         5);
   }
@@ -389,6 +506,136 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
       pct:   Math.round((value / max) * 100),
       color: PALETA[i % PALETA.length],
     }));
+  }
+
+  // ── Resumen por cliente (Garantías por Cliente + Kardex) ──────────────────
+  private procesarClientesResumen(): void {
+    const grupos = new Map<string, LatenciaTicket[]>();
+    for (const t of this.latenciasFiltradas) {
+      if (!t.distribuidor) continue;
+      if (!grupos.has(t.distribuidor)) grupos.set(t.distribuidor, []);
+      grupos.get(t.distribuidor)!.push(t);
+    }
+    const promedio = (vals: number[]): number | null =>
+      vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
+
+    const resumen: ClienteResumen[] = [];
+    grupos.forEach((tickets, cliente) => {
+      const porEstatus: Record<string, number> = {};
+      for (const t of tickets) porEstatus[t.estatus] = (porEstatus[t.estatus] ?? 0) + 1;
+      resumen.push({
+        cliente,
+        total: tickets.length,
+        porEstatus,
+        latAtencionProm: promedio(tickets.map(t => t.lat_atencion).filter((v): v is number => v !== null && v !== undefined)),
+        latCierreProm:   promedio(tickets.map(t => t.lat_cierre).filter((v): v is number => v !== null && v !== undefined)),
+      });
+    });
+    this.clientesResumen = resumen;
+  }
+
+  get clientesGarantiaItems(): RankItem[] {
+    const est = this.filtroEstatusCliente;
+    const filtrados = this.clientesResumen
+      .map(c => ({ cliente: c.cliente, total: est ? (c.porEstatus[est] ?? 0) : c.total }))
+      .filter(c => c.total > 0);
+    const max = Math.max(...filtrados.map(c => c.total), 1);
+    return filtrados.map((c, i) => ({
+      key: c.cliente, value: c.total,
+      pct:   Math.round((c.total / max) * 100),
+      color: PALETA[i % PALETA.length],
+    }));
+  }
+
+  get totalClientesFiltrado(): number {
+    return this.clientesGarantiaItems.reduce((sum, c) => sum + c.value, 0);
+  }
+
+  // ── Kardex ───────────────────────────────────────────────────────────────
+  abrirKardex(cliente: string): void {
+    this.kardexCliente     = cliente;
+    this.modalKardexAbierto = true;
+    this.sortColKardex     = 'fecha_creacion';
+    this.sortDirKardex     = 'desc';
+    this.cdr.markForCheck();
+  }
+
+  cerrarKardex(): void {
+    this.modalKardexAbierto = false;
+    this.kardexCliente      = null;
+    this.cdr.markForCheck();
+  }
+
+  get kardexResumen(): ClienteResumen | null {
+    return this.clientesResumen.find(c => c.cliente === this.kardexCliente) ?? null;
+  }
+
+  toggleSortKardex(col: ColKardex): void {
+    if (this.sortColKardex === col) {
+      this.sortDirKardex = this.sortDirKardex === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColKardex = col;
+      this.sortDirKardex = 'asc';
+    }
+    this.cdr.markForCheck();
+  }
+
+  sortIconKardex(col: string): string {
+    if (this.sortColKardex !== col) return 'fa-sort';
+    return this.sortDirKardex === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+  }
+
+  get kardexTickets(): LatenciaTicket[] {
+    const col = this.sortColKardex;
+    const dir = this.sortDirKardex === 'asc' ? 1 : -1;
+    return this.latenciasFiltradas
+      .filter(t => t.distribuidor === this.kardexCliente)
+      .sort((a, b) => {
+        const av = a[col] as any;
+        const bv = b[col] as any;
+        if (av === null || av === undefined) return 1;
+        if (bv === null || bv === undefined) return -1;
+        if (typeof av === 'number') return (av - bv) * dir;
+        return String(av).localeCompare(String(bv)) * dir;
+      });
+  }
+
+  exportarKardexActual(): void {
+    if (!this.kardexCliente) return;
+    window.open(this.svc.getExportUrl(this.kardexCliente, this.rangoDesde, this.rangoHasta), '_blank');
+  }
+
+  // ── Cuadros por tipo de marco (desde Piezas de Reemplazo) ─────────────────
+  abrirCuadros(): void {
+    this.modalCuadrosAbierto   = true;
+    this.cuadroTipoSeleccionado = null;
+    this.cdr.markForCheck();
+  }
+
+  cerrarCuadros(): void {
+    this.modalCuadrosAbierto   = false;
+    this.cuadroTipoSeleccionado = null;
+    this.cdr.markForCheck();
+  }
+
+  verDetalleCuadro(tipo: string): void {
+    this.cuadroTipoSeleccionado = tipo;
+    this.cdr.markForCheck();
+  }
+
+  volverAConteoCuadros(): void {
+    this.cuadroTipoSeleccionado = null;
+    this.cdr.markForCheck();
+  }
+
+  get cuadrosConteo(): RankItem[] {
+    if (!this.dashboard) return [];
+    return this.buildRank(this.dashboard.cuadros_por_tipo_marco, 999);
+  }
+
+  get cuadrosDetalleFiltrado(): CuadroDetalle[] {
+    if (!this.dashboard || !this.cuadroTipoSeleccionado) return [];
+    return this.dashboard.cuadros_detalle.filter(c => c.tipo_marco === this.cuadroTipoSeleccionado);
   }
 
   // ── Modal ────────────────────────────────────────────────────────────────

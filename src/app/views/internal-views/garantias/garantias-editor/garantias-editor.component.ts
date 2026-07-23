@@ -4,7 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { GarantiasService, GarantiaFormulario } from '../../../../services/garantias.service';
-import { SECCIONES } from '../garantias-formulario/garantias-formulario.component';
+import {
+  SECCIONES, DISTRIBUIDORES, PUESTOS, TALLAS_PROTECCION, TIPOS_COMPONENTE,
+  PROT_LOCALIZACIONES, PROT_TIPOS_DANO, ZAPATO_TIPOS_DANO, CASCO_TIPOS_DANO,
+  MANUBRIO_LOCALIZACIONES, SYNCROS_TIPOS_DANO, ASIENTO_LOCALIZACIONES,
+  POSTE_LOCALIZACIONES, RIN_LOCALIZACIONES, RIN_TIPOS_DANO, TIPOS_DANO,
+} from '../garantias-formulario/garantias-formulario.component';
 
 export interface EditorSeccion {
   id: number;
@@ -24,16 +29,16 @@ export interface EditorCampo {
   editando?: boolean;
 }
 
+// Ramificación (isVisible en el formulario) — no editables desde aquí.
 const TIPOS_MARCO   = ['Doble suspensión', 'Rígida', 'Plasma', 'Foil', 'Ruta', 'Gravel', 'E-Ride'];
 const TIPOS_MARCO_B = ['Doble suspensión'];
 const TIPOS_MARCO_M = ['Doble suspensión', 'Rígida', 'Ruta', 'Gravel', 'E-Ride'];
-const SYNCROS_TIPOS_DANO = ['Raspado', 'Roto', 'Color de la Capa Base Defectuoso', 'Asimétrico', 'Otros'];
 
 function marcoDanoFields(n: number): EditorCampo[] {
   return [
-    { id: `marco_localizacion_${n}`, label: 'Localización del Daño', tipo: 'select', requerido: true },
-    { id: `marco_tipo_dano_${n}`, label: 'Tipo de Daño', tipo: 'radio', requerido: true,
-      opciones: ['Grieta', 'Fractura', 'Abolladura', 'Decoloración', 'Deformación', 'Otros'] },
+    { id: `marco_localizacion_${n}`, label: 'Localización del Daño (no editable — numerada contra el diagrama del marco)', tipo: 'select', requerido: true },
+    { id: `marco_tipo_dano_${n}`, label: 'Tipo de Daño (comparte lista con todas las secciones de Marco — edítala en la sección 15)', tipo: 'radio', requerido: true,
+      opciones: TIPOS_DANO },
     { id: `marco_tipo_dano_otros_${n}`, label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
     { id: `marco_comentarios_${n}`, label: 'Comentarios', tipo: 'textarea', requerido: true },
   ];
@@ -45,54 +50,55 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'email', label: 'Correo Electrónico', tipo: 'email', requerido: true },
         ],
     2:  [
-          { id: 'distribuidor', label: 'Razón Social del Distribuidor', tipo: 'select', requerido: true },
+          { id: 'distribuidor', label: 'Razón Social del Distribuidor', tipo: 'select', requerido: true,
+            opciones: DISTRIBUIDORES },
           { id: 'contacto', label: 'Nombre del Contacto', tipo: 'text', requerido: true },
-          { id: 'puesto', label: 'Rol dentro de la compañía', tipo: 'text', requerido: true },
-          { id: 'marca', label: 'Marca del Producto', tipo: 'radio', requerido: true,
+          { id: 'puesto', label: 'Rol dentro de la compañía', tipo: 'radio', requerido: true,
+            opciones: PUESTOS },
+          { id: 'marca', label: 'Marca del Producto (no editable — controla qué secciones se muestran)', tipo: 'radio', requerido: true,
             opciones: ['SCOTT', 'SYNCROS', 'VITTORIA', 'BOLD', 'MEGAMO'] },
         ],
     3:  [
           { id: 'bici_modelo', label: 'Modelo de la Bicicleta', tipo: 'text', requerido: true },
           { id: 'bici_anio', label: 'Año del Modelo', tipo: 'number', requerido: true },
           { id: 'bici_serie', label: 'Número de Serie del Marco', tipo: 'text', requerido: true },
-          { id: 'scott_tipo_marco', label: 'Tipo de Marco', tipo: 'radio', requerido: true,
+          { id: 'scott_tipo_marco', label: 'Tipo de Marco (no editable — controla qué secciones se muestran)', tipo: 'radio', requerido: true,
             opciones: TIPOS_MARCO_B },
         ],
     4:  [
-          { id: 'scott_grupo', label: 'Grupo de Productos SCOTT', tipo: 'radio', requerido: true,
-            opciones: ['Bicicletas', 'Cascos', 'Protecciones', 'Zapatos', 'Componentes'] },
+          { id: 'scott_grupo', label: 'Grupo de Productos SCOTT (no editable — controla qué secciones se muestran)', tipo: 'radio', requerido: true,
+            opciones: ['Bicicletas', 'Cascos', 'Protecciones', 'Zapatos', 'Componentes - Piezas Eléctricas'] },
         ],
     5:  [
           { id: 'casco_modelo', label: 'Modelo del Casco', tipo: 'text', requerido: true },
           { id: 'casco_anio', label: 'Año de Fabricación', tipo: 'number', requerido: true },
           { id: 'casco_color', label: 'Color', tipo: 'text', requerido: false },
-          { id: 'casco_talla', label: 'Talla', tipo: 'select', requerido: true,
-            opciones: ['XS', 'S', 'M', 'L', 'XL', 'Unitalla'] },
+          { id: 'casco_talla', label: 'Talla (comparte lista con Protecciones, sección 7)', tipo: 'select', requerido: true,
+            opciones: TALLAS_PROTECCION },
           { id: 'casco_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
         ],
     6:  [
-          { id: 'casco_localizacion', label: 'Localización del Daño', tipo: 'select', requerido: true,
+          { id: 'casco_localizacion', label: 'Localización del Daño (no editable — numerada contra el diagrama del casco)', tipo: 'select', requerido: true,
             opciones: ['Casco', 'Visor', 'Correa', 'Hebilla de correa', 'Forro', 'Sistema de ajuste',
                        'Capa baja fricción MIPS', 'Canasta de ajuste MIPS', 'Pin de ajuste MIPS', 'Fijación de gama MIPS'] },
           { id: 'casco_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
-            opciones: ['Roto', 'Descolorido', 'Defecto en Costura', 'Rasgado', 'Malfunción', 'Otros'] },
+            opciones: CASCO_TIPOS_DANO },
           { id: 'casco_tipo_dano_otro', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'casco_comentarios', label: 'Comentarios adicionales', tipo: 'textarea', requerido: false },
         ],
     7:  [
           { id: 'prot_modelo', label: 'Modelo', tipo: 'text', requerido: true },
           { id: 'prot_anio', label: 'Año', tipo: 'number', requerido: false },
-          { id: 'prot_talla', label: 'Talla', tipo: 'select', requerido: false,
-            opciones: ['XS', 'S', 'M', 'L', 'XL', 'Unitalla'] },
+          { id: 'prot_talla', label: 'Talla (comparte lista con Cascos, sección 5 — edítala ahí)', tipo: 'select', requerido: false,
+            opciones: TALLAS_PROTECCION },
           { id: 'prot_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
         ],
     8:  [
           { id: 'prot_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
-            opciones: ['Cascarón de Plástico', 'D30 Insert', 'Relleno / Espuma', 'Correa / Velcro',
-                       'Cierre / Cremallera', 'Hebilla', 'Tejido', 'Decoloración', 'Otros'] },
+            opciones: PROT_LOCALIZACIONES },
           { id: 'prot_localizacion_otro', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
           { id: 'prot_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
-            opciones: ['Roto', 'Defecto en Costura', 'Defecto de Armado', 'Rasgado', 'Descolorido', 'Malfunción', 'Otros'] },
+            opciones: PROT_TIPOS_DANO },
           { id: 'prot_tipo_dano_otro', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'prot_comentarios', label: 'Comentarios adicionales', tipo: 'textarea', requerido: false },
         ],
@@ -103,17 +109,17 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'zapato_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
         ],
     10: [
-          { id: 'zapato_localizacion', label: 'Localización del Daño', tipo: 'select', requerido: true,
+          { id: 'zapato_localizacion', label: 'Localización del Daño (no editable — numerada contra el diagrama del zapato)', tipo: 'select', requerido: true,
             opciones: ['Suela', 'Media Suela', 'Suela Interior', 'Empeine', 'Lengua', 'Forro',
                        'Contra dedos', 'Contra talon', 'Cordones Ojal', 'Correa de Velcro', 'Hebilla', 'Sistema de Cordones BOA'] },
           { id: 'zapato_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
-            opciones: ['Costura', 'Delaminación', 'Desgastado', 'Marca de Pegamento', 'Marca de Impresión', 'Roto', 'Otros'] },
+            opciones: ZAPATO_TIPOS_DANO },
           { id: 'zapato_tipo_dano_otro', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'zapato_comentarios', label: 'Comentarios adicionales', tipo: 'textarea', requerido: false },
         ],
     11: [
           { id: 'comp_tipo', label: 'Tipo de Componente', tipo: 'radio', requerido: true,
-            opciones: ['Bosch', 'Mahle', 'TQ'] },
+            opciones: TIPOS_COMPONENTE },
           { id: 'comp_modelo', label: 'Modelo', tipo: 'text', requerido: true },
           { id: 'comp_serie', label: 'Número de Serie', tipo: 'text', requerido: false },
         ],
@@ -131,7 +137,7 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'bici_modelo', label: 'Modelo de la Bicicleta', tipo: 'text', requerido: true },
           { id: 'bici_anio', label: 'Año del Modelo', tipo: 'number', requerido: true },
           { id: 'bici_serie', label: 'Número de Serie del Marco', tipo: 'text', requerido: true },
-          { id: 'scott_tipo_marco', label: 'Tipo de Marco', tipo: 'radio', requerido: true,
+          { id: 'scott_tipo_marco', label: 'Tipo de Marco (no editable — controla qué secciones se muestran)', tipo: 'radio', requerido: true,
             opciones: TIPOS_MARCO },
         ],
     15: marcoDanoFields(15),
@@ -149,7 +155,7 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'bici_doc4b', label: 'Factura de Venta', tipo: 'file', requerido: true },
         ],
     23: [
-          { id: 'syncros_tipo', label: 'Tipo de Producto SYNCROS', tipo: 'radio', requerido: true,
+          { id: 'syncros_tipo', label: 'Tipo de Producto SYNCROS (no editable — controla qué secciones se muestran)', tipo: 'radio', requerido: true,
             opciones: ['Manubrios', 'Asientos', 'Poste', 'Ruedos/Rines'] },
         ],
     24: [
@@ -160,10 +166,9 @@ function buildEstructura(): EditorSeccion[] {
         ],
     25: [
           { id: 'manubrio_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
-            opciones: ['Potencia', 'Barra de la base', 'Extension', 'Manubrio',
-                       'Abrazadera del Manubrio', 'Hardware de la Potencia', 'Otros'] },
+            opciones: MANUBRIO_LOCALIZACIONES },
           { id: 'manubrio_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
-          { id: 'manubrio_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+          { id: 'manubrio_tipo_dano', label: 'Tipo de Daño (comparte lista con Asientos y Poste, secciones 27 y 29)', tipo: 'radio', requerido: true,
             opciones: SYNCROS_TIPOS_DANO },
           { id: 'manubrio_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'manubrio_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
@@ -176,9 +181,9 @@ function buildEstructura(): EditorSeccion[] {
         ],
     27: [
           { id: 'asiento_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
-            opciones: ['Base', 'Almohadilla', 'Riel', 'Otros'] },
+            opciones: ASIENTO_LOCALIZACIONES },
           { id: 'asiento_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
-          { id: 'asiento_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+          { id: 'asiento_tipo_dano', label: 'Tipo de Daño (comparte lista con Manubrios, sección 25 — edítala ahí)', tipo: 'radio', requerido: true,
             opciones: SYNCROS_TIPOS_DANO },
           { id: 'asiento_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'asiento_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
@@ -191,9 +196,9 @@ function buildEstructura(): EditorSeccion[] {
         ],
     29: [
           { id: 'poste_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
-            opciones: ['Poste de Asiento', 'Abrazadera del asiento', 'Cartucho', 'Base', 'Dropper Seatpost', 'Otros'] },
+            opciones: POSTE_LOCALIZACIONES },
           { id: 'poste_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
-          { id: 'poste_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
+          { id: 'poste_tipo_dano', label: 'Tipo de Daño (comparte lista con Manubrios, sección 25 — edítala ahí)', tipo: 'radio', requerido: true,
             opciones: SYNCROS_TIPOS_DANO },
           { id: 'poste_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'poste_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
@@ -206,10 +211,10 @@ function buildEstructura(): EditorSeccion[] {
         ],
     31: [
           { id: 'rin_localizacion', label: 'Localización del Daño', tipo: 'radio', requerido: true,
-            opciones: ['Base del Rin', 'Banda del Rin', 'Rayo de Carbon', 'Nucleo del cascarón', 'Nucleo interno', 'Otros'] },
+            opciones: RIN_LOCALIZACIONES },
           { id: 'rin_localizacion_otros', label: 'Especificar localización (Otros)', tipo: 'text', requerido: false },
           { id: 'rin_tipo_dano', label: 'Tipo de Daño', tipo: 'radio', requerido: true,
-            opciones: ['Roto', 'Asimétrico', 'Delaminación', 'Color de la Capa Base Defectuoso', 'Otros'] },
+            opciones: RIN_TIPOS_DANO },
           { id: 'rin_tipo_dano_otros', label: 'Especificar tipo de daño (Otros)', tipo: 'text', requerido: false },
           { id: 'rin_dano_desc', label: 'Descripción del Daño', tipo: 'textarea', requerido: true },
         ],
@@ -232,7 +237,7 @@ function buildEstructura(): EditorSeccion[] {
           { id: 'bici_modelo', label: 'Modelo de la Bicicleta', tipo: 'text', requerido: true },
           { id: 'bici_anio', label: 'Año del Modelo', tipo: 'number', requerido: true },
           { id: 'bici_serie', label: 'Número de Serie del Marco', tipo: 'text', requerido: true },
-          { id: 'scott_tipo_marco', label: 'Tipo de Marco', tipo: 'radio', requerido: true,
+          { id: 'scott_tipo_marco', label: 'Tipo de Marco (no editable — controla qué secciones se muestran)', tipo: 'radio', requerido: true,
             opciones: TIPOS_MARCO_M },
         ],
   };

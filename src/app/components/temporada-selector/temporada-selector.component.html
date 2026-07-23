@@ -24,6 +24,18 @@
             <i class="fas fa-check ts-check" *ngIf="!seleccionada"></i>
         </button>
 
+        <button
+            type="button"
+            class="ts-item"
+            *ngIf="incluirHistorico"
+            [class.ts-item-sel]="seleccionada === HISTORICO"
+            (click)="elegir(HISTORICO)"
+        >
+            <i class="fas fa-infinity"></i>
+            <span>Histórico completo</span>
+            <i class="fas fa-check ts-check" *ngIf="seleccionada === HISTORICO"></i>
+        </button>
+
         <div class="ts-divider" *ngIf="temporadas.length"></div>
 
         <div class="ts-cerradas-label" *ngIf="temporadas.length">Temporadas cerradas</div>

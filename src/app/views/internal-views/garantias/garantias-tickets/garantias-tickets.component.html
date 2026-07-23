@@ -212,7 +212,14 @@
             </div>
           </div>
         </div>
-        <span class="result-count">{{ ticketsFiltrados.length }} resultado{{ ticketsFiltrados.length !== 1 ? 's' : '' }}</span>
+        <div class="result-row">
+          <span class="result-count">{{ ticketsFiltrados.length }} resultado{{ ticketsFiltrados.length !== 1 ? 's' : '' }}</span>
+          <button class="sort-toggle-btn" (click)="toggleOrdenFecha()"
+                  [title]="ordenFecha === 'desc' ? 'Mostrando más recientes primero' : 'Mostrando más antiguas primero'">
+            <i class="fas" [class.fa-sort-amount-down]="ordenFecha === 'desc'" [class.fa-sort-amount-up]="ordenFecha === 'asc'"></i>
+            {{ ordenFecha === 'desc' ? 'Más recientes' : 'Más antiguas' }}
+          </button>
+        </div>
       </div>
 
       <!-- Estado de carga -->
@@ -308,7 +315,18 @@
                   <div class="dp-field"><span class="dp-key">Rol</span><span class="dp-val">{{ selected.puesto }}</span></div>
                   <div class="dp-field"><span class="dp-key">Email</span><span class="dp-val">{{ selected.datos?.['email'] || selected.email }}</span></div>
                   <div class="dp-field"><span class="dp-key">Marca</span><span class="dp-val">{{ selected.marca }}</span></div>
-                  <div class="dp-field"><span class="dp-key">Fecha</span><span class="dp-val">{{ selected.fecha_creacion }}</span></div>
+                  <div class="dp-field">
+                    <span class="dp-key">Fecha</span>
+                    <span class="dp-val" *ngIf="!editandoFechaCreacion" style="display:flex;align-items:center;gap:6px;">
+                      {{ selected.fecha_creacion }}
+                      <button class="btn-icon-sm" title="Editar fecha de alta (retroactivo)" (click)="iniciarEditFechaCreacion()"><i class="fas fa-pen"></i></button>
+                    </span>
+                    <span class="dp-val" *ngIf="editandoFechaCreacion" style="display:flex;align-items:center;gap:6px;">
+                      <input type="date" [(ngModel)]="editFechaCreacion" [max]="hoy" style="font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid #555;background:#1a1a2e;color:#fff;">
+                      <button class="btn-confirm-sm" (click)="guardarFechaCreacion()">Guardar</button>
+                      <button class="btn-cancel-sm" (click)="editandoFechaCreacion=false">✕</button>
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -328,6 +346,28 @@
                 <h4 class="dp-section-title"><i class="fas fa-tag"></i> Información de marca</h4>
                 <div class="dp-grid">
                   <div *ngFor="let f of datosMarca" class="dp-field">
+                    <span class="dp-key">{{ f.label }}</span>
+                    <span class="dp-val">{{ f.value }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Datos del producto (cascos, protecciones, zapatos, componentes, syncros, vittoria) -->
+              <div class="dp-section" *ngIf="datosProducto.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-box"></i> Datos del Producto</h4>
+                <div class="dp-grid">
+                  <div *ngFor="let f of datosProducto" class="dp-field">
+                    <span class="dp-key">{{ f.label }}</span>
+                    <span class="dp-val">{{ f.value }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Descripción del daño (cascos, protecciones, zapatos, componentes, syncros, vittoria) -->
+              <div class="dp-section" *ngIf="danoProducto.length > 0">
+                <h4 class="dp-section-title"><i class="fas fa-exclamation-triangle"></i> Descripción del Daño</h4>
+                <div class="dp-grid">
+                  <div *ngFor="let f of danoProducto" class="dp-field">
                     <span class="dp-key">{{ f.label }}</span>
                     <span class="dp-val">{{ f.value }}</span>
                   </div>
@@ -464,9 +504,16 @@
               <div class="dp-section">
                 <h4 class="dp-section-title">
                   <i class="fas fa-wrench"></i> Pieza de reemplazo
-                  <button class="btn-agregar-pieza" (click)="mostrarFormPieza = !mostrarFormPieza" title="Agregar nueva pieza al catálogo">
-                    <i class="fas fa-plus"></i> Nueva pieza
-                  </button>
+                  <span class="pieza-hdr-actions">
+                    <button class="btn-agregar-pieza" (click)="mostrarFormPieza = !mostrarFormPieza; mostrarGestionPiezas = false" title="Agregar nueva pieza al catálogo">
+                      <i class="fas fa-plus"></i> Nueva pieza
+                    </button>
+                    <button class="btn-gestionar-piezas" [class.btn-gestionar-activo]="mostrarGestionPiezas"
+                            (click)="mostrarGestionPiezas ? cerrarGestionPiezas() : abrirGestionPiezas()"
+                            title="Quitar piezas duplicadas o mal capturadas del catálogo">
+                      <i class="fas fa-broom"></i> Gestionar
+                    </button>
+                  </span>
                 </h4>
 
                 <!-- Formulario agregar pieza -->
@@ -480,6 +527,43 @@
                       <i *ngIf="agregandoPieza" class="fas fa-spinner fa-spin"></i>
                       <span *ngIf="!agregandoPieza">Agregar</span>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Panel: gestionar catálogo (quitar duplicados / errores) -->
+                <div class="panel-gestion-piezas" *ngIf="mostrarGestionPiezas">
+                  <div class="gestion-piezas-hint">
+                    <i class="fas fa-info-circle"></i> Quita piezas duplicadas o capturadas por error. No afecta tickets que ya la tengan asignada.
+                  </div>
+                  <div class="gestion-piezas-list">
+                    <div class="gestion-pieza-row" *ngFor="let p of piezasGestionables">
+                      <ng-container *ngIf="piezaAEliminar !== p; else confirmarFila">
+                        <span class="gestion-pieza-nombre">{{ p }}</span>
+                        <button class="gestion-pieza-del-btn" (click)="pedirConfirmacionEliminarPieza(p)" title="Eliminar del catálogo">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </ng-container>
+                      <ng-template #confirmarFila>
+                        <span class="gestion-pieza-confirm-label">
+                          <i *ngIf="cargandoUsoPieza" class="fas fa-spinner fa-spin"></i>
+                          <ng-container *ngIf="!cargandoUsoPieza">
+                            ¿Eliminar "{{ p }}"?
+                            <span class="gestion-pieza-uso" *ngIf="usoPiezaConteo">
+                              — {{ usoPiezaConteo }} ticket{{ usoPiezaConteo !== 1 ? 's' : '' }} ya la tiene{{ usoPiezaConteo !== 1 ? 'n' : '' }} asignada
+                            </span>
+                          </ng-container>
+                        </span>
+                        <button class="gestion-confirm-yes" (click)="confirmarEliminarPieza()" [disabled]="eliminandoPieza || cargandoUsoPieza" title="Sí, eliminar">
+                          <i class="fas" [class.fa-check]="!eliminandoPieza" [class.fa-spinner]="eliminandoPieza" [class.fa-spin]="eliminandoPieza"></i>
+                        </button>
+                        <button class="gestion-confirm-no" (click)="cancelarEliminarPieza()" [disabled]="eliminandoPieza" title="Cancelar">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </ng-template>
+                    </div>
+                    <div class="gestion-piezas-empty" *ngIf="piezasGestionables.length === 0">
+                      <i class="fas fa-inbox"></i> No hay piezas en el catálogo.
+                    </div>
                   </div>
                 </div>
 

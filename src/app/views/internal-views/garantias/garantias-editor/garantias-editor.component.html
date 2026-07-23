@@ -56,8 +56,10 @@
 
     <div class="editor-legend">
       <span><i class="fas fa-info-circle"></i></span>
-      Edita los títulos y campos de cada sección. Los cambios se aplican al formulario al guardar.
-      Las condiciones de visibilidad (lógica de marcas) son fijas y no se modifican aquí.
+      Los títulos y descripciones de sección, y las opciones de listas (desplegable / opción única) que ya
+      existen en el formulario, se aplican al guardar. Los campos marcados como "no editable" en su etiqueta
+      controlan qué secciones se muestran o están numerados contra un diagrama fijo, y no se modifican aquí.
+      Agregar campos completamente nuevos todavía no se refleja en el formulario público.
     </div>
 
     <div class="sections-list" *ngIf="!cargando">

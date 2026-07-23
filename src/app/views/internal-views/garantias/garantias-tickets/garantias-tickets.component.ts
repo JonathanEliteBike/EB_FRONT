@@ -107,6 +107,12 @@ export class GarantiasTicketsComponent implements OnInit {
   filtroMarca   = 'Todas';
   fechaDesde    = '';
   fechaHasta    = '';
+  ordenFecha: 'desc' | 'asc' = 'desc';
+
+  toggleOrdenFecha(): void {
+    this.ordenFecha = this.ordenFecha === 'desc' ? 'asc' : 'desc';
+    this.cdr.markForCheck();
+  }
 
   // Custom date picker
   readonly NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -153,6 +159,13 @@ export class GarantiasTicketsComponent implements OnInit {
   agregandoPieza    = false;
   piezasError       = false;
 
+  // Gestionar (eliminar) piezas duplicadas o mal capturadas del catálogo
+  mostrarGestionPiezas = false;
+  piezaAEliminar: string | null = null;
+  usoPiezaConteo: number | null = null;
+  cargandoUsoPieza = false;
+  eliminandoPieza  = false;
+
   // Importación masiva histórica
   modalImport           = false;
   archivoImport: File | null = null;
@@ -169,8 +182,10 @@ export class GarantiasTicketsComponent implements OnInit {
   // Edición inline de fechas existentes
   editandoFechaEstatus = false;
   editandoFechaPieza   = false;
+  editandoFechaCreacion = false;
   editFechaEstatus     = '';
   editFechaPieza       = '';
+  editFechaCreacion    = '';
 
   get hoy(): string {
     return new Date().toISOString().slice(0, 10);
@@ -363,7 +378,7 @@ export class GarantiasTicketsComponent implements OnInit {
     const desde = this.fechaDesde ? new Date(this.fechaDesde + 'T00:00:00') : null;
     const hasta = this.fechaHasta ? new Date(this.fechaHasta + 'T23:59:59') : null;
 
-    return this.tickets.filter(t => {
+    const resultado = this.tickets.filter(t => {
       if (es !== 'Todos' && t.estatus !== es) return false;
       if (ma !== 'Todas' && t.marca    !== ma) return false;
       if (desde || hasta) {
@@ -374,6 +389,13 @@ export class GarantiasTicketsComponent implements OnInit {
       }
       if (q && !(`${t.folio} ${t.distribuidor} ${t.contacto} ${t.marca}`).toLowerCase().includes(q)) return false;
       return true;
+    });
+
+    const signo = this.ordenFecha === 'asc' ? 1 : -1;
+    return resultado.sort((a, b) => {
+      const fa = this.parseFechaTicket(a.fecha_creacion ?? '')?.getTime() ?? 0;
+      const fb = this.parseFechaTicket(b.fecha_creacion ?? '')?.getTime() ?? 0;
+      return (fa - fb) * signo;
     });
   }
 
@@ -550,6 +572,10 @@ export class GarantiasTicketsComponent implements OnInit {
 
   // ─────────────────────────────────────────────────────────────────────────
 
+  get piezasGestionables(): string[] {
+    return this.piezasReemplazo.filter(p => p !== 'N/A');
+  }
+
   cargarPiezas(): void {
     this.piezasError = false;
     this.svc.getPiezas().subscribe({
@@ -579,6 +605,55 @@ export class GarantiasTicketsComponent implements OnInit {
         this.cargarPiezas();
       },
       error: () => { this.agregandoPieza = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  // ── Gestionar catálogo: quitar piezas duplicadas o mal capturadas ─────────
+  abrirGestionPiezas(): void {
+    this.mostrarGestionPiezas = true;
+    this.mostrarFormPieza     = false;
+    this.piezaAEliminar       = null;
+    this.cdr.markForCheck();
+  }
+
+  cerrarGestionPiezas(): void {
+    this.mostrarGestionPiezas = false;
+    this.piezaAEliminar       = null;
+    this.cdr.markForCheck();
+  }
+
+  pedirConfirmacionEliminarPieza(nombre: string): void {
+    if (nombre === 'N/A') return;
+    this.piezaAEliminar   = nombre;
+    this.usoPiezaConteo   = null;
+    this.cargandoUsoPieza = true;
+    this.cdr.markForCheck();
+    this.svc.contarUsoPieza(nombre).subscribe({
+      next: (res) => { this.usoPiezaConteo = res.count; this.cargandoUsoPieza = false; this.cdr.markForCheck(); },
+      error: () => { this.usoPiezaConteo = null; this.cargandoUsoPieza = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  cancelarEliminarPieza(): void {
+    this.piezaAEliminar = null;
+    this.usoPiezaConteo = null;
+    this.cdr.markForCheck();
+  }
+
+  confirmarEliminarPieza(): void {
+    if (!this.piezaAEliminar || this.eliminandoPieza) return;
+    const nombre = this.piezaAEliminar;
+    this.eliminandoPieza = true;
+    this.cdr.markForCheck();
+    this.svc.eliminarPieza(nombre).subscribe({
+      next: () => {
+        this.piezasReemplazo = this.piezasReemplazo.filter(p => p !== nombre);
+        this.piezaAEliminar  = null;
+        this.usoPiezaConteo  = null;
+        this.eliminandoPieza = false;
+        this.cdr.markForCheck();
+      },
+      error: () => { this.eliminandoPieza = false; this.cdr.markForCheck(); },
     });
   }
 
@@ -637,6 +712,33 @@ export class GarantiasTicketsComponent implements OnInit {
         this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.editandoFechaEstatus = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  // Fecha de alta (creación) del ticket — para corregir tickets dados de alta
+  // con la fecha equivocada sin tener que borrarlos y volver a capturarlos.
+  iniciarEditFechaCreacion(): void {
+    const f = this.parseFechaTicket(this.selected?.fecha_creacion ?? '');
+    this.editFechaCreacion    = f ? f.toISOString().slice(0, 10) : this.hoy;
+    this.editandoFechaCreacion = true;
+    this.cdr.markForCheck();
+  }
+
+  guardarFechaCreacion(): void {
+    if (!this.selected || !this.editFechaCreacion) return;
+    const fecha = this.editFechaCreacion;
+    this.svc.actualizarFechaCreacion(this.selected.id, fecha).subscribe({
+      next: () => {
+        const [y, m, d] = fecha.split('-');
+        const fechaMostrada = `${d}/${m}/${y} 00:00`;
+        this.selected!.fecha_creacion = fechaMostrada;
+        const idx = this.tickets.findIndex(t => t.id === this.selected!.id);
+        if (idx >= 0) this.tickets[idx].fecha_creacion = fechaMostrada;
+        this.editandoFechaCreacion = false;
+        this.cdr.markForCheck();
+        this.cargarComentarios(this.selected!.id, true);
+      },
+      error: () => { this.editandoFechaCreacion = false; this.cdr.markForCheck(); },
     });
   }
 
@@ -842,6 +944,71 @@ export class GarantiasTicketsComponent implements OnInit {
       .map(([k, v]) => ({ label: LABELS[k], value: v }));
   }
 
+  // Prefijo de campos según la categoría de producto (no aplica a bicicletas/marcos,
+  // que ya se cubren con datosBicicleta/danosMarco).
+  private get prefijoProducto(): string | null {
+    const marca = this.selected?.marca;
+    const datos = (this.selected?.datos ?? {}) as Record<string, any>;
+    if (marca === 'SCOTT') {
+      switch (datos['scott_grupo']) {
+        case 'Cascos':       return 'casco';
+        case 'Protecciones': return 'prot';
+        case 'Zapatos':      return 'zapato';
+        case 'Componentes':
+        case 'Componentes - Piezas Eléctricas': return 'comp';
+        default: return null; // Cuadros -> bici_*
+      }
+    }
+    if (marca === 'SYNCROS') {
+      switch (datos['syncros_tipo']) {
+        case 'Manubrios':     return 'manubrio';
+        case 'Asientos':      return 'asiento';
+        case 'Poste':         return 'poste';
+        case 'Ruedos/Rines':  return 'rin';
+        default: return null;
+      }
+    }
+    if (marca === 'VITTORIA') return 'vittoria';
+    return null; // BOLD/MEGAMO -> bici_*
+  }
+
+  private readonly SUFIJOS_PRODUCTO: Record<string, string> = {
+    modelo: 'Modelo', anio: 'Año', color: 'Color', serie: 'Número de Serie',
+    talla: 'Talla', lote: 'Número de Lote / Código', medida: 'Medida', tipo: 'Tipo de Componente',
+  };
+
+  private readonly SUFIJOS_DANO: Record<string, string> = {
+    localizacion: 'Localización del Daño',
+    localizacion_otro: 'Especificar Localización',
+    localizacion_otros: 'Especificar Localización',
+    tipo_dano: 'Tipo de Daño',
+    tipo_dano_otro: 'Especificar Tipo de Daño',
+    tipo_dano_otros: 'Especificar Tipo de Daño',
+    dano_desc: 'Descripción del Daño',
+    comentarios: 'Comentarios',
+    error: 'Código de Error',
+  };
+
+  private camposPorSufijo(sufijos: Record<string, string>): Array<{ label: string; value: any }> {
+    const prefijo = this.prefijoProducto;
+    if (!prefijo || !this.selected?.datos) return [];
+    const datos = this.selected.datos as Record<string, any>;
+    return Object.entries(sufijos)
+      .filter(([suf]) => {
+        const v = datos[`${prefijo}_${suf}`];
+        return v !== undefined && v !== null && v !== '';
+      })
+      .map(([suf, label]) => ({ label, value: datos[`${prefijo}_${suf}`] }));
+  }
+
+  get datosProducto(): Array<{ label: string; value: any }> {
+    return this.camposPorSufijo(this.SUFIJOS_PRODUCTO);
+  }
+
+  get danoProducto(): Array<{ label: string; value: any }> {
+    return this.camposPorSufijo(this.SUFIJOS_DANO);
+  }
+
   get danosMarco(): Array<{ seccion: number; localizacion: string; tipo: string; comentarios: string }> {
     if (!this.selected?.datos) return [];
     const datos = this.selected.datos as Record<string, any>;
@@ -867,6 +1034,7 @@ export class GarantiasTicketsComponent implements OnInit {
 
   get hayDatos(): boolean {
     return this.datosBicicleta.length > 0 || this.documentos.length > 0
-        || this.datosMarca.length > 0 || this.danosMarco.length > 0;
+        || this.datosMarca.length > 0 || this.danosMarco.length > 0
+        || this.datosProducto.length > 0 || this.danoProducto.length > 0;
   }
 }

@@ -22,9 +22,34 @@
         <i class="fas fa-sync-alt"></i> Refrescar
       </button>
       <button class="btn btn-primary" (click)="exportar()">
-        <i class="fas fa-file-excel"></i> Exportar Excel
+        <i class="fas fa-file-pdf"></i> Exportar PDF
       </button>
     </div>
+  </div>
+
+  <!-- ── PERIODO: temporada + rango personalizado ── -->
+  <div class="periodo-bar" *ngIf="temporadas.length">
+    <div class="periodo-label"><i class="fas fa-calendar-week"></i> Periodo</div>
+    <app-temporada-selector
+      [temporadas]="temporadasCerradas"
+      [seleccionada]="temporadaSeleccionada"
+      [incluirHistorico]="true"
+      (cambio)="onTemporadaCambio($event)">
+    </app-temporada-selector>
+    <span class="periodo-divider">ó</span>
+    <app-date-picker
+      mode="range"
+      placeholder="Rango de fechas personalizado"
+      [desde]="rangoDesde"
+      [hasta]="rangoHasta"
+      (rangeChange)="onRangoManual($event)">
+    </app-date-picker>
+    <span class="periodo-rango" *ngIf="rangoDesde && rangoHasta">
+      {{ rangoDesde }} → {{ rangoHasta }}
+    </span>
+    <span class="periodo-rango" *ngIf="!rangoDesde && !rangoHasta">
+      <i class="fas fa-infinity"></i> Histórico completo
+    </span>
   </div>
 
   <!-- ── LOADING ── -->
@@ -242,18 +267,23 @@
             </div>
           </div>
           <div class="rank-actions">
-            <button class="btn-sort-rank" (click)="toggleSortRank('garantias_cliente')"
-                    [title]="sortDirRank['garantias_cliente'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
-              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['garantias_cliente'] === 'desc'"
-                             [class.fa-sort-amount-up]="sortDirRank['garantias_cliente'] === 'asc'"></i>
-            </button>
+            <select class="rank-sort-select" [ngModel]="sortModeRank['garantias_cliente']"
+                    (ngModelChange)="setSortMode('garantias_cliente', $event)">
+              <option *ngFor="let o of sortModeOpciones" [value]="o.value">{{ o.label }}</option>
+            </select>
+            <select class="mlat-select rank-estatus-select" [(ngModel)]="filtroEstatusCliente">
+              <option value="">Todos los estatus</option>
+              <option *ngFor="let e of estatusLatOpciones" [value]="e">{{ e }}</option>
+            </select>
             <button class="btn-ver-todos" (click)="abrirModal('garantias_cliente')">
               <i class="fas fa-expand-alt"></i> Ver todos
             </button>
           </div>
         </div>
-        <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of rankSorted(topClientes, 'garantias_cliente'); let i = index">
+        <div class="rank-total">Total: <strong>{{ totalClientesFiltrado }}</strong> garantía{{ totalClientesFiltrado !== 1 ? 's' : '' }}</div>
+        <div class="rank-list rank-list-scroll">
+          <div class="rank-row rank-row-click" *ngFor="let item of rankOrdenado(clientesGarantiaItems, 'garantias_cliente'); let i = index"
+               (click)="abrirKardex(item.key)" title="Ver Kardex del cliente">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -275,18 +305,18 @@
             </div>
           </div>
           <div class="rank-actions">
-            <button class="btn-sort-rank" (click)="toggleSortRank('latencia_cliente')"
-                    [title]="sortDirRank['latencia_cliente'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
-              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['latencia_cliente'] === 'desc'"
-                             [class.fa-sort-amount-up]="sortDirRank['latencia_cliente'] === 'asc'"></i>
-            </button>
+            <select class="rank-sort-select" [ngModel]="sortModeRank['latencia_cliente']"
+                    (ngModelChange)="setSortMode('latencia_cliente', $event)">
+              <option *ngFor="let o of sortModeOpciones" [value]="o.value">{{ o.label }}</option>
+            </select>
             <button class="btn-ver-todos" (click)="abrirModal('latencia_cliente')">
               <i class="fas fa-expand-alt"></i> Ver todos
             </button>
           </div>
         </div>
-        <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of rankSorted(topLatencia, 'latencia_cliente'); let i = index">
+        <div class="rank-list rank-list-scroll">
+          <div class="rank-row rank-row-click" *ngFor="let item of rankOrdenado(topLatencia, 'latencia_cliente'); let i = index"
+               (click)="abrirKardex(item.key)" title="Ver Kardex del cliente">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -308,11 +338,10 @@
             </div>
           </div>
           <div class="rank-actions">
-            <button class="btn-sort-rank" (click)="toggleSortRank('piezas_reemplazo')"
-                    [title]="sortDirRank['piezas_reemplazo'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
-              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['piezas_reemplazo'] === 'desc'"
-                             [class.fa-sort-amount-up]="sortDirRank['piezas_reemplazo'] === 'asc'"></i>
-            </button>
+            <select class="rank-sort-select" [ngModel]="sortModeRank['piezas_reemplazo']"
+                    (ngModelChange)="setSortMode('piezas_reemplazo', $event)">
+              <option *ngFor="let o of sortModeOpciones" [value]="o.value">{{ o.label }}</option>
+            </select>
             <button class="btn-ver-todos" (click)="abrirModal('piezas_reemplazo')">
               <i class="fas fa-expand-alt"></i> Ver todos
             </button>
@@ -322,9 +351,14 @@
           <div *ngIf="topPiezas.length === 0" class="rank-empty">
             <i class="fas fa-wrench"></i> Sin piezas asignadas aún.
           </div>
-          <div class="rank-row" *ngFor="let item of rankSorted(topPiezas, 'piezas_reemplazo'); let i = index">
+          <div class="rank-row" [class.rank-row-click]="item.key === 'CUADRO'"
+               *ngFor="let item of rankOrdenado(topPiezas, 'piezas_reemplazo'); let i = index"
+               (click)="item.key === 'CUADRO' && abrirCuadros()"
+               [title]="item.key === 'CUADRO' ? 'Ver desglose por tipo de marco' : item.key">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
-            <span class="rank-label" [title]="item.key">{{ item.key }}</span>
+            <span class="rank-label">{{ item.key }}
+              <i class="fas fa-chevron-right rank-drill-icon" *ngIf="item.key === 'CUADRO'"></i>
+            </span>
             <div class="rank-bar-track">
               <div class="rank-bar-fill" [style.width.%]="item.pct" [style.background]="item.color"></div>
             </div>
@@ -344,18 +378,17 @@
             </div>
           </div>
           <div class="rank-actions">
-            <button class="btn-sort-rank" (click)="toggleSortRank('ubicacion_dano')"
-                    [title]="sortDirRank['ubicacion_dano'] === 'desc' ? 'Orden ascendente' : 'Orden descendente'">
-              <i class="fas" [class.fa-sort-amount-down]="sortDirRank['ubicacion_dano'] === 'desc'"
-                             [class.fa-sort-amount-up]="sortDirRank['ubicacion_dano'] === 'asc'"></i>
-            </button>
+            <select class="rank-sort-select" [ngModel]="sortModeRank['ubicacion_dano']"
+                    (ngModelChange)="setSortMode('ubicacion_dano', $event)">
+              <option *ngFor="let o of sortModeOpciones" [value]="o.value">{{ o.label }}</option>
+            </select>
             <button class="btn-ver-todos" (click)="abrirModal('ubicacion_dano')">
               <i class="fas fa-expand-alt"></i> Ver todos
             </button>
           </div>
         </div>
         <div class="rank-list">
-          <div class="rank-row" *ngFor="let item of rankSorted(topUbicaciones, 'ubicacion_dano'); let i = index">
+          <div class="rank-row" *ngFor="let item of rankOrdenado(topUbicaciones, 'ubicacion_dano'); let i = index">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label" [title]="item.key">{{ item.key }}</span>
             <div class="rank-bar-track">
@@ -562,6 +595,183 @@
               </span>
               <span class="lat-na" *ngIf="l.lat_cierre === null || l.lat_cierre === undefined">—</span>
             </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Kardex de Cliente (Garantías por Cliente + Latencia por Cliente) -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalKardexAbierto" (click)="cerrarKardex()">
+  <div class="modal-panel modal-lat-panel" (click)="$event.stopPropagation()">
+
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-icon-wrap"><i class="fas fa-id-card"></i></div>
+        <div>
+          <h2>Kardex de Cliente</h2>
+          <p class="modal-sub">{{ kardexCliente }}</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="cerrarKardex()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <ng-container *ngIf="kardexResumen as r">
+      <div class="kardex-resumen">
+        <div class="kardex-resumen-total">
+          <span class="kardex-resumen-num">{{ r.total }}</span>
+          <span class="kardex-resumen-label">Garantía{{ r.total !== 1 ? 's' : '' }} en total</span>
+        </div>
+        <div class="kardex-chips">
+          <ng-container *ngFor="let e of estatusLatOpciones">
+            <span class="lat-estatus-chip" *ngIf="r.porEstatus[e]"
+                  [style.background]="colorEstatus(e) + '22'"
+                  [style.color]="colorEstatus(e)"
+                  [style.border-color]="colorEstatus(e) + '55'">
+              {{ e }}: {{ r.porEstatus[e] }}
+            </span>
+          </ng-container>
+        </div>
+        <div class="kardex-latencias">
+          <span *ngIf="r.latAtencionProm !== null">
+            Lat. atención prom.: <strong [style.color]="colorLatencia(r.latAtencionProm)">{{ r.latAtencionProm }}&nbsp;d</strong>
+          </span>
+          <span *ngIf="r.latCierreProm !== null">
+            Lat. cierre prom.: <strong [style.color]="colorLatencia(r.latCierreProm)">{{ r.latCierreProm }}&nbsp;d</strong>
+          </span>
+        </div>
+        <button class="btn-ver-todos kardex-export-btn" (click)="exportarKardexActual()">
+          <i class="fas fa-file-pdf"></i> Exportar PDF
+        </button>
+      </div>
+    </ng-container>
+
+    <div class="mlat-table-wrap">
+      <div class="mlat-empty" *ngIf="kardexTickets.length === 0">
+        <i class="fas fa-inbox"></i>
+        <span>Sin tickets para este cliente.</span>
+      </div>
+      <table class="lat-table mlat-table" *ngIf="kardexTickets.length > 0">
+        <thead>
+          <tr>
+            <th class="lat-th-sort" (click)="toggleSortKardex('folio')">
+              Folio <i class="fas {{ sortIconKardex('folio') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortKardex('marca')">
+              Marca <i class="fas {{ sortIconKardex('marca') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortKardex('estatus')">
+              Estatus <i class="fas {{ sortIconKardex('estatus') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortKardex('fecha_creacion')">
+              Fecha <i class="fas {{ sortIconKardex('fecha_creacion') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortKardex('lat_atencion')" title="Días hasta validación de docs">
+              Lat. Atención <i class="fas {{ sortIconKardex('lat_atencion') }} sort-icon"></i>
+            </th>
+            <th class="lat-th-sort" (click)="toggleSortKardex('lat_cierre')" title="Días hasta cierre o rechazo">
+              Lat. Cierre <i class="fas {{ sortIconKardex('lat_cierre') }} sort-icon"></i>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of kardexTickets">
+            <td class="lat-folio">{{ t.folio }}</td>
+            <td>{{ t.marca }}</td>
+            <td>
+              <span class="lat-estatus-chip"
+                    [style.background]="colorEstatus(t.estatus) + '22'"
+                    [style.color]="colorEstatus(t.estatus)"
+                    [style.border-color]="colorEstatus(t.estatus) + '55'">
+                {{ t.estatus }}
+              </span>
+            </td>
+            <td class="date-cell">{{ t.fecha_creacion }}</td>
+            <td>
+              <span class="lat-dias" *ngIf="t.lat_atencion !== null && t.lat_atencion !== undefined"
+                    [style.color]="colorLatencia(t.lat_atencion)">
+                {{ t.lat_atencion }} días
+              </span>
+              <span class="lat-na" *ngIf="t.lat_atencion === null || t.lat_atencion === undefined">—</span>
+            </td>
+            <td>
+              <span class="lat-dias" *ngIf="t.lat_cierre !== null && t.lat_cierre !== undefined"
+                    [style.color]="colorLatencia(t.lat_cierre)">
+                {{ t.lat_cierre }} días
+              </span>
+              <span class="lat-na" *ngIf="t.lat_cierre === null || t.lat_cierre === undefined">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Cuadros por Tipo de Marco (desde Piezas de Reemplazo)           -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="modalCuadrosAbierto" (click)="cerrarCuadros()">
+  <div class="modal-panel modal-lat-panel" (click)="$event.stopPropagation()">
+
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-icon-wrap"><i class="fas fa-bicycle"></i></div>
+        <div>
+          <h2>Cuadros por Tipo de Marco</h2>
+          <p class="modal-sub" *ngIf="!cuadroTipoSeleccionado">Desglose de piezas "CUADRO" registradas</p>
+          <p class="modal-sub" *ngIf="cuadroTipoSeleccionado">{{ cuadroTipoSeleccionado }} — tickets y tipo de daño</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="cerrarCuadros()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Vista de conteo por tipo de marco -->
+    <div class="rank-list cuadros-conteo" *ngIf="!cuadroTipoSeleccionado">
+      <div class="mlat-empty" *ngIf="cuadrosConteo.length === 0">
+        <i class="fas fa-inbox"></i>
+        <span>Sin cuadros registrados en piezas de reemplazo.</span>
+      </div>
+      <div class="rank-row rank-row-click" *ngFor="let item of cuadrosConteo; let i = index"
+           (click)="verDetalleCuadro(item.key)" title="Ver tickets de este tipo">
+        <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
+        <span class="rank-label">{{ item.key }}
+          <i class="fas fa-chevron-right rank-drill-icon"></i>
+        </span>
+        <div class="rank-bar-track">
+          <div class="rank-bar-fill" [style.width.%]="item.pct" [style.background]="item.color"></div>
+        </div>
+        <span class="rank-value">{{ item.value }}</span>
+      </div>
+    </div>
+
+    <!-- Vista de detalle por tipo de marco seleccionado -->
+    <div class="mlat-table-wrap" *ngIf="cuadroTipoSeleccionado">
+      <button class="btn-cancel-sm cuadros-volver-btn" (click)="volverAConteoCuadros()">
+        <i class="fas fa-arrow-left"></i> Volver al conteo
+      </button>
+      <table class="lat-table mlat-table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Distribuidor</th>
+            <th>Tipo de Daño</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of cuadrosDetalleFiltrado">
+            <td class="lat-folio">{{ d.folio }}</td>
+            <td class="lat-dist">{{ d.distribuidor }}</td>
+            <td>{{ d.tipo_dano }}</td>
           </tr>
         </tbody>
       </table>

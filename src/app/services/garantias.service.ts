@@ -11,6 +11,13 @@ export interface GarantiasKpis {
   lat_cierre: number;
 }
 
+export interface CuadroDetalle {
+  folio: string;
+  distribuidor: string;
+  tipo_marco: string;
+  tipo_dano: string;
+}
+
 export interface GarantiasDashboard {
   kpis: GarantiasKpis;
   por_estatus: Record<string, number>;
@@ -20,6 +27,8 @@ export interface GarantiasDashboard {
   piezas_reemplazo: Record<string, number>;
   ubicacion_dano: Record<string, number>;
   por_marca: Record<string, number>;
+  cuadros_por_tipo_marco: Record<string, number>;
+  cuadros_detalle: CuadroDetalle[];
   ultima_actualizacion: string;
 }
 
@@ -28,6 +37,8 @@ export interface LatenciaTicket {
   folio: string;
   estatus: string;
   distribuidor: string;
+  marca: string;
+  fecha_creacion: string;
   lat_atencion: number | null;
   lat_cierre: number | null;
 }
@@ -84,16 +95,27 @@ export class GarantiasService {
   constructor(private http: HttpClient) {}
 
   // ── Dashboard ────────────────────────────────────────
-  getDashboard(): Observable<GarantiasDashboard> {
-    return this.http.get<GarantiasDashboard>(`${this.api}/garantias/dashboard`);
+  getDashboard(desde?: string, hasta?: string): Observable<GarantiasDashboard> {
+    let url = `${this.api}/garantias/dashboard`;
+    if (desde && hasta) url += `?desde=${desde}&hasta=${hasta}`;
+    return this.http.get<GarantiasDashboard>(url);
   }
 
   refrescar(): Observable<any> {
     return this.http.post(`${this.api}/garantias/refrescar`, {});
   }
 
-  getExportUrl(): string {
-    return `${this.api}/garantias/exportar`;
+  getExportUrl(distribuidor?: string, desde?: string, hasta?: string): string {
+    const url = `${this.api}/garantias/exportar`;
+    const params: string[] = [];
+    if (distribuidor) params.push(`distribuidor=${encodeURIComponent(distribuidor)}`);
+    if (desde && hasta) params.push(`desde=${desde}`, `hasta=${hasta}`);
+    return params.length ? `${url}?${params.join('&')}` : url;
+  }
+
+  // ── Temporadas (mismo endpoint compartido que usan caratulas/monitor) ─
+  getTemporadas(): Observable<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]> {
+    return this.http.get<any>(`${this.api}/temporadas`);
   }
 
   // ── DB init ──────────────────────────────────────────
@@ -137,6 +159,12 @@ export class GarantiasService {
 
   actualizarFechaEstatus(id: number, fecha: string): Observable<any> {
     return this.http.put(`${this.api}/garantias/formulario/${id}/fecha-estatus`, {
+      fecha
+    });
+  }
+
+  actualizarFechaCreacion(id: number, fecha: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/formulario/${id}/fecha-creacion`, {
       fecha
     });
   }
@@ -233,6 +261,19 @@ export class GarantiasService {
     return this.http.post<{ ok: boolean; nombre: string }>(
       `${this.api}/garantias/piezas`,
       { nombre }
+    );
+  }
+
+  contarUsoPieza(nombre: string): Observable<{ nombre: string; count: number }> {
+    return this.http.get<{ nombre: string; count: number }>(
+      `${this.api}/garantias/piezas/uso?nombre=${encodeURIComponent(nombre)}`
+    );
+  }
+
+  eliminarPieza(nombre: string): Observable<{ ok: boolean; nombre: string }> {
+    return this.http.delete<{ ok: boolean; nombre: string }>(
+      `${this.api}/garantias/piezas`,
+      { body: { nombre } }
     );
   }
 

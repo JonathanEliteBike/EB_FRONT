@@ -51,7 +51,7 @@
            class="step-dot"
            [class.active]="i === currentStepIdx"
            [class.done]="i < currentStepIdx"
-           [title]="sec.label">
+           [title]="tituloSeccion(sec.id)">
       </div>
     </div>
 
@@ -59,8 +59,9 @@
     <div class="form-card">
       <div class="section-header">
         <span class="section-num">{{ currentSection.id }}</span>
-        <h2 class="section-title">{{ currentSection.label }}</h2>
+        <h2 class="section-title">{{ tituloSeccion(currentSection.id) }}</h2>
       </div>
+      <p class="section-intro" *ngIf="descripcionSeccion(currentSection.id)">{{ descripcionSeccion(currentSection.id) }}</p>
 
       <!-- ════════════════════════════════════════════════════════ -->
       <!-- SECCIÓN 1: Información del Solicitante                  -->
@@ -99,7 +100,7 @@
         <div class="field-group">
           <label class="field-label required">Rol que desempeña dentro de la compañía</label>
           <div class="radio-grid" style="flex-direction:column; gap:8px;">
-            <label *ngFor="let rol of ['Dueño','Encargado de Sucursal','Servicio Técnico','Vendedor']"
+            <label *ngFor="let rol of puestos"
                    class="radio-option" [class.selected]="formData.puesto === rol">
               <input type="radio" [value]="rol" [(ngModel)]="formData.puesto" name="puesto">
               <span class="radio-mark"></span>

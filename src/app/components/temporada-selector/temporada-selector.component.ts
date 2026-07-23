@@ -4,6 +4,12 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+/** Valor especial emitido por la opción "Histórico completo" (solo si
+ *  `incluirHistorico` está activo) -- distinto de '' (temporada actual) y de
+ *  una etiqueta real de temporada cerrada, para que el consumidor pueda
+ *  distinguir los tres casos sin ambigüedad. */
+export const TEMPORADA_HISTORICO = '__HISTORICO__';
+
 /**
  * Selector custom de temporada (actual vs. temporadas cerradas). Reemplaza
  * el <select> nativo -- el menu desplegado de un <select> usa el estilo del
@@ -14,6 +20,10 @@ import { CommonModule } from '@angular/common';
  * Emite '' para "temporada actual", o la etiqueta (ej. '2025-2026') para una
  * temporada cerrada -- mismo contrato que ya esperan los metodos
  * verTemporadaPasada(temporada: string) existentes en cada pantalla.
+ *
+ * `incluirHistorico` es opt-in (default false) para no alterar las pantallas
+ * que ya consumen este componente (caratulas, monitor, multimarcas) -- si se
+ * activa, aparece una opción extra que emite TEMPORADA_HISTORICO.
  */
 @Component({
   selector: 'app-temporada-selector',
@@ -27,6 +37,9 @@ export class TemporadaSelectorComponent {
   @Input() temporadas: string[] = [];
   @Input() seleccionada: string | null = null;
   @Input() disabled = false;
+  @Input() incluirHistorico = false;
+
+  readonly HISTORICO = TEMPORADA_HISTORICO;
 
   @Output() cambio = new EventEmitter<string>();
 
@@ -66,6 +79,7 @@ export class TemporadaSelectorComponent {
   }
 
   get etiquetaActual(): string {
+    if (this.seleccionada === this.HISTORICO) return 'Histórico completo';
     return this.seleccionada || 'Temporada actual';
   }
 }
