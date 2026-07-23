@@ -60,6 +60,7 @@ export interface ForecastRow {
   color: string;
   talla: string;
   fuente?: string;
+  categ_path?: string;
   actualizado_en?: string;
   precio_publico?: number | null;
   mayo: number;
@@ -234,7 +235,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       if (this.filtroModelo && r.modelo !== this.filtroModelo) return false;
       // Ocultar bicicletas con 0 unidades fuera del modo edición.
       // Productos excel (apparel/Syncros) siempre se muestran para que el usuario pueda editarlos.
-      if (!this.modoEdicion && !r._nuevo && this.calcTotal(r) === 0 && r.fuente !== 'excel') return false;
+      if (!this.modoEdicion && !r._nuevo && this.calcTotal(r) === 0) return false;
       return true;
     });
   }
@@ -258,26 +259,42 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
              ProyeccionesTabComponent._PARTE_KW.some(kw => n.includes(kw));
     };
 
-    // Bicicletas: whitelist de Odoo (asumidas bici a menos que sean ropa/refacción)
-    // o legado con marca conocida
+    // Extrae la marca desde categ_path de Odoo (primer segmento): "SCOTT / BICICLETA / ..." → "SCOTT"
+    const _categBrand = (r: ForecastRow): string => {
+      const cat = (r.categ_path || '').toUpperCase().trim();
+      if (!cat || !cat.includes(' / ')) return '';
+      return cat.split(' / ')[0].trim();
+    };
+
+    // Detectar bicicleta usando categ_path de Odoo; fallback por nombre de producto
     const esBicicleta = (r: ForecastRow): boolean => {
-      // Productos de Odoo whitelist que no son ropa ni refacción → bicicleta
-      if (r.fuente === 'whitelist') return true;
-      // Filas legado: detectar por nombre
+      const cat = (r.categ_path || '').toUpperCase().trim();
+      if (cat) {
+        if (cat.includes('BICICLET') || cat === 'BICIS' || cat === 'BICICLETAS') return true;
+        if (cat.includes(' / ') && !cat.includes('BICICLET')) return false;
+      }
       const n = (r.producto || '').toUpperCase();
       return n.includes('BICICLET') || n.includes('E-BIKE') || n.includes('EBIKE');
     };
 
-    const esBici = (r: ForecastRow) =>
-      !r._nuevo && !esRopa(r) && !esSyncros(r) && esBicicleta(r) && (
-        r.fuente === 'whitelist' ||
-        (r.fuente !== 'excel' &&
-          !r.sku.toUpperCase().includes('-APP-') &&
-          ['MEGAMO', 'SCOTT'].includes((r.marca || '').toUpperCase()))
-      );
+    const esBici = (r: ForecastRow): boolean => {
+      if (r._nuevo || esRopa(r) || esSyncros(r) || !esBicicleta(r)) return false;
+      return true;
+    };
 
-    const megamo  = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'MEGAMO');
-    const scott   = all.filter(r => esBici(r) && (r.marca || '').toUpperCase() === 'SCOTT');
+    // Inferir marca: priorizar categ_path, luego campo marca, luego nombre de producto
+    const _marcaBici = (r: ForecastRow): string => {
+      const brand = _categBrand(r);
+      if (brand === 'MEGAMO' || brand === 'SCOTT') return brand;
+      const m = (r.marca || '').toUpperCase();
+      if (m === 'MEGAMO' || m === 'SCOTT') return m;
+      const n = (r.producto || '').toUpperCase();
+      if (n.includes('MEGAMO')) return 'MEGAMO';
+      if (n.includes('SCOTT')) return 'SCOTT';
+      return m;
+    };
+    const megamo  = all.filter(r => esBici(r) && _marcaBici(r) === 'MEGAMO');
+    const scott   = all.filter(r => esBici(r) && _marcaBici(r) === 'SCOTT');
     const syncros = all.filter(r => !r._nuevo && !esBici(r) && esSyncros(r));
 
     // Ropa/accesorios de vestir agrupados por marca (todo lo que no es bici ni Syncros)

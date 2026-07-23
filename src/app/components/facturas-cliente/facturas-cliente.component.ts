@@ -369,7 +369,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
                 fecha_esperada: r.fecha_esperada ?? null,
                 po_name: r.po_name ?? null,
                 de_proyeccion: r.de_proyeccion ?? false,
-                etiquetas: Array.isArray(r.etiquetas) ? r.etiquetas : []
+                etiquetas: Array.isArray(r.etiquetas) ? r.etiquetas.filter((t: string) => t.includes('MY27')) : []
               }));
               if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.error = null;
