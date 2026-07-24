@@ -1,4 +1,4 @@
-import { AtributoDinamico } from "./atributo-dinamico.model";
+import { AtributoDinamico, AtributoDinamicoFlete } from "./atributo-dinamico.model";
 
 export interface Clasificacion {
   id: number;
@@ -14,10 +14,6 @@ export interface Clasificacion {
   multimarca_compra_minima_anual: number;
   bicicleta_compra_minima_anual_multiplo: number;
   multimarca_compra_minima_anual_multiplo: number;
-  precio_actual_bici_cn: number; 
-  precio_actual_bici_tw: number; 
-  precio_actual_ebike: number;
-  precio_actual_caja_acc: number;
   porcentaje_subsidio: number;
   precio_pagar_temporada_bici_cn: number;
   precio_pagar_temporada_bici_tw: number;
@@ -30,6 +26,8 @@ export interface Clasificacion {
   poligono_exclusivo: string;
   plazo_pago: string;
   beneficios_dinamicos: AtributoDinamico[];
+  fletes: AtributoDinamicoFlete[];
+  promedioSubsidioFlete: number;
 }
 
 export const LISTA_CLASIFICACIONES: Clasificacion[] = 
@@ -47,10 +45,12 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     multimarca_compra_minima_anual: 0,
     bicicleta_compra_minima_anual_multiplo: 1.15,
     multimarca_compra_minima_anual_multiplo: 0.089,
-    precio_actual_bici_cn: 488,
-    precio_actual_bici_tw: 750,
-    precio_actual_ebike: 960,
-    precio_actual_caja_acc: 270,
+    fletes: [
+      { descripcion: "bici_cn", valor: 488 },
+      { descripcion: "bici_tw", valor: 750 },
+      { descripcion: "ebike", valor: 960 },
+      { descripcion: "caja_acc", valor: 270 }
+    ],
     porcentaje_subsidio: 50,
     precio_pagar_temporada_bici_cn: 0, //Calculado
     precio_pagar_temporada_bici_tw: 0, //Calculado
@@ -66,6 +66,7 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
       { descripcion: "ACCESO A PEDIDOS EN TRANSITO", valor: "SI" },
       { descripcion: "Politica de Garantía de Buena Voluntad", valor: "SI"},
     ],
+    promedioSubsidioFlete: 0
   },
   {
     id: 3,
@@ -81,10 +82,12 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     multimarca_compra_minima_anual: 0,
     bicicleta_compra_minima_anual_multiplo: 1.1,
     multimarca_compra_minima_anual_multiplo: 0.133,
-    precio_actual_bici_cn: 488,
-    precio_actual_bici_tw: 750,
-    precio_actual_ebike: 960,
-    precio_actual_caja_acc: 270,
+    fletes: [
+      { descripcion: "bici_cn", valor: 488 },
+      { descripcion: "bici_tw", valor: 750 },
+      { descripcion: "ebike", valor: 960 },
+      { descripcion: "caja_acc", valor: 270 }
+    ],
     porcentaje_subsidio: 30,
     precio_pagar_temporada_bici_cn: 0, //Calculado
     precio_pagar_temporada_bici_tw: 0, //Calculado
@@ -96,11 +99,11 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     seguro_transporte_caja_acc: 0,
     poligono_exclusivo: "SI",
     plazo_pago: "60 Días",
-
     beneficios_dinamicos: [
       { descripcion: "ACCESO A PEDIDOS EN TRANSITO", valor: "SI" },
       { descripcion: "Politica de Garantía de Buena Voluntad", valor: "SI" },
     ],
+    promedioSubsidioFlete: 0
   },
   {
     id: 2,
@@ -116,10 +119,12 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     multimarca_compra_minima_anual: 0,
     bicicleta_compra_minima_anual_multiplo: 1.05,
     multimarca_compra_minima_anual_multiplo: 0.12,
-    precio_actual_bici_cn: 488,
-    precio_actual_bici_tw: 750,
-    precio_actual_ebike: 960,
-    precio_actual_caja_acc: 270,
+    fletes: [
+      { descripcion: "bici_cn", valor: 488 },
+      { descripcion: "bici_tw", valor: 750 },
+      { descripcion: "ebike", valor: 960 },
+      { descripcion: "caja_acc", valor: 270 }
+    ],
     porcentaje_subsidio: 0,
     precio_pagar_temporada_bici_cn: 0, //Calculado
     precio_pagar_temporada_bici_tw: 0, //Calculado
@@ -131,11 +136,11 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     seguro_transporte_caja_acc: 0,
     poligono_exclusivo: "",
     plazo_pago: "45 Días",
-  
     beneficios_dinamicos: [
       { descripcion: "SEGURO DE INVERSION (Descuento retroactivo en caso de disminución de precios***)", valor: "0%" },
       { descripcion: "ACCESO TIENDAS ELITE (Pedidos en Transito Con preferencia de acceso nuevo producto)", valor: "SI" },
     ],
+    promedioSubsidioFlete: 0
   },
   {
     id: 1,
@@ -151,10 +156,12 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     multimarca_compra_minima_anual: 0,
     bicicleta_compra_minima_anual_multiplo: 1, //el valor original es 0 pero se multplica por uno para evitar el cero
     multimarca_compra_minima_anual_multiplo: 0.13,
-    precio_actual_bici_cn: 488,
-    precio_actual_bici_tw: 750,
-    precio_actual_ebike: 960,
-    precio_actual_caja_acc: 270,
+    fletes: [
+      { descripcion: "bici_cn", valor: 488 },
+      { descripcion: "bici_tw", valor: 750 },
+      { descripcion: "ebike", valor: 960 },
+      { descripcion: "caja_acc", valor: 270 }
+    ],
     porcentaje_subsidio: 0,
     precio_pagar_temporada_bici_cn: 0,  //Calculado
     precio_pagar_temporada_bici_tw: 0, //Calculado
@@ -166,9 +173,9 @@ export const LISTA_CLASIFICACIONES: Clasificacion[] =
     seguro_transporte_caja_acc: 0,
     poligono_exclusivo: "",
     plazo_pago: "30 Días",
-
     beneficios_dinamicos: [
       { descripcion: "ACCESO TIENDAS ELITE (Pedidos en Transito Con preferencia de acceso nuevo producto)", valor: "SI" },
     ],
+    promedioSubsidioFlete: 0
   },
 ];

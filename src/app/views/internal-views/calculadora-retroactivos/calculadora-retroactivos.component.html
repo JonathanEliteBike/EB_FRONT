@@ -35,7 +35,7 @@
 
   <div style="display: flex; flex-wrap: wrap; gap: 10px;">
     <div class="dropdown">
-      <label>Poligono</label>
+      <label>POLÍGONO</label>
       <select class="select-control" required [(ngModel)]="poligonoSeleccionado" (ngModelChange)="obtenerClasificacionSugerida()">
         <option value="" disabled selected>Selecciona una opción...</option>
         <option *ngFor="let item of listaPoligonos" [ngValue]="item">
@@ -45,12 +45,12 @@
     </div>
 
     <div class="dropdown">
-      <label>Nivel Mínimo del Polígono</label>
+      <label>NIVEL MÍNIMO DEL POLÍGONO</label>
       <span>{{ clasificacionSugerida().descripcion }}</span>
     </div>
 
     <div class="dropdown">
-      <label>Nivel</label>
+      <label>NIVEL</label>
       <select class="select-control" required [(ngModel)]="clasificacionSeleccionada" (ngModelChange)="buscarPoligonoExclusivoPorNivel()">
         <option value="" disabled selected>Selecciona una opción...</option>  
         <option *ngFor="let item of listaClasificaciones" [ngValue]="item">
@@ -60,7 +60,7 @@
     </div>
 
     <div class="dropdown">
-      <label>Sucursales</label>
+      <label>SUCURSALES</label>
       <select class="select-control" required [(ngModel)]="sucursalSeleccionada" (ngModelChange)="calcularDetalleRetroActivo()">
         <option value="" disabled selected>Selecciona una opción...</option>
         <option *ngFor="let item of listaSucursales" [ngValue]="item">
@@ -227,34 +227,53 @@
   <p class="descripcion">*** Indicativo, no es retroactivo, sino que se descuenta mediante nota de credito cuando se da el pre-pago o pago de contado</p>
 
   <p class="titulo">SIMULADOR</p>
+  <div class="contenedor-nivel">
+    <div class="dropdown">
+      <label>POLÍGONO</label>
+      <select class="select-control" required [(ngModel)]="poligonoSeleccionadoSimulador" (ngModelChange)="obtenerClasificacionSugeridaSimulador()">
+        <option value="" disabled selected>Selecciona una opción...</option>
+        <option *ngFor="let item of listaPoligonos" [ngValue]="item">
+          {{ item.ciudad }} — {{ item.descripcion }}
+        </option>
+      </select>
+    </div>
+    <div class="dropdown">
+      <label>NIVEL MÍNIMO DEL POLÍGONO</label>
+      <span>{{ clasificacionSugeridaSimulador().descripcion }}</span>
+    </div>
+     <div class="dropdown">
+      <label>NIVEL</label>
+      <select class="select-control" required [(ngModel)]="clasificacionSeleccionadaSimulador" (ngModelChange)="calcularSimuladorRetroactivo()">
+        <option value="" disabled selected>Selecciona una opción...</option>  
+        <option *ngFor="let item of listaClasificacionesSimulador" [ngValue]="item">
+            {{ item.descripcion }}
+        </option>
+      </select>
+    </div>
+     <div class="dropdown">
+      <label>SUCURSALES</label>
+      <select class="select-control" required [(ngModel)]="sucursalSeleccionadaSimulador" (ngModelChange)="calcularSimuladorRetroactivo()">
+        <option value="" disabled selected>Selecciona una opción...</option>
+        <option *ngFor="let item of listaSucursales" [ngValue]="item">
+          {{ item.cantidad }}
+        </option>
+      </select>
+    </div>
+  </div>
   <table class="tabla simulador">
     <thead>
       <tr class="cabecera">
-        <th>
-          <div class="dropdown-simulador">
-            <label>NIVEL</label>
-            <select class="select-control" required [(ngModel)]="clasificacionSeleccionadaSimulador" (ngModelChange)="calcularSimuladorRetroactivo()">
-              <option value="" disabled selected>Selecciona una opción...</option>  
-              <option *ngFor="let item of listaClasificacionesSimulador" [ngValue]="item">
-                  {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
-        </th>
-        <th> 
-          <div class="dropdown-simulador">
-            <label>SUCURSALES</label>
-            <select class="select-control" required [(ngModel)]="sucursalSeleccionadaSimulador" (ngModelChange)="calcularSimuladorRetroactivo()">
-              <option value="" disabled selected>Selecciona una opción...</option>
-              <option *ngFor="let item of listaSucursales" [ngValue]="item">
-                {{ item.cantidad }}
-              </option>
-            </select>
-          </div>
-        </th>
+        <th></th>
+        <th></th>
         <th>COMPRA MINIMA</th>
         <th>CANTIDAD ADICIONAL</th>
-        <th>PORCENTAJE RETROACTIVO</th>
+        <th class="tooltip-informacion">
+          PORCENTAJE RETROACTIVO
+          <i class="fa fa-question-circle" aria-hidden="true"></i>
+          <div class="tooltip-informacion-recuadro">
+            Descuento retroactivo por logro de compra anual adicional al mínimo del nivel
+          </div>
+        </th>
         <th class="tooltip-informacion">
           TOTAL MARGEN POR CATEGORIA 
           <i class="fa fa-question-circle" aria-hidden="true"></i>
@@ -282,15 +301,23 @@
     <tbody>
       <ng-container *ngFor="let item of listaSimuladorRetroactivo()">
         <tr>
-          <td>{{ item.descripcion | uppercase }}</td>
-          <td><input class="numberbox" type="text" (input)="validarCantidad($event, item)" [(ngModel)]="item.cantidadAMostrar" (change)="calcularSimuladorRetroactivo()" placeholder="Ingresa la cantidad"/> </td>
-          <td class="alineacion-derecha">{{ item.compraMinima | currency:'MXN':'symbol':'1.0-0' }}</td>
-          <td class="alineacion-derecha">{{ item.totalCompraConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
-          <td class="alineacion-derecha">{{ item.porcentaje }}%</td>
-          <td class="alineacion-derecha">{{ item.totalMargenConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
-          <td class="alineacion-derecha">{{ item.totalMargenConPorcentaje | currency:'MXN':'symbol':'1.0-0' }}</td>
-          <td class="alineacion-derecha">{{ item.totalBeneficios | currency:'MXN':'symbol':'1.0-0' }}</td>
-          <td class="alineacion-derecha">{{ item.totalMargenCalculado | currency:'MXN':'symbol':'1.0-0' }}</td>
+          @if(item.id !== 3) {
+            <td>{{ item.descripcion | uppercase }}</td>    
+            <td><input class="numberbox" type="text" (input)="validarCantidad($event, item)" [(ngModel)]="item.cantidadAMostrar" (change)="calcularSimuladorRetroactivo()" placeholder="Ingresa la cantidad"/> </td>
+            <td class="alineacion-derecha">{{ item.compraMinima | currency:'MXN':'symbol':'1.0-0' }}</td>
+            <td class="alineacion-derecha">{{ item.totalCompraConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
+            <td class="alineacion-derecha">{{ item.porcentaje }}%</td>
+            <td class="alineacion-derecha">{{ item.totalMargenConDescuento | currency:'MXN':'symbol':'1.0-0' }}</td>
+            <td class="alineacion-derecha">{{ item.totalMargenConPorcentaje | currency:'MXN':'symbol':'1.0-0' }}</td>
+            <td class="alineacion-derecha">{{ item.totalBeneficios | currency:'MXN':'symbol':'1.0-0' }}</td>
+            <td class="alineacion-derecha">{{ item.totalMargenCalculado | currency:'MXN':'symbol':'1.0-0' }}</td>
+          }
+          @else {
+            @if (clasificacionSeleccionadaSimulador.valor >= 3){
+              <td colspan="8">{{ item.descripcion | uppercase }}</td>    
+              <td class="alineacion-derecha">{{ item.totalMargenCalculado | currency:'MXN':'symbol':'1.2-2' }}</td>
+            }
+          }
         </tr>
       </ng-container>
     </tbody>
@@ -300,10 +327,18 @@
         <td class="alineacion-centrada totales">{{ totalMargenConDescuentoSimulador() | currency:'MXN':'symbol':'1.0-0' }}</td>
         <td class="alineacion-centrada totales">{{ totalMargenConPorcentajeSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
         <td class="alineacion-centrada totales">{{ totalBeneficiosSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
-        <td class="alineacion-centrada totales">{{ totalMargenCalculadoSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
+        <td class="alineacion-centrada totales">{{ totalMargenBeneficiosCalculadoSimulador() | currency:'MXN':'symbol':'1.0-0'}}</td>
       </tr>
     </tfoot>
   </table>
+  <div class="beneficios-descripcion">
+    <p>
+      *EL BENEFICIO DE FLETES APLICA ÚNICAMENTE PARA LOS NIVELES PARTNER ELITE Y PARTNER ELITE PLUS. CALCULO REALIAZADO CON PROMEDIOS DE COSTOS DE BICICLETAS Y FLETES.
+    </p>
+    <p>
+    **EL MONTO RESULTANTE EQUIVALE A UN SUBSIDIO DEL 30 % PARA PARTNER ELITE Y DEL 50 % PARA PARTNER ELITE PLUS.
+    </p>
+  </div>
 
   <p class="titulo">BENEFICIOS</p>
   <table class="tabla">
@@ -323,10 +358,9 @@
       </tr>
       <tr>
         <td>PRECIOS ACTUALES *SUJETOS A CAMBIOS</td>
-        <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_bici_cn | currency:'MXN':'symbol':'1.0-0'}}</td>
-        <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_bici_tw | currency:'MXN':'symbol':'1.0-0'}}</td>
-        <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_ebike | currency:'MXN':'symbol':'1.0-0'}}</td>
-        <td class="alineacion-derecha">{{ clasificacionSeleccionada.precio_actual_caja_acc | currency:'MXN':'symbol':'1.0-0'}}</td>
+        <ng-container *ngFor="let item of clasificacionSeleccionada.fletes">
+          <td class="alineacion-derecha">{{ item.valor | currency:'MXN':'symbol':'1.0-0'}}</td>
+        </ng-container>
       </tr>
       <tr>
         <td>PORCENTAJE DE SUBSIDIO</td>

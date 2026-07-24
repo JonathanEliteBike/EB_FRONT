@@ -32,10 +32,7 @@ const clasificacionVacia = (): Clasificacion => ({
   multimarca_compra_minima_anual: 0,
   bicicleta_compra_minima_anual_multiplo: 0,
   multimarca_compra_minima_anual_multiplo: 0,
-  precio_actual_bici_cn: 0, 
-  precio_actual_bici_tw: 0, 
-  precio_actual_ebike: 0,
-  precio_actual_caja_acc: 0,
+  fletes: [],
   porcentaje_subsidio: 0,
   precio_pagar_temporada_bici_cn: 0,
   precio_pagar_temporada_bici_tw: 0,
@@ -47,7 +44,8 @@ const clasificacionVacia = (): Clasificacion => ({
   seguro_transporte_caja_acc: 0,
   poligono_exclusivo: '',
   plazo_pago: '',
-  beneficios_dinamicos: []
+  beneficios_dinamicos: [],
+  promedioSubsidioFlete: 0
 });
 
 const sucursalVacia = (): Sucursal => ({
@@ -116,8 +114,48 @@ export class CalculadoraRetroactivosComponent {
   ]);
   
   listaSimuladorRetroactivo = signal<SimuladorRetroactivo[]>([
-    { id: 1, descripcion: "BICICLETAS", cantidadIngresada: 0, cantidadAMostrar: "", compraMinima: 0, totalCompraConDescuento: 0, porcentaje: 0, totalMargenConDescuento: 0, totalMargenConPorcentaje: 0, totalMargenCalculado: 0, totalBeneficios: 0 },
-    { id: 2, descripcion: "APPAREL Y SYNCROS", cantidadIngresada: 0, cantidadAMostrar: "", compraMinima: 0, totalCompraConDescuento: 0, porcentaje: 0, totalMargenConDescuento: 0, totalMargenConPorcentaje: 0, totalMargenCalculado: 0, totalBeneficios: 0 },
+    { 
+      id: 1, 
+      descripcion: "BICICLETAS", 
+      cantidadIngresada: 0, 
+      cantidadAMostrar: "", 
+      compraMinima: 0, 
+      totalCompraConDescuento: 0, 
+      porcentaje: 0, 
+      totalMargenConDescuento: 0, 
+      totalMargenConPorcentaje: 0, 
+      totalMargenCalculado: 0, 
+      totalBeneficios: 0,
+      promedioBicicleta: 0
+    },
+    { 
+      id: 2, 
+      descripcion: "APPAREL Y SYNCROS", 
+      cantidadIngresada: 0, 
+      cantidadAMostrar: "", 
+      compraMinima: 0, 
+      totalCompraConDescuento: 0, 
+      porcentaje: 0, 
+      totalMargenConDescuento: 0, 
+      totalMargenConPorcentaje: 0, 
+      totalMargenCalculado: 0, 
+      totalBeneficios: 0,
+      promedioBicicleta: 0
+    },
+    { 
+      id: 3, 
+      descripcion: "FLETES", 
+      cantidadIngresada: 0, 
+      cantidadAMostrar: "", 
+      compraMinima: 0, 
+      totalCompraConDescuento: 0, 
+      porcentaje: 0, 
+      totalMargenConDescuento: 0, 
+      totalMargenConPorcentaje: 0, 
+      totalMargenCalculado: 0, 
+      totalBeneficios: 0,
+      promedioBicicleta: 26400
+    },
   ]);
   
   listaAnualPorCumplimiento: AnualPorCumplimiento[] = [
@@ -141,8 +179,10 @@ export class CalculadoraRetroactivosComponent {
 
   clasificacionSeleccionadaSimulador: Clasificacion = clasificacionVacia();
   sucursalSeleccionadaSimulador: Sucursal = sucursalVacia();
+  poligonoSeleccionadoSimulador: Poligono = poligonoVacio();
   
   clasificacionSugerida = signal<Clasificacion>(clasificacionVacia());
+  clasificacionSugeridaSimulador = signal<Clasificacion>(clasificacionVacia());
   
   readonly porcentajeSemestreJulAgo: number = 33;
   readonly porcentajeSemestreSepOct: number = 35;
@@ -150,6 +190,7 @@ export class CalculadoraRetroactivosComponent {
   readonly porcentajeSemestreEneFeb: number = 40;
   readonly porcentajeSemestreMarzAbr: number = 45;
   readonly porcentajeSemestreMayJun: number = 15;
+  readonly porcentajeVariableNivel: number = 1.5;
 
   // PARAMETROS DE CALCULO
   bicicletaPorcentajeInicial: number = 0;
@@ -197,29 +238,99 @@ export class CalculadoraRetroactivosComponent {
     return this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.totalMargenConPorcentaje, 0);
   });
 
-  totalMargenCalculadoSimulador = computed(() => {
-    return this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.totalMargenCalculado, 0);
-  });
-
   totalBeneficiosSimulador = computed(() => {
     return this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.totalBeneficios, 0);
   });
+  
+  totalMargenBeneficiosCalculadoSimulador = computed(() => {
+    return this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.totalMargenCalculado, 0);
+  });
 
   ngOnInit(): void {
-    this.obtenerMultimarcaCompraMinimaAnual();
-    this.obtenerBeneficios();
+    this.inicializarAtributosClasificaciones();
     this.filtrarListaClasificacionSimulador();
   };
   
   calcularSimuladorRetroactivo() {
     this.filtrarCantidadIngresadaSimulador();
 
-    if ((this.clasificacionSeleccionadaSimulador.id > 0) && (this.sucursalSeleccionadaSimulador.id > 0)){
+    if (this.clasificacionSugeridaSimulador().valor > 0 && this.clasificacionSeleccionadaSimulador.id > 0 && this.sucursalSeleccionadaSimulador.id > 0){
       this.obtenerCompraMinimaSimulador();
-      this.obtenerCalculoMargenRetroactivo();
+      this.obtenerCalculoMargenRetroactivoSimulador();
       this.actualizarAnualAdicionalPorNivelCantidad(this.listaAnualAdicionalPorNivelCantidadSimulador, this.sucursalSeleccionadaSimulador);
       this.obtenerPorcentajesSimulador();
-      this.obtenerTotalMargenCalculado();
+      this.obtenerTotalMargenCalculadoSimulador();
+    }
+  }
+
+   obtenerClasificacionSugeridaSimulador() {
+    if (this.poligonoSeleccionadoSimulador){
+      let clasificacionSugerida = this.listaClasificaciones.find( item => item.id === this.poligonoSeleccionadoSimulador?.clasificacionId) || clasificacionVacia();
+      if (clasificacionSugerida) {
+        this.clasificacionSugeridaSimulador.set(clasificacionSugerida);
+        this.calcularSimuladorRetroactivo();
+      }
+    } 
+  }
+
+  obtenerTotalMargenCalculadoSimulador() {            
+    let margenBicicleta = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 1) //margn de bicicletas   
+    let margenAparel = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 4); //margn de apparel
+    // let sumaPorcentajes = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.porcentaje, 0);
+    let sumaCantidadIngresada = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.cantidadIngresada, 0);
+
+    
+    if (margenBicicleta && margenAparel){
+        this.listaSimuladorRetroactivo.update(listaActual => 
+        listaActual.map(item => {
+
+          let totalConDescuento = 0;
+          let totalConPorcentaje = 0;
+          let totalMargenCalculado = 0;
+          let totalBeneficios = 0;
+          let totalFletePorNivelCalculado = 0;
+
+          if (item.id === 3) { //Flete
+            let cantidadAdicionalObtenida = this.listaSimuladorRetroactivo().find(item => item.id === 1)?.totalCompraConDescuento ?? 0;
+            let porcentajeBicicletaObtenido = this.listaSimuladorRetroactivo().find(item => item.id === 1)?.porcentaje ?? 0;
+
+            if (cantidadAdicionalObtenida > 0 && porcentajeBicicletaObtenido > 0){
+              let cantidadIngresadaBicicleta = this.listaSimuladorRetroactivo().find(item => item.id === 1)?.cantidadIngresada ?? 0; //Cantidad ingresada de bicicleta
+              let promedioBicicletaFleteCalculado = (cantidadIngresadaBicicleta / item.promedioBicicleta);
+              let totalFleteCalculado = (promedioBicicletaFleteCalculado * this.clasificacionSeleccionadaSimulador.promedioSubsidioFlete);
+
+              totalFletePorNivelCalculado = ((totalFleteCalculado * this.clasificacionSeleccionadaSimulador.porcentaje_subsidio) / 100);
+            }
+          } 
+
+          if (item.cantidadIngresada >= item.compraMinima) {
+            if ((item.id === 1 && item.porcentaje > 0)){
+              totalBeneficios = (item.cantidadIngresada * this.clasificacionSeleccionadaSimulador.margen_inicial_adicional_distribuidor) / 100;
+              totalConDescuento = (item.cantidadIngresada * margenBicicleta.margen_inicio_temporada) ;
+              totalConDescuento = totalConDescuento / 100;
+              totalConPorcentaje = ((sumaCantidadIngresada * item.porcentaje ) / 100);
+              totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
+            }
+            if (item.id === 2){
+              totalBeneficios = (item.cantidadIngresada * this.clasificacionSeleccionadaSimulador.margen_inicial_adicional_distribuidor) / 100;
+              totalConDescuento = (item.cantidadIngresada * margenAparel.margen_inicio_temporada);
+              totalConDescuento = totalConDescuento / 100;
+              totalConPorcentaje = ((sumaCantidadIngresada * item.porcentaje ) / 100);
+              totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
+            }
+          }
+
+          totalMargenCalculado = item.id === 3 ? totalFletePorNivelCalculado : totalMargenCalculado;
+          
+          return {
+              ...item,
+              totalMargenConDescuento: totalConDescuento,
+              totalMargenConPorcentaje: totalConPorcentaje,
+              totalBeneficios: totalBeneficios,
+              totalMargenCalculado: totalMargenCalculado
+            };
+        })
+      );
     }
   }
 
@@ -239,12 +350,7 @@ export class CalculadoraRetroactivosComponent {
     item.cantidadAMostrar = valorFormateado;
     item.cantidadIngresada = Number(numeroLimpio || 0);
   }
-
-  filtrarListaClasificacionSimulador(){
-    this.listaClasificacionesSimulador = [...this.listaClasificaciones];
-    this.listaClasificacionesSimulador.pop();
-  };
-
+  
   filtrarCantidadIngresadaSimulador(){
     this.listaSimuladorRetroactivo.update(listaActual => 
       listaActual.map(item => {
@@ -257,41 +363,13 @@ export class CalculadoraRetroactivosComponent {
     );
   }
 
-  obtenerTotalMargenCalculado() {            
-    let margenBicicleta = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 1) //margn de bicicletas   
-    let margenAparel = this.listaCalculoMargenesRetroActivosSimulador().find(item => item.id === 4); //margn de apparel
-    // let sumaPorcentajes = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.porcentaje, 0);
-    let sumaCantidadIngresada = this.listaSimuladorRetroactivo().reduce((acc, item) => acc + item.cantidadIngresada, 0);
-    
-    if ((margenBicicleta) && (margenAparel)){
-        this.listaSimuladorRetroactivo.update(listaActual => 
-        listaActual.map(item => {
-          let totalConDescuento = 0;
-          let totalConPorcentaje = 0;
-          let totalMargenCalculado = 0;
-          let totalBeneficios = (item.cantidadIngresada * this.clasificacionSeleccionadaSimulador.margen_inicial_adicional_distribuidor) / 100;
+  filtrarListaClasificacionSimulador() { //Elimina a distribuidor
+    this.listaClasificacionesSimulador = [...this.listaClasificaciones];
+    this.listaClasificacionesSimulador.pop();
+  };
 
-          if (item.cantidadIngresada >= item.compraMinima){
-            totalConDescuento = item.id === 1 ? (item.cantidadIngresada * margenBicicleta.margen_inicio_temporada) : (item.cantidadIngresada * margenAparel.margen_inicio_temporada);
-            totalConDescuento = totalConDescuento / 100;
-            totalConPorcentaje = (sumaCantidadIngresada * item.porcentaje ) / 100;
-          }
-          
-          totalMargenCalculado = totalConDescuento + totalConPorcentaje + totalBeneficios;
-          
-          return {
-              ...item,
-              totalMargenConDescuento: totalConDescuento,
-              totalMargenConPorcentaje: totalConPorcentaje,
-              totalBeneficios: totalBeneficios,
-              totalMargenCalculado: totalMargenCalculado
-            };
-        })
-      );
-    }
-  }
 
-  obtenerCalculoMargenRetroactivo(){
+  obtenerCalculoMargenRetroactivoSimulador() {
     this.listaCalculoMargenesRetroActivosSimulador.update(listaActual => 
     listaActual.map(item => {
     let margenTemporada = item.margen_precio_distribuidor + this.clasificacionSeleccionadaSimulador.margen_inicial_adicional_distribuidor;
@@ -346,7 +424,7 @@ export class CalculadoraRetroactivosComponent {
         }
         else if (item.id === 2){
           if ((item.cantidadIngresada > 0) && (item.cantidadIngresada >= item.compraMinima) && (anualPorCumplimiento)){
-            porcentaje = anualPorCumplimiento.descuento;
+            porcentaje = this.clasificacionSugeridaSimulador().valor > this.clasificacionSeleccionadaSimulador.valor ? this.porcentajeVariableNivel : anualPorCumplimiento.descuento;
           }
         }
         else {
@@ -359,6 +437,8 @@ export class CalculadoraRetroactivosComponent {
         };
       })
     );  
+
+    console.log(this.listaSimuladorRetroactivo())
   }
 
   calcularDetalleRetroActivo(){
@@ -429,7 +509,7 @@ export class CalculadoraRetroactivosComponent {
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
         bonoPorCumplimiento.map(item => {
           if (item.id === 1){
-            item.descuento = this.clasificacionSugerida().valor > this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
+            item.descuento = this.clasificacionSugerida().valor > this.clasificacionSeleccionada.valor ? this.porcentajeVariableNivel : item.descuento;
           }
 
           descuentoRetroActivo += item.descuento 
@@ -438,6 +518,7 @@ export class CalculadoraRetroactivosComponent {
     }
     
     if ((this.clasificacionSeleccionada.valor === 2)){
+      descuentoRetroActivo = this.anualAdicionalPorNivel.descuento_retroactivo;
       bonoPorCumplimiento = this.anualPorCumplimiento
       .filter(item => item.id === 2 || item.id === 3)
       .map(item => ({ ...item }));
@@ -446,7 +527,7 @@ export class CalculadoraRetroactivosComponent {
         bonoPorCumplimiento = bonoPorCumplimiento.filter(item => item.seleccionado === true);
         bonoPorCumplimiento.map(item => { 
            if (item.id === 2){
-            item.descuento = this.clasificacionSugerida().valor > this.clasificacionSeleccionada.valor ? 1.5 : item.descuento;
+            item.descuento = this.clasificacionSugerida().valor > this.clasificacionSeleccionada.valor ? this.porcentajeVariableNivel : item.descuento;
           }
           descuentoRetroActivo += item.descuento 
         });
@@ -537,29 +618,27 @@ export class CalculadoraRetroactivosComponent {
     this.calcularDetalleRetroActivo();
   }
 
-  obtenerBeneficios(){
-    this.listaClasificaciones = this.listaClasificaciones.map( item => {
-      return {
-        ...item,
-        precio_pagar_temporada_bici_cn: (item.precio_actual_bici_cn - (item.precio_actual_bici_cn * item.porcentaje_subsidio) / 100),
-        precio_pagar_temporada_bici_tw: (item.precio_actual_bici_tw - (item.precio_actual_bici_tw * item.porcentaje_subsidio) / 100),
-        precio_pagar_temporada_ebike: (item.precio_actual_ebike - (item.precio_actual_ebike * item.porcentaje_subsidio) / 100),
-        precio_pagar_temporada_caja_acc: (item.precio_actual_caja_acc - (item.precio_actual_caja_acc * item.porcentaje_subsidio) / 100)
-      }
-    })
-  }
-
-  obtenerMultimarcaCompraMinimaAnual(){
-    this.listaClasificaciones = this.listaClasificaciones.map( item => {
+  inicializarAtributosClasificaciones(){
+    this.listaClasificaciones = this.listaClasificaciones.map(item => {
       //const factorPorcentaje = (item.valor === 4) ? 0.11 : 0.15;
       let bicicletaCompraMinimaAnual = Math.ceil(item.bicicleta_compra_minima_anual * item.bicicleta_compra_minima_anual_multiplo);
-      let compraMinimaAnual = Math.ceil((bicicletaCompraMinimaAnual * item.multimarca_compra_minima_anual_multiplo) / 5000) * 5000;
-
+      let compraMinimaAnualCalculado = Math.ceil((bicicletaCompraMinimaAnual * item.multimarca_compra_minima_anual_multiplo) / 5000) * 5000;
+      let precioActualBiciCnCalculado = item.fletes.find(p => p.descripcion === "bici_cn")?.valor ?? 0;
+      let precioActualBiciTw = item.fletes.find(p => p.descripcion === "bici_tw")?.valor ?? 0;
+      let precioActualEbike = item.fletes.find(p => p.descripcion === "ebike")?.valor ?? 0;
+      let precioActualCajaAcc = item.fletes.find(p => p.descripcion === "caja_acc")?.valor ?? 0;
+      let promedioSubidioFleteCalculado = Math.ceil((precioActualBiciCnCalculado + precioActualBiciTw + precioActualEbike) / 3);
+      
       return {
         ...item,
         bicicleta_compra_minima_anual: bicicletaCompraMinimaAnual,
-        multimarca_compra_minima_anual: compraMinimaAnual
+        multimarca_compra_minima_anual: compraMinimaAnualCalculado,
+        precio_pagar_temporada_bici_cn: precioActualBiciCnCalculado - ((precioActualBiciCnCalculado * item.porcentaje_subsidio) / 100),
+        precio_pagar_temporada_bici_tw: precioActualBiciTw - ((precioActualBiciTw * item.porcentaje_subsidio) / 100),
+        precio_pagar_temporada_ebike: precioActualEbike - ((precioActualEbike * item.porcentaje_subsidio) / 100),
+        precio_pagar_temporada_caja_acc: precioActualCajaAcc - ((precioActualCajaAcc * item.porcentaje_subsidio) / 100),
+        promedioSubsidioFlete: promedioSubidioFleteCalculado
       };
-    })
+    });
   }
 }
