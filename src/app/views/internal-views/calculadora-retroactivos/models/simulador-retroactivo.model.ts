@@ -10,4 +10,6 @@ export interface SimuladorRetroactivo {
   totalMargenConPorcentaje: number;
   totalBeneficios: number
   totalMargenCalculado: number;
+  //Fletes
+  promedioBicicleta: number;
 }

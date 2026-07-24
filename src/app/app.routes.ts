@@ -41,7 +41,6 @@ import { AuditoriaComponent } from './views/internal-views/auditoria/auditoria.c
 import { MonitorPedidosComponent } from './views/internal-views/monitor-pedidos/monitor-pedidos.component';
 
 import { DashboardRetroactivosComponent } from './views/internal-views/dashboard-retroactivos/dashboard-retroactivos.component';
-import { RetroactivosComponent } from './views/internal-views/retroactivos/retroactivos.component';
 import { CaratulaRetroactivosComponent } from './views/internal-views/caratula-retroactivos/caratula-retroactivos.component';
 import { VentasMonitorComponent } from './views/internal-views/ventas-monitor/ventas-monitor.component';
 import { CatalogoForecastComponent } from './views/internal-views/catalogo-forecast/catalogo-forecast.component';
@@ -112,7 +111,6 @@ export const routes: Routes = [
   { path: 'monitor-pedidos', component: MonitorPedidosComponent, canActivate: [adminGuard] },
   { path: 'dashboard-retroactivos', component: DashboardRetroactivosComponent, canActivate: [adminGuard] },
   { path: 'caratula-retroactivos', component: CaratulaRetroactivosComponent, canActivate: [adminGuard] },
-  { path: 'retroactivos', component: RetroactivosComponent, canActivate: [adminGuard] },
   { path: 'calculadora-retroactivos', component: CalculadoraRetroactivosComponent, canActivate: [adminGuard] },
   { path: 'ventas-monitor', component: VentasMonitorComponent, canActivate: [adminGuard] },
   { path: 'catalogo-forecast', component: CatalogoForecastComponent, canActivate: [adminGuard] },
