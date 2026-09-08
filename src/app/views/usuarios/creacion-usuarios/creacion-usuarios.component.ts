@@ -40,7 +40,6 @@ export class CreacionUsuariosComponent implements OnInit {
   alertMsj: string | null = null;
   alertTipo: 'success' | 'error' = 'success';
 
-  padreId: number | null = null;
   cupo: CupoResponse | null = null;
   usuariosHijos: UsuarioHijoItem[] = [];
 
@@ -70,13 +69,8 @@ export class CreacionUsuariosComponent implements OnInit {
   private estadoInicial: Map<string, boolean> = new Map();
 
   ngOnInit(): void {
-     if (this.tieneAcceso) {
-      this.padreId = this.authService.getUserId();
-      if (this.padreId) {
-        this.cargarDatos();
-      } else {
-        this.mostrarAlerta('No se identificó el ID de la sesión actual.', 'error');
-      }
+    if (this.tieneAcceso) {
+      this.cargarDatos();
     }
   }
 
@@ -90,13 +84,12 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   cargarDatos(): void {
-    if (!this.padreId) return;
     this.cargando = true;
 
-    this.adminService.getCupoPadre(this.padreId).subscribe({
+    this.adminService.getCupoPadre().subscribe({
       next: (resCupo) => {
         this.cupo = resCupo;
-        this.adminService.getUsuariosHijos(this.padreId!).subscribe({
+        this.adminService.getUsuariosHijos().subscribe({
           next: (resHijos) => {
             this.usuariosHijos = resHijos.usuarios || [];
             this.cargando = false;
@@ -141,32 +134,16 @@ export class CreacionUsuariosComponent implements OnInit {
       return;
     }
 
-    this.formNombre = '';
-    this.formUsuario = '';
-    this.formContrasena = '';
-    this.formCorreo = '';
-
-    if (!this.padreId) return;
-
-    // Consulta independiente para rellenar el correo al abrir el modal
-    this.adminService.getCorreoPadre(this.padreId).subscribe({
-      next: (res) => {
-        this.formCorreo = res.correo || '';
-        this.modalCrearVisible = true;
-      },
-      error: () => {
-        this.mostrarAlerta('No se pudo obtener el correo del titular.', 'error');
-        this.modalCrearVisible = true;
-      }
-    });
+    this.limpiarFormularioCrear();
+    this.modalCrearVisible = true;
   }
 
   cerrarModal(): void {
     this.modalCrearVisible = false;
+    this.limpiarFormularioCrear();
   }
 
   guardarNuevoUsuario(): void {
-    if (!this.padreId) return;
     if (!this.puedeCrear) {
       this.mostrarAlerta('No tienes cupos disponibles para crear más usuarios.', 'error');
       return;
@@ -176,9 +153,12 @@ export class CreacionUsuariosComponent implements OnInit {
       this.mostrarAlerta('Todos los campos son obligatorios.', 'error');
       return;
     }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.formCorreo.trim())) {
+      this.mostrarAlerta('Ingresa un correo electrónico válido para el usuario hijo.', 'error');
+      return;
+    }
 
     this.adminService.crearUsuarioHijo({
-      padre_id: this.padreId,
       nombre: this.formNombre.trim(),
       correo: this.formCorreo.trim(),
       usuario: this.formUsuario.trim(),
@@ -189,13 +169,26 @@ export class CreacionUsuariosComponent implements OnInit {
         this.cerrarModal();
         this.cargarDatos();
       },
-      error: (err) => this.mostrarAlerta(err.error?.error || 'Error al crear el usuario.', 'error')
+      error: (err) => this.mostrarAlerta(this.obtenerMensajeErrorCreacion(err), 'error')
     });
   }
 
+  private limpiarFormularioCrear(): void {
+    this.formNombre = '';
+    this.formCorreo = '';
+    this.formUsuario = '';
+    this.formContrasena = '';
+  }
+
+  private obtenerMensajeErrorCreacion(err: any): string {
+    const mensaje = err?.error?.error;
+    if (mensaje) return mensaje;
+    if (err?.status >= 500) return 'Ocurrió un error del servidor al crear el usuario hijo.';
+    return 'Los datos del usuario hijo no son válidos.';
+  }
+
   cambiarEstado(hijo: UsuarioHijoItem, nuevoEstado: number): void {
-    if (!this.padreId) return;
-    this.adminService.cambiarEstadoHijo(hijo.id, this.padreId, nuevoEstado).subscribe({
+    this.adminService.cambiarEstadoHijo(hijo.id, nuevoEstado).subscribe({
       next: () => {
         hijo.activo = nuevoEstado;
         this.mostrarAlerta(`Usuario ${nuevoEstado === 1 ? 'activado' : 'desactivado'}.`, 'success');
@@ -217,9 +210,9 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   eliminarUsuarioHijo(): void {
-    if (!this.padreId || !this.usuarioAEliminar) return;
+    if (!this.usuarioAEliminar) return;
 
-    this.adminService.eliminarUsuarioHijo(this.usuarioAEliminar.id, this.padreId).subscribe({
+    this.adminService.eliminarUsuarioHijo(this.usuarioAEliminar.id).subscribe({
       next: () => {
         this.mostrarAlerta('Usuario eliminado permanentemente.', 'success');
         this.cancelarEliminacion();
@@ -244,13 +237,13 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   guardarNuevaContrasena(): void {
-    if (!this.padreId || !this.usuarioSeleccionadoId) return;
+    if (!this.usuarioSeleccionadoId) return;
     if (!this.formNuevaContrasena.trim()) {
       this.mostrarAlerta('Ingresa la nueva contraseña.', 'error');
       return;
     }
 
-    this.adminService.cambiarContrasenaHijo(this.usuarioSeleccionadoId, this.padreId, this.formNuevaContrasena.trim()).subscribe({
+    this.adminService.cambiarContrasenaHijo(this.usuarioSeleccionadoId, this.formNuevaContrasena.trim()).subscribe({
       next: () => {
         this.mostrarAlerta('Contraseña actualizada correctamente.', 'success');
         this.cerrarModalContrasena();
@@ -275,11 +268,11 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   cargarPermisosHijo(): void {
-    if (!this.padreId || !this.hijoSeleccionado) return;
+    if (!this.hijoSeleccionado) return;
     this.cargandoPermisos = true;
     this.modulosExpandidos.clear();
 
-    this.adminService.getPermisosDelegables(this.padreId).subscribe({
+    this.adminService.getMisPermisosDelegables().subscribe({
       next: (resDelegables: any) => {
         const rawDelegables = resDelegables.permisos_delegables || [];
 
@@ -293,7 +286,7 @@ export class CreacionUsuariosComponent implements OnInit {
                  !modNombre.includes('gestión de usuarios');
         });
 
-        this.adminService.getPermisosUsuarioHijo(this.hijoSeleccionado!.id, this.padreId!).subscribe({
+        this.adminService.getPermisosUsuarioHijo(this.hijoSeleccionado!.id).subscribe({
           next: (resHijo: any) => {
             this.cargandoPermisos = false;
             const asignadosHijo = resHijo.permisos || [];
@@ -366,7 +359,7 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   guardarPermisos(): void {
-    if (!this.padreId || !this.hijoSeleccionado) return;
+    if (!this.hijoSeleccionado) return;
     this.guardandoPermisos = true;
 
     const peticiones: Observable<any>[] = [];
@@ -379,11 +372,11 @@ export class CreacionUsuariosComponent implements OnInit {
         if (a.asignado !== estadoOriginal) {
           if (a.asignado) {
             peticiones.push(
-              this.adminService.asignarPermisoHijo(this.padreId!, this.hijoSeleccionado!.id, m.modulo_id, a.accion_id)
+              this.adminService.asignarPermisoHijo(this.hijoSeleccionado!.id, m.modulo_id, a.accion_id)
             );
           } else {
             peticiones.push(
-              this.adminService.revocarPermisoHijo(this.padreId!, this.hijoSeleccionado!.id, m.modulo_id, a.accion_id)
+              this.adminService.revocarPermisoHijo(this.hijoSeleccionado!.id, m.modulo_id, a.accion_id)
             );
           }
         }

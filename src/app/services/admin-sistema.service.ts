@@ -58,7 +58,6 @@ export interface UsuarioHijoItem {
 }
 
 export interface CrearHijoPayload {
-  padre_id: number;
   nombre: string;
   correo: string;
   usuario: string;
@@ -227,20 +226,18 @@ export class AdminSistemaService {
 
   /**
    * Consulta la disponibilidad de cupos de un Administrador Cliente.
-   * GET /api/usuarios-hijos/cupo?padre_id=X
+   * GET /api/usuarios-hijos/cupo
    */
-  getCupoPadre(padreId: number): Observable<CupoResponse> {
-    const params = new HttpParams().set('padre_id', padreId.toString());
-    return this.http.get<CupoResponse>(`${this.apiUrl}/usuarios-hijos/cupo`, { params });
+  getCupoPadre(): Observable<CupoResponse> {
+    return this.http.get<CupoResponse>(`${this.apiUrl}/usuarios-hijos/cupo`);
   }
 
   /**
    * Obtiene la lista de usuarios hijos creados por un distribuidor.
-   * GET /api/usuarios-hijos?padre_id=X
+   * GET /api/usuarios-hijos
    */
-  getUsuariosHijos(padreId: number): Observable<{ usuarios: UsuarioHijoItem[] }> {
-    const params = new HttpParams().set('padre_id', padreId.toString());
-    return this.http.get<{ usuarios: UsuarioHijoItem[] }>(`${this.apiUrl}/usuarios-hijos`, { params });
+  getUsuariosHijos(): Observable<{ usuarios: UsuarioHijoItem[] }> {
+    return this.http.get<{ usuarios: UsuarioHijoItem[] }>(`${this.apiUrl}/usuarios-hijos`);
   }
 
   /**
@@ -255,9 +252,8 @@ export class AdminSistemaService {
    * Activa o desactiva un usuario hijo.
    * PATCH /api/usuarios-hijos/:hijo_id/estado
    */
-  cambiarEstadoHijo(hijoId: number, padreId: number, activo: number): Observable<ApiResponse> {
+  cambiarEstadoHijo(hijoId: number, activo: number): Observable<ApiResponse> {
     return this.http.put<ApiResponse>(`${this.apiUrl}/usuarios-hijos/${hijoId}/estado`, {
-      padre_id: padreId,
       activo
     });
   }
@@ -266,9 +262,8 @@ export class AdminSistemaService {
    * Reestablece la contraseña de un usuario hijo.
    * PATCH /api/usuarios-hijos/:hijo_id/contrasena
    */
-  cambiarContrasenaHijo(hijoId: number, padreId: number, contrasena: string): Observable<ApiResponse> {
+  cambiarContrasenaHijo(hijoId: number, contrasena: string): Observable<ApiResponse> {
     return this.http.put<ApiResponse>(`${this.apiUrl}/usuarios-hijos/${hijoId}/contrasena`, {
-      padre_id: padreId,
       contrasena
     });
   }
@@ -283,21 +278,27 @@ export class AdminSistemaService {
   }
 
   /**
-   * Consulta los permisos asignados actualmente a un usuario hijo.
-   * GET /api/permisos/usuario/:hijo_id?padre_id=X
+   * Consulta la bolsa delegable del distribuidor autenticado.
+   * GET /api/permisos/delegables
    */
-  getPermisosUsuarioHijo(hijoId: number, padreId: number): Observable<{ permisos: PermisoUsuarioItem[] }> {
-    const params = new HttpParams().set('padre_id', padreId.toString());
-    return this.http.get<{ permisos: PermisoUsuarioItem[] }>(`${this.apiUrl}/permisos/usuario/${hijoId}`, { params });
+  getMisPermisosDelegables(): Observable<{ permisos_delegables: PermisoUsuarioItem[] }> {
+    return this.http.get<{ permisos_delegables: PermisoUsuarioItem[] }>(`${this.apiUrl}/permisos/delegables`);
+  }
+
+  /**
+   * Consulta los permisos asignados actualmente a un usuario hijo.
+   * GET /api/permisos/usuario/:hijo_id
+   */
+  getPermisosUsuarioHijo(hijoId: number): Observable<{ permisos: PermisoUsuarioItem[] }> {
+    return this.http.get<{ permisos: PermisoUsuarioItem[] }>(`${this.apiUrl}/permisos/usuario/${hijoId}`);
   }
 
   /**
    * Asigna un permiso de la bolsa delegable a un usuario hijo.
    * POST /api/permisos/asignar
    */
-  asignarPermisoHijo(padreId: number, hijoId: number, moduloId: number, accionId: number): Observable<ApiResponse> {
+  asignarPermisoHijo(hijoId: number, moduloId: number, accionId: number): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.apiUrl}/permisos/asignar`, {
-      padre_id: padreId,
       hijo_id: hijoId,
       modulo_id: moduloId,
       accion_id: accionId
@@ -308,10 +309,9 @@ export class AdminSistemaService {
    * Revoca un permiso previamente asignado a un usuario hijo.
    * DELETE /api/permisos/revocar
    */
-  revocarPermisoHijo(padreId: number, hijoId: number, moduloId: number, accionId: number): Observable<ApiResponse> {
+  revocarPermisoHijo(hijoId: number, moduloId: number, accionId: number): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.apiUrl}/permisos/revocar`, {
       body: {
-        padre_id: padreId,
         hijo_id: hijoId,
         modulo_id: moduloId,
         accion_id: accionId
@@ -322,8 +322,8 @@ export class AdminSistemaService {
   /**
    * Elimina un usuario hijo (Rol 3)
    */
-  eliminarUsuarioHijo(hijoId: number, padreId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/usuarios-hijos/${hijoId}?padre_id=${padreId}`);
+  eliminarUsuarioHijo(hijoId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/usuarios-hijos/${hijoId}`);
   }
 
   /**

@@ -27,14 +27,10 @@ export const adminGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
     if (decodedToken.rol === 1) {
       return true;
-    } else if (decodedToken.rol === 3) {
-      // Importaciones — solo puede acceder a sus rutas propias
-      router.navigate(['/importaciones/dashboard']);
-      return false;
-    } else {
-      router.navigate(['/usuarios/dashboard']);
-      return false;
     }
+
+    router.navigate(['/usuarios/dashboard']);
+    return false;
   } catch (error) {
     console.error('Token inválido o error al decodificar:', error);
     router.navigate(['/login']);

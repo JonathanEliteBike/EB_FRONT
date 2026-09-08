@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Observable } from 'rxjs';
 import { AdminSistemaService, UsuarioHijoItem } from '../../../services/admin-sistema.service';
-import { AuthService } from '../../../services/auth.service';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 
 export interface AccionNodo {
@@ -30,7 +29,6 @@ export interface ModuloNodo {
 })
 export class CatalogoPermisosComponent implements OnInit {
   private readonly adminService = inject(AdminSistemaService);
-  private readonly authService = inject(AuthService);
 
   cargando: boolean = false;
   cargandoPermisos: boolean = false;
@@ -38,7 +36,6 @@ export class CatalogoPermisosComponent implements OnInit {
   alertMsj: string | null = null;
   alertTipo: 'success' | 'error' = 'success';
 
-  padreId: number | null = null;
   usuariosHijos: UsuarioHijoItem[] = [];
   hijoSeleccionadoId: number | null = null;
   treePermisos: ModuloNodo[] = [];
@@ -47,18 +44,12 @@ export class CatalogoPermisosComponent implements OnInit {
   private estadoInicial: Map<string, boolean> = new Map();
 
   ngOnInit(): void {
-    this.padreId = this.authService.getUserId();
-    if (this.padreId) {
-      this.cargarUsuariosHijos();
-    } else {
-      this.mostrarAlerta('No se identificó el ID de la sesión actual.', 'error');
-    }
+    this.cargarUsuariosHijos();
   }
 
   cargarUsuariosHijos(): void {
-    if (!this.padreId) return;
     this.cargando = true;
-    this.adminService.getUsuariosHijos(this.padreId).subscribe({
+    this.adminService.getUsuariosHijos().subscribe({
       next: (res) => {
         this.usuariosHijos = res.usuarios || [];
         this.cargando = false;
@@ -71,7 +62,7 @@ export class CatalogoPermisosComponent implements OnInit {
   }
 
   onSeleccionarHijo(): void {
-    if (!this.hijoSeleccionadoId || !this.padreId) {
+    if (!this.hijoSeleccionadoId) {
       this.treePermisos = [];
       this.modulosExpandidos.clear();
       return;
@@ -79,11 +70,11 @@ export class CatalogoPermisosComponent implements OnInit {
 
     this.cargandoPermisos = true;
 
-    this.adminService.getPermisosDelegables(this.padreId).subscribe({
+    this.adminService.getMisPermisosDelegables().subscribe({
       next: (resDelegables: any) => {
         const delegables = resDelegables.permisos_delegables || [];
 
-        this.adminService.getPermisosUsuarioHijo(this.hijoSeleccionadoId!, this.padreId!).subscribe({
+        this.adminService.getPermisosUsuarioHijo(this.hijoSeleccionadoId!).subscribe({
           next: (resHijo: any) => {
             this.cargandoPermisos = false;
             const asignadosHijo = resHijo.permisos || [];
@@ -174,7 +165,7 @@ export class CatalogoPermisosComponent implements OnInit {
   }
 
   guardarPermisos(): void {
-    if (!this.padreId || !this.hijoSeleccionadoId) return;
+    if (!this.hijoSeleccionadoId) return;
 
     this.guardandoPermisos = true;
     const peticiones: Observable<any>[] = [];
@@ -187,11 +178,11 @@ export class CatalogoPermisosComponent implements OnInit {
         if (a.asignado !== estadoOriginal) {
           if (a.asignado) {
             peticiones.push(
-              this.adminService.asignarPermisoHijo(this.padreId!, this.hijoSeleccionadoId!, m.modulo_id, a.accion_id)
+              this.adminService.asignarPermisoHijo(this.hijoSeleccionadoId!, m.modulo_id, a.accion_id)
             );
           } else {
             peticiones.push(
-              this.adminService.revocarPermisoHijo(this.padreId!, this.hijoSeleccionadoId!, m.modulo_id, a.accion_id)
+              this.adminService.revocarPermisoHijo(this.hijoSeleccionadoId!, m.modulo_id, a.accion_id)
             );
           }
         }

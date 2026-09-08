@@ -57,7 +57,7 @@ export class AuthService {
 
     // Rol 2: Administrador Cliente / Distribuidor
     if (rol === 2 && userId) {
-      return this.http.get<any>(`${this.apiUrl}/api/permisos/delegables?padre_id=${userId}`).pipe(
+      return this.http.get<any>(`${this.apiUrl}/api/permisos/delegables`).pipe(
         map(res => this.normalizarPermisos(res.permisos_delegables || [])),
         tap(set => {
           this.rutasPermitidas = set;
@@ -71,12 +71,8 @@ export class AuthService {
     }
 
     // Rol 3: Usuario Hijo
-    if (rol === 3 && userId) {
-      const padreId = this.getPadreId();
-      // Solo adjuntamos padre_id si existe un valor válido
-      const urlParams = padreId ? `?padre_id=${padreId}` : '';
-      
-      return this.http.get<any>(`${this.apiUrl}/api/permisos/usuario/${userId}${urlParams}`).pipe(
+    if (rol === 3) {
+      return this.http.get<any>(`${this.apiUrl}/api/permisos/mis-permisos`).pipe(
         map(res => this.normalizarPermisos(res.permisos || [])),
         tap(set => {
           this.rutasPermitidas = set;
@@ -149,10 +145,9 @@ export class AuthService {
   /**
    * Carga manual específica para usuario hijo
    */
-  cargarPermisos(hijoId: number, padreId?: number | null): Observable<any> {
-    const urlParams = padreId ? `?padre_id=${padreId}` : '';
+  cargarPermisos(): Observable<any> {
     return this.http.get<{ permisos: PermisoItem[] }>(
-      `${this.apiUrl}/api/permisos/usuario/${hijoId}${urlParams}`
+      `${this.apiUrl}/api/permisos/mis-permisos`
     ).pipe(
       tap(response => {
         const permisosLista = (response && response.permisos && Array.isArray(response.permisos))

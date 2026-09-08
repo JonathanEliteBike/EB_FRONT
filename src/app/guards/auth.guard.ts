@@ -28,10 +28,8 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     if (rutasPublicas.includes(ruta)) {
       if (decoded.rol === 1) {
         router.navigate(['/home']);
-      } else if (decoded.rol === 2) {
+      } else if (decoded.rol === 2 || decoded.rol === 3) {
         router.navigate(['/usuarios/dashboard']);
-      } else if (decoded.rol === 3) {
-        router.navigate(['/importaciones/dashboard']);
       }
       return false;
     }
@@ -41,15 +39,9 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
       return true;
     }
 
-    // Si es Usuario (rol 2) intenta acceder a ruta de Admin
-    if (decoded.rol === 2) {
+    // Distribuidor (rol 2) o usuario hijo (rol 3) intenta acceder a ruta de Admin
+    if (decoded.rol === 2 || decoded.rol === 3) {
       router.navigate(['/usuarios/dashboard']);
-      return false;
-    }
-
-    // Si es rol Importaciones (rol 3) intenta acceder a ruta que no es importaciones
-    if (decoded.rol === 3) {
-      router.navigate(['/importaciones/dashboard']);
       return false;
     }
 
