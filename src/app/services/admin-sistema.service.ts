@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -269,12 +269,13 @@ export class AdminSistemaService {
   }
 
   /**
-   * Consulta los permisos que el Administrador Cliente tiene autorizados en su bolsa delegable.
-   * GET /api/permisos/delegables?padre_id=X
+   * Consulta, como rol 1, la bolsa delegable del Administrador Cliente seleccionado.
+   * GET /api/admin-sistema/administradores/:admin_id/permisos-delegables
    */
-  getPermisosDelegables(padreId: number): Observable<{ permisos_delegables: PermisoUsuarioItem[] }> {
-    const params = new HttpParams().set('padre_id', padreId.toString());
-    return this.http.get<{ permisos_delegables: PermisoUsuarioItem[] }>(`${this.apiUrl}/permisos/delegables`, { params });
+  getPermisosDelegablesAdministrador(adminId: number): Observable<{ permisos_delegables: PermisoUsuarioItem[] }> {
+    return this.http.get<{ permisos_delegables: PermisoUsuarioItem[] }>(
+      `${this.apiUrl}/admin-sistema/administradores/${adminId}/permisos-delegables`
+    );
   }
 
   /**

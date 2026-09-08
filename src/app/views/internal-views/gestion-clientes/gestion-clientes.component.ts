@@ -1,16 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, Observable } from 'rxjs';
 import { AdminSistemaService, AdminClienteItem, AccionBase, ModuloItem } from '../../../services/admin-sistema.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 
 export interface PermisoDelegableFila {
   modulo_id: number;
   modulo: string;
-  identificador: string;
-  tipo: 'Usuario' | 'Sistema';
   accion_id: number;
   accion: string;
   asignado: boolean;
@@ -51,8 +48,7 @@ export class GestionClientesComponent implements OnInit {
   elementosPorPagina: number = 25;
   opcionesPorPagina: number[] = [10, 25, 50, 100];
 
-  // ── PAGINACIÓN Y FILTROS DEL MODAL ──────────────────────────────────────
-  filtroAmbitoModal: 'todas' | 'usuario' | 'sistema' = 'todas';
+  // ── BÚSQUEDA Y PAGINACIÓN DEL MODAL ─────────────────────────────────────
   filtroBusquedaModal: string = '';
   paginaModal: number = 1;
   itemsPorPaginaModal: number = 10;
@@ -118,32 +114,13 @@ export class GestionClientesComponent implements OnInit {
     if (this.paginaActual < this.totalPaginas) this.paginaActual++;
   }
 
-  // ── LÓGICA DEL MODAL (FILTRADO Y BÚSQUEDA) ─────────────────────────────
-  esModuloUsuario(identificador: string): boolean {
-    const idLimpio = (identificador || '').toLowerCase();
-    return idLimpio.includes('usuario') || idLimpio.includes('cliente');
-  }
-
+  // ── LÓGICA DEL MODAL (BÚSQUEDA Y JERARQUÍA) ─────────────────────────────
   get modulosModalFiltrados(): ModuloItem[] {
     let lista = (this.modulos || []).filter(m => !m.padre_id);
 
-    // 1. Filtro por Ámbito
-    if (this.filtroAmbitoModal === 'usuario') {
-      lista = lista.filter(m => this.esModuloUsuario(m.identificador));
-    } else if (this.filtroAmbitoModal === 'sistema') {
-      lista = lista.filter(m => !this.esModuloUsuario(m.identificador));
-    }
-
-    // 2. Filtro por Texto en Buscador
     if (this.filtroBusquedaModal.trim()) {
       const q = this.filtroBusquedaModal.toLowerCase().trim();
-      lista = lista.filter(m => {
-        const coincidePadre = m.nombre.toLowerCase().includes(q) || m.identificador.toLowerCase().includes(q);
-        const coincideSub = this.getSubmodulos(m.id).some(s => 
-          s.nombre.toLowerCase().includes(q) || s.identificador.toLowerCase().includes(q)
-        );
-        return coincidePadre || coincideSub;
-      });
+      lista = lista.filter(m => this.moduloCoincideBusqueda(m, q));
     }
 
     return lista;
@@ -156,19 +133,6 @@ export class GestionClientesComponent implements OnInit {
 
   get totalPaginasModal(): number {
     return Math.ceil(this.modulosModalFiltrados.length / this.itemsPorPaginaModal) || 1;
-  }
-
-  get totalUsuarioCount(): number {
-    return (this.modulos || []).filter(m => !m.padre_id && this.esModuloUsuario(m.identificador)).length;
-  }
-
-  get totalSistemaCount(): number {
-    return (this.modulos || []).filter(m => !m.padre_id && !this.esModuloUsuario(m.identificador)).length;
-  }
-
-  setFiltroAmbitoModal(tipo: 'todas' | 'usuario' | 'sistema'): void {
-    this.filtroAmbitoModal = tipo;
-    this.paginaModal = 1;
   }
 
   onBusquedaModalChange(): void {
@@ -213,8 +177,7 @@ export class GestionClientesComponent implements OnInit {
   }
 
   tieneAlgunPermiso(moduloId: number): boolean {
-    const subIds = this.getSubmodulos(moduloId).map(s => s.id);
-    const todosIds = [moduloId, ...subIds];
+    const todosIds = [moduloId, ...this.getDescendientes(moduloId).map(s => s.id)];
     return this.catalogoModulosAcciones.some(p => todosIds.includes(p.modulo_id) && p.asignado);
   }
 
@@ -233,10 +196,10 @@ export class GestionClientesComponent implements OnInit {
     });
   }
 
-  actualizarCupo(admin: AdminClienteItem, nuevoLimite: number): void {
+  actualizarCupo(admin: AdminClienteItem, nuevoLimite: number | string): void {
     const limiteNum = Number(nuevoLimite);
-    if (isNaN(limiteNum) || limiteNum < 0) {
-      this.mostrarAlerta('El límite de cupo no puede ser negativo.', 'error');
+    if (!Number.isInteger(limiteNum) || limiteNum < 0) {
+      this.mostrarAlerta('El cupo debe ser un número entero mayor o igual a 0.', 'error');
       return;
     }
 
@@ -276,6 +239,28 @@ export class GestionClientesComponent implements OnInit {
     return (this.modulos || []).filter(m => m.padre_id === padreId);
   }
 
+  getDescendientes(padreId: number): ModuloItem[] {
+    const descendientes: ModuloItem[] = [];
+    const visitados = new Set<number>();
+    const recorrer = (id: number): void => {
+      this.getSubmodulos(id).forEach(hijo => {
+        if (visitados.has(hijo.id)) return;
+        visitados.add(hijo.id);
+        descendientes.push(hijo);
+        recorrer(hijo.id);
+      });
+    };
+    recorrer(padreId);
+    return descendientes;
+  }
+
+  private moduloCoincideBusqueda(modulo: ModuloItem, termino: string): boolean {
+    const coincideActual = modulo.nombre.toLowerCase().includes(termino)
+      || (modulo.acciones || []).some(accion => accion.nombre.toLowerCase().includes(termino));
+    return coincideActual || this.getSubmodulos(modulo.id)
+      .some(hijo => this.moduloCoincideBusqueda(hijo, termino));
+  }
+
   isPermisoAsignado(moduloId: number, accionId: number): boolean {
     const item = this.catalogoModulosAcciones.find(
       p => p.modulo_id === moduloId && p.accion_id === accionId
@@ -287,7 +272,6 @@ export class GestionClientesComponent implements OnInit {
     this.clienteSeleccionado = admin;
     this.modalBolsaVisible = true;
     this.paginaModal = 1;
-    this.filtroAmbitoModal = 'todas';
     this.filtroBusquedaModal = '';
     this.cargarPermisosDelegables(admin.id);
   }
@@ -310,29 +294,28 @@ export class GestionClientesComponent implements OnInit {
     this.cargandoModal = true;
 
     forkJoin({
-      modulosRes: this.adminService.getModulos().pipe(catchError(() => of({ modulos: [] }))),
-      delegablesRes: this.adminService.getPermisosDelegables(adminId).pipe(catchError(() => of({ permisos_delegables: [] })))
+      modulosRes: this.adminService.getModulos(),
+      delegablesRes: this.adminService.getPermisosDelegablesAdministrador(adminId)
     }).subscribe({
       next: ({ modulosRes, delegablesRes }: { modulosRes: any, delegablesRes: any }) => {
         this.cargandoModal = false;
 
         // Módulos reales y registrados en BD
-        const listaModulos: ModuloItem[] = (modulosRes.modulos || []).filter((m: any) => m && m.id);
+        const listaModulos: ModuloItem[] = (modulosRes.modulos || []).filter(
+          (m: any) => m && m.id && Number(m.activo) === 1
+        );
         this.modulos = listaModulos;
+        this.modulosExpandidos = new Set(
+          this.modulos.filter(m => this.getSubmodulos(m.id).length > 0).map(m => m.id)
+        );
 
-        // Crear lista plana de permisos solo para módulos existentes
+        // Crear lista plana sólo con combinaciones reales de modulo_acciones.
         const listaPlana: PermisoDelegableFila[] = [];
         this.modulos.forEach(m => {
-          const acciones: AccionBase[] = (m.acciones && m.acciones.length > 0) 
-            ? m.acciones 
-            : [{ id: 1, nombre: 'Ver', identificador: 'ver', activo: 1 }];
-
-          acciones.forEach((a: AccionBase) => {
+          (m.acciones || []).forEach((a: AccionBase) => {
             listaPlana.push({
               modulo_id: m.id,
               modulo: m.nombre,
-              identificador: m.identificador,
-              tipo: this.esModuloUsuario(m.identificador) ? 'Usuario' : 'Sistema',
               accion_id: a.id,
               accion: a.nombre,
               asignado: false
@@ -346,8 +329,7 @@ export class GestionClientesComponent implements OnInit {
 
         listaPlana.forEach(item => {
           const estaAsignado = asignados.some(
-            (d: any) => (d.modulo_id && d.modulo_id === item.modulo_id && d.accion_id === item.accion_id) ||
-                        (d.identificador && d.identificador === item.identificador)
+            (d: any) => d.modulo_id === item.modulo_id && d.accion_id === item.accion_id
           );
           item.asignado = estaAsignado;
           this.estadoInicial[`${item.modulo_id}_${item.accion_id}`] = estaAsignado;
@@ -355,9 +337,9 @@ export class GestionClientesComponent implements OnInit {
 
         this.catalogoModulosAcciones = listaPlana;
       },
-      error: () => {
+      error: (err) => {
         this.cargandoModal = false;
-        this.mostrarAlerta('Error al obtener la lista de permisos.', 'error');
+        this.mostrarAlerta(err.error?.error || 'Error al obtener la bolsa de permisos.', 'error');
       }
     });
   }
@@ -396,7 +378,6 @@ export class GestionClientesComponent implements OnInit {
 
     if (peticiones.length === 0) {
       this.mostrarAlerta('No se realizaron cambios en los permisos.', 'success');
-      this.cerrarModalBolsa();
       this.guardandoPermisos = false;
       return;
     }
@@ -405,11 +386,12 @@ export class GestionClientesComponent implements OnInit {
       next: () => {
         this.guardandoPermisos = false;
         this.mostrarAlerta('Permisos actualizados correctamente.', 'success');
-        this.cerrarModalBolsa();
+        this.cargarPermisosDelegables(this.clienteSeleccionado!.id);
       },
       error: () => {
         this.guardandoPermisos = false;
         this.mostrarAlerta('Error al guardar algunos permisos.', 'error');
+        this.cargarPermisosDelegables(this.clienteSeleccionado!.id);
       }
     });
   }

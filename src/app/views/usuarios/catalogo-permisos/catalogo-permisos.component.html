@@ -52,52 +52,41 @@
       </thead>
       <tbody>
         <ng-container *ngFor="let m of modulosRaiz">
-          <!-- MÓDULO RAÍZ -->
-          <tr class="tr-root">
+          <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: m, nivel: 0 }"></ng-container>
+        </ng-container>
+
+        <ng-template #filaModulo let-modulo let-nivel="nivel">
+          <tr [ngClass]="nivel === 0 ? 'tr-root' : 'tr-submodule'">
             <td>
-              <button 
-                *ngIf="getSubmodulos(m.modulo_id).length > 0" 
-                type="button" 
-                class="btn-expand" 
-                (click)="toggleExpandir(m.modulo_id)">
-                {{ isExpandido(m.modulo_id) ? '▼' : '►' }}
+              <button
+                *ngIf="getSubmodulos(modulo.modulo_id).length > 0"
+                type="button"
+                class="btn-expand"
+                (click)="toggleExpandir(modulo.modulo_id)">
+                {{ isExpandido(modulo.modulo_id) ? '▼' : '►' }}
               </button>
             </td>
-            <td>{{ m.modulo_id }}</td>
-            <td>
-              <div class="module-title"><strong>{{ m.nombre }}</strong></div>
-              <div class="vertical-actions-tree" *ngIf="m.acciones.length > 0">
-                <label *ngFor="let acc of m.acciones" class="custom-checkbox-wrapper">
+            <td>{{ modulo.modulo_id }}</td>
+            <td [class.td-sub-indent]="nivel > 0" [style.padding-left.px]="nivel > 0 ? 24 + (nivel * 20) : null">
+              <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
+              <div class="vertical-actions-tree" *ngIf="modulo.acciones.length > 0">
+                <label *ngFor="let acc of modulo.acciones" class="custom-checkbox-wrapper">
                   <input type="checkbox" [(ngModel)]="acc.asignado">
                   <span class="chip-accion-vertical">{{ acc.nombre }}</span>
                 </label>
               </div>
-              <div *ngIf="m.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
+              <div *ngIf="modulo.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
             </td>
-            <td><code>{{ m.identificador }}</code></td>
-            <td><span class="badge badge-root">Módulo Raíz</span></td>
+            <td><code>{{ modulo.identificador }}</code></td>
+            <td><span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">{{ nivel === 0 ? 'Módulo' : 'Submódulo' }}</span></td>
           </tr>
 
-          <!-- SUBMÓDULOS DEL MÓDULO RAÍZ -->
-          <ng-container *ngIf="isExpandido(m.modulo_id)">
-            <tr *ngFor="let sub of getSubmodulos(m.modulo_id)" class="tr-submodule">
-              <td></td>
-              <td>{{ sub.modulo_id }}</td>
-              <td class="td-sub-indent">
-                <div class="module-title"><strong>{{ sub.nombre }}</strong></div>
-                <div class="vertical-actions-tree" *ngIf="sub.acciones.length > 0">
-                  <label *ngFor="let acc of sub.acciones" class="custom-checkbox-wrapper">
-                    <input type="checkbox" [(ngModel)]="acc.asignado">
-                    <span class="chip-accion-vertical">{{ acc.nombre }}</span>
-                  </label>
-                </div>
-                <div *ngIf="sub.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
-              </td>
-              <td><code>{{ sub.identificador }}</code></td>
-              <td><span class="badge badge-sub">Submódulo</span></td>
-            </tr>
+          <ng-container *ngIf="isExpandido(modulo.modulo_id)">
+            <ng-container *ngFor="let hijo of getSubmodulos(modulo.modulo_id)">
+              <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: hijo, nivel: nivel + 1 }"></ng-container>
+            </ng-container>
           </ng-container>
-        </ng-container>
+        </ng-template>
 
         <tr *ngIf="treePermisos.length === 0">
           <td colspan="5" class="empty-state">

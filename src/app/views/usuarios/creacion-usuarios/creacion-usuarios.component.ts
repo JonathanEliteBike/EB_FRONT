@@ -121,11 +121,12 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   get modulosRaiz(): ModuloNodo[] {
-    return this.treePermisos.filter(m => m.es_raiz);
+    const modulosDisponibles = new Set(this.treePermisos.map(m => m.modulo_id));
+    return this.treePermisos.filter(m => !m.padre_id || !modulosDisponibles.has(m.padre_id));
   }
 
   getSubmodulos(padreId: number): ModuloNodo[] {
-    return this.treePermisos.filter(m => !m.es_raiz && (m.padre_id === padreId || (padreId === 7 && m.modulo_id === 8)));
+    return this.treePermisos.filter(m => m.padre_id === padreId);
   }
 
   abrirModalCrear(): void {
@@ -297,7 +298,7 @@ export class CreacionUsuariosComponent implements OnInit {
               const modId = item.modulo_id || item.id;
               const modNombre = item.modulo || item.nombre;
               const modIdentificador = item.identificador || modNombre.toLowerCase().trim().replace(/\s+de\s+/g, '_').replace(/\s+/g, '_');
-              const padreIdNode = item.padre_id ? Number(item.padre_id) : (modId === 8 ? 7 : null);
+              const padreIdNode = item.padre_id ? Number(item.padre_id) : null;
 
               let esRaiz = true;
               if (item.es_raiz !== undefined && item.es_raiz !== null) {
@@ -316,9 +317,7 @@ export class CreacionUsuariosComponent implements OnInit {
                   acciones: []
                 });
 
-                if (esRaiz) {
-                  this.modulosExpandidos.add(modId);
-                }
+                this.modulosExpandidos.add(modId);
               }
 
               const moduloObj = modMap.get(modId)!;

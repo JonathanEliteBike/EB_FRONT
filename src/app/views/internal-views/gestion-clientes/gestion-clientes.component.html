@@ -12,7 +12,7 @@
       <button class="btn-volver" (click)="goBack()">
         <i class="fas fa-arrow-left"></i> Volver
       </button>
-      <h2 class="main-title">Gestión de clientes</h2>
+       <h2 class="main-title">Gestión de Permisos</h2>
     </div>
 
     <!-- BARRA DE FILTROS Y BOTÓN RECARGAR LISTADO -->
@@ -31,7 +31,7 @@
     <p>Cargando información de administradores...</p>
   </div>
 
-  <!-- TABLA DE CLIENTES -->
+  <!-- LISTA EXCLUSIVA DE ADMINISTRADORES CLIENTE -->
   <div *ngIf="!cargando" class="table-wrap">
     <div class="table-responsive">
       <table class="data-table">
@@ -40,7 +40,7 @@
             <th>ID</th>
             <th>Nombre</th>
             <th>Usuario / Correo</th>
-            <th>Cupo Máximo</th>
+            <th>Cupo de hijos</th>
             <th>Estado</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
@@ -54,9 +54,17 @@
               <small style="color: var(--t3);">{{ admin.correo }}</small>
             </td>
             <td>
-              <div class="form-group-inline">
-                <input type="number" class="input-cupo" [(ngModel)]="admin.max_hijos" min="0">
-                <button class="btn btn-primary" (click)="actualizarCupo(admin, admin.max_hijos)">Guardar</button>
+              <div class="cupo-control">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  aria-label="Cupo máximo de usuarios hijos"
+                  [(ngModel)]="admin.max_hijos">
+                <span>{{ admin.hijos_activos || 0 }} activos</span>
+                <button class="btn btn-action" type="button" (click)="actualizarCupo(admin, admin.max_hijos)">
+                  Guardar
+                </button>
               </div>
             </td>
             <td>
@@ -65,14 +73,8 @@
             </td>
             <td>
               <div class="td-actions">
-                <button *ngIf="admin.activo === 1" class="btn btn-action delete" (click)="cambiarEstadoUsuario(admin, 0)">
-                  Desactivar
-                </button>
-                <button *ngIf="admin.activo === 0" class="btn btn-action" (click)="cambiarEstadoUsuario(admin, 1)">
-                  Activar
-                </button>
                 <button class="btn btn-primary" (click)="abrirModalBolsaDelegable(admin)">
-                  Permisos
+                  Gestionar permisos
                 </button>
               </div>
             </td>
@@ -129,13 +131,13 @@
 <div *ngIf="modalBolsaVisible" class="modal-backdrop">
   <div class="modal-card modal-large">
     <div class="modal-header-custom">
-      <h3>Permisos — {{ clienteSeleccionado?.nombre }}</h3>
+        <h3>Permisos delegables — {{ clienteSeleccionado?.nombre }}</h3>
       <button type="button" class="close-btn" (click)="cerrarModalBolsa()">&times;</button>
     </div>
     
     <div class="modal-body-custom">
       <p class="modal-desc">
-        Marca o desmarca los permisos que este Administrador Cliente tendrá autorizados para otorgar a sus usuarios.
+        Selecciona los permisos que este administrador podrá asignar posteriormente a sus usuarios.
       </p>
 
       <div *ngIf="cargandoModal" class="empty-state">Cargando permisos del catálogo general...</div>
@@ -143,138 +145,74 @@
       <!-- CONTENEDOR UNIFICADO DEL MODAL -->
       <div *ngIf="!cargandoModal" class="modal-table-box">
         
-        <!-- SUBFILTROS Y BUSCADOR (FILTRO A LA IZQUIERDA / BUSCADOR A LA DERECHA) -->
+        <!-- BÚSQUEDA POR NOMBRE VISIBLE DE MÓDULO O ACCIÓN -->
         <div class="table-subfilters-bar">
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <span class="subfilter-label">FILTRAR POR ÁMBITO:</span>
-            <div class="selector-pills">
-              <button class="btn-pill" [class.activa]="filtroAmbitoModal === 'todas'" (click)="setFiltroAmbitoModal('todas')">
-                Todas ({{ modulos.length }})
-              </button>
-              <button class="btn-pill" [class.activa]="filtroAmbitoModal === 'usuario'" (click)="setFiltroAmbitoModal('usuario')">
-                Usuarios / Clientes ({{ totalUsuarioCount }})
-              </button>
-              <button class="btn-pill" [class.activa]="filtroAmbitoModal === 'sistema'" (click)="setFiltroAmbitoModal('sistema')">
-                Administrativas / Sistema ({{ totalSistemaCount }})
-              </button>
-            </div>
-          </div>
-
           <div class="search-box-modal" style="width: 280px; margin-left: auto;">
             <input 
               type="text" 
               class="input-base"
               [(ngModel)]="filtroBusquedaModal" 
               (ngModelChange)="onBusquedaModalChange()" 
-              placeholder="Buscar permiso o módulo..." 
+              placeholder="Buscar módulo o acción..."
               style="width: 100%; padding: 6px 12px; background: #121212; border: 1px solid var(--border2); color: #fff; border-radius: 6px; font-size: 0.82rem; outline: none;"
             />
           </div>
         </div>
 
-        <!-- TABLA CON IDENTIFICADOR Y ACCIONES ALINEADOS -->
+        <!-- ÁRBOL DE MÓDULOS Y ACCIONES DELEGABLES -->
         <div class="modal-table-wrap">
           <table class="data-table modal-data-table">
             <thead>
               <tr>
                 <th class="col-expand"></th>
-                <th class="col-id">ID</th>
                 <th class="col-nombre">Nombre Módulo / Acciones</th>
-                <th class="col-ambito">Ámbito / Categoría</th>
-                <th class="col-identificador">Identificador</th>
+                <th class="col-jerarquia">Jerarquía</th>
                 <th class="col-estado">Estado</th>
               </tr>
             </thead>
             <tbody>
-              <ng-container *ngFor="let m of modulosModalPaginados">
-                
-                <tr class="tr-root">
+              <ng-template #filaPermiso let-modulo let-nivel="nivel">
+                <tr [class.tr-root]="nivel === 0" [class.tr-submodule]="nivel > 0">
                   <td class="col-expand">
-                    <button 
-                      *ngIf="getSubmodulos(m.id).length > 0" 
-                      type="button" 
-                      class="btn-expand" 
-                      (click)="toggleExpandir(m.id)">
-                      <span class="arrow" [class.rotated]="isExpandido(m.id)">&#9654;</span>
+                    <button *ngIf="getSubmodulos(modulo.id).length > 0" type="button" class="btn-expand" (click)="toggleExpandir(modulo.id)">
+                      <span class="arrow" [class.rotated]="isExpandido(modulo.id)">&#9654;</span>
                     </button>
                   </td>
-                  <td class="col-id">{{ m.id }}</td>
-                  <td class="col-nombre">
-                    <div class="module-title"><strong>{{ m.nombre }}</strong></div>
-                    <div class="vertical-actions-tree" *ngIf="m.acciones && m.acciones.length > 0">
-                      <label *ngFor="let acc of m.acciones" class="action-tree-item checkbox-permiso">
-                        <input 
-                          type="checkbox" 
-                          [checked]="isPermisoAsignado(m.id, acc.id)" 
-                          (change)="togglePermiso(m.id, acc.id)">
+                  <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24">
+                    <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
+                    <div class="vertical-actions-tree" *ngIf="modulo.acciones && modulo.acciones.length > 0">
+                      <label *ngFor="let acc of modulo.acciones" class="action-tree-item checkbox-permiso">
+                        <input type="checkbox" [checked]="isPermisoAsignado(modulo.id, acc.id)" (change)="togglePermiso(modulo.id, acc.id)">
                         <span class="chip-accion-vertical">{{ acc.nombre }}</span>
                       </label>
                     </div>
-                    <div *ngIf="!m.acciones || m.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
+                    <div *ngIf="!modulo.acciones || modulo.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
                   </td>
-                  <td class="col-ambito">
-                    <span class="badge" [ngClass]="esModuloUsuario(m.identificador) ? 'badge-sub' : 'badge-root'">
-                      {{ esModuloUsuario(m.identificador) ? 'Usuarios / Clientes' : 'Sistema / Admin' }}
+                  <td class="col-jerarquia">
+                    <span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">
+                      {{ nivel === 0 ? 'Módulo raíz' : 'Submódulo' }}
                     </span>
                   </td>
-                  <td class="col-identificador">
-                    <div class="module-title"><code>{{ m.identificador }}</code></div>
-                    <div class="vertical-actions-tree" *ngIf="m.acciones && m.acciones.length > 0">
-                      <div *ngFor="let acc of m.acciones" class="action-tree-item">
-                        <code>{{ m.identificador }}/{{ (acc.identificador || acc.nombre) | lowercase }}</code>
-                      </div>
-                    </div>
-                  </td>
                   <td class="col-estado">
-                    <span class="badge" [ngClass]="tieneAlgunPermiso(m.id) ? 'badge-active' : 'badge-inactive'">
-                      {{ tieneAlgunPermiso(m.id) ? 'Asignado' : 'No Asignado' }}
+                    <span class="badge" [ngClass]="tieneAlgunPermiso(modulo.id) ? 'badge-active' : 'badge-inactive'">
+                      {{ tieneAlgunPermiso(modulo.id) ? 'Asignado' : 'No Asignado' }}
                     </span>
                   </td>
                 </tr>
 
-                <!-- SUBMÓDULOS EXPANDIBLES -->
-                <ng-container *ngIf="isExpandido(m.id)">
-                  <tr *ngFor="let sub of getSubmodulos(m.id)" class="tr-submodule">
-                    <td class="col-expand"></td>
-                    <td class="col-id">{{ sub.id }}</td>
-                    <td class="col-nombre td-sub-indent">
-                      <div class="module-title"><strong>{{ sub.nombre }}</strong></div>
-                      <div class="vertical-actions-tree" *ngIf="sub.acciones && sub.acciones.length > 0">
-                        <label *ngFor="let acc of sub.acciones" class="action-tree-item checkbox-permiso">
-                          <input 
-                            type="checkbox" 
-                            [checked]="isPermisoAsignado(sub.id, acc.id)" 
-                            (change)="togglePermiso(sub.id, acc.id)">
-                          <span class="chip-accion-vertical">{{ acc.nombre }}</span>
-                        </label>
-                      </div>
-                      <div *ngIf="!sub.acciones || sub.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
-                    </td>
-                    <td class="col-ambito">
-                      <span class="badge" [ngClass]="esModuloUsuario(sub.identificador) ? 'badge-sub' : 'badge-root'">
-                        {{ esModuloUsuario(sub.identificador) ? 'Usuarios / Clientes' : 'Sistema / Admin' }}
-                      </span>
-                    </td>
-                    <td class="col-identificador">
-                      <div class="module-title"><code>{{ sub.identificador }}</code></div>
-                      <div class="vertical-actions-tree" *ngIf="sub.acciones && sub.acciones.length > 0">
-                        <div *ngFor="let acc of sub.acciones" class="action-tree-item">
-                          <code>{{ sub.identificador }}/{{ (acc.identificador || acc.nombre) | lowercase }}</code>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="col-estado">
-                      <span class="badge" [ngClass]="tieneAlgunPermiso(sub.id) ? 'badge-active' : 'badge-inactive'">
-                        {{ tieneAlgunPermiso(sub.id) ? 'Asignado' : 'No Asignado' }}
-                      </span>
-                    </td>
-                  </tr>
+                <ng-container *ngIf="isExpandido(modulo.id)">
+                  <ng-container *ngFor="let hijo of getSubmodulos(modulo.id)">
+                    <ng-container *ngTemplateOutlet="filaPermiso; context: { $implicit: hijo, nivel: nivel + 1 }"></ng-container>
+                  </ng-container>
                 </ng-container>
+              </ng-template>
 
+              <ng-container *ngFor="let modulo of modulosModalPaginados">
+                <ng-container *ngTemplateOutlet="filaPermiso; context: { $implicit: modulo, nivel: 0 }"></ng-container>
               </ng-container>
 
               <tr *ngIf="modulosModalFiltrados.length === 0">
-                <td colspan="6" class="empty-state">No se encontraron permisos registrados con el criterio seleccionado.</td>
+                  <td colspan="4" class="empty-state">No se encontraron permisos registrados con el criterio seleccionado.</td>
               </tr>
             </tbody>
           </table>

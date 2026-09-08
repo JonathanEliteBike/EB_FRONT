@@ -156,6 +156,29 @@
   color: #fff;
 }
 
+.cupo-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.cupo-control input {
+  width: 64px;
+  padding: 6px 8px;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--t1);
+  font: inherit;
+  text-align: center;
+}
+
+.cupo-control span {
+  color: var(--t3);
+  font-size: 0.78rem;
+}
+
 .btn-action.delete {
   background: rgba(229, 57, 53, 0.12);
   border-color: rgba(229, 57, 53, 0.3);

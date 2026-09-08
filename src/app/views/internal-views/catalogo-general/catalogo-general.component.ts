@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminSistemaService, ModuloItem, AccionBase, ModuloPayload } from '../../../services/admin-sistema.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
@@ -17,7 +18,7 @@ export interface RutaDetectada {
 @Component({
   selector: 'app-catalogo-general',
   standalone: true,
-  imports: [CommonModule, FormsModule, HomeBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HomeBarComponent],
   templateUrl: './catalogo-general.component.html',
   styleUrl: './catalogo-general.component.css'
 })
@@ -76,6 +77,9 @@ export class CatalogoGeneralComponent implements OnInit {
         this.adminService.getModulos().subscribe({
           next: (resModulos) => {
             this.modulos = resModulos.modulos || [];
+            this.modulosExpandidos = new Set(
+              this.modulos.filter(m => this.getSubmodulos(m.id).length > 0).map(m => m.id)
+            );
             this.generarListaRutas();
             
             this.pageModulos = 1;

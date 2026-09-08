@@ -102,9 +102,7 @@ export class CatalogoPermisosComponent implements OnInit {
                   acciones: []
                 });
                 
-                if (esRaiz) {
-                  this.modulosExpandidos.add(modId);
-                }
+                this.modulosExpandidos.add(modId);
               }
 
               const moduloObj = modMap.get(modId)!;
@@ -157,7 +155,11 @@ export class CatalogoPermisosComponent implements OnInit {
   }
 
   get modulosRaiz(): ModuloNodo[] {
-    return this.treePermisos.filter(m => m.es_raiz);
+    const modulosDisponibles = new Set(this.treePermisos.map(m => m.modulo_id));
+
+    // Los permisos se delegan de forma independiente. Si el padre no forma
+    // parte de la bolsa, el módulo debe seguir visible como inicio del árbol.
+    return this.treePermisos.filter(m => !m.padre_id || !modulosDisponibles.has(m.padre_id));
   }
 
   getSubmodulos(padreId: number): ModuloNodo[] {
