@@ -39,6 +39,9 @@
         </div>
       </div>
       <div class="det-header-right">
+        <a class="btn-asignaciones" [routerLink]="['/importaciones', embarque.id, 'asignaciones']">
+          <i class="fas fa-people-arrows"></i> Asignaciones
+        </a>
         <!-- Progreso global -->
         <div class="prog-global">
           <div class="prog-ring" [style.--pct]="progresoPct + '%'" [style.--color]="colorPct(progresoPct)">
