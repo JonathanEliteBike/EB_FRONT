@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   AsignacionesImportacionService,
   AsignacionesProducto,
+  AsignacionRow,
   DetalleProducto,
   PropuestaProducto,
   Movimiento,
@@ -35,6 +36,7 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
   formAsignacion: { clave_cliente: string; cantidad: number }[] = [];
   guardandoAsignacion = false;
   errorAsignacion = '';
+  errorCancelarAsignacion = '';
 
   nuevaVenta = { clave_cliente: '', cantidad: null as number | null, numero_pedido_odoo: '' };
   guardandoVenta = false;
@@ -54,6 +56,7 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
     this.formAsignacion = [];
     this.guardandoAsignacion = false;
     this.errorAsignacion = '';
+    this.errorCancelarAsignacion = '';
     this.nuevaVenta = { clave_cliente: '', cantidad: null, numero_pedido_odoo: '' };
     this.guardandoVenta = false;
     this.errorVenta = '';
@@ -112,7 +115,16 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
   }
 
   confirmarAsignacion(): void {
-    const asignaciones = this.formAsignacion.filter((f) => f.clave_cliente.trim() && f.cantidad > 0);
+    const asignaciones = this.formAsignacion
+      .filter((f) => f.clave_cliente.trim() && f.cantidad > 0)
+      .map((f) => {
+        const propuestaCliente = (this.propuesta?.propuesta || []).find(
+          (c) => c.clave_cliente === f.clave_cliente
+        );
+        return propuestaCliente
+          ? { ...f, cantidad_proyectada: propuestaCliente.cantidad_proyectada }
+          : f;
+      });
     if (!asignaciones.length) {
       this.errorAsignacion = 'Agrega al menos una asignación con cantidad > 0';
       return;
@@ -130,6 +142,19 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
       error: (err) => {
         this.guardandoAsignacion = false;
         this.errorAsignacion = err?.error?.error?.message || 'No se pudo confirmar la asignación';
+      },
+    });
+  }
+
+  cancelarAsignacion(asignacion: AsignacionRow): void {
+    if (!confirm(`¿Cancelar la asignación de ${asignacion.cantidad_asignada} unidades a ${asignacion.clave_cliente}?`)) {
+      return;
+    }
+    this.errorCancelarAsignacion = '';
+    this.svc.cancelarAsignacion(this.importacionId, this.producto.id, asignacion.id).subscribe({
+      next: () => { this.cargarDetalle(); this.cambio.emit(); },
+      error: (err) => {
+        this.errorCancelarAsignacion = err?.error?.error?.message || 'No se pudo cancelar la asignación';
       },
     });
   }

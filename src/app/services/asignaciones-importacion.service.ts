@@ -147,7 +147,7 @@ export class AsignacionesImportacionService {
   asignar(
     importacionId: number,
     productoId: number,
-    asignaciones: { clave_cliente: string; cantidad: number }[]
+    asignaciones: { clave_cliente: string; cantidad: number; cantidad_proyectada?: number }[]
   ): Observable<{ producto_id: number; disponible_restante: number }> {
     return this.http
       .post<ApiOk<{ producto_id: number; disponible_restante: number }>>(
@@ -180,6 +180,14 @@ export class AsignacionesImportacionService {
   cancelarVenta(importacionId: number, ventaId: number): Observable<VentaSobrante> {
     return this.http
       .post<ApiOk<VentaSobrante>>(`${this.base}/${importacionId}/asignaciones/ventas/${ventaId}/cancelar`, {})
+      .pipe(map(r => r.data));
+  }
+
+  cancelarAsignacion(importacionId: number, productoId: number, asignacionId: number): Observable<AsignacionRow> {
+    return this.http
+      .post<ApiOk<AsignacionRow>>(
+        `${this.base}/${importacionId}/asignaciones/productos/${productoId}/asignaciones/${asignacionId}/cancelar`, {}
+      )
       .pipe(map(r => r.data));
   }
 

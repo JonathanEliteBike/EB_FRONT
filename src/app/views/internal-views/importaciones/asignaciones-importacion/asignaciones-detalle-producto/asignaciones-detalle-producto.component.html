@@ -61,14 +61,20 @@
 
       <!-- ── Asignaciones ya confirmadas ── -->
       <div *ngIf="tab === 'asignaciones'">
+        <div class="form-error" *ngIf="errorCancelarAsignacion">{{ errorCancelarAsignacion }}</div>
         <table class="tabla-mini" *ngIf="detalle?.asignaciones?.length; else sinDatos">
-          <thead><tr><th>Cliente</th><th>Prioridad</th><th>Asignado</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Prioridad</th><th>Asignado</th><th>Estado</th><th></th></tr></thead>
           <tbody>
             <tr *ngFor="let a of detalle!.asignaciones">
               <td>{{ a.clave_cliente }}</td>
               <td>{{ a.prioridad }}</td>
               <td>{{ a.cantidad_asignada }}</td>
               <td><span class="badge" [class.badge-cancelada]="a.estado === 'CANCELADA'">{{ a.estado }}</span></td>
+              <td>
+                <button *ngIf="a.estado === 'ACTIVA'" class="btn-texto btn-danger" (click)="cancelarAsignacion(a)">
+                  Cancelar
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
