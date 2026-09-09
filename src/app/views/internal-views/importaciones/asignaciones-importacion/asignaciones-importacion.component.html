@@ -1,0 +1,90 @@
+<app-home-bar></app-home-bar>
+
+<div class="asig-container" *ngIf="!cargando; else cargandoTpl">
+  <div class="asig-error" *ngIf="error">{{ error }}</div>
+
+  <ng-container *ngIf="resumen">
+    <div class="asig-header">
+      <button class="back-btn" (click)="volver()"><i class="fas fa-arrow-left"></i></button>
+      <div>
+        <span class="asig-ref">{{ resumen.embarque.referencia }}</span>
+        <h1>{{ resumen.embarque.nombre }} — Asignaciones</h1>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.unidades_embarcadas }}</span>
+        <span class="kpi-label">Embarcadas</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.unidades_asignadas }}</span>
+        <span class="kpi-label">Asignadas</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.unidades_sobrantes }}</span>
+        <span class="kpi-label">Sobrantes</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.unidades_vendidas }}</span>
+        <span class="kpi-label">Vendidas (sobrante)</span>
+      </div>
+      <div class="kpi-card kpi-highlight">
+        <span class="kpi-num">{{ resumen.kpis.unidades_disponibles }}</span>
+        <span class="kpi-label">Disponibles</span>
+      </div>
+    </div>
+
+    <div class="asig-toolbar">
+      <h2>Productos del embarque</h2>
+      <button class="btn-primary" (click)="toggleFormNuevo()">
+        {{ mostrarFormNuevo ? 'Cancelar' : '+ Agregar producto' }}
+      </button>
+    </div>
+
+    <div class="form-nuevo" *ngIf="mostrarFormNuevo">
+      <input type="text" placeholder="SKU" [(ngModel)]="nuevoProducto.sku" name="sku" />
+      <input type="number" placeholder="Cantidad embarcada" [(ngModel)]="nuevoProducto.cantidad_embarcada" name="cantidad" min="0" />
+      <input type="text" placeholder="Periodo (ej. 2026-2027)" [(ngModel)]="nuevoProducto.periodo" name="periodo" />
+      <input type="text" placeholder="Descripción (opcional)" [(ngModel)]="nuevoProducto.descripcion" name="descripcion" />
+      <button class="btn-primary" [disabled]="guardandoProducto" (click)="agregarProducto()">Guardar</button>
+      <div class="form-error" *ngIf="errorProducto">{{ errorProducto }}</div>
+    </div>
+
+    <table class="asig-tabla" *ngIf="resumen.productos.length; else sinProductos">
+      <thead>
+        <tr>
+          <th>SKU</th><th>Periodo</th><th>Embarcado</th><th>Asignado</th>
+          <th>Sobrante</th><th>Vendido</th><th>Disponible</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of resumen.productos" (click)="abrirDetalle(p)" class="fila-clickable">
+          <td>{{ p.sku }}</td>
+          <td>{{ p.periodo }}</td>
+          <td>{{ p.cantidad_embarcada }}</td>
+          <td>{{ p.cantidad_asignada }}</td>
+          <td>{{ p.cantidad_sobrante }}</td>
+          <td>{{ p.cantidad_vendida }}</td>
+          <td class="celda-disponible">{{ p.cantidad_disponible }}</td>
+          <td><i class="fas fa-chevron-right"></i></td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #sinProductos>
+      <p class="asig-vacio">Este embarque todavía no tiene productos registrados.</p>
+    </ng-template>
+  </ng-container>
+</div>
+
+<ng-template #cargandoTpl>
+  <div class="asig-cargando">Cargando...</div>
+</ng-template>
+
+<app-asignaciones-detalle-producto
+  *ngIf="productoSeleccionado"
+  [importacionId]="importacionId"
+  [producto]="productoSeleccionado"
+  (cerrar)="cerrarDetalle()"
+  (cambio)="onCambioEnDetalle()"
+></app-asignaciones-detalle-producto>

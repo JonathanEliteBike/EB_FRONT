@@ -1,0 +1,30 @@
+.asig-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.asig-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+.asig-cargando { text-align: center; padding: 60px; color: #64748b; }
+
+.asig-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.back-btn { background: none; border: 1px solid #cbd5e1; border-radius: 8px; width: 40px; height: 40px; cursor: pointer; }
+.asig-ref { font-size: 13px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: .5px; }
+.asig-header h1 { margin: 4px 0 0; font-size: 22px; color: #0f172a; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpi-highlight { background: #eff6ff; border-color: #93c5fd; }
+.kpi-num { font-size: 24px; font-weight: 700; color: #0f172a; }
+.kpi-label { font-size: 12px; color: #64748b; }
+
+.asig-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.btn-primary { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.form-nuevo { display: flex; flex-wrap: wrap; gap: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.form-nuevo input { flex: 1; min-width: 140px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.form-error { color: #b91c1c; font-size: 13px; width: 100%; }
+
+.asig-tabla { width: 100%; border-collapse: collapse; }
+.asig-tabla th { text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #e2e8f0; }
+.asig-tabla td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
+.fila-clickable { cursor: pointer; }
+.fila-clickable:hover { background: #f8fafc; }
+.celda-disponible { font-weight: 700; color: #3b82f6; }
+.asig-vacio { color: #64748b; text-align: center; padding: 40px; }
