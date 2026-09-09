@@ -9,10 +9,10 @@
     </div>
 
     <div class="panel-kpis">
-      <span>Embarcado: <b>{{ producto.cantidad_embarcada }}</b></span>
-      <span>Asignado: <b>{{ producto.cantidad_asignada }}</b></span>
-      <span>Sobrante: <b>{{ producto.cantidad_sobrante }}</b></span>
-      <span>Disponible: <b class="disponible">{{ producto.cantidad_disponible }}</b></span>
+      <span>Embarcado: <b>{{ (detalle?.producto ?? producto).cantidad_embarcada }}</b></span>
+      <span>Asignado: <b>{{ (detalle?.producto ?? producto).cantidad_asignada }}</b></span>
+      <span>Sobrante: <b>{{ (detalle?.producto ?? producto).cantidad_sobrante }}</b></span>
+      <span>Disponible: <b class="disponible">{{ (detalle?.producto ?? producto).cantidad_disponible }}</b></span>
     </div>
 
     <div class="panel-tabs">
@@ -23,6 +23,7 @@
     </div>
 
     <div class="panel-body" *ngIf="!cargando; else cargandoTpl">
+      <div class="form-error" *ngIf="errorDetalle">{{ errorDetalle }}</div>
 
       <!-- ── Proyecciones / propuesta de reparto ── -->
       <div *ngIf="tab === 'proyecciones'">
@@ -112,6 +113,7 @@
       <!-- ── Historial de movimientos ── -->
       <div *ngIf="tab === 'movimientos'">
         <div *ngIf="cargandoMovimientos">Cargando historial...</div>
+        <div class="form-error" *ngIf="errorMovimientos">{{ errorMovimientos }}</div>
         <table class="tabla-mini" *ngIf="!cargandoMovimientos && movimientos.length; else sinDatos">
           <thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Cliente</th><th>Referencia</th></tr></thead>
           <tbody>
