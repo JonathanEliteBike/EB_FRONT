@@ -49,6 +49,15 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
   ngOnChanges(): void {
     this.tab = 'proyecciones';
     this.propuesta = null;
+    this.formAsignacion = [];
+    this.guardandoAsignacion = false;
+    this.errorAsignacion = '';
+    this.nuevaVenta = { clave_cliente: '', cantidad: null, numero_pedido_odoo: '' };
+    this.guardandoVenta = false;
+    this.errorVenta = '';
+    this.validandoVentaId = null;
+    this.folioParaValidar = '';
+    this.movimientos = [];
     this.cargarDetalle();
   }
 
