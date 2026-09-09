@@ -1,0 +1,134 @@
+<div class="panel-overlay" (click)="cerrarPanel()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <div class="panel-header">
+      <div>
+        <span class="panel-sku">{{ producto.sku }}</span>
+        <span class="panel-periodo">{{ producto.periodo }}</span>
+      </div>
+      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="panel-kpis">
+      <span>Embarcado: <b>{{ producto.cantidad_embarcada }}</b></span>
+      <span>Asignado: <b>{{ producto.cantidad_asignada }}</b></span>
+      <span>Sobrante: <b>{{ producto.cantidad_sobrante }}</b></span>
+      <span>Disponible: <b class="disponible">{{ producto.cantidad_disponible }}</b></span>
+    </div>
+
+    <div class="panel-tabs">
+      <button [class.activo]="tab === 'proyecciones'" (click)="cambiarTab('proyecciones')">Proyecciones</button>
+      <button [class.activo]="tab === 'asignaciones'" (click)="cambiarTab('asignaciones')">Asignaciones</button>
+      <button [class.activo]="tab === 'sobrantes'" (click)="cambiarTab('sobrantes')">Sobrantes / Ventas</button>
+      <button [class.activo]="tab === 'movimientos'" (click)="cambiarTab('movimientos')">Historial</button>
+    </div>
+
+    <div class="panel-body" *ngIf="!cargando; else cargandoTpl">
+
+      <!-- ── Proyecciones / propuesta de reparto ── -->
+      <div *ngIf="tab === 'proyecciones'">
+        <button class="btn-secundario" [disabled]="recalculando" (click)="recalcular()">
+          {{ recalculando ? 'Calculando...' : 'Recalcular propuesta' }}
+        </button>
+        <p class="hint" *ngIf="propuesta && !propuesta.proyecciones_disponibles">
+          Proyecciones no disponible en este momento — se muestra solo lo embarcado.
+        </p>
+
+        <table class="tabla-mini" *ngIf="formAsignacion.length">
+          <thead><tr><th>Cliente</th><th>Prioridad</th><th>Proyectado</th><th>A asignar</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let fila of formAsignacion; let i = index">
+              <td><input type="text" [(ngModel)]="fila.clave_cliente" [name]="'cliente' + i" /></td>
+              <td>
+                {{ (propuesta?.propuesta || []).find(c => c.clave_cliente === fila.clave_cliente)?.prioridad ?? '—' }}
+              </td>
+              <td>
+                {{ (propuesta?.propuesta || []).find(c => c.clave_cliente === fila.clave_cliente)?.cantidad_proyectada ?? '—' }}
+              </td>
+              <td><input type="number" min="0" [(ngModel)]="fila.cantidad" [name]="'cantidad' + i" /></td>
+              <td><button class="btn-quitar" (click)="quitarFila(i)">✕</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <button class="btn-texto" (click)="agregarFilaManual()">+ agregar cliente manualmente</button>
+
+        <div class="form-error" *ngIf="errorAsignacion">{{ errorAsignacion }}</div>
+        <button class="btn-primary" [disabled]="guardandoAsignacion || !formAsignacion.length" (click)="confirmarAsignacion()">
+          Confirmar asignación
+        </button>
+      </div>
+
+      <!-- ── Asignaciones ya confirmadas ── -->
+      <div *ngIf="tab === 'asignaciones'">
+        <table class="tabla-mini" *ngIf="detalle?.asignaciones?.length; else sinDatos">
+          <thead><tr><th>Cliente</th><th>Prioridad</th><th>Asignado</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let a of detalle!.asignaciones">
+              <td>{{ a.clave_cliente }}</td>
+              <td>{{ a.prioridad }}</td>
+              <td>{{ a.cantidad_asignada }}</td>
+              <td><span class="badge" [class.badge-cancelada]="a.estado === 'CANCELADA'">{{ a.estado }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── Sobrantes / ventas anticipadas ── -->
+      <div *ngIf="tab === 'sobrantes'">
+        <div class="form-nuevo">
+          <input type="text" placeholder="Cliente" [(ngModel)]="nuevaVenta.clave_cliente" name="ventaCliente" />
+          <input type="number" placeholder="Cantidad" min="1" [(ngModel)]="nuevaVenta.cantidad" name="ventaCantidad" />
+          <input type="text" placeholder="Pedido Odoo (opcional)" [(ngModel)]="nuevaVenta.numero_pedido_odoo" name="ventaFolio" />
+          <button class="btn-primary" [disabled]="guardandoVenta" (click)="registrarVenta()">Registrar venta</button>
+        </div>
+        <div class="form-error" *ngIf="errorVenta">{{ errorVenta }}</div>
+
+        <table class="tabla-mini" *ngIf="detalle?.sobrantes_ventas?.length; else sinDatos">
+          <thead><tr><th>Cliente</th><th>Cantidad</th><th>Pedido Odoo</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let v of detalle!.sobrantes_ventas">
+              <td>{{ v.clave_cliente }}</td>
+              <td>{{ v.cantidad }}</td>
+              <td>{{ v.numero_pedido_odoo || '—' }}</td>
+              <td><span class="badge" [ngClass]="'badge-' + v.estado.toLowerCase()">{{ v.estado }}</span></td>
+              <td class="acciones-venta">
+                <ng-container *ngIf="v.estado !== 'CANCELADO' && v.estado !== 'VALIDADO'">
+                  <ng-container *ngIf="validandoVentaId === v.id; else botonValidar">
+                    <input type="text" placeholder="Folio Odoo" [(ngModel)]="folioParaValidar" [name]="'folio' + v.id" />
+                    <button class="btn-texto" (click)="confirmarValidacionOdoo(v)">Validar</button>
+                    <button class="btn-texto" (click)="cancelarValidacion()">✕</button>
+                  </ng-container>
+                  <ng-template #botonValidar>
+                    <button class="btn-texto" (click)="iniciarValidacion(v)">Validar en Odoo</button>
+                  </ng-template>
+                  <button class="btn-texto btn-danger" (click)="cancelarVentaSobrante(v)">Cancelar</button>
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── Historial de movimientos ── -->
+      <div *ngIf="tab === 'movimientos'">
+        <div *ngIf="cargandoMovimientos">Cargando historial...</div>
+        <table class="tabla-mini" *ngIf="!cargandoMovimientos && movimientos.length; else sinDatos">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Cliente</th><th>Referencia</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of movimientos">
+              <td>{{ m.created_at | date: 'short' }}</td>
+              <td>{{ m.tipo_movimiento }}</td>
+              <td [class.positivo]="m.cantidad > 0" [class.negativo]="m.cantidad < 0">{{ m.cantidad }}</td>
+              <td>{{ m.clave_cliente || '—' }}</td>
+              <td>{{ m.referencia_externa || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #sinDatos><p class="asig-vacio">Sin registros todavía.</p></ng-template>
+    </div>
+
+    <ng-template #cargandoTpl><div class="asig-cargando">Cargando...</div></ng-template>
+  </div>
+</div>

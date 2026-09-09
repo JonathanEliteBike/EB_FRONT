@@ -8,11 +8,12 @@ import {
   AsignacionesResumen,
   AsignacionesProducto,
 } from '../../../../services/asignaciones-importacion.service';
+import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 
 @Component({
   selector: 'app-asignaciones-importacion',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, AsignacionesDetalleProductoComponent],
   templateUrl: './asignaciones-importacion.component.html',
   styleUrl: './asignaciones-importacion.component.css',
 })
