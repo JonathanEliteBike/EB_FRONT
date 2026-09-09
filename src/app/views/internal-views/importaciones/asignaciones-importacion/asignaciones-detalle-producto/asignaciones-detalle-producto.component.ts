@@ -28,6 +28,7 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
   tab: Tab = 'proyecciones';
   cargando = true;
   detalle: DetalleProducto | null = null;
+  errorDetalle = '';
 
   propuesta: PropuestaProducto | null = null;
   recalculando = false;
@@ -43,6 +44,7 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
 
   movimientos: Movimiento[] = [];
   cargandoMovimientos = false;
+  errorMovimientos = '';
 
   constructor(private svc: AsignacionesImportacionService) {}
 
@@ -58,14 +60,20 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
     this.validandoVentaId = null;
     this.folioParaValidar = '';
     this.movimientos = [];
+    this.errorDetalle = '';
+    this.errorMovimientos = '';
     this.cargarDetalle();
   }
 
   cargarDetalle(): void {
     this.cargando = true;
+    this.errorDetalle = '';
     this.svc.detalleProducto(this.importacionId, this.producto.id).subscribe({
       next: (data) => { this.detalle = data; this.cargando = false; },
-      error: () => { this.cargando = false; },
+      error: (err) => {
+        this.cargando = false;
+        this.errorDetalle = err?.error?.error?.message || 'No se pudo cargar el detalle del producto';
+      },
     });
   }
 
@@ -78,6 +86,7 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
 
   recalcular(): void {
     this.recalculando = true;
+    this.errorAsignacion = '';
     this.svc.recalcular(this.importacionId, this.producto.periodo).subscribe({
       next: (propuestas) => {
         this.recalculando = false;
@@ -87,7 +96,10 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
           cantidad: c.cantidad_sugerida,
         }));
       },
-      error: () => { this.recalculando = false; },
+      error: (err) => {
+        this.recalculando = false;
+        this.errorAsignacion = err?.error?.error?.message || 'No se pudo recalcular la propuesta';
+      },
     });
   }
 
@@ -179,19 +191,27 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
     if (!confirm(`¿Cancelar la venta de ${venta.cantidad} unidades a ${venta.clave_cliente}?`)) {
       return;
     }
+    this.errorVenta = '';
     this.svc.cancelarVenta(this.importacionId, venta.id).subscribe({
       next: () => { this.cargarDetalle(); this.cambio.emit(); },
+      error: (err) => {
+        this.errorVenta = err?.error?.error?.message || 'No se pudo cancelar la venta';
+      },
     });
   }
 
   cargarMovimientos(): void {
     this.cargandoMovimientos = true;
+    this.errorMovimientos = '';
     this.svc.movimientos(this.importacionId).subscribe({
       next: (data) => {
         this.movimientos = data.filter((m) => m.importacion_producto_id === this.producto.id);
         this.cargandoMovimientos = false;
       },
-      error: () => { this.cargandoMovimientos = false; },
+      error: (err) => {
+        this.cargandoMovimientos = false;
+        this.errorMovimientos = err?.error?.error?.message || 'No se pudo cargar el historial de movimientos';
+      },
     });
   }
 
