@@ -37,18 +37,42 @@
 
     <div class="asig-toolbar">
       <h2>Productos del embarque</h2>
-      <button class="btn-primary" (click)="toggleFormNuevo()">
-        {{ mostrarFormNuevo ? 'Cancelar' : '+ Agregar producto' }}
-      </button>
     </div>
 
-    <div class="form-nuevo" *ngIf="mostrarFormNuevo">
-      <input type="text" placeholder="SKU" [(ngModel)]="nuevoProducto.sku" name="sku" />
-      <input type="number" placeholder="Cantidad embarcada" [(ngModel)]="nuevoProducto.cantidad_embarcada" name="cantidad" min="0" />
-      <input type="text" placeholder="Periodo (ej. 2026-2027)" [(ngModel)]="nuevoProducto.periodo" name="periodo" />
-      <input type="text" placeholder="Descripción (opcional)" [(ngModel)]="nuevoProducto.descripcion" name="descripcion" />
-      <button class="btn-primary" [disabled]="guardandoProducto" (click)="agregarProducto()">Guardar</button>
-      <div class="form-error" *ngIf="errorProducto">{{ errorProducto }}</div>
+    <div class="import-panel">
+      <div class="import-fila">
+        <input type="text" class="import-periodo" placeholder="Periodo (ej. 2026-2027)"
+               [(ngModel)]="periodoImport" name="periodoImport" />
+        <label class="import-file-label">
+          <input type="file" accept=".xlsx,.xls" (change)="onArchivoSeleccionado($event)" />
+          <span>{{ archivoNombre || 'Elegir archivo Excel…' }}</span>
+        </label>
+        <button class="btn-primary" [disabled]="importando || !archivoImport || !periodoImport.trim()"
+                (click)="importarExcel()">
+          {{ importando ? 'Importando…' : 'Importar' }}
+        </button>
+      </div>
+      <p class="import-ayuda">
+        El Excel debe tener una fila de encabezados con columnas <b>SKU</b>, <b>Cantidad</b> y
+        (opcional) <b>Descripción</b>. Los SKU que ya existan en el embarque se actualizan; los nuevos se agregan.
+      </p>
+      <div class="form-error" *ngIf="errorImport">{{ errorImport }}</div>
+
+      <div class="import-resultado" *ngIf="resultadoImport">
+        <p class="import-resumen">
+          <span class="import-ok">{{ resultadoImport.insertados }} agregados</span>
+          <span class="import-ok">{{ resultadoImport.actualizados }} actualizados</span>
+          <span *ngIf="resultadoImport.errores.length" class="import-err">
+            {{ resultadoImport.errores.length }} con error
+          </span>
+          <span class="import-total">de {{ resultadoImport.total_filas }} filas</span>
+        </p>
+        <ul class="import-errores" *ngIf="resultadoImport.errores.length">
+          <li *ngFor="let e of resultadoImport.errores">
+            <span *ngIf="e.fila">Fila {{ e.fila }} · </span>{{ e.sku }} — {{ e.motivo }}
+          </li>
+        </ul>
+      </div>
     </div>
 
     <table class="asig-tabla" *ngIf="resumen.productos.length; else sinProductos">

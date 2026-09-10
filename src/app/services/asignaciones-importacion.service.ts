@@ -95,6 +95,19 @@ export interface ClientePrioridad {
   prioridad: number;
 }
 
+export interface ImportacionErrorFila {
+  fila: number | null;
+  sku: string | null;
+  motivo: string;
+}
+
+export interface ImportacionResultado {
+  insertados: number;
+  actualizados: number;
+  total_filas: number;
+  errores: ImportacionErrorFila[];
+}
+
 interface ApiOk<T> { ok: true; data: T; }
 
 @Injectable({ providedIn: 'root' })
@@ -129,6 +142,21 @@ export class AsignacionesImportacionService {
   ): Observable<AsignacionesProducto> {
     return this.http
       .put<ApiOk<AsignacionesProducto>>(`${this.base}/${importacionId}/asignaciones/productos/${productoId}`, body)
+      .pipe(map(r => r.data));
+  }
+
+  importarProductos(
+    importacionId: number,
+    file: File,
+    periodo: string
+  ): Observable<ImportacionResultado> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('periodo', periodo);
+    return this.http
+      .post<ApiOk<ImportacionResultado>>(
+        `${this.base}/${importacionId}/asignaciones/productos/importar`, form
+      )
       .pipe(map(r => r.data));
   }
 

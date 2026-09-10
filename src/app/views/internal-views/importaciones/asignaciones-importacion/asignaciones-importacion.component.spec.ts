@@ -17,7 +17,7 @@ describe('AsignacionesImportacionComponent', () => {
   };
 
   beforeEach(async () => {
-    svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', ['resumen', 'crearProducto']);
+    svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', ['resumen', 'importarProductos']);
     svcSpy.resumen.and.returnValue(of(resumenMock));
 
     await TestBed.configureTestingModule({
@@ -43,11 +43,20 @@ describe('AsignacionesImportacionComponent', () => {
     expect(component.cargando).toBeFalse();
   });
 
-  it('agregarProducto() valida campos obligatorios antes de llamar al servicio', () => {
-    component.nuevoProducto = { sku: '', cantidad_embarcada: null, periodo: '', descripcion: '' };
-    component.agregarProducto();
-    expect(component.errorProducto).toContain('obligatorios');
-    expect(svcSpy.crearProducto).not.toHaveBeenCalled();
+  it('importarExcel() exige periodo antes de llamar al servicio', () => {
+    component.periodoImport = '';
+    component.archivoImport = new File(['x'], 'c.xlsx');
+    component.importarExcel();
+    expect(component.errorImport).toContain('periodo');
+    expect(svcSpy.importarProductos).not.toHaveBeenCalled();
+  });
+
+  it('importarExcel() exige archivo antes de llamar al servicio', () => {
+    component.periodoImport = '2026-2027';
+    component.archivoImport = null;
+    component.importarExcel();
+    expect(component.errorImport).toContain('archivo');
+    expect(svcSpy.importarProductos).not.toHaveBeenCalled();
   });
 
   it('abrirDetalle() setea productoSeleccionado', () => {

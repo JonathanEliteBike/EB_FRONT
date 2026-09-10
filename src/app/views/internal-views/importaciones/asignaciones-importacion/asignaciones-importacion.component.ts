@@ -7,6 +7,7 @@ import {
   AsignacionesImportacionService,
   AsignacionesResumen,
   AsignacionesProducto,
+  ImportacionResultado,
 } from '../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 
@@ -23,10 +24,12 @@ export class AsignacionesImportacionComponent implements OnInit {
   cargando = true;
   error = '';
 
-  mostrarFormNuevo = false;
-  guardandoProducto = false;
-  errorProducto = '';
-  nuevoProducto = { sku: '', cantidad_embarcada: null as number | null, periodo: '', descripcion: '' };
+  periodoImport = '';
+  archivoImport: File | null = null;
+  archivoNombre = '';
+  importando = false;
+  errorImport = '';
+  resultadoImport: ImportacionResultado | null = null;
 
   productoSeleccionado: AsignacionesProducto | null = null;
 
@@ -57,34 +60,37 @@ export class AsignacionesImportacionComponent implements OnInit {
     this.router.navigate(['/importaciones', this.importacionId]);
   }
 
-  toggleFormNuevo(): void {
-    this.mostrarFormNuevo = !this.mostrarFormNuevo;
-    this.errorProducto = '';
+  onArchivoSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.archivoImport = input.files && input.files.length ? input.files[0] : null;
+    this.archivoNombre = this.archivoImport ? this.archivoImport.name : '';
+    this.errorImport = '';
+    this.resultadoImport = null;
   }
 
-  agregarProducto(): void {
-    if (!this.nuevoProducto.sku.trim() || !this.nuevoProducto.periodo.trim() ||
-        this.nuevoProducto.cantidad_embarcada === null || this.nuevoProducto.cantidad_embarcada < 0) {
-      this.errorProducto = 'SKU, periodo y cantidad embarcada (>= 0) son obligatorios';
+  importarExcel(): void {
+    if (!this.periodoImport.trim()) {
+      this.errorImport = 'Indica el periodo (ej. 2026-2027)';
       return;
     }
-    this.guardandoProducto = true;
-    this.errorProducto = '';
-    this.svc.crearProducto(this.importacionId, {
-      sku: this.nuevoProducto.sku.trim(),
-      cantidad_embarcada: this.nuevoProducto.cantidad_embarcada,
-      periodo: this.nuevoProducto.periodo.trim(),
-      descripcion: this.nuevoProducto.descripcion.trim() || undefined,
-    }).subscribe({
-      next: () => {
-        this.guardandoProducto = false;
-        this.nuevoProducto = { sku: '', cantidad_embarcada: null, periodo: '', descripcion: '' };
-        this.mostrarFormNuevo = false;
+    if (!this.archivoImport) {
+      this.errorImport = 'Selecciona un archivo .xlsx';
+      return;
+    }
+    this.importando = true;
+    this.errorImport = '';
+    this.resultadoImport = null;
+    this.svc.importarProductos(this.importacionId, this.archivoImport, this.periodoImport.trim()).subscribe({
+      next: (res) => {
+        this.importando = false;
+        this.resultadoImport = res;
+        this.archivoImport = null;
+        this.archivoNombre = '';
         this.cargar();
       },
       error: (err) => {
-        this.guardandoProducto = false;
-        this.errorProducto = err?.error?.error?.message || 'No se pudo registrar el producto';
+        this.importando = false;
+        this.errorImport = err?.error?.error?.message || 'No se pudo importar el archivo';
       },
     });
   }
