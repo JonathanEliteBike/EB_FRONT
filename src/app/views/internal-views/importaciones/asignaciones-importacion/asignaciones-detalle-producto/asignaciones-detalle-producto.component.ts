@@ -4,15 +4,36 @@ import { FormsModule } from '@angular/forms';
 import {
   AsignacionesImportacionService,
   AsignacionesProducto,
-  AsignacionRow,
   DetalleProducto,
   PropuestaProducto,
-  PropuestaCliente,
+  ReservaRow,
   Movimiento,
   VentaSobrante,
 } from '../../../../../services/asignaciones-importacion.service';
 
-type Tab = 'proyecciones' | 'asignaciones' | 'sobrantes' | 'movimientos';
+/** Fila editable de la propuesta: una por (cliente, mes). */
+interface FilaPropuesta {
+  clave_cliente: string;
+  nombre_cliente: string;
+  prioridad: number;
+  mes: string;              // 'YYYY-MM'
+  proyectado: number;
+  vigente: number;
+  sugerido: number;
+  cantidad: number;         // lo que el usuario decide reservar
+}
+
+type Tab = 'proyecciones' | 'reservas' | 'sobrantes' | 'movimientos';
+type Modo = 'inicial' | 'reasignacion';
+
+const MESES: { valor: string; label: string }[] = [
+  { valor: 'mayo', label: 'Mayo' }, { valor: 'junio', label: 'Junio' },
+  { valor: 'julio', label: 'Julio' }, { valor: 'agosto', label: 'Agosto' },
+  { valor: 'septiembre', label: 'Septiembre' }, { valor: 'octubre', label: 'Octubre' },
+  { valor: 'noviembre', label: 'Noviembre' }, { valor: 'diciembre', label: 'Diciembre' },
+  { valor: 'enero', label: 'Enero' }, { valor: 'febrero', label: 'Febrero' },
+  { valor: 'marzo', label: 'Marzo' }, { valor: 'abril', label: 'Abril' },
+];
 
 @Component({
   selector: 'app-asignaciones-detalle-producto',
@@ -27,24 +48,36 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
   @Output() cerrar = new EventEmitter<void>();
   @Output() cambio = new EventEmitter<void>();
 
+  readonly meses = MESES;
+
   tab: Tab = 'proyecciones';
   cargando = true;
   detalle: DetalleProducto | null = null;
   errorDetalle = '';
 
+  // ── Propuesta (reserva inicial / reasignación) ──
+  modo: Modo = 'inicial';
+  mesDesde = 'octubre';
+  mesHasta = 'diciembre';
   propuesta: PropuestaProducto | null = null;
-  recalculando = false;
-  formAsignacion: { clave_cliente: string; cantidad: number }[] = [];
-  guardandoAsignacion = false;
-  errorAsignacion = '';
-  errorCancelarAsignacion = '';
+  filas: FilaPropuesta[] = [];
+  calculando = false;
+  guardando = false;
+  errorPropuesta = '';
+  errorGuardar = '';
 
+  // ── Reservas ──
+  resolviendoId: number | null = null;
+  errorReservas = '';
+
+  // ── Sobrantes / ventas ──
   nuevaVenta = { clave_cliente: '', cantidad: null as number | null, numero_pedido_odoo: '' };
   guardandoVenta = false;
   errorVenta = '';
   validandoVentaId: number | null = null;
   folioParaValidar = '';
 
+  // ── Movimientos ──
   movimientos: Movimiento[] = [];
   cargandoMovimientos = false;
   errorMovimientos = '';
@@ -53,11 +86,15 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.tab = 'proyecciones';
+    this.modo = 'inicial';
     this.propuesta = null;
-    this.formAsignacion = [];
-    this.guardandoAsignacion = false;
-    this.errorAsignacion = '';
-    this.errorCancelarAsignacion = '';
+    this.filas = [];
+    this.calculando = false;
+    this.guardando = false;
+    this.errorPropuesta = '';
+    this.errorGuardar = '';
+    this.resolviendoId = null;
+    this.errorReservas = '';
     this.nuevaVenta = { clave_cliente: '', cantidad: null, numero_pedido_odoo: '' };
     this.guardandoVenta = false;
     this.errorVenta = '';
@@ -67,6 +104,10 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
     this.errorDetalle = '';
     this.errorMovimientos = '';
     this.cargarDetalle();
+  }
+
+  get prod(): AsignacionesProducto {
+    return this.detalle?.producto ?? this.producto;
   }
 
   cargarDetalle(): void {
@@ -88,86 +129,145 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
     }
   }
 
-  recalcular(): void {
-    this.recalculando = true;
-    this.errorAsignacion = '';
-    this.svc.recalcular(this.importacionId, this.producto.periodo).subscribe({
-      next: (propuestas) => {
-        this.recalculando = false;
-        this.propuesta = propuestas.find((p) => p.producto_id === this.producto.id) || null;
-        this.formAsignacion = (this.propuesta?.propuesta || []).map((c) => ({
-          clave_cliente: c.clave_cliente,
-          cantidad: c.cantidad_sugerida,
-        }));
+  // ── Propuesta ────────────────────────────────────────────────────────────
+
+  private _cargarPropuesta(obs: ReturnType<AsignacionesImportacionService['recalcular']>, modo: Modo): void {
+    this.calculando = true;
+    this.modo = modo;
+    this.errorPropuesta = '';
+    this.errorGuardar = '';
+    obs.subscribe({
+      next: (props) => {
+        this.calculando = false;
+        this.propuesta = props.find((p) => p.producto_id === this.producto.id) || null;
+        this.filas = [];
+        for (const c of this.propuesta?.propuesta || []) {
+          for (const m of c.meses) {
+            this.filas.push({
+              clave_cliente: c.clave_cliente,
+              nombre_cliente: c.nombre_cliente,
+              prioridad: c.prioridad,
+              mes: m.mes,
+              proyectado: m.proyectado,
+              vigente: m.vigente,
+              sugerido: m.sugerido,
+              cantidad: m.sugerido,
+            });
+          }
+        }
       },
       error: (err) => {
-        this.recalculando = false;
-        this.errorAsignacion = err?.error?.error?.message || 'No se pudo recalcular la propuesta';
+        this.calculando = false;
+        this.errorPropuesta = err?.error?.error?.message || 'No se pudo calcular la propuesta';
       },
     });
   }
 
-  agregarFilaManual(): void {
-    this.formAsignacion.push({ clave_cliente: '', cantidad: 0 });
-  }
-
-  quitarFila(i: number): void {
-    this.formAsignacion.splice(i, 1);
-  }
-
-  /** Devuelve la fila de la propuesta calculada para un cliente, si existe.
-   *  Se hace en el componente y no en la plantilla porque Angular no permite
-   *  funciones flecha dentro de expresiones de plantilla. */
-  proyeccionCliente(claveCliente: string): PropuestaCliente | undefined {
-    return (this.propuesta?.propuesta || []).find(
-      (c) => c.clave_cliente === claveCliente,
+  recalcular(): void {
+    this._cargarPropuesta(
+      this.svc.recalcular(this.importacionId, this.mesDesde, this.mesHasta, this.producto.periodo),
+      'inicial',
     );
   }
 
-  confirmarAsignacion(): void {
-    const asignaciones = this.formAsignacion
-      .filter((f) => f.clave_cliente.trim() && f.cantidad > 0)
-      .map((f) => {
-        const propuestaCliente = (this.propuesta?.propuesta || []).find(
-          (c) => c.clave_cliente === f.clave_cliente
-        );
-        return propuestaCliente
-          ? { ...f, cantidad_proyectada: propuestaCliente.cantidad_proyectada }
-          : f;
-      });
-    if (!asignaciones.length) {
-      this.errorAsignacion = 'Agrega al menos una asignación con cantidad > 0';
+  reasignar(): void {
+    // meses anteriores a la ventana ya trabajada (mesDesde)
+    this._cargarPropuesta(
+      this.svc.proponerReasignacion(this.importacionId, this.mesDesde, this.producto.periodo),
+      'reasignacion',
+    );
+  }
+
+  totalAReservar(): number {
+    return this.filas.reduce((s, f) => s + (f.cantidad > 0 ? f.cantidad : 0), 0);
+  }
+
+  guardar(): void {
+    const reservas = this.filas
+      .filter((f) => f.clave_cliente && f.cantidad > 0)
+      .map((f) => ({
+        clave_cliente: f.clave_cliente,
+        mes_objetivo: f.mes,
+        cantidad: f.cantidad,
+        proyectado: f.proyectado,
+      }));
+    if (!reservas.length) {
+      this.errorGuardar = 'No hay ninguna fila con cantidad mayor a 0';
       return;
     }
-    this.guardandoAsignacion = true;
-    this.errorAsignacion = '';
-    this.svc.asignar(this.importacionId, this.producto.id, asignaciones).subscribe({
+    if (this.totalAReservar() > (this.propuesta?.disponible ?? 0)) {
+      this.errorGuardar =
+        `Estás intentando reservar ${this.totalAReservar()} y solo hay ${this.propuesta?.disponible ?? 0} disponibles`;
+      return;
+    }
+    this.guardando = true;
+    this.errorGuardar = '';
+    const req = this.modo === 'inicial'
+      ? this.svc.reservar(this.importacionId, this.producto.id, reservas)
+      : this.svc.confirmarReasignacion(this.importacionId, this.producto.id, reservas);
+    req.subscribe({
       next: () => {
-        this.guardandoAsignacion = false;
-        this.formAsignacion = [];
+        this.guardando = false;
         this.propuesta = null;
+        this.filas = [];
+        this.tab = 'reservas';
         this.cargarDetalle();
         this.cambio.emit();
       },
       error: (err) => {
-        this.guardandoAsignacion = false;
-        this.errorAsignacion = err?.error?.error?.message || 'No se pudo confirmar la asignación';
+        this.guardando = false;
+        this.errorGuardar = err?.error?.error?.message
+          || (this.modo === 'inicial' ? 'No se pudo reservar' : 'No se pudo confirmar la reasignación');
       },
     });
   }
 
-  cancelarAsignacion(asignacion: AsignacionRow): void {
-    if (!confirm(`¿Cancelar la asignación de ${asignacion.cantidad_asignada} unidades a ${asignacion.clave_cliente}?`)) {
-      return;
-    }
-    this.errorCancelarAsignacion = '';
-    this.svc.cancelarAsignacion(this.importacionId, this.producto.id, asignacion.id).subscribe({
-      next: () => { this.cargarDetalle(); this.cambio.emit(); },
+  // ── Reservas ─────────────────────────────────────────────────────────────
+
+  resolver(reserva: ReservaRow, decision: 'ACEPTADA' | 'RECHAZADA'): void {
+    const txt = decision === 'ACEPTADA'
+      ? `Confirmar que ${reserva.clave_cliente} SÍ quiere las ${reserva.cantidad_asignada} unidades de ${reserva.mes_objetivo}`
+      : `Marcar que ${reserva.clave_cliente} NO quiere las ${reserva.cantidad_asignada} unidades de ${reserva.mes_objetivo} (pasan a sobrante)`;
+    if (!confirm(txt + '?')) { return; }
+    this.resolviendoId = reserva.id;
+    this.errorReservas = '';
+    this.svc.resolverReserva(this.importacionId, reserva.id, decision).subscribe({
+      next: () => { this.resolviendoId = null; this.cargarDetalle(); this.cambio.emit(); },
       error: (err) => {
-        this.errorCancelarAsignacion = err?.error?.error?.message || 'No se pudo cancelar la asignación';
+        this.resolviendoId = null;
+        this.errorReservas = err?.error?.error?.message || 'No se pudo resolver la reserva';
       },
     });
   }
+
+  cancelarReserva(reserva: ReservaRow): void {
+    if (!confirm(`¿Cancelar la reserva de ${reserva.cantidad_asignada} unidades a ${reserva.clave_cliente}?`)) {
+      return;
+    }
+    this.errorReservas = '';
+    this.svc.cancelarAsignacion(this.importacionId, this.producto.id, reserva.id).subscribe({
+      next: () => { this.cargarDetalle(); this.cambio.emit(); },
+      error: (err) => {
+        this.errorReservas = err?.error?.error?.message || 'No se pudo cancelar la reserva';
+      },
+    });
+  }
+
+  origenLabel(o: string): string {
+    return o === 'REASIGNACION' ? 'Reasignación' : 'Inicial';
+  }
+
+  estadoLabel(e: string): string {
+    return ({
+      RESERVADA: 'Reservada',
+      PENDIENTE_CONFIRMACION: 'Pendiente conf.',
+      CONFIRMADA: 'Confirmada',
+      RECHAZADA: 'Rechazada',
+      CANCELADA: 'Cancelada',
+    } as Record<string, string>)[e] || e;
+  }
+
+  // ── Sobrantes / ventas ───────────────────────────────────────────────────
 
   registrarVenta(): void {
     if (!this.nuevaVenta.clave_cliente.trim() || !this.nuevaVenta.cantidad || this.nuevaVenta.cantidad <= 0) {
@@ -234,6 +334,8 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
       },
     });
   }
+
+  // ── Movimientos ──────────────────────────────────────────────────────────
 
   cargarMovimientos(): void {
     this.cargandoMovimientos = true;

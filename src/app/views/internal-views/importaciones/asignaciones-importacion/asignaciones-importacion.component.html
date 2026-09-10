@@ -18,8 +18,12 @@
         <span class="kpi-label">Embarcadas</span>
       </div>
       <div class="kpi-card">
-        <span class="kpi-num">{{ resumen.kpis.unidades_asignadas }}</span>
-        <span class="kpi-label">Asignadas</span>
+        <span class="kpi-num">{{ resumen.kpis.unidades_reservadas }}</span>
+        <span class="kpi-label">Reservadas</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.reservado_reasignacion_pendiente }}</span>
+        <span class="kpi-label">Pend. confirmación</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-num">{{ resumen.kpis.unidades_sobrantes }}</span>
@@ -78,16 +82,19 @@
     <table class="asig-tabla" *ngIf="resumen.productos.length; else sinProductos">
       <thead>
         <tr>
-          <th>SKU</th><th>Periodo</th><th>Embarcado</th><th>Asignado</th>
+          <th>SKU</th><th>Descripción</th><th>Periodo</th><th>Embarcado</th><th>Reservado</th>
+          <th title="Reservas de reasignación pendientes de confirmar con el cliente">Pend.</th>
           <th>Sobrante</th><th>Vendido</th><th>Disponible</th><th></th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let p of resumen.productos" (click)="abrirDetalle(p)" class="fila-clickable">
           <td>{{ p.sku }}</td>
+          <td class="celda-desc">{{ p.descripcion || '—' }}</td>
           <td>{{ p.periodo }}</td>
           <td>{{ p.cantidad_embarcada }}</td>
-          <td>{{ p.cantidad_asignada }}</td>
+          <td>{{ p.reservado_total }}</td>
+          <td>{{ p.reservado_reasignacion_pendiente || '—' }}</td>
           <td>{{ p.cantidad_sobrante }}</td>
           <td>{{ p.cantidad_vendida }}</td>
           <td class="celda-disponible">{{ p.cantidad_disponible }}</td>

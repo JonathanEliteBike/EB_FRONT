@@ -16,13 +16,18 @@
 
 .asig-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .asig-toolbar h2 { color: #e2e8f0; }
-.btn-primary { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; }
-.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.btn-primary { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: background 150ms ease-out, transform 120ms ease-out; }
+.btn-primary:hover:not(:disabled) { background: #2f6fd8; }
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 
 .import-panel { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
 .import-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.import-periodo { flex: 0 1 200px; padding: 8px 10px; border: 1px solid #2d3748; border-radius: 6px; background: #0f1623; color: #e2e8f0; }
-.import-file-label { flex: 1 1 240px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px dashed #3d4a5f; border-radius: 6px; background: #0f1623; color: #94a3b8; cursor: pointer; overflow: hidden; }
+.import-periodo { flex: 0 1 200px; padding: 8px 10px; border: 1px solid #2d3748; border-radius: 6px; background: #0f1623; color: #e2e8f0; transition: border-color 150ms ease-out, box-shadow 150ms ease-out; }
+.import-periodo:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .22); }
+.import-periodo::placeholder { color: #64748b; }
+.import-file-label { flex: 1 1 240px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px dashed #3d4a5f; border-radius: 6px; background: #0f1623; color: #94a3b8; cursor: pointer; overflow: hidden; transition: border-color 150ms ease-out, color 150ms ease-out; }
+.import-file-label:hover { border-color: #60a5fa; color: #cbd5e1; }
 .import-file-label input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .import-file-label span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .import-ayuda { color: #94a3b8; font-size: 12px; margin: 10px 0 0; }
@@ -43,4 +48,5 @@
 .fila-clickable { cursor: pointer; }
 .fila-clickable:hover { background: #1a2333; }
 .celda-disponible { font-weight: 700; color: #60a5fa; }
+.celda-desc { color: #cbd5e1; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .asig-vacio { color: #94a3b8; text-align: center; padding: 40px; }

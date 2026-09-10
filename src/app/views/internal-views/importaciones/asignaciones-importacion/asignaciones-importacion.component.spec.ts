@@ -12,7 +12,11 @@ describe('AsignacionesImportacionComponent', () => {
 
   const resumenMock: AsignacionesResumen = {
     embarque: { id: 1, referencia: 'IMP-001', nombre: 'Test', estado: 'activo' },
-    kpis: { unidades_embarcadas: 10, unidades_asignadas: 4, unidades_sobrantes: 6, unidades_vendidas: 0, unidades_disponibles: 6 },
+    kpis: {
+      unidades_embarcadas: 10, unidades_reservadas: 4, unidades_asignadas: 4,
+      reservado_inicial: 4, reservado_reasignacion_pendiente: 0, reservado_confirmado: 0,
+      unidades_sobrantes: 6, unidades_vendidas: 0, unidades_disponibles: 6,
+    },
     productos: [],
   };
 

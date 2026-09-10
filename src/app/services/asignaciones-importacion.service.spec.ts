@@ -26,8 +26,9 @@ describe('AsignacionesImportacionService', () => {
     const mockResumen: AsignacionesResumen = {
       embarque: { id: 1, referencia: 'IMP-001', nombre: 'Test', estado: 'activo' },
       kpis: {
-        unidades_embarcadas: 10, unidades_asignadas: 5, unidades_sobrantes: 5,
-        unidades_vendidas: 0, unidades_disponibles: 5,
+        unidades_embarcadas: 10, unidades_reservadas: 5, unidades_asignadas: 5,
+        reservado_inicial: 5, reservado_reasignacion_pendiente: 0, reservado_confirmado: 0,
+        unidades_sobrantes: 5, unidades_vendidas: 0, unidades_disponibles: 5,
       },
       productos: [],
     };
@@ -50,15 +51,42 @@ describe('AsignacionesImportacionService', () => {
     req.flush({ ok: true, data: { id: 10, ...body } });
   });
 
-  it('asignar() hace POST a la ruta de asignar del producto', () => {
-    const asignaciones = [{ clave_cliente: 'LC657', cantidad: 3 }];
+  it('recalcular() hace POST con la ventana de meses', () => {
+    service.recalcular(1, 'octubre', 'diciembre', '2026-2027').subscribe();
 
-    service.asignar(1, 10, asignaciones).subscribe();
-
-    const req = httpMock.expectOne(`${base}/1/asignaciones/productos/10/asignar`);
+    const req = httpMock.expectOne(`${base}/1/asignaciones/recalcular`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ asignaciones });
+    expect(req.request.body).toEqual({ mes_desde: 'octubre', mes_hasta: 'diciembre', periodo: '2026-2027' });
+    req.flush({ ok: true, data: [] });
+  });
+
+  it('reservar() hace POST a /reservar con { reservas }', () => {
+    const reservas = [{ clave_cliente: 'LC657', mes_objetivo: '2026-10', cantidad: 3, proyectado: 5 }];
+
+    service.reservar(1, 10, reservas).subscribe();
+
+    const req = httpMock.expectOne(`${base}/1/asignaciones/productos/10/reservar`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ reservas });
     req.flush({ ok: true, data: { producto_id: 10, disponible_restante: 2 } });
+  });
+
+  it('proponerReasignacion() hace POST a /asignaciones/reasignar', () => {
+    service.proponerReasignacion(1, 'diciembre', '2026-2027').subscribe();
+
+    const req = httpMock.expectOne(`${base}/1/asignaciones/reasignar`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ ventana_desde: 'diciembre', periodo: '2026-2027' });
+    req.flush({ ok: true, data: [] });
+  });
+
+  it('resolverReserva() hace POST a /asignaciones/reservas/<id>/resolver', () => {
+    service.resolverReserva(1, 9, 'ACEPTADA').subscribe();
+
+    const req = httpMock.expectOne(`${base}/1/asignaciones/reservas/9/resolver`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ decision: 'ACEPTADA' });
+    req.flush({ ok: true, data: {} });
   });
 
   it('prioridadClientes() hace GET a /clientes/prioridad (sin envolver en data)', () => {

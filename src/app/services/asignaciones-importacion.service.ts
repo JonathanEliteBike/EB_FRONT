@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -12,7 +12,12 @@ export interface AsignacionesProducto {
   sku_norm: string;
   descripcion: string | null;
   cantidad_embarcada: number;
-  cantidad_asignada: number;
+  cantidad_asignada: number;        // alias de reservado_total (compat)
+  cantidad_reservada: number;
+  reservado_inicial: number;
+  reservado_reasignacion_pendiente: number;
+  reservado_confirmado: number;
+  reservado_total: number;
   cantidad_vendida: number;
   cantidad_sobrante: number;
   cantidad_disponible: number;
@@ -22,7 +27,11 @@ export interface AsignacionesProducto {
 
 export interface AsignacionesKpis {
   unidades_embarcadas: number;
-  unidades_asignadas: number;
+  unidades_reservadas: number;
+  unidades_asignadas: number;       // alias de unidades_reservadas (compat)
+  reservado_inicial: number;
+  reservado_reasignacion_pendiente: number;
+  reservado_confirmado: number;
   unidades_sobrantes: number;
   unidades_vendidas: number;
   unidades_disponibles: number;
@@ -34,32 +43,56 @@ export interface AsignacionesResumen {
   productos: AsignacionesProducto[];
 }
 
-export interface PropuestaCliente {
+export type OrigenReserva = 'INICIAL' | 'REASIGNACION';
+export type EstadoReserva =
+  | 'RESERVADA' | 'PENDIENTE_CONFIRMACION' | 'CONFIRMADA' | 'RECHAZADA' | 'CANCELADA';
+
+export interface PropuestaMes {
+  mes: string;            // 'YYYY-MM'
+  proyectado: number;
+  vigente: number;
+  sugerido: number;
+}
+
+export interface PropuestaClienteMensual {
   clave_cliente: string;
+  nombre_cliente: string;
   prioridad: number;
-  cantidad_proyectada: number;
-  cantidad_sugerida: number;
+  meses: PropuestaMes[];
+  proyectado_total: number;
+  sugerido_total: number;
+  faltante_total: number;
 }
 
 export interface PropuestaProducto {
   producto_id: number;
   sku: string;
+  descripcion: string | null;
   periodo: string;
   cantidad_embarcada: number;
   disponible: number;
   proyecciones_disponibles: boolean;
-  propuesta: PropuestaCliente[];
+  origen: OrigenReserva;
+  ventana: { desde: string; hasta: string };
+  propuesta: PropuestaClienteMensual[];
   sobrante_estimado: number;
 }
 
-export interface AsignacionRow {
+export interface ReservaRow {
   id: number;
   importacion_producto_id: number;
   clave_cliente: string;
+  mes_objetivo: string | null;      // 'YYYY-MM'
+  origen: OrigenReserva;
+  estado: EstadoReserva;
   cantidad_proyectada: number;
   cantidad_asignada: number;
   prioridad: number;
-  estado: 'ACTIVA' | 'CANCELADA';
+  proyectado: number;
+  reservado: number;
+  faltante: number;
+  confirmada_at?: string | null;
+  confirmada_por?: number | null;
 }
 
 export interface VentaSobrante {
@@ -74,8 +107,9 @@ export interface VentaSobrante {
 
 export interface DetalleProducto {
   producto: AsignacionesProducto;
-  proyecciones: PropuestaCliente[];
-  asignaciones: AsignacionRow[];
+  proyecciones: never[];            // la propuesta se pide aparte con recalcular()
+  asignaciones: ReservaRow[];       // alias de reservas (compat)
+  reservas: ReservaRow[];
   sobrantes_ventas: VentaSobrante[];
 }
 
@@ -108,6 +142,70 @@ export interface ImportacionResultado {
   errores: ImportacionErrorFila[];
 }
 
+export interface AsignacionesGlobalKpis {
+  embarcadas: number;
+  asignadas: number;
+  pendientes: number;
+  sobrantes: number;
+  vendidas: number;
+  disponibles: number;
+}
+
+export interface AsignacionesEmbarqueFila {
+  id: number;
+  referencia: string;
+  nombre: string;
+  estado: string;
+  n_productos: number;
+  n_periodos: number;
+  kpis: AsignacionesGlobalKpis;
+  ultima_actividad: string | null;
+}
+
+export interface AsignacionesGlobalResumen {
+  embarques: AsignacionesEmbarqueFila[];
+  totales: AsignacionesGlobalKpis & { n_embarques: number };
+}
+
+export interface AsignacionesProductoGlobal {
+  importacion_id: number;
+  referencia: string;
+  embarque_nombre: string;
+  embarque_estado: string;
+  producto_id: number;
+  sku: string;
+  descripcion: string | null;
+  periodo: string;
+  cantidad_embarcada: number;
+  cantidad_asignada: number;
+  cantidad_pendiente: number;
+  cantidad_sobrante: number;
+  cantidad_vendida: number;
+  cantidad_disponible: number;
+}
+
+export interface AsignacionesProductosGlobal {
+  productos: AsignacionesProductoGlobal[];
+  totales: AsignacionesGlobalKpis;
+  total_filas: number;
+  limite: number;
+  offset: number;
+}
+
+export interface AsignacionesGlobalFiltros {
+  estado?: string;
+  origen?: string;
+  anio?: string;
+  q?: string;
+  importacion_id?: number | string;
+  periodo?: string;
+  sku?: string;
+  solo_con_disponible?: boolean;
+  solo_disponible?: boolean;
+  limite?: number;
+  offset?: number;
+}
+
 interface ApiOk<T> { ok: true; data: T; }
 
 @Injectable({ providedIn: 'root' })
@@ -118,6 +216,29 @@ export class AsignacionesImportacionService {
 
   resumen(importacionId: number): Observable<AsignacionesResumen> {
     return this.http.get<ApiOk<AsignacionesResumen>>(`${this.base}/${importacionId}/asignaciones`)
+      .pipe(map(r => r.data));
+  }
+
+  private _params(filtros: AsignacionesGlobalFiltros = {}): HttpParams {
+    let p = new HttpParams();
+    for (const [k, v] of Object.entries(filtros)) {
+      if (v === undefined || v === null || v === '' || v === false) continue;
+      p = p.set(k, v === true ? '1' : String(v));
+    }
+    return p;
+  }
+
+  /** Un renglón por embarque con productos, con KPIs de asignación agregados. */
+  resumenGlobal(filtros: AsignacionesGlobalFiltros = {}): Observable<AsignacionesGlobalResumen> {
+    return this.http
+      .get<ApiOk<AsignacionesGlobalResumen>>(`${this.base}/asignaciones/embarques`, { params: this._params(filtros) })
+      .pipe(map(r => r.data));
+  }
+
+  /** Lista plana de productos cruzando todos los embarques (vista por SKU). */
+  productosGlobal(filtros: AsignacionesGlobalFiltros = {}): Observable<AsignacionesProductosGlobal> {
+    return this.http
+      .get<ApiOk<AsignacionesProductosGlobal>>(`${this.base}/asignaciones/productos`, { params: this._params(filtros) })
       .pipe(map(r => r.data));
   }
 
@@ -166,20 +287,71 @@ export class AsignacionesImportacionService {
       .pipe(map(r => r.data));
   }
 
-  recalcular(importacionId: number, periodo?: string): Observable<PropuestaProducto[]> {
+  /** Propuesta de reserva inicial para la ventana [mesDesde .. mesHasta] (YYYY-MM o nombre de mes). */
+  recalcular(
+    importacionId: number, mesDesde: string, mesHasta: string, periodo?: string
+  ): Observable<PropuestaProducto[]> {
     return this.http
-      .post<ApiOk<PropuestaProducto[]>>(`${this.base}/${importacionId}/asignaciones/recalcular`, { periodo })
+      .post<ApiOk<PropuestaProducto[]>>(
+        `${this.base}/${importacionId}/asignaciones/recalcular`,
+        { mes_desde: mesDesde, mes_hasta: mesHasta, periodo }
+      )
       .pipe(map(r => r.data));
   }
 
-  asignar(
+  /** Propuesta de reasignación del sobrante a meses anteriores a `ventanaDesde`. */
+  proponerReasignacion(
+    importacionId: number, ventanaDesde: string, periodo?: string
+  ): Observable<PropuestaProducto[]> {
+    return this.http
+      .post<ApiOk<PropuestaProducto[]>>(
+        `${this.base}/${importacionId}/asignaciones/reasignar`,
+        { ventana_desde: ventanaDesde, periodo }
+      )
+      .pipe(map(r => r.data));
+  }
+
+  private _reservarBody(
+    reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[]
+  ) {
+    return { reservas };
+  }
+
+  /** Confirma las reservas iniciales (origen INICIAL). */
+  reservar(
     importacionId: number,
     productoId: number,
-    asignaciones: { clave_cliente: string; cantidad: number; cantidad_proyectada?: number }[]
+    reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[]
   ): Observable<{ producto_id: number; disponible_restante: number }> {
     return this.http
       .post<ApiOk<{ producto_id: number; disponible_restante: number }>>(
-        `${this.base}/${importacionId}/asignaciones/productos/${productoId}/asignar`, { asignaciones }
+        `${this.base}/${importacionId}/asignaciones/productos/${productoId}/reservar`,
+        this._reservarBody(reservas)
+      )
+      .pipe(map(r => r.data));
+  }
+
+  /** Confirma las reservas de reasignación (origen REASIGNACION, quedan PENDIENTE_CONFIRMACION). */
+  confirmarReasignacion(
+    importacionId: number,
+    productoId: number,
+    reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[]
+  ): Observable<{ producto_id: number; disponible_restante: number }> {
+    return this.http
+      .post<ApiOk<{ producto_id: number; disponible_restante: number }>>(
+        `${this.base}/${importacionId}/asignaciones/productos/${productoId}/reasignar`,
+        this._reservarBody(reservas)
+      )
+      .pipe(map(r => r.data));
+  }
+
+  /** Resuelve una reserva PENDIENTE_CONFIRMACION tras hablar con el cliente. */
+  resolverReserva(
+    importacionId: number, reservaId: number, decision: 'ACEPTADA' | 'RECHAZADA'
+  ): Observable<ReservaRow> {
+    return this.http
+      .post<ApiOk<ReservaRow>>(
+        `${this.base}/${importacionId}/asignaciones/reservas/${reservaId}/resolver`, { decision }
       )
       .pipe(map(r => r.data));
   }
@@ -211,9 +383,9 @@ export class AsignacionesImportacionService {
       .pipe(map(r => r.data));
   }
 
-  cancelarAsignacion(importacionId: number, productoId: number, asignacionId: number): Observable<AsignacionRow> {
+  cancelarAsignacion(importacionId: number, productoId: number, asignacionId: number): Observable<ReservaRow> {
     return this.http
-      .post<ApiOk<AsignacionRow>>(
+      .post<ApiOk<ReservaRow>>(
         `${this.base}/${importacionId}/asignaciones/productos/${productoId}/asignaciones/${asignacionId}/cancelar`, {}
       )
       .pipe(map(r => r.data));
