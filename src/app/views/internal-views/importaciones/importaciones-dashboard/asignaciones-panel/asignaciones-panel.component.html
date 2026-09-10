@@ -1,0 +1,124 @@
+<div class="ap-wrap">
+  <div class="ap-toolbar">
+    <div class="ap-switch">
+      <button [class.activo]="vista === 'embarques'" (click)="cambiarVista('embarques')">Por embarque</button>
+      <button [class.activo]="vista === 'productos'" (click)="cambiarVista('productos')">Por producto (SKU)</button>
+    </div>
+
+    <div class="ap-filtros">
+      <input type="text" class="ap-input" placeholder="Buscar…"
+             [(ngModel)]="busqueda" (ngModelChange)="pedirRecarga()" />
+      <ng-container *ngIf="vista === 'productos'">
+        <input type="text" class="ap-input ap-input--sm" placeholder="Periodo"
+               [(ngModel)]="periodo" (ngModelChange)="pedirRecarga()" />
+        <input type="text" class="ap-input ap-input--sm" placeholder="SKU"
+               [(ngModel)]="sku" (ngModelChange)="pedirRecarga()" />
+      </ng-container>
+      <label class="ap-check">
+        <input type="checkbox" [(ngModel)]="soloDisponible" (ngModelChange)="pedirRecarga(true)" />
+        Solo con disponible
+      </label>
+    </div>
+  </div>
+
+  <div class="ap-error" *ngIf="error">{{ error }}</div>
+  <div class="ap-cargando" *ngIf="cargando">Cargando…</div>
+
+  <!-- ── Por embarque ── -->
+  <ng-container *ngIf="!cargando && vista === 'embarques' && resumen">
+    <div class="ap-tabla-scroll" *ngIf="resumen.embarques.length; else vacio">
+      <table class="ap-tabla">
+        <thead>
+          <tr>
+            <th>Referencia</th><th>Embarque</th><th>Estado</th><th class="num">Productos</th>
+            <th class="num">Embarcado</th><th class="num">Reservado</th>
+            <th class="num" title="Reservas de reasignación pendientes de confirmar">Pend.</th>
+            <th class="num">Sobrante</th><th class="num">Disponible</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of resumen.embarques" class="fila-click" (click)="irAEmbarque(e.id)">
+            <td><span class="ap-ref">{{ e.referencia }}</span></td>
+            <td class="ap-nombre">{{ e.nombre || '—' }}</td>
+            <td><span class="ap-badge" [ngClass]="'ap-badge--' + e.estado">{{ e.estado }}</span></td>
+            <td class="num">{{ e.n_productos }}</td>
+            <td class="num">{{ e.kpis.embarcadas }}</td>
+            <td class="num">{{ e.kpis.asignadas }}</td>
+            <td class="num">
+              <span class="ap-pend" *ngIf="e.kpis.pendientes">{{ e.kpis.pendientes }}</span>
+              <span *ngIf="!e.kpis.pendientes">—</span>
+            </td>
+            <td class="num">{{ e.kpis.sobrantes }}</td>
+            <td class="num ap-disp">{{ e.kpis.disponibles }}</td>
+            <td class="ap-chevron"><i class="fas fa-chevron-right"></i></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">{{ resumen.totales.n_embarques }} embarque(s)</td>
+            <td class="num">—</td>
+            <td class="num">{{ resumen.totales.embarcadas }}</td>
+            <td class="num">{{ resumen.totales.asignadas }}</td>
+            <td class="num">{{ resumen.totales.pendientes || '—' }}</td>
+            <td class="num">{{ resumen.totales.sobrantes }}</td>
+            <td class="num ap-disp">{{ resumen.totales.disponibles }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- ── Por producto (SKU) ── -->
+  <ng-container *ngIf="!cargando && vista === 'productos' && productos">
+    <div class="ap-tabla-scroll" *ngIf="productos.productos.length; else vacio">
+      <table class="ap-tabla">
+        <thead>
+          <tr>
+            <th>SKU</th><th>Descripción</th><th>Embarque</th><th>Periodo</th>
+            <th class="num">Embarcado</th><th class="num">Reservado</th>
+            <th class="num" title="Reservas de reasignación pendientes de confirmar">Pend.</th>
+            <th class="num">Sobrante</th><th class="num">Disponible</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of productos.productos" class="fila-click" (click)="irAEmbarque(p.importacion_id)">
+            <td><span class="ap-sku">{{ p.sku }}</span></td>
+            <td class="ap-nombre">{{ p.descripcion || '—' }}</td>
+            <td class="ap-nombre">{{ p.referencia }}</td>
+            <td>{{ p.periodo }}</td>
+            <td class="num">{{ p.cantidad_embarcada }}</td>
+            <td class="num">{{ p.cantidad_asignada }}</td>
+            <td class="num">
+              <span class="ap-pend" *ngIf="p.cantidad_pendiente">{{ p.cantidad_pendiente }}</span>
+              <span *ngIf="!p.cantidad_pendiente">—</span>
+            </td>
+            <td class="num">{{ p.cantidad_sobrante }}</td>
+            <td class="num ap-disp">{{ p.cantidad_disponible }}</td>
+            <td class="ap-chevron"><i class="fas fa-chevron-right"></i></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">
+              {{ productos.productos.length }} de {{ productos.total_filas }} producto(s)
+            </td>
+            <td class="num">{{ productos.totales.embarcadas }}</td>
+            <td class="num">{{ productos.totales.asignadas }}</td>
+            <td class="num">{{ productos.totales.pendientes || '—' }}</td>
+            <td class="num">{{ productos.totales.sobrantes }}</td>
+            <td class="num ap-disp">{{ productos.totales.disponibles }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="ap-truncado" *ngIf="productos.productos.length < productos.total_filas">
+        Mostrando los primeros {{ productos.productos.length }}. Afina los filtros para ver el resto.
+      </p>
+    </div>
+  </ng-container>
+
+  <ng-template #vacio>
+    <p class="ap-vacio">No hay embarques con productos registrados para estos filtros.</p>
+  </ng-template>
+</div>

@@ -9,6 +9,7 @@ import { HomeBarComponent } from '../../../../components/home-bar/home-bar.compo
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../../components/temporada-selector/temporada-selector.component';
 import { ImportacionesService } from '../../../../services/importaciones.service';
+import { AsignacionesPanelComponent } from './asignaciones-panel/asignaciones-panel.component';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -61,7 +62,7 @@ interface DashData {
 @Component({
   selector: 'app-importaciones-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, DatePipe, DatePickerComponent, TemporadaSelectorComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, DatePipe, DatePickerComponent, TemporadaSelectorComponent, AsignacionesPanelComponent],
   templateUrl: './importaciones-dashboard.component.html',
   styleUrl: './importaciones-dashboard.component.css',
 })
@@ -85,7 +86,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   textoBuscador = '';
   filtroEtapa   = '';
   desgloseOrigen = false;
-  activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' = 'resumen';
+  activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' | 'asignaciones' = 'resumen';
 
   filtros = { via: '', estado: '', origen: '', anio: '' };
 
@@ -270,7 +271,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab') as typeof this.activeTab | null;
-    if (tab && ['resumen','latencias','costos','embarques'].includes(tab)) this.activeTab = tab;
+    if (tab && ['resumen','latencias','costos','embarques','asignaciones'].includes(tab)) this.activeTab = tab;
     this.cargar();
   }
   ngAfterViewInit(): void {}
@@ -304,7 +305,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return !!(this.filtros.via || this.filtros.estado || this.filtros.origen || this.filtros.anio);
   }
 
-  switchTab(tab: 'resumen' | 'latencias' | 'costos' | 'embarques'): void {
+  switchTab(tab: 'resumen' | 'latencias' | 'costos' | 'embarques' | 'asignaciones'): void {
     if (tab === this.activeTab) return;
     this.activeTab = tab;
     this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });

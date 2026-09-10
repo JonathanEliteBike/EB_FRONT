@@ -72,6 +72,9 @@
         Embarques
         <span class="tab-count">{{ data.kpis.total }}</span>
       </button>
+      <button class="tab-btn" [class.active]="activeTab === 'asignaciones'" (click)="switchTab('asignaciones')">
+        <i class="fas fa-people-arrows"></i> Asignaciones
+      </button>
     </div>
 
     <!-- ════════════════════════════════ TAB: RESUMEN ══════════════════════════ -->
@@ -640,6 +643,17 @@
         </div>
       </div>
 
+    </div>
+    </ng-container>
+
+    <!-- ════════════════════════════ TAB: ASIGNACIONES ═══════════════════════ -->
+    <ng-container *ngIf="activeTab === 'asignaciones'">
+    <div class="tab-panel">
+      <app-asignaciones-panel
+        [estado]="filtros.estado"
+        [origen]="filtros.origen"
+        [anio]="filtros.anio">
+      </app-asignaciones-panel>
     </div>
     </ng-container>
 
