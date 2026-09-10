@@ -7,6 +7,7 @@ import {
   AsignacionRow,
   DetalleProducto,
   PropuestaProducto,
+  PropuestaCliente,
   Movimiento,
   VentaSobrante,
 } from '../../../../../services/asignaciones-importacion.service';
@@ -112,6 +113,15 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
 
   quitarFila(i: number): void {
     this.formAsignacion.splice(i, 1);
+  }
+
+  /** Devuelve la fila de la propuesta calculada para un cliente, si existe.
+   *  Se hace en el componente y no en la plantilla porque Angular no permite
+   *  funciones flecha dentro de expresiones de plantilla. */
+  proyeccionCliente(claveCliente: string): PropuestaCliente | undefined {
+    return (this.propuesta?.propuesta || []).find(
+      (c) => c.clave_cliente === claveCliente,
+    );
   }
 
   confirmarAsignacion(): void {

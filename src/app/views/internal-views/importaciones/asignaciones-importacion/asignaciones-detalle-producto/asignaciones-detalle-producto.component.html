@@ -40,10 +40,10 @@
             <tr *ngFor="let fila of formAsignacion; let i = index">
               <td><input type="text" [(ngModel)]="fila.clave_cliente" [name]="'cliente' + i" /></td>
               <td>
-                {{ (propuesta?.propuesta || []).find(c => c.clave_cliente === fila.clave_cliente)?.prioridad ?? '—' }}
+                {{ proyeccionCliente(fila.clave_cliente)?.prioridad ?? '—' }}
               </td>
               <td>
-                {{ (propuesta?.propuesta || []).find(c => c.clave_cliente === fila.clave_cliente)?.cantidad_proyectada ?? '—' }}
+                {{ proyeccionCliente(fila.clave_cliente)?.cantidad_proyectada ?? '—' }}
               </td>
               <td><input type="number" min="0" [(ngModel)]="fila.cantidad" [name]="'cantidad' + i" /></td>
               <td><button class="btn-quitar" (click)="quitarFila(i)">✕</button></td>
