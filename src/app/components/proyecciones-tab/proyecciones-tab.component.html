@@ -21,7 +21,7 @@
         <i class="fas fa-download"></i> Exportar datos
       </button>
       <ng-container *ngIf="!ocultarBotonesImport">
-        <button class="proy-btn proy-btn-outline"
+        <button *ngIf="puedeVerMontos" class="proy-btn proy-btn-outline"
                 [disabled]="!periodoSeleccionado"
                 (click)="exportarPlantilla()"
                 title="Exportar plantilla Excel prellenada con productos autorizados">
@@ -142,9 +142,9 @@
 
   <!-- ── Error / estado vacío con botón Agregar ── -->
   <div *ngIf="error && !cargando" class="proy-error-neutral">
-    <i class="fas fa-inbox proy-error-neutral-icon"></i>
-    <p class="proy-error-neutral-titulo">Aún no hay proyecciones para este periodo</p>
-    <p class="proy-error-neutral-sub">Importa una plantilla o agrega productos manualmente para comenzar.</p>
+    <i class="fas fa-exclamation-circle proy-error-neutral-icon"></i>
+    <p class="proy-error-neutral-titulo">{{ error }}</p>
+    <p class="proy-error-neutral-sub">Para consultar Proyecciones se requiere el permiso Ver. Ver montos complementa ese acceso.</p>
   </div>
 
   <!-- ── Totales por marca ── -->
@@ -159,7 +159,7 @@
             <span class="proy-resumen-num">{{ totalMegamoUnidades | number:'1.0-0' }}</span>
             <span class="proy-resumen-lbl">unidades</span>
           </div>
-          <div class="proy-resumen-stat">
+          <div *ngIf="puedeVerMontos" class="proy-resumen-stat">
             <span class="proy-resumen-num">{{ totalMegamoCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
             <span class="proy-resumen-lbl">costo total</span>
           </div>
@@ -174,7 +174,7 @@
             <span class="proy-resumen-num">{{ totalSyncrosUnidades | number:'1.0-0' }}</span>
             <span class="proy-resumen-lbl">unidades</span>
           </div>
-          <div class="proy-resumen-stat">
+          <div *ngIf="puedeVerMontos" class="proy-resumen-stat">
             <span class="proy-resumen-num">{{ totalSyncrosCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
             <span class="proy-resumen-lbl">costo total</span>
           </div>
@@ -195,7 +195,7 @@
             <span class="proy-resumen-num">{{ totalScottUnidades | number:'1.0-0' }}</span>
             <span class="proy-resumen-lbl">unidades</span>
           </div>
-          <div class="proy-resumen-stat">
+          <div *ngIf="puedeVerMontos" class="proy-resumen-stat">
             <span class="proy-resumen-num">{{ totalScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
             <span class="proy-resumen-lbl">costo total</span>
           </div>
@@ -210,7 +210,7 @@
             <span class="proy-resumen-num">{{ totalApparelScottUnidades | number:'1.0-0' }}</span>
             <span class="proy-resumen-lbl">unidades</span>
           </div>
-          <div class="proy-resumen-stat">
+          <div *ngIf="puedeVerMontos" class="proy-resumen-stat">
             <span class="proy-resumen-num">{{ totalApparelScottCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
             <span class="proy-resumen-lbl">costo total</span>
           </div>
@@ -225,11 +225,11 @@
     <!-- GLOBAL -->
     <div class="proy-resumen-card proy-resumen-global">
       <div class="proy-resumen-logo"><i class="fas fa-globe"></i> GLOBAL</div>
-      <div class="proy-resumen-stat">
+          <div class="proy-resumen-stat">
         <span class="proy-resumen-num">{{ totalGlobalUnidades | number:'1.0-0' }}</span>
         <span class="proy-resumen-lbl">unidades totales</span>
       </div>
-      <div class="proy-resumen-stat">
+      <div *ngIf="puedeVerMontos" class="proy-resumen-stat">
         <span class="proy-resumen-num">{{ totalGlobalCosto | currency:'MXN':'symbol':'1.0-0' }}</span>
         <span class="proy-resumen-lbl">costo global</span>
       </div>
@@ -271,10 +271,10 @@
             <th>Modelo</th>
             <th class="th-center">Color</th>
             <th class="th-center">Talla</th>
-            <th class="th-precio">Precio</th>
+            <th *ngIf="puedeVerMontos" class="th-precio">Precio</th>
             <th class="th-precio th-precio-pub">P. Público c/IVA</th>
             <th class="th-total">Total uds.</th>
-            <th class="th-total-precio">Total $</th>
+            <th *ngIf="puedeVerMontos" class="th-total-precio">Total $</th>
             <th *ngIf="modoEdicion" class="th-acciones">Acciones</th>
           </tr>
           <!-- Encabezado modo expandido -->
@@ -283,11 +283,11 @@
             <th class="th-producto">Producto</th>
             <th class="th-center">Color</th>
             <th class="th-center">Talla</th>
-            <th class="th-precio">Precio</th>
+            <th *ngIf="puedeVerMontos" class="th-precio">Precio</th>
             <th class="th-precio th-precio-pub">P. Público c/IVA</th>
             <th *ngFor="let label of mesesLabels" class="th-mes">{{ label }}</th>
             <th class="th-total">Total uds.</th>
-            <th class="th-total-precio">Total $</th>
+            <th *ngIf="puedeVerMontos" class="th-total-precio">Total $</th>
             <th *ngIf="modoEdicion" class="th-acciones">Acciones</th>
           </tr>
         </thead>
@@ -360,7 +360,7 @@
             </td>
 
             <!-- Precio distribuidor (siempre visible) -->
-            <td class="td-precio">
+            <td *ngIf="puedeVerMontos" class="td-precio">
               <span *ngIf="row.precio">{{ row.precio | currency:'MXN':'symbol':'1.2-2' }}</span>
               <span *ngIf="!row.precio" class="td-precio-nd">—</span>
             </td>
@@ -397,7 +397,7 @@
             <td class="td-total">{{ getRestante(row) | number:'1.0-0' }}</td>
 
             <!-- Total $ -->
-            <td class="td-total-precio">
+            <td *ngIf="puedeVerMontos" class="td-total-precio">
               {{ (getRestante(row) * (row.precio || 0)) | currency:'MXN':'symbol':'1.0-0' }}
             </td>
 
@@ -430,20 +430,24 @@
           <!-- Fila 1: Totales de unidades por mes -->
           <tr class="proy-fila-totales">
             <td [attr.colspan]="modoExpandido ? 4 : 6"><strong>TOTALES</strong></td>
-            <td class="td-precio-foot"></td>
+            <td *ngIf="puedeVerMontos" class="td-precio-foot"></td>
             <td class="td-precio-foot"></td>
             <ng-container *ngIf="modoExpandido">
               <td *ngFor="let mes of mesesKeys" class="td-total-foot">
                 <strong>{{ totalMes(mes) | number:'1.0-0' }}</strong>
               </td>
             </ng-container>
-            <td class="td-total"><strong>{{ totalRestante | number:'1.0-0' }}</strong></td>
-            <td class="td-total-precio"><strong>{{ totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
+            <td class="td-total">
+              <!-- Las unidades no son información monetaria: se conservan aun
+                   cuando la política del hijo redacta precios e importes. -->
+              <strong>{{ totalRestante | number:'1.0-0' }}</strong>
+            </td>
+            <td *ngIf="puedeVerMontos" class="td-total-precio"><strong>{{ totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
 
           <!-- Filas 2-5: Una fila por sección (generadas desde desgloseData) -->
-          <ng-container *ngIf="modoExpandido">
+          <ng-container *ngIf="modoExpandido && puedeVerMontos">
             <tr *ngFor="let sec of desgloseData; let last = last"
                 class="proy-fila-sec" [ngClass]="'proy-fila-sec--' + sec.cls"
                 [class.proy-fila-sec--last]="last">
@@ -459,7 +463,7 @@
           </ng-container>
 
           <!-- Fila 3: Total $ por mes -->
-          <tr class="proy-fila-total-precio" *ngIf="modoExpandido">
+          <tr class="proy-fila-total-precio" *ngIf="modoExpandido && puedeVerMontos">
             <td colspan="5" class="td-total-precio-lbl">TOTAL INVERSIÓN</td>
             <td *ngFor="let mes of mesesKeys" class="td-total-precio-mes">
               <strong>{{ formatPrecioCorto(totalPrecioMes(mes)) }}</strong>

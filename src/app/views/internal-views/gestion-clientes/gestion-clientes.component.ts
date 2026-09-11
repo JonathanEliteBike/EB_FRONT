@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable } from 'rxjs';
+import { concat, forkJoin, last, Observable } from 'rxjs';
 import { AdminSistemaService, AdminClienteItem, AccionBase, ModuloItem } from '../../../services/admin-sistema.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 
 export interface PermisoDelegableFila {
   modulo_id: number;
   modulo: string;
+  identificador: string;
   accion_id: number;
   accion: string;
   asignado: boolean;
@@ -36,6 +37,8 @@ export class GestionClientesComponent implements OnInit {
   catalogoModulosAcciones: PermisoDelegableFila[] = [];
   
   estadoInicial: { [key: string]: boolean } = {};
+  modulosAcceso: { [key: number]: boolean } = {};
+  estadoInicialModulos: { [key: number]: boolean } = {};
 
   modalBolsaVisible: boolean = false;
   clienteSeleccionado: AdminClienteItem | null = null;
@@ -177,6 +180,7 @@ export class GestionClientesComponent implements OnInit {
   }
 
   tieneAlgunPermiso(moduloId: number): boolean {
+    if (this.esModuloMigrado(moduloId)) return !!this.modulosAcceso[moduloId];
     const todosIds = [moduloId, ...this.getDescendientes(moduloId).map(s => s.id)];
     return this.catalogoModulosAcciones.some(p => todosIds.includes(p.modulo_id) && p.asignado);
   }
@@ -239,6 +243,14 @@ export class GestionClientesComponent implements OnInit {
     return (this.modulos || []).filter(m => m.padre_id === padreId);
   }
 
+  esModuloMigrado(moduloId: number): boolean {
+    const identificador = this.modulos.find(m => m.id === moduloId)?.identificador;
+    return identificador === 'usuarios_proyeccion_compras' ||
+      identificador === 'usuarios_garantias' ||
+      identificador === 'usuarios_caratula' ||
+      identificador === 'usuarios_caratula_retroactivos';
+  }
+
   getDescendientes(padreId: number): ModuloItem[] {
     const descendientes: ModuloItem[] = [];
     const visitados = new Set<number>();
@@ -282,6 +294,8 @@ export class GestionClientesComponent implements OnInit {
     this.catalogoModulosAcciones = [];
     this.modulos = [];
     this.estadoInicial = {};
+    this.modulosAcceso = {};
+    this.estadoInicialModulos = {};
     this.filtroBusquedaModal = '';
     this.modulosExpandidos.clear();
   }
@@ -290,15 +304,20 @@ export class GestionClientesComponent implements OnInit {
    * Carga estrictamente los módulos dados de alta en la base de datos (getModulos)
    * garantizando que solo existan ítems con ID real y persistente.
    */
-  cargarPermisosDelegables(adminId: number): void {
-    this.cargandoModal = true;
+  cargarPermisosDelegables(adminId: number, mostrarCarga = true): void {
+    if (mostrarCarga) {
+      this.cargandoModal = true;
+    }
 
     forkJoin({
       modulosRes: this.adminService.getModulos(),
-      delegablesRes: this.adminService.getPermisosDelegablesAdministrador(adminId)
+      delegablesRes: this.adminService.getPermisosDelegablesAdministrador(adminId),
+      modulosDelegablesRes: this.adminService.getModulosDelegablesAdministrador(adminId)
     }).subscribe({
-      next: ({ modulosRes, delegablesRes }: { modulosRes: any, delegablesRes: any }) => {
-        this.cargandoModal = false;
+      next: ({ modulosRes, delegablesRes, modulosDelegablesRes }: any) => {
+        if (mostrarCarga) {
+          this.cargandoModal = false;
+        }
 
         // Módulos reales y registrados en BD
         const listaModulos: ModuloItem[] = (modulosRes.modulos || []).filter(
@@ -312,10 +331,12 @@ export class GestionClientesComponent implements OnInit {
         // Crear lista plana sólo con combinaciones reales de modulo_acciones.
         const listaPlana: PermisoDelegableFila[] = [];
         this.modulos.forEach(m => {
+          if (this.esModuloMigrado(m.id)) return;
           (m.acciones || []).forEach((a: AccionBase) => {
             listaPlana.push({
               modulo_id: m.id,
               modulo: m.nombre,
+              identificador: m.identificador,
               accion_id: a.id,
               accion: a.nombre,
               asignado: false
@@ -336,9 +357,19 @@ export class GestionClientesComponent implements OnInit {
         });
 
         this.catalogoModulosAcciones = listaPlana;
+
+        this.modulos.filter(m => this.esModuloMigrado(m.id)).forEach(modulo => {
+          const asignado = (modulosDelegablesRes.modulos || []).some(
+            (m: any) => m.modulo_id === modulo.id
+          );
+          this.modulosAcceso[modulo.id] = asignado;
+          this.estadoInicialModulos[modulo.id] = asignado;
+        });
       },
       error: (err) => {
-        this.cargandoModal = false;
+        if (mostrarCarga) {
+          this.cargandoModal = false;
+        }
         this.mostrarAlerta(err.error?.error || 'Error al obtener la bolsa de permisos.', 'error');
       }
     });
@@ -348,16 +379,34 @@ export class GestionClientesComponent implements OnInit {
     const item = this.catalogoModulosAcciones.find(
       p => p.modulo_id === moduloId && p.accion_id === accionId
     );
-    if (item) {
-      item.asignado = !item.asignado;
-    }
+    if (!item) return;
+
+    item.asignado = !item.asignado;
+  }
+
+  puedeSeleccionarPermiso(moduloId: number, accionId: number): boolean {
+    const item = this.catalogoModulosAcciones.find(
+      p => p.modulo_id === moduloId && p.accion_id === accionId
+    );
+    return !!item;
   }
 
   guardarPermisos(): void {
     if (!this.clienteSeleccionado) return;
     this.guardandoPermisos = true;
 
-    const peticiones: Observable<any>[] = [];
+    const cambios: { peticion: Observable<any>, prioridad: number }[] = [];
+
+    this.modulos.filter(m => this.esModuloMigrado(m.id)).forEach(modulo => {
+      if (this.modulosAcceso[modulo.id] === this.estadoInicialModulos[modulo.id]) return;
+      cambios.push({
+        peticion: this.modulosAcceso[modulo.id]
+          ? this.adminService.asignarModuloDelegable(this.clienteSeleccionado!.id, modulo.id)
+          : this.adminService.revocarModuloDelegable(this.clienteSeleccionado!.id, modulo.id),
+        prioridad: 0
+      });
+    });
+
 
     this.catalogoModulosAcciones.forEach(item => {
       const key = `${item.modulo_id}_${item.accion_id}`;
@@ -365,34 +414,52 @@ export class GestionClientesComponent implements OnInit {
 
       if (item.asignado !== estadoOriginal) {
         if (item.asignado) {
-          peticiones.push(
-            this.adminService.asignarPermisoDelegable(this.clienteSeleccionado!.id, item.modulo_id, item.accion_id)
-          );
+          cambios.push({
+            peticion: this.adminService.asignarPermisoDelegable(this.clienteSeleccionado!.id, item.modulo_id, item.accion_id),
+            prioridad: 2
+          });
         } else {
-          peticiones.push(
-            this.adminService.revocarPermisoDelegable(this.clienteSeleccionado!.id, item.modulo_id, item.accion_id)
-          );
+          cambios.push({
+            peticion: this.adminService.revocarPermisoDelegable(this.clienteSeleccionado!.id, item.modulo_id, item.accion_id),
+            prioridad: 2
+          });
         }
       }
     });
 
-    if (peticiones.length === 0) {
+    if (cambios.length === 0) {
       this.mostrarAlerta('No se realizaron cambios en los permisos.', 'success');
       this.guardandoPermisos = false;
       return;
     }
 
-    forkJoin(peticiones).subscribe({
+    const peticionesOrdenadas = cambios
+      .sort((a, b) => a.prioridad - b.prioridad)
+      .map(cambio => cambio.peticion);
+
+    concat(...peticionesOrdenadas).pipe(last()).subscribe({
       next: () => {
         this.guardandoPermisos = false;
+        this.sincronizarEstadoGuardado();
         this.mostrarAlerta('Permisos actualizados correctamente.', 'success');
-        this.cargarPermisosDelegables(this.clienteSeleccionado!.id);
       },
       error: () => {
         this.guardandoPermisos = false;
         this.mostrarAlerta('Error al guardar algunos permisos.', 'error');
-        this.cargarPermisosDelegables(this.clienteSeleccionado!.id);
+        // Puede haber cambios parciales: se recarga sin desmontar el contenido.
+        this.cargarPermisosDelegables(this.clienteSeleccionado!.id, false);
       }
+    });
+  }
+
+  /** Actualiza el punto de comparación sin reconstruir el modal. */
+  private sincronizarEstadoGuardado(): void {
+    this.catalogoModulosAcciones.forEach(item => {
+      this.estadoInicial[`${item.modulo_id}_${item.accion_id}`] = item.asignado;
+    });
+
+    this.modulos.filter(modulo => this.esModuloMigrado(modulo.id)).forEach(modulo => {
+      this.estadoInicialModulos[modulo.id] = !!this.modulosAcceso[modulo.id];
     });
   }
 

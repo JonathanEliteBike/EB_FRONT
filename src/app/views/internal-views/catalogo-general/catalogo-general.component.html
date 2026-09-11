@@ -1,12 +1,6 @@
 <app-home-bar></app-home-bar>
 
 <div class="retroactivos-layout">
-  <!-- ALERTA INLINE LOCAL -->
-  <div *ngIf="alertMsj" [ngClass]="alertTipo === 'success' ? 'inline-alert success' : 'inline-alert error'">
-    <span>{{ alertMsj }}</span>
-    <button class="close-btn" (click)="alertMsj = null">&times;</button>
-  </div>
-
   <!-- ENCABEZADO Y TOOLBAR UNIFICADA -->
   <div class="header-section">
      <div class="header-title">
@@ -23,9 +17,6 @@
         <button class="tab-btn" [class.active]="pestanaActiva === 'modulos'" (click)="pestanaActiva = 'modulos'">
           <i class="fas fa-sitemap"></i> Módulos y Submódulos
         </button>
-        <button class="tab-btn" [class.active]="pestanaActiva === 'acciones'" (click)="pestanaActiva = 'acciones'">
-          <i class="fas fa-bolt"></i> Acciones
-        </button>
       </div>
 
       <!-- ACCIONES (DERECHA) -->
@@ -38,9 +29,6 @@
         </a>
         <button *ngIf="pestanaActiva === 'modulos'" class="btn btn-primary" (click)="abrirModalNuevoModulo()">
           <i class="fas fa-plus"></i> Nuevo Módulo
-        </button>
-        <button *ngIf="pestanaActiva === 'acciones'" class="btn btn-primary" (click)="abrirModalNuevaAccion()">
-          <i class="fas fa-plus"></i> Nueva Acción Base
         </button>
       </div>
     </div>
@@ -58,7 +46,7 @@
         <thead>
           <tr>
             <th class="col-expand"></th>
-            <th class="col-nombre">Nombre Módulo / Acciones</th>
+            <th class="col-nombre">Nombre del módulo</th>
             <th class="col-jerarquia">Jerarquía</th>
             <th class="col-estado">Estado</th>
             <th class="col-acciones-btns" style="text-align: right;">Acciones</th>
@@ -74,12 +62,6 @@
               </td>
               <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24">
                 <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
-                <div class="vertical-actions-tree" *ngIf="modulo.acciones && modulo.acciones.length > 0">
-                  <div *ngFor="let acc of modulo.acciones" class="action-tree-item">
-                    <span class="chip-accion-vertical">{{ acc.nombre }}</span>
-                  </div>
-                </div>
-                <div *ngIf="!modulo.acciones || modulo.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
               </td>
               <td class="col-jerarquia">
                 <span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">
@@ -151,77 +133,6 @@
         </div>
 
         <button class="btn btn-action" (click)="cambiarPagina('modulos', 1)" [disabled]="pageModulos === totalPagesModulos">
-          Siguiente
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TABLA ACCIONES -->
-  <div *ngIf="!cargando && pestanaActiva === 'acciones'" class="table-wrap tab-fade-in">
-    <div class="table-responsive">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Nombre Acción</th>
-            <th>Estado</th>
-            <th style="text-align: right;">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let a of accionesPaginadas">
-            <td><strong>{{ a.nombre }}</strong></td>
-            <td>
-              <span *ngIf="a.activo === 1" class="badge badge-active">Activa</span>
-              <span *ngIf="a.activo === 0" class="badge badge-inactive">Inactiva</span>
-            </td>
-            <td>
-              <div class="container-actions">
-                <button *ngIf="a.activo === 1" class="btn btn-action" (click)="cambiarEstadoAccion(a, 0)">Desactivar</button>
-                <button *ngIf="a.activo === 0" class="btn btn-action" (click)="cambiarEstadoAccion(a, 1)">Activar</button>
-                <button class="btn btn-action delete" (click)="eliminarAccion(a)">Eliminar</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- PAGINACIÓN ACCIONES -->
-    <div class="paginacion-container" *ngIf="accionesGlobales.length > 0">
-      <div class="paginador-selector-wrap">
-        <span class="selector-label">Mostrar:</span>
-        <div class="selector-pills">
-          <button 
-            *ngFor="let cant of opcionesPorPagina" 
-            class="btn-pill" 
-            [class.activa]="itemsPerPage === cant" 
-            (click)="cambiarItemsPorPagina(cant)">
-            {{ cant }}
-          </button>
-        </div>
-        <span class="paginador-info">
-          Mostrando {{ accionesPaginadas.length }} de {{ accionesGlobales.length }} registros
-        </span>
-      </div>
-
-      <div class="paginador-controles">
-        <button class="btn btn-action" (click)="cambiarPagina('acciones', -1)" [disabled]="pageAcciones === 1">
-          Anterior
-        </button>
-
-        <div class="paginas-numeros">
-          <button 
-            *ngFor="let pagina of obtenerRangoPaginas(pageAcciones, totalPagesAcciones)" 
-            class="btn-page" 
-            [class.activa]="pagina === pageAcciones" 
-            [disabled]="pagina === -1"
-            (click)="cambiarPaginaDirecta('acciones', pagina)">
-            {{ pagina === -1 ? '...' : pagina }}
-          </button>
-        </div>
-
-        <button class="btn btn-action" (click)="cambiarPagina('acciones', 1)" [disabled]="pageAcciones === totalPagesAcciones">
           Siguiente
         </button>
       </div>
@@ -344,13 +255,53 @@
         <button type="button" class="close-btn" (click)="cerrarModalModulo()">&times;</button>
       </div>
       <div class="modal-body-custom">
+        <div class="form-group">
+          <label>Ruta Asociada</label>
+          <div class="ruta-picker">
+            <div class="ruta-search-wrap">
+              <i class="fas fa-search" aria-hidden="true"></i>
+              <input type="search"
+                     [(ngModel)]="filtroRutasModal"
+                     (focus)="listaRutasAbierta = true"
+                     placeholder="Buscar por ruta, nombre o identificador"
+                     aria-label="Buscar ruta asociada">
+              <button *ngIf="filtroRutasModal"
+                      type="button"
+                      class="ruta-search-clear"
+                      (click)="filtroRutasModal = ''"
+                      aria-label="Limpiar búsqueda de rutas">&times;</button>
+            </div>
+            <div *ngIf="listaRutasAbierta" class="ruta-results" role="listbox" aria-label="Rutas Angular disponibles">
+              <button type="button"
+                      class="ruta-result"
+                      [class.ruta-result-selected]="!rutaAsociadaModulo"
+                      (click)="seleccionarRutaAsociada()">
+                <span>Crear módulo sin ruta asociada</span>
+                <small>Identificador manual</small>
+              </button>
+              <button *ngFor="let ruta of rutasFiltradasParaSelector"
+                      type="button"
+                      class="ruta-result"
+                      [class.ruta-result-selected]="rutaAsociadaModulo === ruta.path"
+                      [class.ruta-result-registered]="!esRutaDisponibleParaModulo(ruta)"
+                      [disabled]="!esRutaDisponibleParaModulo(ruta)"
+                      (click)="seleccionarRutaAsociada(ruta)">
+                <span>/{{ ruta.path }}</span>
+                <small>{{ ruta.registrado && !esRutaDisponibleParaModulo(ruta) ? '✓ Registrada' : 'Disponible' }}</small>
+              </button>
+              <p *ngIf="rutasFiltradasParaSelector.length === 0" class="ruta-results-empty">No hay rutas que coincidan con la búsqueda.</p>
+            </div>
+          </div>
+          <small class="form-help">La ruta sólo genera el identificador; no crea ni modifica rutas Angular.</small>
+        </div>
         <div class="form-group" [class.form-group-disabled]="formNombreBloqueado">
           <label>Nombre del Módulo</label>
           <input type="text" [(ngModel)]="formNombreModulo" [disabled]="formNombreBloqueado" placeholder="Ej. Solicitudes">
         </div>
-        <div class="form-group">
+        <div class="form-group" [class.form-group-readonly]="identificadorAutomatico">
           <label>Identificador Único</label>
-          <input type="text" [(ngModel)]="formIdentificadorModulo" placeholder="Ej. garantias_solicitudes">
+          <input type="text" [(ngModel)]="formIdentificadorModulo" [readonly]="identificadorAutomatico" placeholder="Ej. garantias_solicitudes">
+          <small *ngIf="identificadorAutomatico" class="form-help">Generado automáticamente desde la ruta seleccionada.</small>
         </div>
         <div class="form-group">
           <label>Módulo Padre (Opcional)</label>
@@ -360,31 +311,14 @@
           </select>
         </div>
 
-        <div>
-          <label style="font-size: 0.7rem; font-weight: 800; color: #888; text-transform: uppercase;">
-            Acciones Permitidas
+        <div class="form-group module-access-option">
+          <label class="checkbox-item">
+            <input type="checkbox" [(ngModel)]="formDelegableAHijos">
+            <span>Permitir delegar acceso al módulo a usuarios hijo</span>
           </label>
-          <div class="checkbox-grid">
-            <label *ngFor="let a of accionesGlobales" class="checkbox-item">
-              <input type="checkbox" [checked]="estaAccionSeleccionada(a.id)" (change)="toggleAccionEnModulo(a.id)">
-              <span>{{ a.nombre }}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="dev-helper-box" *ngIf="formIdentificadorModulo && formAccionesSeleccionadas.length > 0">
-          <div class="dev-helper-title">
-            <span>💻 Estructura de Validación (Dev Helper)</span>
-          </div>
-
-          <div class="permisos-code-list">
-            <div *ngFor="let accionId of formAccionesSeleccionadas" class="permiso-code-item">
-              <code>{{ getClavePermiso(accionId) }}</code>
-              <button type="button" class="btn-copy-code" (click)="copiarTexto(getClavePermiso(accionId))">
-                Copiar
-              </button>
-            </div>
-          </div>
+          <small class="form-help">
+            Cada módulo nuevo usa un único acceso. Las acciones antiguas no se agregan automáticamente.
+          </small>
         </div>
 
       </div>

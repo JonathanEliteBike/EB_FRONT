@@ -15,7 +15,7 @@
             [seleccionada]="temporadaHistoricaSeleccionada"
             (cambio)="verTemporadaPasada($event)">
         </app-temporada-selector>
-        <button class="btn btn-secondary" (click)="generarPDF()" [disabled]="exportandoPDF || !datosCliente">
+        <button *ngIf="puedeVerMontos" class="btn btn-secondary" (click)="generarPDF()" [disabled]="exportandoPDF || !datosCliente">
             <i class="fas fa-spinner fa-spin" *ngIf="exportandoPDF"></i>
             <i class="fas fa-file-pdf" *ngIf="!exportandoPDF"></i>
             {{ exportandoPDF ? 'Generando...' : 'Exportar Caratula PDF' }}
@@ -109,7 +109,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Compra Mínima ANUAL</span>
-                    <span class="info-value">{{ datosCliente.compra_minima_anual | currency:'USD':'$':'1.2-2' }}</span>
+                    <span class="info-value">{{ puedeVerMontos ? (datosCliente.compra_minima_anual | currency:'USD':'$':'1.2-2') : '-' }}</span>
                 </div>
             </div>
 
@@ -135,13 +135,13 @@
                         <table class="table-periodo">
                           <thead><tr><th></th><th>SCOTT / BICICLETAS</th><th>APPAREL / SYNCROS</th></tr></thead>
                           <tbody>
-                            <tr><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
                             <tr><td>% Cumplimiento</td>
                                 <td [style.color]="p.pctBici >= 100 ? '#28a745' : '#dc3545'">{{ p.pctBici }}%</td>
                                 <td [style.color]="p.pctApp >= 100 ? '#28a745' : '#dc3545'">{{ p.pctApp }}%</td></tr>
-                            <tr><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Estatus</td>
+                            <tr *ngIf="puedeVerMontos"><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Estatus</td>
                                 <td><span [class.estado-cumplido]="p.faltBici<=0" [class.estado-faltante]="p.faltBici>0">{{ p.faltBici<=0?'Cumplido':'Faltante' }}</span></td>
                                 <td><span [class.estado-cumplido]="p.faltApp<=0" [class.estado-faltante]="p.faltApp>0">{{ p.faltApp<=0?'Cumplido':'Faltante' }}</span></td></tr>
                           </tbody>
@@ -170,13 +170,13 @@
                         <table class="table-periodo">
                           <thead><tr><th></th><th>SCOTT / BICICLETAS</th><th>APPAREL / SYNCROS</th></tr></thead>
                           <tbody>
-                            <tr><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
                             <tr><td>% Cumplimiento</td>
                                 <td [style.color]="p.pctBici >= 100 ? '#28a745' : '#dc3545'">{{ p.pctBici }}%</td>
                                 <td [style.color]="p.pctApp >= 100 ? '#28a745' : '#dc3545'">{{ p.pctApp }}%</td></tr>
-                            <tr><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Estatus</td>
+                            <tr *ngIf="puedeVerMontos"><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Estatus</td>
                                 <td><span [class.estado-cumplido]="p.faltBici<=0" [class.estado-faltante]="p.faltBici>0">{{ p.faltBici<=0?'Cumplido':'Faltante' }}</span></td>
                                 <td><span [class.estado-cumplido]="p.faltApp<=0" [class.estado-faltante]="p.faltApp>0">{{ p.faltApp<=0?'Cumplido':'Faltante' }}</span></td></tr>
                           </tbody>
@@ -205,13 +205,13 @@
                         <table class="table-periodo">
                           <thead><tr><th></th><th>SCOTT / BICICLETAS</th><th>APPAREL / SYNCROS</th></tr></thead>
                           <tbody>
-                            <tr><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
                             <tr><td>% Cumplimiento</td>
                                 <td [style.color]="p.pctBici >= 100 ? '#28a745' : '#dc3545'">{{ p.pctBici }}%</td>
                                 <td [style.color]="p.pctApp >= 100 ? '#28a745' : '#dc3545'">{{ p.pctApp }}%</td></tr>
-                            <tr><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Estatus</td>
+                            <tr *ngIf="puedeVerMontos"><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Estatus</td>
                                 <td><span [class.estado-cumplido]="p.faltBici<=0" [class.estado-faltante]="p.faltBici>0">{{ p.faltBici<=0?'Cumplido':'Faltante' }}</span></td>
                                 <td><span [class.estado-cumplido]="p.faltApp<=0" [class.estado-faltante]="p.faltApp>0">{{ p.faltApp<=0?'Cumplido':'Faltante' }}</span></td></tr>
                           </tbody>
@@ -240,13 +240,13 @@
                         <table class="table-periodo">
                           <thead><tr><th></th><th>SCOTT / BICICLETAS</th><th>APPAREL / SYNCROS</th></tr></thead>
                           <tbody>
-                            <tr><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
                             <tr><td>% Cumplimiento</td>
                                 <td [style.color]="p.pctBici >= 100 ? '#28a745' : '#dc3545'">{{ p.pctBici }}%</td>
                                 <td [style.color]="p.pctApp >= 100 ? '#28a745' : '#dc3545'">{{ p.pctApp }}%</td></tr>
-                            <tr><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Estatus</td>
+                            <tr *ngIf="puedeVerMontos"><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Estatus</td>
                                 <td><span [class.estado-cumplido]="p.faltBici<=0" [class.estado-faltante]="p.faltBici>0">{{ p.faltBici<=0?'Cumplido':'Faltante' }}</span></td>
                                 <td><span [class.estado-cumplido]="p.faltApp<=0" [class.estado-faltante]="p.faltApp>0">{{ p.faltApp<=0?'Cumplido':'Faltante' }}</span></td></tr>
                           </tbody>
@@ -275,13 +275,13 @@
                         <table class="table-periodo">
                           <thead><tr><th></th><th>SCOTT / BICICLETAS</th><th>APPAREL / SYNCROS</th></tr></thead>
                           <tbody>
-                            <tr><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
                             <tr><td>% Cumplimiento</td>
                                 <td [style.color]="p.pctBici >= 100 ? '#28a745' : '#dc3545'">{{ p.pctBici }}%</td>
                                 <td [style.color]="p.pctApp >= 100 ? '#28a745' : '#dc3545'">{{ p.pctApp }}%</td></tr>
-                            <tr><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Estatus</td>
+                            <tr *ngIf="puedeVerMontos"><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Estatus</td>
                                 <td><span [class.estado-cumplido]="p.faltBici<=0" [class.estado-faltante]="p.faltBici>0">{{ p.faltBici<=0?'Cumplido':'Faltante' }}</span></td>
                                 <td><span [class.estado-cumplido]="p.faltApp<=0" [class.estado-faltante]="p.faltApp>0">{{ p.faltApp<=0?'Cumplido':'Faltante' }}</span></td></tr>
                           </tbody>
@@ -310,13 +310,13 @@
                         <table class="table-periodo">
                           <thead><tr><th></th><th>SCOTT / BICICLETAS</th><th>APPAREL / SYNCROS</th></tr></thead>
                           <tbody>
-                            <tr><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Meta bimestral</td><td>{{ p.compBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.compApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Avance real</td><td>{{ p.avBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.avApp | currency:'USD':'$':'1.2-2' }}</td></tr>
                             <tr><td>% Cumplimiento</td>
                                 <td [style.color]="p.pctBici >= 100 ? '#28a745' : '#dc3545'">{{ p.pctBici }}%</td>
                                 <td [style.color]="p.pctApp >= 100 ? '#28a745' : '#dc3545'">{{ p.pctApp }}%</td></tr>
-                            <tr><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
-                            <tr><td>Estatus</td>
+                            <tr *ngIf="puedeVerMontos"><td>Faltante</td><td>{{ p.faltBici | currency:'USD':'$':'1.2-2' }}</td><td>{{ p.faltApp | currency:'USD':'$':'1.2-2' }}</td></tr>
+                            <tr *ngIf="puedeVerMontos"><td>Estatus</td>
                                 <td><span [class.estado-cumplido]="p.faltBici<=0" [class.estado-faltante]="p.faltBici>0">{{ p.faltBici<=0?'Cumplido':'Faltante' }}</span></td>
                                 <td><span [class.estado-cumplido]="p.faltApp<=0" [class.estado-faltante]="p.faltApp>0">{{ p.faltApp<=0?'Cumplido':'Faltante' }}</span></td></tr>
                           </tbody>
@@ -326,27 +326,27 @@
                   </div>
                 </ng-container>
 
-                <div class="table-container">
+                <div class="table-container" *ngIf="puedeVerMontos">
                     <table>
                         <thead>
-                            <tr>
+                            <tr *ngIf="puedeVerMontos">
                                 <th>RESUMEN ACUMULADO</th>
                                 <th>BICICLETAS</th>
                                 <th>APPAREL, SYNCROS, VITTORIA</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
+                            <tr *ngIf="puedeVerMontos">
                                 <td>Compromiso Acumulado</td>
                                 <td>{{ getCompromisoAcumuladoScott() | currency:'USD':'$':'1.2-2' }}</td>
                                 <td>{{ getCompromisoAcumuladoApparel() | currency:'USD':'$':'1.2-2' }}</td>
                             </tr>
-                            <tr>
+                            <tr *ngIf="puedeVerMontos">
                                 <td>Avance Real Total</td>
                                 <td>{{ getAvanceAcumuladoScott() | currency:'USD':'$':'1.2-2' }}</td>
                                 <td>{{ getAvanceAcumuladoApparel() | currency:'USD':'$':'1.2-2' }}</td>
                             </tr>
-                            <tr>
+                            <tr *ngIf="puedeVerMontos">
                                 <td>% de Cumplimiento</td>
                                 <td>{{ getPorcentajeAcumuladoScott() }}%</td>
                                 <td>{{ getPorcentajeAcumuladoApparel() }}%</td>
@@ -379,11 +379,11 @@
             <div class="section">
                 <h3>b) Compra Mínima INICIAL</h3>
                 <div class="compra-minima">
-                    <div class="compra-item">
+                    <div class="compra-item" *ngIf="puedeVerMontos">
                         <div class="compra-label">Meta</div>
                         <div class="compra-value">{{ datosCliente.compra_minima_inicial | currency:'USD':'$':'1.2-2' }}</div>
                     </div>
-                    <div class="compra-item">
+                    <div class="compra-item" *ngIf="puedeVerMontos">
                         <div class="compra-label">Avance</div>
                         <div class="compra-value">{{ datosCliente.acumulado_anticipado | currency:'USD':'$':'1.2-2' }}</div>
                     </div>
@@ -397,11 +397,11 @@
             <div class="section">
                 <h3>c) Compra Mínima ANUAL</h3>
                 <div class="compra-minima">
-                    <div class="compra-item">
+                    <div class="compra-item" *ngIf="puedeVerMontos">
                         <div class="compra-label">Meta</div>
                         <div class="compra-value">{{ datosCliente.compra_minima_anual | currency:'USD':'$':'1.2-2' }}</div>
                     </div>
-                    <div class="compra-item">
+                    <div class="compra-item" *ngIf="puedeVerMontos">
                         <div class="compra-label">Avance</div>
                         <div class="compra-value">{{ datosCliente.acumulado_anticipado | currency:'USD':'$':'1.2-2' }}</div>
                     </div>

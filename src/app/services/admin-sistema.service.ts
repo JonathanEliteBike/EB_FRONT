@@ -38,6 +38,7 @@ export interface ModuloItem {
   identificador: string;
   padre_id?: number | null;
   activo: number;
+  delegable_a_hijos?: boolean | number;
   acciones?: AccionBase[];
 }
 
@@ -45,7 +46,8 @@ export interface ModuloPayload {
   nombre: string;
   identificador: string;
   padre_id?: number | null;
-  acciones_ids: number[];
+  delegable_a_hijos?: boolean;
+  acciones_ids?: number[];
 }
 
 export interface UsuarioHijoItem {
@@ -60,8 +62,11 @@ export interface UsuarioHijoItem {
 export interface CrearHijoPayload {
   nombre: string;
   correo: string;
-  usuario: string;
   contrasena: string;
+}
+
+export interface SiguienteUsuarioHijoResponse {
+  usuario: string;
 }
 
 export interface PermisoUsuarioItem {
@@ -70,6 +75,25 @@ export interface PermisoUsuarioItem {
   accion_id: number;
   accion: string;
   identificador?: string;
+}
+
+export interface ModuloAccesoItem {
+  modulo_id: number;
+  modulo: string;
+  identificador: string;
+  padre_id?: number | null;
+}
+
+export interface AmbitoMontosItem {
+  id: number;
+  identificador: string;
+  nombre: string;
+  ocultar_montos: boolean | number;
+}
+
+export interface ConfiguracionMontosHijo {
+  ocultar_montos_global: boolean | number;
+  ambitos: AmbitoMontosItem[];
 }
 
 export interface CupoResponse {
@@ -141,6 +165,36 @@ export class AdminSistemaService {
         modulo_id: moduloId,
         accion_id: accionId
       }
+    });
+  }
+
+  getModulosDelegablesAdministrador(adminId: number): Observable<{ modulos: ModuloAccesoItem[] }> {
+    return this.http.get<{ modulos: ModuloAccesoItem[] }>(`${this.apiUrl}/admin-sistema/administradores/${adminId}/modulos-delegables`);
+  }
+
+  asignarModuloDelegable(administradorId: number, moduloId: number): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.apiUrl}/admin-sistema/modulos-delegables/asignar`, {
+      administrador_id: administradorId, modulo_id: moduloId
+    });
+  }
+
+  revocarModuloDelegable(administradorId: number, moduloId: number): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/admin-sistema/modulos-delegables/revocar`, {
+      body: { administrador_id: administradorId, modulo_id: moduloId }
+    });
+  }
+
+  getCapacidadesDelegablesAdministrador(adminId: number): Observable<{ capacidades: { capacidad: string }[] }> {
+    return this.http.get<{ capacidades: { capacidad: string }[] }>(`${this.apiUrl}/admin-sistema/administradores/${adminId}/capacidades-delegables`);
+  }
+
+  asignarCapacidadDelegable(administradorId: number, capacidad: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.apiUrl}/admin-sistema/capacidades-delegables/asignar`, { administrador_id: administradorId, capacidad });
+  }
+
+  revocarCapacidadDelegable(administradorId: number, capacidad: string): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/admin-sistema/capacidades-delegables/revocar`, {
+      body: { administrador_id: administradorId, capacidad }
     });
   }
 
@@ -248,6 +302,11 @@ export class AdminSistemaService {
     return this.http.post<ApiResponse<{ id: number }>>(`${this.apiUrl}/usuarios-hijos`, payload);
   }
 
+  /** Previsualización no reservada; el backend vuelve a calcular al crear. */
+  getSiguienteUsuarioHijo(): Observable<SiguienteUsuarioHijoResponse> {
+    return this.http.get<SiguienteUsuarioHijoResponse>(`${this.apiUrl}/usuarios-hijos/siguiente-usuario`);
+  }
+
   /**
    * Activa o desactiva un usuario hijo.
    * PATCH /api/usuarios-hijos/:hijo_id/estado
@@ -284,6 +343,55 @@ export class AdminSistemaService {
    */
   getMisPermisosDelegables(): Observable<{ permisos_delegables: PermisoUsuarioItem[] }> {
     return this.http.get<{ permisos_delegables: PermisoUsuarioItem[] }>(`${this.apiUrl}/permisos/delegables`);
+  }
+
+  getMisModulosDelegables(): Observable<{ modulos: ModuloAccesoItem[] }> {
+    return this.http.get<{ modulos: ModuloAccesoItem[] }>(`${this.apiUrl}/permisos/modulos-delegables`);
+  }
+
+  getModulosUsuarioHijo(hijoId: number): Observable<{ modulos: ModuloAccesoItem[] }> {
+    return this.http.get<{ modulos: ModuloAccesoItem[] }>(`${this.apiUrl}/permisos/modulos/usuario/${hijoId}`);
+  }
+
+  asignarModuloHijo(hijoId: number, moduloId: number): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.apiUrl}/permisos/modulos/asignar`, { hijo_id: hijoId, modulo_id: moduloId });
+  }
+
+  revocarModuloHijo(hijoId: number, moduloId: number): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/permisos/modulos/revocar`, { body: { hijo_id: hijoId, modulo_id: moduloId } });
+  }
+
+  getMisCapacidadesDelegables(): Observable<{ capacidades: { capacidad: string }[] }> {
+    return this.http.get<{ capacidades: { capacidad: string }[] }>(`${this.apiUrl}/permisos/capacidades-delegables`);
+  }
+
+  getCapacidadesUsuarioHijo(hijoId: number): Observable<{ capacidades: { capacidad: string }[] }> {
+    return this.http.get<{ capacidades: { capacidad: string }[] }>(`${this.apiUrl}/permisos/capacidades/usuario/${hijoId}`);
+  }
+
+  asignarCapacidadHijo(hijoId: number, capacidad: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.apiUrl}/permisos/capacidades/asignar`, { hijo_id: hijoId, capacidad });
+  }
+
+  revocarCapacidadHijo(hijoId: number, capacidad: string): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/permisos/capacidades/revocar`, { body: { hijo_id: hijoId, capacidad } });
+  }
+
+  getConfiguracionMontosHijo(hijoId: number): Observable<ConfiguracionMontosHijo> {
+    return this.http.get<ConfiguracionMontosHijo>(`${this.apiUrl}/permisos/montos/usuario/${hijoId}`);
+  }
+
+  actualizarOcultarMontosGlobalHijo(hijoId: number, ocultarMontosGlobal: boolean): Observable<ApiResponse> {
+    return this.http.put<ApiResponse>(`${this.apiUrl}/permisos/montos/usuario/${hijoId}/global`, {
+      ocultar_montos_global: ocultarMontosGlobal
+    });
+  }
+
+  actualizarOcultarMontosAmbitoHijo(hijoId: number, ambitoIdentificador: string, ocultarMontos: boolean): Observable<ApiResponse> {
+    return this.http.put<ApiResponse>(`${this.apiUrl}/permisos/montos/usuario/${hijoId}/ambito`, {
+      ambito_identificador: ambitoIdentificador,
+      ocultar_montos: ocultarMontos
+    });
   }
 
   /**

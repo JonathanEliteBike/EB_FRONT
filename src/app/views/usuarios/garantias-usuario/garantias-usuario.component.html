@@ -1,5 +1,6 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 
+<ng-container *ngIf="puedeVer; else accesoDenegado">
 <div class="garantias-page">
 
   <!-- ══════════════════════ VISTA HUB ══════════════════════ -->
@@ -17,7 +18,7 @@
         <p>Consulta el estado de tus solicitudes de garantía y sube documentos corregidos si es necesario.</p>
         <div class="hub-card-btn">Ver mis tickets <i class="fas fa-arrow-right"></i></div>
       </div>
-      <div class="hub-card hub-card-secondary" routerLink="/garantias/formulario">
+      <div *ngIf="puedeCrear" class="hub-card hub-card-secondary" routerLink="/garantias/formulario">
         <div class="hub-card-icon"><i class="fas fa-plus-circle"></i></div>
         <h2>Crear nuevo ticket</h2>
         <p>¿Tienes un producto con falla? Registra tu solicitud llenando el formulario correspondiente.</p>
@@ -49,7 +50,7 @@
         <i class="fas fa-inbox empty-icon"></i>
         <h2>Sin tickets registrados</h2>
         <p>Aún no has enviado ninguna solicitud de garantía.</p>
-        <button class="btn btn-primary" routerLink="/garantias/formulario"><i class="fas fa-plus"></i> Crear mi primer ticket</button>
+        <button *ngIf="puedeCrear" class="btn btn-primary" routerLink="/garantias/formulario"><i class="fas fa-plus"></i> Crear mi primer ticket</button>
       </div>
     </div>
 
@@ -194,7 +195,7 @@
             <span *ngIf="validacionDocs['numero_serie'] === 'valido'" class="val-chip valid"><i class="fas fa-check"></i> Válido</span>
             <span *ngIf="validacionDocs['numero_serie'] === 'rechazado'" class="val-chip rejected"><i class="fas fa-times"></i> Rechazado</span>
           </div>
-          <div class="doc-reupload" *ngIf="validacionDocs['numero_serie'] === 'rechazado'">
+          <div class="doc-reupload" *ngIf="puedeEditar && validacionDocs['numero_serie'] === 'rechazado'">
             <p class="reupload-hint"><i class="fas fa-exclamation-circle"></i> El número de serie fue rechazado. Ingrésalo nuevamente:</p>
             <div class="serie-update-row">
               <input class="serie-input" type="text" [(ngModel)]="nuevaSerie" placeholder="Número de serie corregido">
@@ -222,7 +223,7 @@
             <span *ngIf="validacionDocs[doc.key] === 'valido'" class="val-chip valid"><i class="fas fa-check"></i> Válido</span>
             <span *ngIf="validacionDocs[doc.key] === 'rechazado'" class="val-chip rejected"><i class="fas fa-times"></i> Rechazado</span>
           </div>
-          <div class="doc-reupload" *ngIf="validacionDocs[doc.key] === 'rechazado'">
+          <div class="doc-reupload" *ngIf="puedeEditar && validacionDocs[doc.key] === 'rechazado'">
             <p class="reupload-hint"><i class="fas fa-exclamation-circle"></i> Este documento fue rechazado. Sube uno corregido:</p>
             <label class="upload-label" [class.uploading]="resubiendo[doc.key]">
               <input type="file" class="file-hidden" accept="image/*,.pdf,.mp4,.mov"
@@ -255,7 +256,7 @@
             <div class="empty-comments" *ngIf="comentarios.length === 0">
               <i class="fas fa-comment-slash"></i> Sin comentarios aún.
             </div>
-            <div class="add-comment">
+            <div class="add-comment" *ngIf="puedeEditar">
               <textarea class="comment-input" [(ngModel)]="nuevoComentario" rows="3"
                         placeholder="Escribe un comentario o aclaración…"></textarea>
               <button class="btn btn-primary btn-sm" (click)="enviarComentario()"
@@ -300,3 +301,15 @@
   </ng-container>
 
 </div>
+</ng-container>
+
+<ng-template #accesoDenegado>
+  <div class="garantias-page">
+    <div class="empty-state"><div class="empty-inner">
+      <i class="fas fa-lock empty-icon"></i>
+      <h2>Acceso restringido</h2>
+      <p>No tienes permiso para consultar Garantías.</p>
+      <a class="btn btn-outline" routerLink="/usuarios/dashboard">Volver al inicio</a>
+    </div></div>
+  </div>
+</ng-template>

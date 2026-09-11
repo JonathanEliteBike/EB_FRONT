@@ -1,6 +1,7 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 <app-alerta *ngIf="mensajeAlerta" [mensaje]="mensajeAlerta" [tipo]="tipoAlerta"></app-alerta>
 
+<ng-container *ngIf="puedeCrear; else accesoRestringido">
 <div class="monitor-container">
     <h2>Proyecciones de Compras</h2>
 
@@ -30,23 +31,23 @@
 
         <div class="resumen-compromiso" *ngIf="nivelCliente && compromisoCliente">
             <h4>Resumen de tu Proyección</h4>
-            <p><strong>Total proyectado:</strong> {{ calcularTotalProyeccion() | number:'1.2-2' }}&nbsp;MXN</p>
+            <p *ngIf="puedeVerMontos"><strong>Total proyectado:</strong> {{ calcularTotalProyeccion() | number:'1.2-2' }}&nbsp;MXN</p>
             <p><strong>Total de bicicletas:</strong> {{ calcularTotalBicicletas() }}</p>
-            <p><strong>Compra Inicial (Bimestre 2 y 3):</strong> {{ compromisoCliente | number:'1.2-2' }}&nbsp;MXN</p>
-            <p class="info-montos-quincena">
+            <p *ngIf="puedeVerMontos"><strong>Compra Inicial (Bimestre 2 y 3):</strong> {{ compromisoCliente | number:'1.2-2' }}&nbsp;MXN</p>
+            <p *ngIf="puedeVerMontos" class="info-montos-quincena">
                 <span>Haz clic en "<strong>Ver montos por quincena</strong>" para conocer la cantidad de dinero
                     proyectada en cada quincena.</span>
             </p>
 
             <!-- Sección de montos por quincena -->
-            <div class="montos-quincena">
+            <div *ngIf="puedeVerMontos" class="montos-quincena">
                 <button class="btn-ver-montos" (click)="mostrarModalMontos()">
                     <i class="fas fa-calculator"></i> Ver montos por quincena
                 </button>
             </div>
 
             <!-- Modal para mostrar los montos -->
-            <div class="modal-montos" *ngIf="mostrarModal" (click)="cerrarModal($event)">
+            <div class="modal-montos" *ngIf="mostrarModal && puedeVerMontos" (click)="cerrarModal($event)">
                 <div class="modal-contenido">
                     <div class="modal-header">
                         <h4>Montos por quincena</h4>
@@ -195,7 +196,7 @@
                         </div>
                     </th>
                     <th  style="min-width: 440px;">Especificaciones (sujetas a cambios)</th>
-                    <th>Precio ({{ nivelCliente || 'Público' }}) con IVA</th>
+                    <th *ngIf="puedeVerMontos">Precio ({{ nivelCliente || 'Público' }}) con IVA</th>
                     <th>Precio Público (con IVA)</th>
                     <th>1ER QUINCENA DE SEPTIEMBRE 2025</th>
                     <th>2DA QUINCENA DE SEPTIEMBRE 2025</th>
@@ -227,7 +228,7 @@
                     <td>{{ item.descripcion }}</td>
                     <td>{{ item.modelo }}</td>
                     <td>{{ item.spec }}</td>
-                    <td>{{ getPrecioCliente(item) | currency }}</td>
+                    <td *ngIf="puedeVerMontos">{{ getPrecioCliente(item) | currency }}</td>
                     <td>{{ item.precio_publico_con_iva | currency }}</td>
 
                     <!-- Inputs para cada quincena -->
@@ -349,3 +350,8 @@
         <button (click)="cambiarPagina(totalPaginas)" [disabled]="paginaActual === totalPaginas">Última »</button>
     </div>
 </div>
+</ng-container>
+
+<ng-template #accesoRestringido>
+    <app-acceso-restringido modulo="Proyección de Compras" rutaInicio="/usuarios/inicio"></app-acceso-restringido>
+</ng-template>

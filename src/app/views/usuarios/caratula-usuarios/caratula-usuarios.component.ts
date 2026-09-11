@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { FacturasClienteComponent } from '../../../components/facturas-cliente/facturas-cliente.component';
 import { AlertaService } from '../../../services/alerta.service';
 import { AlertaComponent } from '../../../components/alerta/alerta.component';
+import { AuthService } from '../../../services/auth.service';
 
 import { FechaActualizacionComponent } from '../../../components/fecha-actualizacion/fecha-actualizacion.component';
 import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
@@ -140,8 +141,14 @@ export class CaratulaUsuariosComponent implements OnInit {
   constructor(
     private caratulasService: CaratulasService,
     private router: Router,
-    private alertaService: AlertaService
+    private alertaService: AlertaService,
+    private authService: AuthService
   ) { }
+
+  /** Rol 2 siempre ve sus datos; rol 3 sigue la política por ámbito. */
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('caratula_distribuidor');
+  }
 
   ngOnInit() {
     this.obtenerDatosToken();
@@ -442,9 +449,13 @@ export class CaratulaUsuariosComponent implements OnInit {
       porcentaje_may_jun_app: this.parseNumber(datos.porcentaje_may_jun_app || '0'),
       compra_minima_inicial: this.parseNumber(datos.compra_minima_inicial || '0'),
       avance_global: this.parseNumber(datos.avance_global || '0'),
-      porcentaje_global: metaInicial > 0 ? Math.round((avanceReal / metaInicial) * 100) : 0,
+      porcentaje_global: this.parseNumber(
+        datos.porcentaje_global ?? (metaInicial > 0 ? Math.round((avanceReal / metaInicial) * 100) : 0)
+      ),
       acumulado_anticipado: this.parseNumber(datos.acumulado_anticipado || '0'),
-      porcentaje_anual: metaAnual > 0 ? Math.round((avanceReal / metaAnual) * 100) : 0,
+      porcentaje_anual: this.parseNumber(
+        datos.porcentaje_anual ?? (metaAnual > 0 ? Math.round((avanceReal / metaAnual) * 100) : 0)
+      ),
       periodoJulAgo: datos.periodoJulAgo || 'Julio - Agosto',
       periodoSepOct: datos.periodoSepOct || 'Septiembre - Octubre',
       periodoNovDic: datos.periodoNovDic || 'Noviembre - Diciembre',
@@ -466,6 +477,11 @@ export class CaratulaUsuariosComponent implements OnInit {
   }
 
   generarPDF() {
+    if (!this.puedeVerMontos) {
+      this.alertaService.mostrarError('No tienes autorización para exportar la carátula con montos.');
+      return;
+    }
+
     if (!this.datosCliente || this.exportandoPDF) {
       this.alertaService.mostrarError('Espere a que los datos del cliente carguen o a que finalice la descarga actual.');
       return;
@@ -625,13 +641,13 @@ export class CaratulaUsuariosComponent implements OnInit {
   getPeriodoData(periodo: string) {
     if (!this.datosCliente) return null;
     const d = this.datosCliente as any;
-    const map: Record<string, { compBici: string; avBici: string; compApp: string; avApp: string }> = {
-      'Jul-Ago': { compBici: 'compromiso_jul_ago',  avBici: 'avance_jul_ago',  compApp: 'compromiso_jul_ago_app',  avApp: 'avance_jul_ago_app' },
-      'Sep-Oct': { compBici: 'compromiso_sep_oct',  avBici: 'avance_sep_oct',  compApp: 'compromiso_sep_oct_app',  avApp: 'avance_sep_oct_app' },
-      'Nov-Dic': { compBici: 'compromiso_nov_dic',  avBici: 'avance_nov_dic',  compApp: 'compromiso_nov_dic_app',  avApp: 'avance_nov_dic_app' },
-      'Ene-Feb': { compBici: 'compromiso_ene_feb',  avBici: 'avance_ene_feb',  compApp: 'compromiso_ene_feb_app',  avApp: 'avance_ene_feb_app' },
-      'Mar-Abr': { compBici: 'compromiso_mar_abr',  avBici: 'avance_mar_abr',  compApp: 'compromiso_mar_abr_app',  avApp: 'avance_mar_abr_app' },
-      'May-Jun': { compBici: 'compromiso_may_jun',  avBici: 'avance_may_jun',  compApp: 'compromiso_may_jun_app',  avApp: 'avance_may_jun_app' },
+    const map: Record<string, { compBici: string; avBici: string; pctBici: string; compApp: string; avApp: string; pctApp: string }> = {
+      'Jul-Ago': { compBici: 'compromiso_jul_ago', avBici: 'avance_jul_ago', pctBici: 'porcentaje_jul_ago', compApp: 'compromiso_jul_ago_app', avApp: 'avance_jul_ago_app', pctApp: 'porcentaje_jul_ago_app' },
+      'Sep-Oct': { compBici: 'compromiso_sep_oct', avBici: 'avance_sep_oct', pctBici: 'porcentaje_sep_oct', compApp: 'compromiso_sep_oct_app', avApp: 'avance_sep_oct_app', pctApp: 'porcentaje_sep_oct_app' },
+      'Nov-Dic': { compBici: 'compromiso_nov_dic', avBici: 'avance_nov_dic', pctBici: 'porcentaje_nov_dic', compApp: 'compromiso_nov_dic_app', avApp: 'avance_nov_dic_app', pctApp: 'porcentaje_nov_dic_app' },
+      'Ene-Feb': { compBici: 'compromiso_ene_feb', avBici: 'avance_ene_feb', pctBici: 'porcentaje_ene_feb', compApp: 'compromiso_ene_feb_app', avApp: 'avance_ene_feb_app', pctApp: 'porcentaje_ene_feb_app' },
+      'Mar-Abr': { compBici: 'compromiso_mar_abr', avBici: 'avance_mar_abr', pctBici: 'porcentaje_mar_abr', compApp: 'compromiso_mar_abr_app', avApp: 'avance_mar_abr_app', pctApp: 'porcentaje_mar_abr_app' },
+      'May-Jun': { compBici: 'compromiso_may_jun', avBici: 'avance_may_jun', pctBici: 'porcentaje_may_jun', compApp: 'compromiso_may_jun_app', avApp: 'avance_may_jun_app', pctApp: 'porcentaje_may_jun_app' },
     };
     const fields = map[periodo];
     if (!fields) return null;
@@ -641,10 +657,10 @@ export class CaratulaUsuariosComponent implements OnInit {
     const avApp    = d[fields.avApp]    || 0;
     return {
       compBici, avBici,
-      pctBici:  compBici > 0 ? Math.round((avBici / compBici) * 100) : 0,
+      pctBici: this.parseNumber(d[fields.pctBici] ?? (compBici > 0 ? Math.round((avBici / compBici) * 100) : 0)),
       faltBici: Math.max(0, compBici - avBici),
       compApp,  avApp,
-      pctApp:   compApp > 0 ? Math.round((avApp / compApp) * 100) : 0,
+      pctApp: this.parseNumber(d[fields.pctApp] ?? (compApp > 0 ? Math.round((avApp / compApp) * 100) : 0)),
       faltApp:  Math.max(0, compApp - avApp),
     };
   }

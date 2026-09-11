@@ -18,7 +18,7 @@ export class ProyeccionUsuariosComponent implements OnInit {
   private clientesService = inject(ClientesService);
 
   modulo = "Proyección de compras";
-  permisoNombre = "usuarios_proyeccion_compras/ver";
+  moduloIdentificador = "usuarios_proyeccion_compras";
 
   clienteClave: string | null = null;
   idCliente: number | null = null;
@@ -31,7 +31,7 @@ export class ProyeccionUsuariosComponent implements OnInit {
 
   // Evaluador dinámico (reemplaza a ngOnInit y a la variable tieneAcceso)
   get tieneAcceso(): boolean {
-    return this.authService.tienePermiso(this.permisoNombre);
+    return this.authService.tieneModulo(this.moduloIdentificador);
   }
 
   ngOnInit(): void {

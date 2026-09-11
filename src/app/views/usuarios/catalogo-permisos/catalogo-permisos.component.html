@@ -1,11 +1,5 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 <div class="retroactivos-layout">
-  <!-- ALERTA INLINE -->
-  <div *ngIf="alertMsj" [ngClass]="alertTipo === 'success' ? 'inline-alert success' : 'inline-alert error'">
-    <span>{{ alertMsj }}</span>
-    <button class="close-btn" (click)="alertMsj = null">&times;</button>
-  </div>
-
   <!-- HEADER PRINCIPAL -->
   <div class="page-header">
     <div class="header-back">
@@ -38,6 +32,21 @@
     <p>Selecciona un usuario hijo en la parte superior para consultar y editar sus accesos.</p>
   </div>
 
+  <section *ngIf="hijoSeleccionadoId && !cargandoPermisos" class="selector-card">
+    <h3>Información sensible</h3>
+    <label class="custom-checkbox-wrapper">
+      <input type="checkbox" [(ngModel)]="ocultarMontosGlobal">
+      <span class="chip-accion-vertical">Ocultar montos en todo el sistema</span>
+    </label>
+    <div class="vertical-actions-tree" *ngIf="ambitosMontos.length > 0">
+      <h4>Configuración por módulo / vista</h4>
+      <label *ngFor="let ambito of ambitosMontos" class="custom-checkbox-wrapper">
+        <input type="checkbox" [(ngModel)]="ambito.ocultar_montos" [disabled]="ocultarMontosGlobal">
+        <span class="chip-accion-vertical">{{ ambito.nombre }} — Ocultar montos</span>
+      </label>
+    </div>
+  </section>
+
   <!-- TABLA ÁRBOL DE PERMISOS -->
   <div *ngIf="hijoSeleccionadoId && !cargandoPermisos" class="table-wrap">
     <table class="data-table">
@@ -69,9 +78,17 @@
             <td>{{ modulo.modulo_id }}</td>
             <td [class.td-sub-indent]="nivel > 0" [style.padding-left.px]="nivel > 0 ? 24 + (nivel * 20) : null">
               <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
+              <div class="vertical-actions-tree" *ngIf="modulo.esAccesoModulo">
+                <label class="custom-checkbox-wrapper">
+                  <input type="checkbox" [(ngModel)]="modulo.asignado">
+                  <span class="chip-accion-vertical">Acceso al módulo</span>
+                </label>
+              </div>
               <div class="vertical-actions-tree" *ngIf="modulo.acciones.length > 0">
                 <label *ngFor="let acc of modulo.acciones" class="custom-checkbox-wrapper">
-                  <input type="checkbox" [(ngModel)]="acc.asignado">
+                  <input type="checkbox"
+                    [(ngModel)]="acc.asignado"
+                    >
                   <span class="chip-accion-vertical">{{ acc.nombre }}</span>
                 </label>
               </div>

@@ -1,13 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable } from 'rxjs';
-import { AdminSistemaService, UsuarioHijoItem } from '../../../services/admin-sistema.service';
+import { concat, forkJoin, last, Observable } from 'rxjs';
+import { AdminSistemaService, UsuarioHijoItem, AmbitoMontosItem } from '../../../services/admin-sistema.service';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
+import { AlertaService } from '../../../services/alerta.service';
 
 export interface AccionNodo {
   accion_id: number;
   nombre: string;
+  identificador: string;
   asignado: boolean;
 }
 
@@ -18,6 +20,8 @@ export interface ModuloNodo {
   identificador: string;
   es_raiz: boolean;
   acciones: AccionNodo[];
+  esAccesoModulo?: boolean;
+  asignado?: boolean;
 }
 
 @Component({
@@ -29,12 +33,11 @@ export interface ModuloNodo {
 })
 export class CatalogoPermisosComponent implements OnInit {
   private readonly adminService = inject(AdminSistemaService);
+  private readonly alertaService = inject(AlertaService);
 
   cargando: boolean = false;
   cargandoPermisos: boolean = false;
   guardandoPermisos: boolean = false;
-  alertMsj: string | null = null;
-  alertTipo: 'success' | 'error' = 'success';
 
   usuariosHijos: UsuarioHijoItem[] = [];
   hijoSeleccionadoId: number | null = null;
@@ -42,6 +45,10 @@ export class CatalogoPermisosComponent implements OnInit {
 
   modulosExpandidos = new Set<number>();
   private estadoInicial: Map<string, boolean> = new Map();
+  ocultarMontosGlobal = true;
+  ambitosMontos: AmbitoMontosItem[] = [];
+  private ocultarMontosGlobalInicial = true;
+  private estadosAmbitosIniciales = new Map<string, boolean>();
 
   ngOnInit(): void {
     this.cargarUsuariosHijos();
@@ -70,76 +77,81 @@ export class CatalogoPermisosComponent implements OnInit {
 
     this.cargandoPermisos = true;
 
-    this.adminService.getMisPermisosDelegables().subscribe({
-      next: (resDelegables: any) => {
-        const delegables = resDelegables.permisos_delegables || [];
-
-        this.adminService.getPermisosUsuarioHijo(this.hijoSeleccionadoId!).subscribe({
-          next: (resHijo: any) => {
-            this.cargandoPermisos = false;
-            const asignadosHijo = resHijo.permisos || [];
-            const modMap = new Map<number, ModuloNodo>();
-            this.estadoInicial.clear();
-            this.modulosExpandidos.clear();
-
-            delegables.forEach((item: any) => {
-              const modId = item.modulo_id;
-              const modNombre = item.modulo;
-              const modIdentificador = item.identificador || modNombre.toLowerCase().trim().replace(/\s+/g, '_');
-              
-              const padreId = item.padre_id ? Number(item.padre_id) : null;
-              const esRaiz = item.es_raiz !== undefined 
-                ? Boolean(item.es_raiz) 
-                : (!padreId || padreId === 0);
-
-              if (!modMap.has(modId)) {
-                modMap.set(modId, {
-                  modulo_id: modId,
-                  padre_id: padreId,
-                  nombre: modNombre,
-                  identificador: modIdentificador,
-                  es_raiz: esRaiz,
-                  acciones: []
-                });
-                
-                this.modulosExpandidos.add(modId);
-              }
-
-              const moduloObj = modMap.get(modId)!;
-              const actId = item.accion_id;
-              const actNombre = item.accion;
-
-              if (actId) {
-                const estaAsignado = asignadosHijo.some((h: any) => 
-                  (h.modulo_id === modId || h.id === modId) && 
-                  (h.accion_id === actId || h.accion === actNombre)
-                );
-
-                this.estadoInicial.set(`${modId}_${actId}`, estaAsignado);
-
-                if (!moduloObj.acciones.some(a => a.accion_id === actId)) {
-                  moduloObj.acciones.push({
-                    accion_id: actId,
-                    nombre: actNombre,
-                    asignado: estaAsignado
-                  });
-                }
-              }
-            });
-
-            this.treePermisos = Array.from(modMap.values());
-          },
-          error: () => {
-            this.cargandoPermisos = false;
-            this.mostrarAlerta('Error al consultar permisos del usuario hijo.', 'error');
-          }
-        });
-      },
+    const hijoId = this.hijoSeleccionadoId;
+    forkJoin({
+      delegablesAntiguos: this.adminService.getMisPermisosDelegables(),
+      permisosAntiguosHijo: this.adminService.getPermisosUsuarioHijo(hijoId),
+      modulosDelegables: this.adminService.getMisModulosDelegables(),
+      modulosHijo: this.adminService.getModulosUsuarioHijo(hijoId),
+      configuracionMontos: this.adminService.getConfiguracionMontosHijo(hijoId)
+    }).subscribe({
+      next: (respuesta: any) => this.construirMatriz(respuesta),
       error: () => {
         this.cargandoPermisos = false;
-        this.mostrarAlerta('Error al obtener la bolsa delegable del administrador.', 'error');
+        this.treePermisos = [];
+        this.mostrarAlerta('No se pudieron cargar los accesos del usuario hijo.', 'error');
       }
     });
+  }
+
+  private construirMatriz(respuesta: any): void {
+    const asignadosHijo = respuesta.permisosAntiguosHijo.permisos || [];
+    const modMap = new Map<number, ModuloNodo>();
+    this.estadoInicial.clear();
+    this.modulosExpandidos.clear();
+    const modulosDelegables = respuesta.modulosDelegables.modulos || [];
+    const idsDeModulosNuevos = new Set<number>(
+      modulosDelegables.map((modulo: any) => modulo.modulo_id)
+    );
+
+    // Los módulos presentes en la bolsa nueva se administran únicamente por
+    // módulo. La matriz heredada queda para lo que aún no migra.
+    (respuesta.delegablesAntiguos.permisos_delegables || [])
+      .filter((item: any) => !idsDeModulosNuevos.has(item.modulo_id))
+      .forEach((item: any) => {
+        const modId = item.modulo_id;
+        const padreId = item.padre_id ? Number(item.padre_id) : null;
+        if (!modMap.has(modId)) {
+          modMap.set(modId, {
+            modulo_id: modId, padre_id: padreId, nombre: item.modulo,
+            identificador: item.identificador || '',
+            es_raiz: !padreId, acciones: []
+          });
+          this.modulosExpandidos.add(modId);
+        }
+        const estaAsignado = asignadosHijo.some((h: any) =>
+          h.modulo_id === modId && h.accion_id === item.accion_id
+        );
+        this.estadoInicial.set(`${modId}_${item.accion_id}`, estaAsignado);
+        modMap.get(modId)!.acciones.push({
+          accion_id: item.accion_id, nombre: item.accion,
+          identificador: item.accion_id_texto || '', asignado: estaAsignado
+        });
+      });
+
+    modulosDelegables.forEach((modulo: any) => {
+      const asignado = (respuesta.modulosHijo.modulos || [])
+        .some((m: any) => m.modulo_id === modulo.modulo_id);
+      this.estadoInicial.set(`modulo_${modulo.modulo_id}`, asignado);
+      modMap.set(modulo.modulo_id, {
+        modulo_id: modulo.modulo_id, padre_id: modulo.padre_id || null,
+        nombre: modulo.modulo, identificador: modulo.identificador,
+        es_raiz: !modulo.padre_id, acciones: [], esAccesoModulo: true, asignado
+      });
+    });
+
+    const configuracionMontos = respuesta.configuracionMontos || {};
+    this.ocultarMontosGlobal = !!configuracionMontos.ocultar_montos_global;
+    this.ocultarMontosGlobalInicial = this.ocultarMontosGlobal;
+    this.ambitosMontos = (configuracionMontos.ambitos || []).map((ambito: AmbitoMontosItem) => ({
+      ...ambito,
+      ocultar_montos: !!ambito.ocultar_montos
+    }));
+    this.estadosAmbitosIniciales = new Map(
+      this.ambitosMontos.map(ambito => [ambito.identificador, !!ambito.ocultar_montos])
+    );
+    this.treePermisos = Array.from(modMap.values());
+    this.cargandoPermisos = false;
   }
 
   toggleExpandir(id: number): void {
@@ -170,34 +182,73 @@ export class CatalogoPermisosComponent implements OnInit {
     if (!this.hijoSeleccionadoId) return;
 
     this.guardandoPermisos = true;
-    const peticiones: Observable<any>[] = [];
+    const cambios: { peticion: Observable<any>, prioridad: number }[] = [];
 
     this.treePermisos.forEach(m => {
+      if (m.esAccesoModulo) {
+        const estadoOriginal = !!this.estadoInicial.get(`modulo_${m.modulo_id}`);
+        if (m.asignado !== estadoOriginal) {
+          cambios.push({
+            peticion: m.asignado
+              ? this.adminService.asignarModuloHijo(this.hijoSeleccionadoId!, m.modulo_id)
+              : this.adminService.revocarModuloHijo(this.hijoSeleccionadoId!, m.modulo_id),
+            prioridad: 0
+          });
+        }
+        return;
+      }
       m.acciones.forEach(a => {
         const key = `${m.modulo_id}_${a.accion_id}`;
         const estadoOriginal = !!this.estadoInicial.get(key);
 
         if (a.asignado !== estadoOriginal) {
           if (a.asignado) {
-            peticiones.push(
-              this.adminService.asignarPermisoHijo(this.hijoSeleccionadoId!, m.modulo_id, a.accion_id)
-            );
+            cambios.push({
+              peticion: this.adminService.asignarPermisoHijo(this.hijoSeleccionadoId!, m.modulo_id, a.accion_id),
+              prioridad: 2
+            });
           } else {
-            peticiones.push(
-              this.adminService.revocarPermisoHijo(this.hijoSeleccionadoId!, m.modulo_id, a.accion_id)
-            );
+            cambios.push({
+              peticion: this.adminService.revocarPermisoHijo(this.hijoSeleccionadoId!, m.modulo_id, a.accion_id),
+              prioridad: 2
+            });
           }
         }
       });
     });
 
-    if (peticiones.length === 0) {
+    if (this.ocultarMontosGlobal !== this.ocultarMontosGlobalInicial) {
+      cambios.push({
+        peticion: this.adminService.actualizarOcultarMontosGlobalHijo(
+          this.hijoSeleccionadoId!, this.ocultarMontosGlobal
+        ),
+        prioridad: 1
+      });
+    }
+
+    this.ambitosMontos.forEach(ambito => {
+      const estadoOriginal = this.estadosAmbitosIniciales.get(ambito.identificador) || false;
+      if (!!ambito.ocultar_montos !== estadoOriginal) {
+        cambios.push({
+          peticion: this.adminService.actualizarOcultarMontosAmbitoHijo(
+            this.hijoSeleccionadoId!, ambito.identificador, !!ambito.ocultar_montos
+          ),
+          prioridad: 1
+        });
+      }
+    });
+
+    if (cambios.length === 0) {
       this.guardandoPermisos = false;
       this.mostrarAlerta('No se realizaron cambios en los permisos.', 'success');
       return;
     }
 
-    forkJoin(peticiones).subscribe({
+    const peticionesOrdenadas = cambios
+      .sort((a, b) => a.prioridad - b.prioridad)
+      .map(cambio => cambio.peticion);
+
+    concat(...peticionesOrdenadas).pipe(last()).subscribe({
       next: () => {
         this.guardandoPermisos = false;
         this.mostrarAlerta('Permisos actualizados correctamente.', 'success');
@@ -211,9 +262,12 @@ export class CatalogoPermisosComponent implements OnInit {
   }
 
   mostrarAlerta(msj: string, tipo: 'success' | 'error'): void {
-    this.alertMsj = msj;
-    this.alertTipo = tipo;
-    setTimeout(() => (this.alertMsj = null), 4000);
+    if (tipo === 'success') {
+      this.alertaService.mostrarExito(msj);
+      return;
+    }
+
+    this.alertaService.mostrarError(msj);
   }
 
   regresar(): void {

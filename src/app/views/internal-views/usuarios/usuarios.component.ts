@@ -590,11 +590,21 @@ export class UsuariosComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al eliminar:', error);
-          this.alerta.mostrarError('Error al eliminar usuario');
+          this.alerta.mostrarError(this.obtenerMensajeErrorEliminacion(error));
           this.cargandoUsuarios = false;
         }
       });
     }
+  }
+
+  private obtenerMensajeErrorEliminacion(error: any): string {
+    if (error?.status === 404) return 'El usuario ya no existe.';
+    if (error?.status === 409) {
+      return error.error?.error || 'El usuario tiene información relacionada y no puede eliminarse.';
+    }
+    if (error?.status === 403) return 'No tienes autorización para eliminar este usuario.';
+    if (error?.status >= 500) return 'No fue posible eliminar el usuario.';
+    return error?.error?.error || 'No fue posible eliminar el usuario.';
   }
 
   obtenerRangoPaginas(): number[] {

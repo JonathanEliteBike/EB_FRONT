@@ -294,6 +294,36 @@ app-root {
   100% { background-position: 18% 50%; }
 }
 
+/* ===== CAPAS GLOBALES =====
+   Los avisos y confirmaciones se renderizan en app-root o en el CDK overlay,
+   fuera de los componentes que abren modales. Estas capas mantienen el orden:
+   modal < confirmación < notificación. */
+:root {
+  --eb-z-confirmacion: 11000;
+  --eb-z-notificacion: 12000;
+}
+
+/* Angular Material inserta sus diálogos directamente en body. */
+.cdk-overlay-container {
+  z-index: var(--eb-z-confirmacion) !important;
+}
+
+/*
+  Compatibilidad con avisos heredados que todavía se renderizan dentro de una
+  vista. Al posicionarlos en la capa de notificaciones dejan de competir con
+  el backdrop o el modal que los originó.
+*/
+body .inline-alert {
+  position: fixed !important;
+  top: calc(var(--topbar-height) + 16px);
+  left: 50%;
+  z-index: var(--eb-z-notificacion) !important;
+  width: min(calc(100vw - 32px), 960px);
+  margin: 0 !important;
+  transform: translateX(-50%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
 /* ===== SNACKBAR STYLES ===== */
 .snackbar-success {
   background-color: #4caf50;

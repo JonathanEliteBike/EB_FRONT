@@ -2,12 +2,6 @@
 
 <ng-container *ngIf="tieneAcceso; else sinAcceso">
   <div class="creacion-usuarios-layout">
-    <!-- ALERTA INLINE -->
-    <div *ngIf="alertMsj" [ngClass]="alertTipo === 'success' ? 'inline-alert success' : 'inline-alert error'">
-      <span>{{ alertMsj }}</span>
-      <button class="close-btn" (click)="alertMsj = null">&times;</button>
-    </div>
-
     <!-- HEADER PRINCIPAL -->
     <div class="page-header">
       <div>
@@ -108,7 +102,10 @@
           </div>
           <div class="form-group">
             <label>Usuario</label>
-            <input type="text" [(ngModel)]="formUsuario" placeholder="jperez">
+            <input type="text" [(ngModel)]="formUsuario" readonly
+                   [placeholder]="cargandoSiguienteUsuario ? 'Generando usuario...' : 'Usuario automático'">
+            <small *ngIf="cargandoSiguienteUsuario">Calculando el siguiente usuario disponible...</small>
+            <small *ngIf="errorSiguienteUsuario" class="form-error">{{ errorSiguienteUsuario }}</small>
           </div>
           <div class="form-group">
             <label>Contraseña</label>
@@ -119,7 +116,7 @@
           <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
             Cancelar
           </button>
-          <button type="button" class="btn btn-primary" (click)="guardarNuevoUsuario()" [disabled]="!puedeCrear">
+          <button type="button" class="btn btn-primary" (click)="guardarNuevoUsuario()" [disabled]="!puedeGuardarNuevoUsuario">
             <i class="fas fa-save"></i> Guardar Usuario
           </button>
         </div>
@@ -178,13 +175,35 @@
           <button type="button" class="close-btn" (click)="cerrarModalPermisos()" aria-label="Cerrar">&times;</button>
         </div>
         <div class="modal-body-custom">
-          <p class="modal-desc">
-            Marca o desmarca las acciones que este usuario tendrá autorizadas dentro de tu bolsa delegable.
-          </p>
+          <p class="modal-desc">Asigna los accesos disponibles dentro de tu bolsa delegable y define la visibilidad de montos.</p>
 
           <div *ngIf="cargandoPermisos" class="empty-state">
             <p>Cargando matriz de permisos...</p>
           </div>
+
+          <section *ngIf="!cargandoPermisos" class="permisos-capacidad">
+            <label class="custom-checkbox-wrapper">
+              <input type="checkbox" [(ngModel)]="ocultarMontosGlobal">
+              <div class="checkmark">
+                <svg *ngIf="ocultarMontosGlobal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <span class="accion-label">Información sensible: Ocultar montos en todo el sistema</span>
+            </label>
+            <div class="acciones-list" *ngIf="ambitosMontos.length">
+              <strong>Configuración por módulo / vista</strong>
+              <label *ngFor="let ambito of ambitosMontos" class="custom-checkbox-wrapper">
+                <input type="checkbox" [(ngModel)]="ambito.ocultar_montos" [disabled]="ocultarMontosGlobal">
+                <div class="checkmark">
+                  <svg *ngIf="ambito.ocultar_montos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <span class="accion-label">{{ ambito.nombre }}: Ocultar montos</span>
+              </label>
+            </div>
+          </section>
 
           <div *ngIf="!cargandoPermisos" class="table-wrap modal-table-wrap">
             <div class="table-responsive">
@@ -213,6 +232,17 @@
                       <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.padding-left.px]="nivel * 24">
                         <div class="modulo-info">
                           <span class="modulo-nombre"><strong>{{ modulo.nombre }}</strong></span>
+                          <div *ngIf="modulo.esAccesoModulo" class="acciones-list">
+                            <label class="custom-checkbox-wrapper">
+                              <input type="checkbox" [(ngModel)]="modulo.asignado">
+                              <div class="checkmark">
+                                <svg *ngIf="modulo.asignado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                              <span class="accion-label">Acceso al módulo</span>
+                            </label>
+                          </div>
                           <div *ngIf="modulo.acciones.length > 0" class="acciones-list">
                             <label *ngFor="let a of modulo.acciones" class="custom-checkbox-wrapper">
                               <input type="checkbox" [(ngModel)]="a.asignado">
@@ -224,7 +254,7 @@
                               <span class="accion-label">{{ a.nombre }}</span>
                             </label>
                           </div>
-                          <span *ngIf="modulo.acciones.length === 0" class="sin-acciones">Sin acciones</span>
+                          <span *ngIf="modulo.acciones.length === 0 && !modulo.esAccesoModulo" class="sin-acciones">Sin acciones</span>
                         </div>
                       </td>
                       <td class="col-jerarquia"><span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">{{ nivel === 0 ? 'Módulo Raíz' : 'Submódulo' }}</span></td>

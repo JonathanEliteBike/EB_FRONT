@@ -56,7 +56,6 @@ interface DatosRetroactivo {
 export class CaratulaRetroactivosUsuarioComponent implements OnInit {
 
   modulo = "Retroactivos";
-  permisoNombre = "retroactivos/ver";
 
   isLoading = true;
   error: string | null = null;
@@ -89,7 +88,11 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
   }
 
   get tieneAccesoModulo(): boolean {
-    return this.authService.tienePermiso(this.permisoNombre);
+    return this.authService.tieneModulo('usuarios_caratula_retroactivos');
+  }
+
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('retroactivos');
   }
 
   cargarTemporadasDisponibles(): void {
@@ -342,7 +345,7 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
   }
 
   descargarPDF(): void {
-    if (!this.authService.tienePermiso('retroactivos/exportar')) {
+    if (!this.tieneAccesoModulo || !this.puedeVerMontos) {
       return;
     }
     window.print();

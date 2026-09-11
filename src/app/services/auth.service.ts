@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, BehaviorSubject, of } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, of, forkJoin } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { jwtDecode } from 'jwt-decode';
@@ -28,12 +28,20 @@ export class AuthService {
 
   // Matriz de rutas permitidas cargadas en memoria
   private rutasPermitidas = new Set<string>();
+  // Infraestructura nueva: no sustituye aún la matriz temporal por acción.
+  private modulosPermitidos = new Set<string>();
+  private capacidadesPermitidas = new Set<string>();
+  private ocultarMontosGlobal = true;
+  private ambitosMontosOcultos = new Set<string>();
 
   constructor() {
     this.restaurarPermisosLocales();
+    this.restaurarAccesosLocales();
 
     if (this.isLoggedIn()) {
       this.obtenerPermisosEnVivo().subscribe();
+      this.obtenerAccesosEnVivo().subscribe();
+      this.obtenerPoliticaMontosEnVivo().subscribe();
     }
   }
 
@@ -86,6 +94,97 @@ export class AuthService {
     }
 
     return of(this.rutasPermitidas);
+  }
+
+  /** Carga la base nueva módulo/capacidad sin alterar permisos por acción. */
+  obtenerAccesosEnVivo(): Observable<{ modulos: Set<string>, capacidades: Set<string> }> {
+    const rol = this.getRol();
+    if (rol === 1) {
+      this.modulosPermitidos = new Set(['*']);
+      this.capacidadesPermitidas = new Set(['*']);
+      this.guardarAccesosLocales();
+      return of({ modulos: this.modulosPermitidos, capacidades: this.capacidadesPermitidas });
+    }
+
+    let modulosUrl = '';
+    let capacidadesUrl = '';
+    if (rol === 2) {
+      modulosUrl = `${this.apiUrl}/api/permisos/mis-modulos`;
+      capacidadesUrl = `${this.apiUrl}/api/permisos/capacidades-delegables`;
+    } else if (rol === 3) {
+      modulosUrl = `${this.apiUrl}/api/permisos/mis-modulos`;
+      capacidadesUrl = `${this.apiUrl}/api/permisos/mis-capacidades`;
+    } else {
+      return of({ modulos: this.modulosPermitidos, capacidades: this.capacidadesPermitidas });
+    }
+
+    return forkJoin({
+      modulos: this.http.get<any>(modulosUrl).pipe(
+        catchError(err => {
+          console.warn('Error al obtener módulos efectivos:', err);
+          return of({ modulos: [] });
+        })
+      ),
+      capacidades: this.http.get<any>(capacidadesUrl).pipe(
+        catchError(err => {
+          console.warn('Error al obtener capacidades efectivas:', err);
+          return of({ capacidades: [] });
+        })
+      )
+    }).pipe(
+      map(respuesta => ({
+        modulos: new Set<string>((respuesta.modulos.modulos || [])
+          .map((item: any) => String(item?.identificador || '').toLowerCase().trim())
+          .filter(Boolean)),
+        capacidades: new Set<string>((respuesta.capacidades.capacidades || [])
+          .map((item: any) => String(item?.capacidad || '').toLowerCase().trim())
+          .filter(Boolean))
+      })),
+      tap(accesos => {
+        this.modulosPermitidos = accesos.modulos;
+        this.capacidadesPermitidas = accesos.capacidades;
+        this.guardarAccesosLocales();
+      }),
+      catchError(err => {
+        console.warn('Error al obtener accesos por módulo/capacidad:', err);
+        return of({ modulos: this.modulosPermitidos, capacidades: this.capacidadesPermitidas });
+      })
+    );
+  }
+
+  /** Carga la politica efectiva de datos monetarios. Flask sigue siendo la autoridad. */
+  obtenerPoliticaMontosEnVivo(): Observable<void> {
+    const rol = this.getRol();
+    if (rol === 1 || rol === 2) {
+      this.ocultarMontosGlobal = false;
+      this.ambitosMontosOcultos.clear();
+      this.guardarPoliticaMontosLocal();
+      return of(void 0);
+    }
+    if (rol !== 3) {
+      this.ocultarMontosGlobal = true;
+      this.ambitosMontosOcultos.clear();
+      return of(void 0);
+    }
+    return this.http.get<any>(`${this.apiUrl}/api/permisos/montos/mis-politicas`).pipe(
+      tap(respuesta => {
+        this.ocultarMontosGlobal = !!respuesta?.ocultar_montos_global;
+        this.ambitosMontosOcultos = new Set<string>((respuesta?.ambitos || [])
+          .filter((ambito: any) => !!ambito?.ocultar_montos)
+          .map((ambito: any) => String(ambito.identificador || '').toLowerCase().trim())
+          .filter(Boolean));
+        this.guardarPoliticaMontosLocal();
+      }),
+      map(() => void 0),
+      catchError(err => {
+        // Falla cerrada: un rol 3 sin politica disponible no muestra montos.
+        console.warn('Error al obtener politica monetaria:', err);
+        this.ocultarMontosGlobal = true;
+        this.ambitosMontosOcultos.clear();
+        this.guardarPoliticaMontosLocal();
+        return of(void 0);
+      })
+    );
   }
 
   /**
@@ -220,6 +319,35 @@ export class AuthService {
     return false;
   }
 
+  /** Comprueba identificadores de módulo mediante coincidencia exacta. */
+  tieneModulo(identificador: string): boolean {
+    // Rol 2 usa el portal con acceso propio. La bolsa sólo controla qué
+    // módulos puede delegar a sus hijos, no su acceso personal.
+    if (this.isAdmin() || this.getRol() === 2) return true;
+    const normalizado = (identificador || '').toLowerCase().trim();
+    return !!normalizado && this.modulosPermitidos.has(normalizado);
+  }
+
+  /** Comprueba capacidades globales; una capacidad no da acceso a módulos. */
+  tieneCapacidad(capacidad: string): boolean {
+    // "Mostrar montos" y demás capacidades son propias del distribuidor.
+    // Para rol 3 siguen siendo necesarias la bolsa del padre y la asignación
+    // individual, que se reflejan en capacidadesPermitidas.
+    if (this.isAdmin() || this.getRol() === 2) return true;
+    const normalizada = (capacidad || '').toLowerCase().trim();
+    return !!normalizada && this.capacidadesPermitidas.has(normalizada);
+  }
+
+  /** Semantica negativa explicita para evitar invertir la regla de negocio. */
+  debeOcultarMontos(ambito: string): boolean {
+    const rol = this.getRol();
+    if (rol === 1 || rol === 2) return false;
+    if (rol !== 3) return true;
+    if (this.ocultarMontosGlobal) return true;
+    const normalizado = (ambito || '').toLowerCase().trim();
+    return !normalizado || this.ambitosMontosOcultos.has(normalizado);
+  }
+
   private restaurarPermisosLocales(): void {
     const raw = localStorage.getItem('rutas_permitidas');
     if (raw) {
@@ -234,6 +362,33 @@ export class AuthService {
 
   private guardarPermisosLocales(set: Set<string>): void {
     localStorage.setItem('rutas_permitidas', JSON.stringify(Array.from(set)));
+  }
+
+  private restaurarAccesosLocales(): void {
+    for (const [clave, destino] of [
+      ['modulos_permitidos', 'modulos'],
+      ['capacidades_permitidas', 'capacidades']
+    ] as const) {
+      try {
+        const valores = JSON.parse(localStorage.getItem(clave) || '[]');
+        if (Array.isArray(valores)) {
+          if (destino === 'modulos') this.modulosPermitidos = new Set(valores);
+          else this.capacidadesPermitidas = new Set(valores);
+        }
+      } catch {
+        // El siguiente refresco autenticado reemplazará un valor no válido.
+      }
+    }
+  }
+
+  private guardarAccesosLocales(): void {
+    localStorage.setItem('modulos_permitidos', JSON.stringify(Array.from(this.modulosPermitidos)));
+    localStorage.setItem('capacidades_permitidas', JSON.stringify(Array.from(this.capacidadesPermitidas)));
+  }
+
+  private guardarPoliticaMontosLocal(): void {
+    localStorage.setItem('ocultar_montos_global', JSON.stringify(this.ocultarMontosGlobal));
+    localStorage.setItem('ambitos_montos_ocultos', JSON.stringify(Array.from(this.ambitosMontosOcultos)));
   }
 
   // ==========================================
@@ -289,6 +444,8 @@ export class AuthService {
           this.setToken(response.token);
           this.authState.next(true);
           this.obtenerPermisosEnVivo().subscribe();
+          this.obtenerAccesosEnVivo().subscribe();
+          this.obtenerPoliticaMontosEnVivo().subscribe();
         }
       })
     );
@@ -351,6 +508,18 @@ export class AuthService {
   }
 
   setToken(token: string): void {
+    // Nunca reutilizar permisos o módulos de una sesión anterior al cambiar
+    // de usuario: se reemplazarán exclusivamente con la respuesta del JWT nuevo.
+    localStorage.removeItem('rutas_permitidas');
+    localStorage.removeItem('modulos_permitidos');
+    localStorage.removeItem('capacidades_permitidas');
+    localStorage.removeItem('ocultar_montos_global');
+    localStorage.removeItem('ambitos_montos_ocultos');
+    this.rutasPermitidas.clear();
+    this.modulosPermitidos.clear();
+    this.capacidadesPermitidas.clear();
+    this.ocultarMontosGlobal = true;
+    this.ambitosMontosOcultos.clear();
     localStorage.setItem('token', token);
   }
 
@@ -365,7 +534,15 @@ export class AuthService {
   clearToken(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('rutas_permitidas');
+    localStorage.removeItem('modulos_permitidos');
+    localStorage.removeItem('capacidades_permitidas');
+    localStorage.removeItem('ocultar_montos_global');
+    localStorage.removeItem('ambitos_montos_ocultos');
     this.rutasPermitidas.clear();
+    this.modulosPermitidos.clear();
+    this.capacidadesPermitidas.clear();
+    this.ocultarMontosGlobal = true;
+    this.ambitosMontosOcultos.clear();
   }
 
   getUserId(): number | null {

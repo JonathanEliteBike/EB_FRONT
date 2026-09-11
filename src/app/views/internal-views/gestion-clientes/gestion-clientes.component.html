@@ -140,6 +140,7 @@
         Selecciona los permisos que este administrador podrá asignar posteriormente a sus usuarios.
       </p>
 
+
       <div *ngIf="cargandoModal" class="empty-state">Cargando permisos del catálogo general...</div>
 
       <!-- CONTENEDOR UNIFICADO DEL MODAL -->
@@ -180,9 +181,17 @@
                   </td>
                   <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24">
                     <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
-                    <div class="vertical-actions-tree" *ngIf="modulo.acciones && modulo.acciones.length > 0">
+                    <div class="vertical-actions-tree" *ngIf="esModuloMigrado(modulo.id)">
+                      <label class="action-tree-item checkbox-permiso">
+                        <input type="checkbox" [(ngModel)]="modulosAcceso[modulo.id]">
+                        <span class="chip-accion-vertical">Acceso al módulo</span>
+                      </label>
+                    </div>
+                    <div class="vertical-actions-tree" *ngIf="!esModuloMigrado(modulo.id) && modulo.acciones && modulo.acciones.length > 0">
                       <label *ngFor="let acc of modulo.acciones" class="action-tree-item checkbox-permiso">
-                        <input type="checkbox" [checked]="isPermisoAsignado(modulo.id, acc.id)" (change)="togglePermiso(modulo.id, acc.id)">
+                        <input type="checkbox"
+                          [checked]="isPermisoAsignado(modulo.id, acc.id)"
+                          (change)="togglePermiso(modulo.id, acc.id)">
                         <span class="chip-accion-vertical">{{ acc.nombre }}</span>
                       </label>
                     </div>

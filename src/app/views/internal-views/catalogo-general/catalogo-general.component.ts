@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminSistemaService, ModuloItem, AccionBase, ModuloPayload } from '../../../services/admin-sistema.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { routes } from '../../../app.routes';
+import { AlertaService } from '../../../services/alerta.service';
 
 export interface RutaDetectada {
   path: string;
@@ -24,12 +25,11 @@ export interface RutaDetectada {
 })
 export class CatalogoGeneralComponent implements OnInit {
   private readonly adminService = inject(AdminSistemaService);
+  private readonly alertaService = inject(AlertaService);
 
   constructor(private location: Location) {} goBack() { this.location.back(); }
 
   cargando: boolean = false;
-  alertMsj: string | null = null;
-  alertTipo: 'success' | 'error' = 'success';
 
   modulos: ModuloItem[] = [];
   accionesGlobales: AccionBase[] = [];
@@ -54,8 +54,11 @@ export class CatalogoGeneralComponent implements OnInit {
   formNombreModulo: string = '';
   formNombreBloqueado: boolean = false;
   formIdentificadorModulo: string = '';
+  rutaAsociadaModulo: string = '';
+  filtroRutasModal: string = '';
+  listaRutasAbierta: boolean = false;
   formPadreIdModulo: number | null = null;
-  formAccionesSeleccionadas: number[] = [];
+  formDelegableAHijos: boolean = true;
 
   // Formulario Acción Base
   modalAccionVisible: boolean = false;
@@ -114,7 +117,7 @@ export class CatalogoGeneralComponent implements OnInit {
     const procesarRuta = (path: string) => {
       if (!path || rutasIgnoradas.includes(path) || path.includes(':')) return;
 
-      const identificador = path.toLowerCase().replace(/\//g, '_').replace(/-/g, '_');
+      const identificador = this.generarIdentificadorDesdeRuta(path);
       const existe = this.modulos.find(m => 
         m.identificador === identificador || 
         m.identificador === path || 
@@ -145,6 +148,11 @@ export class CatalogoGeneralComponent implements OnInit {
     });
 
     this.rutasDetectadasLista = resultado;
+  }
+
+  /** Convierte una ruta Angular en el identificador técnico del módulo. */
+  private generarIdentificadorDesdeRuta(path: string): string {
+    return path.toLowerCase().replace(/\//g, '_').replace(/-/g, '_');
   }
 
   // ── GETTERS Y MÉTODOS DE PAGINACIÓN UNIFICADA ─────────────────────────────
@@ -242,39 +250,48 @@ export class CatalogoGeneralComponent implements OnInit {
   // ── MÉTODOS DE NEGOCIO ──────────────────────────────────────────────────
 
   registrarModuloDesdeRuta(ruta: RutaDetectada): void {
-    this.editandoModuloId = null;
-    this.formNombreModulo = ruta.nombreSugerido;
-    this.formNombreBloqueado = true;
+    this.abrirModalNuevoModulo();
+    this.rutaAsociadaModulo = ruta.path;
+    this.aplicarRutaAsociada();
+  }
+
+  get identificadorAutomatico(): boolean {
+    return Boolean(this.rutaAsociadaModulo);
+  }
+
+  /** Completa datos técnicos desde la ruta, sin imponer acciones ni jerarquía. */
+  aplicarRutaAsociada(): void {
+    if (!this.rutaAsociadaModulo) return;
+
+    const ruta = this.rutasDetectadasLista.find(item => item.path === this.rutaAsociadaModulo);
+    if (!ruta) return;
+
     this.formIdentificadorModulo = ruta.identificador;
-    this.formPadreIdModulo = null;
-    this.formAccionesSeleccionadas = [];
-
-    const accionVer = this.accionesGlobales.find(a => a.identificador === 'ver');
-    if (accionVer) this.formAccionesSeleccionadas.push(accionVer.id);
-    this.modalModuloVisible = true;
+    this.formNombreModulo = ruta.nombreSugerido;
+    this.formNombreBloqueado = false;
   }
 
-  getClavePermiso(accionId: number): string {
-    const accion = this.accionesGlobales.find(a => a.id === accionId);
-    const identAccion = accion ? accion.identificador : '';
-    const identModulo = (this.formIdentificadorModulo || '').trim().toLowerCase();
+  seleccionarRutaAsociada(ruta?: RutaDetectada): void {
+    if (ruta && !this.esRutaDisponibleParaModulo(ruta)) return;
 
-    if (this.formPadreIdModulo) {
-      const padre = this.modulos.find(m => m.id === this.formPadreIdModulo);
-      if (padre && padre.identificador) {
-        const identPadre = padre.identificador.trim().toLowerCase();
-        return `${identPadre}/${identModulo}/${identAccion}`.toLowerCase();
-      }
-    }
-    return `${identModulo}/${identAccion}`.toLowerCase();
+    this.rutaAsociadaModulo = ruta?.path ?? '';
+    this.aplicarRutaAsociada();
+    this.listaRutasAbierta = false;
   }
 
-  copiarTexto(texto: string): void {
-    navigator.clipboard.writeText(texto).then(() => {
-      this.alertTipo = 'success';
-      this.alertMsj = `Texto copiado al portapapeles: "${texto}"`;
-      setTimeout(() => (this.alertMsj = null), 2500);
-    });
+  esRutaDisponibleParaModulo(ruta: RutaDetectada): boolean {
+    return !ruta.registrado || ruta.moduloExistente?.id === this.editandoModuloId;
+  }
+
+  get rutasFiltradasParaSelector(): RutaDetectada[] {
+    const filtro = this.filtroRutasModal.trim().toLowerCase();
+    if (!filtro) return this.rutasDetectadasLista;
+
+    return this.rutasDetectadasLista.filter(ruta =>
+      ruta.path.toLowerCase().includes(filtro) ||
+      ruta.nombreSugerido.toLowerCase().includes(filtro) ||
+      ruta.identificador.toLowerCase().includes(filtro)
+    );
   }
 
   toggleExpandir(id: number): void {
@@ -296,8 +313,11 @@ export class CatalogoGeneralComponent implements OnInit {
     this.formNombreModulo = '';
     this.formNombreBloqueado = false;
     this.formIdentificadorModulo = '';
+    this.rutaAsociadaModulo = '';
+    this.filtroRutasModal = '';
+    this.listaRutasAbierta = false;
     this.formPadreIdModulo = null;
-    this.formAccionesSeleccionadas = [];
+    this.formDelegableAHijos = true;
     this.modalModuloVisible = true;
   }
 
@@ -306,20 +326,17 @@ export class CatalogoGeneralComponent implements OnInit {
     this.formNombreModulo = m.nombre;
     this.formNombreBloqueado = false;
     this.formIdentificadorModulo = m.identificador;
+    this.rutaAsociadaModulo = this.rutasDetectadasLista.find(
+      ruta => ruta.identificador === m.identificador
+    )?.path ?? '';
+    this.filtroRutasModal = '';
+    this.listaRutasAbierta = false;
     this.formPadreIdModulo = m.padre_id || null;
-    this.formAccionesSeleccionadas = (m.acciones || []).map(a => a.id);
+    this.formDelegableAHijos = m.delegable_a_hijos !== 0 && m.delegable_a_hijos !== false;
     this.modalModuloVisible = true;
   }
 
   cerrarModalModulo(): void { this.modalModuloVisible = false; }
-
-  toggleAccionEnModulo(accionId: number): void {
-    const index = this.formAccionesSeleccionadas.indexOf(accionId);
-    if (index > -1) this.formAccionesSeleccionadas.splice(index, 1);
-    else this.formAccionesSeleccionadas.push(accionId);
-  }
-
-  estaAccionSeleccionada(accionId: number): boolean { return this.formAccionesSeleccionadas.includes(accionId); }
 
   guardarModulo(): void {
     if (!this.formNombreModulo.trim() || !this.formIdentificadorModulo.trim()) {
@@ -331,7 +348,7 @@ export class CatalogoGeneralComponent implements OnInit {
       nombre: this.formNombreModulo.trim(),
       identificador: this.formIdentificadorModulo.trim(),
       padre_id: this.formPadreIdModulo,
-      acciones_ids: this.formAccionesSeleccionadas
+      delegable_a_hijos: this.formDelegableAHijos
     };
 
     const peticion$ = this.editandoModuloId
@@ -378,7 +395,10 @@ export class CatalogoGeneralComponent implements OnInit {
         this.mostrarAlerta('Módulo eliminado correctamente.', 'success');
         this.cargarCatalogo();
       },
-      error: () => this.mostrarAlerta('Error al eliminar el módulo.', 'error')
+      error: (err) => this.mostrarAlerta(
+        err.error?.error || err.error?.mensaje || 'Error al eliminar el módulo.',
+        'error'
+      )
     });
   }
 
@@ -431,9 +451,23 @@ export class CatalogoGeneralComponent implements OnInit {
     });
   }
 
+  copiarTexto(texto: string): void {
+    if (!navigator.clipboard) {
+      this.mostrarAlerta('El navegador no permite copiar al portapapeles.', 'error');
+      return;
+    }
+
+    navigator.clipboard.writeText(texto)
+      .then(() => this.mostrarAlerta('Identificador copiado al portapapeles.', 'success'))
+      .catch(() => this.mostrarAlerta('No fue posible copiar el identificador.', 'error'));
+  }
+
   mostrarAlerta(msj: string, tipo: 'success' | 'error'): void {
-    this.alertMsj = msj;
-    this.alertTipo = tipo;
-    setTimeout(() => (this.alertMsj = null), 4000);
+    if (tipo === 'success') {
+      this.alertaService.mostrarExito(msj);
+      return;
+    }
+
+    this.alertaService.mostrarError(msj);
   }
 }

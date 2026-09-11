@@ -1,9 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable } from 'rxjs';
-import { AdminSistemaService, UsuarioHijoItem, CupoResponse } from '../../../services/admin-sistema.service';
+import { concat, forkJoin, last, Observable } from 'rxjs';
+import { AdminSistemaService, UsuarioHijoItem, CupoResponse, AmbitoMontosItem } from '../../../services/admin-sistema.service';
 import { AuthService } from '../../../services/auth.service';
+import { AlertaService } from '../../../services/alerta.service';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 import { AccesoRestringidoComponent } from '../../../components/acceso-restringido/acceso-restringido.component';
 
@@ -20,6 +21,8 @@ export interface ModuloNodo {
   identificador: string;
   es_raiz: boolean;
   acciones: AccionNodo[];
+  esAccesoModulo?: boolean;
+  asignado?: boolean;
 }
 
 @Component({
@@ -32,13 +35,12 @@ export interface ModuloNodo {
 export class CreacionUsuariosComponent implements OnInit {
   private readonly adminService = inject(AdminSistemaService);
   private readonly authService = inject(AuthService);
+  private readonly alertaService = inject(AlertaService);
 
   modulo = "Gestión de usuarios";
   permisoNombre = "usuarios_creacion_usuarios/ver";
 
   cargando: boolean = false;
-  alertMsj: string | null = null;
-  alertTipo: 'success' | 'error' = 'success';
 
   cupo: CupoResponse | null = null;
   usuariosHijos: UsuarioHijoItem[] = [];
@@ -49,6 +51,8 @@ export class CreacionUsuariosComponent implements OnInit {
   formCorreo: string = '';
   formUsuario: string = '';
   formContrasena: string = '';
+  cargandoSiguienteUsuario = false;
+  errorSiguienteUsuario: string | null = null;
 
   // Modal Cambiar Contraseña
   modalPassVisible: boolean = false;
@@ -67,6 +71,11 @@ export class CreacionUsuariosComponent implements OnInit {
   treePermisos: ModuloNodo[] = [];
   modulosExpandidos = new Set<number>();
   private estadoInicial: Map<string, boolean> = new Map();
+  ocultarMontosGlobal = true;
+  ambitosMontos: AmbitoMontosItem[] = [];
+  private ocultarMontosGlobalInicial = true;
+  private estadosAmbitosIniciales = new Map<string, boolean>();
+  private cargaPermisosId = 0;
 
   ngOnInit(): void {
     if (this.tieneAcceso) {
@@ -75,7 +84,7 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   get tieneAcceso(): boolean {
-    return this.authService.tienePermiso(this.permisoNombre);
+    return this.authService.tieneModulo('usuarios_creacion_usuarios');
   }
 
   get puedeCrear(): boolean {
@@ -125,6 +134,10 @@ export class CreacionUsuariosComponent implements OnInit {
     return this.treePermisos.filter(m => !m.padre_id || !modulosDisponibles.has(m.padre_id));
   }
 
+  get puedeGuardarNuevoUsuario(): boolean {
+    return this.puedeCrear && !this.cargandoSiguienteUsuario && !this.errorSiguienteUsuario && Boolean(this.formUsuario);
+  }
+
   getSubmodulos(padreId: number): ModuloNodo[] {
     return this.treePermisos.filter(m => m.padre_id === padreId);
   }
@@ -137,6 +150,19 @@ export class CreacionUsuariosComponent implements OnInit {
 
     this.limpiarFormularioCrear();
     this.modalCrearVisible = true;
+    this.cargandoSiguienteUsuario = true;
+    this.adminService.getSiguienteUsuarioHijo().subscribe({
+      next: ({ usuario }) => {
+        this.formUsuario = usuario;
+        this.cargandoSiguienteUsuario = false;
+      },
+      error: (err) => {
+        this.cargandoSiguienteUsuario = false;
+        const mensaje = err?.error?.error || 'No fue posible generar el usuario automático.';
+        this.errorSiguienteUsuario = mensaje;
+        this.mostrarAlerta(mensaje, 'error');
+      }
+    });
   }
 
   cerrarModal(): void {
@@ -150,7 +176,12 @@ export class CreacionUsuariosComponent implements OnInit {
       return;
     }
 
-    if (!this.formNombre.trim() || !this.formCorreo.trim() || !this.formUsuario.trim() || !this.formContrasena.trim()) {
+    if (!this.puedeGuardarNuevoUsuario) {
+      this.mostrarAlerta(this.errorSiguienteUsuario || 'Espera a que se genere el usuario automático.', 'error');
+      return;
+    }
+
+    if (!this.formNombre.trim() || !this.formCorreo.trim() || !this.formContrasena.trim()) {
       this.mostrarAlerta('Todos los campos son obligatorios.', 'error');
       return;
     }
@@ -162,7 +193,6 @@ export class CreacionUsuariosComponent implements OnInit {
     this.adminService.crearUsuarioHijo({
       nombre: this.formNombre.trim(),
       correo: this.formCorreo.trim(),
-      usuario: this.formUsuario.trim(),
       contrasena: this.formContrasena.trim()
     }).subscribe({
       next: () => {
@@ -179,6 +209,8 @@ export class CreacionUsuariosComponent implements OnInit {
     this.formCorreo = '';
     this.formUsuario = '';
     this.formContrasena = '';
+    this.cargandoSiguienteUsuario = false;
+    this.errorSiguienteUsuario = null;
   }
 
   private obtenerMensajeErrorCreacion(err: any): string {
@@ -256,140 +288,192 @@ export class CreacionUsuariosComponent implements OnInit {
   // --- MODAL ASIGNACIÓN DE PERMISOS ---
   abrirModalPermisos(hijo: UsuarioHijoItem): void {
     this.hijoSeleccionado = hijo;
+    this.reiniciarEstadoPermisos();
     this.modalPermisosVisible = true;
     this.cargarPermisosHijo();
   }
 
   cerrarModalPermisos(): void {
+    this.cargaPermisosId++;
     this.modalPermisosVisible = false;
     this.hijoSeleccionado = null;
+    this.reiniciarEstadoPermisos();
+  }
+
+  private reiniciarEstadoPermisos(): void {
     this.treePermisos = [];
     this.modulosExpandidos.clear();
     this.estadoInicial.clear();
+    this.ocultarMontosGlobal = true;
+    this.ocultarMontosGlobalInicial = true;
+    this.ambitosMontos = [];
+    this.estadosAmbitosIniciales.clear();
   }
 
   cargarPermisosHijo(): void {
     if (!this.hijoSeleccionado) return;
+    const hijoId = this.hijoSeleccionado.id;
+    const cargaActual = ++this.cargaPermisosId;
     this.cargandoPermisos = true;
-    this.modulosExpandidos.clear();
 
-    this.adminService.getMisPermisosDelegables().subscribe({
-      next: (resDelegables: any) => {
-        const rawDelegables = resDelegables.permisos_delegables || [];
-
-        // Filtro de seguridad: Excluir módulos de creación o administración de usuarios para los hijos (Rol 3)
-        const delegables = rawDelegables.filter((item: any) => {
-          const modIdentificador = (item.identificador || '').toLowerCase();
-          const modNombre = (item.modulo || item.nombre || '').toLowerCase();
-          return !modIdentificador.includes('creacion_usuarios') &&
-                 !modIdentificador.includes('usuarios_creacion_usuarios') &&
-                 !modNombre.includes('creacion usuarios') &&
-                 !modNombre.includes('gestión de usuarios');
-        });
-
-        this.adminService.getPermisosUsuarioHijo(this.hijoSeleccionado!.id).subscribe({
-          next: (resHijo: any) => {
-            this.cargandoPermisos = false;
-            const asignadosHijo = resHijo.permisos || [];
-            const modMap = new Map<number, ModuloNodo>();
-            this.estadoInicial.clear();
-
-            delegables.forEach((item: any) => {
-              const modId = item.modulo_id || item.id;
-              const modNombre = item.modulo || item.nombre;
-              const modIdentificador = item.identificador || modNombre.toLowerCase().trim().replace(/\s+de\s+/g, '_').replace(/\s+/g, '_');
-              const padreIdNode = item.padre_id ? Number(item.padre_id) : null;
-
-              let esRaiz = true;
-              if (item.es_raiz !== undefined && item.es_raiz !== null) {
-                esRaiz = Boolean(item.es_raiz);
-              } else if (padreIdNode && padreIdNode > 0) {
-                esRaiz = false;
-              }
-
-              if (!modMap.has(modId)) {
-                modMap.set(modId, {
-                  modulo_id: modId,
-                  padre_id: padreIdNode,
-                  nombre: modNombre,
-                  identificador: modIdentificador,
-                  es_raiz: esRaiz,
-                  acciones: []
-                });
-
-                this.modulosExpandidos.add(modId);
-              }
-
-              const moduloObj = modMap.get(modId)!;
-              const actId = item.accion_id;
-              const actNombre = item.accion;
-
-              if (actId) {
-                const estaAsignado = asignadosHijo.some((h: any) =>
-                  (h.modulo_id === modId || h.id === modId) &&
-                  (h.accion_id === actId || h.accion === actNombre)
-                );
-
-                this.estadoInicial.set(`${modId}_${actId}`, estaAsignado);
-
-                if (!moduloObj.acciones.some(a => a.accion_id === actId)) {
-                  moduloObj.acciones.push({
-                    accion_id: actId,
-                    nombre: actNombre,
-                    asignado: estaAsignado
-                  });
-                }
-              }
-            });
-
-            this.treePermisos = Array.from(modMap.values());
-          },
-          error: () => {
-            this.cargandoPermisos = false;
-            this.mostrarAlerta('Error al consultar permisos del usuario hijo.', 'error');
-          }
-        });
+    forkJoin({
+      delegablesAntiguos: this.adminService.getMisPermisosDelegables(),
+      permisosAntiguosHijo: this.adminService.getPermisosUsuarioHijo(hijoId),
+      modulosDelegables: this.adminService.getMisModulosDelegables(),
+      modulosHijo: this.adminService.getModulosUsuarioHijo(hijoId),
+      configuracionMontos: this.adminService.getConfiguracionMontosHijo(hijoId)
+    }).subscribe({
+      next: (respuesta: any) => {
+        if (cargaActual !== this.cargaPermisosId || this.hijoSeleccionado?.id !== hijoId) return;
+        this.construirMatrizPermisos(respuesta);
       },
-      error: () => {
+      error: (err) => {
+        if (cargaActual !== this.cargaPermisosId || this.hijoSeleccionado?.id !== hijoId) return;
         this.cargandoPermisos = false;
-        this.mostrarAlerta('Error al obtener la bolsa delegable del administrador.', 'error');
+        this.treePermisos = [];
+        this.mostrarAlerta(err.error?.error || 'No se pudieron cargar los accesos del usuario hijo.', 'error');
       }
     });
+  }
+
+  private construirMatrizPermisos(respuesta: any): void {
+    const asignadosHijo = respuesta.permisosAntiguosHijo.permisos || [];
+    const modMap = new Map<number, ModuloNodo>();
+    this.estadoInicial.clear();
+    const modulosDelegables = respuesta.modulosDelegables.modulos || [];
+    const idsDeModulosNuevos = new Set<number>(
+      modulosDelegables.map((modulo: any) => modulo.modulo_id)
+    );
+
+    // La matriz heredada queda sólo para módulos aún no migrados al acceso por módulo.
+    (respuesta.delegablesAntiguos.permisos_delegables || [])
+      .filter((item: any) => {
+        return !idsDeModulosNuevos.has(item.modulo_id);
+      })
+      .forEach((item: any) => {
+        const moduloId = item.modulo_id;
+        const padreId = item.padre_id ? Number(item.padre_id) : null;
+        if (!modMap.has(moduloId)) {
+          modMap.set(moduloId, {
+            modulo_id: moduloId,
+            padre_id: padreId,
+            nombre: item.modulo,
+            identificador: item.identificador || '',
+            es_raiz: !padreId,
+            acciones: []
+          });
+          this.modulosExpandidos.add(moduloId);
+        }
+
+        const asignado = asignadosHijo.some((permiso: any) =>
+          permiso.modulo_id === moduloId && permiso.accion_id === item.accion_id
+        );
+        this.estadoInicial.set(`${moduloId}_${item.accion_id}`, asignado);
+        modMap.get(moduloId)!.acciones.push({
+          accion_id: item.accion_id,
+          nombre: item.accion,
+          asignado
+        });
+      });
+
+    modulosDelegables.forEach((modulo: any) => {
+      const asignado = (respuesta.modulosHijo.modulos || [])
+        .some((moduloHijo: any) => moduloHijo.modulo_id === modulo.modulo_id);
+      this.estadoInicial.set(`modulo_${modulo.modulo_id}`, asignado);
+      modMap.set(modulo.modulo_id, {
+        modulo_id: modulo.modulo_id,
+        padre_id: modulo.padre_id || null,
+        nombre: modulo.modulo,
+        identificador: modulo.identificador,
+        es_raiz: !modulo.padre_id,
+        acciones: [],
+        esAccesoModulo: true,
+        asignado
+      });
+      this.modulosExpandidos.add(modulo.modulo_id);
+    });
+
+    const configuracionMontos = respuesta.configuracionMontos || {};
+    this.ocultarMontosGlobal = !!configuracionMontos.ocultar_montos_global;
+    this.ocultarMontosGlobalInicial = this.ocultarMontosGlobal;
+    this.ambitosMontos = (configuracionMontos.ambitos || []).map((ambito: AmbitoMontosItem) => ({
+      ...ambito,
+      ocultar_montos: !!ambito.ocultar_montos
+    }));
+    this.estadosAmbitosIniciales = new Map(
+      this.ambitosMontos.map(ambito => [ambito.identificador, !!ambito.ocultar_montos])
+    );
+    this.treePermisos = Array.from(modMap.values());
+    this.cargandoPermisos = false;
   }
 
   guardarPermisos(): void {
     if (!this.hijoSeleccionado) return;
     this.guardandoPermisos = true;
 
-    const peticiones: Observable<any>[] = [];
+    const cambios: { peticion: Observable<any>, prioridad: number }[] = [];
 
     this.treePermisos.forEach(m => {
+      if (m.esAccesoModulo) {
+        const estadoOriginal = !!this.estadoInicial.get(`modulo_${m.modulo_id}`);
+        if (m.asignado !== estadoOriginal) {
+          cambios.push({
+            peticion: m.asignado
+              ? this.adminService.asignarModuloHijo(this.hijoSeleccionado!.id, m.modulo_id)
+              : this.adminService.revocarModuloHijo(this.hijoSeleccionado!.id, m.modulo_id),
+            prioridad: 0
+          });
+        }
+        return;
+      }
+
       m.acciones.forEach(a => {
         const key = `${m.modulo_id}_${a.accion_id}`;
         const estadoOriginal = !!this.estadoInicial.get(key);
 
         if (a.asignado !== estadoOriginal) {
           if (a.asignado) {
-            peticiones.push(
-              this.adminService.asignarPermisoHijo(this.hijoSeleccionado!.id, m.modulo_id, a.accion_id)
-            );
+            cambios.push({ peticion: this.adminService.asignarPermisoHijo(this.hijoSeleccionado!.id, m.modulo_id, a.accion_id), prioridad: 2 });
           } else {
-            peticiones.push(
-              this.adminService.revocarPermisoHijo(this.hijoSeleccionado!.id, m.modulo_id, a.accion_id)
-            );
+            cambios.push({ peticion: this.adminService.revocarPermisoHijo(this.hijoSeleccionado!.id, m.modulo_id, a.accion_id), prioridad: 2 });
           }
         }
       });
     });
 
-    if (peticiones.length === 0) {
+    if (this.ocultarMontosGlobal !== this.ocultarMontosGlobalInicial) {
+      cambios.push({
+        peticion: this.adminService.actualizarOcultarMontosGlobalHijo(
+          this.hijoSeleccionado.id, this.ocultarMontosGlobal
+        ),
+        prioridad: 1
+      });
+    }
+
+    this.ambitosMontos.forEach(ambito => {
+      const estadoOriginal = this.estadosAmbitosIniciales.get(ambito.identificador) || false;
+      if (!!ambito.ocultar_montos !== estadoOriginal) {
+        cambios.push({
+          peticion: this.adminService.actualizarOcultarMontosAmbitoHijo(
+            this.hijoSeleccionado!.id, ambito.identificador, !!ambito.ocultar_montos
+          ),
+          prioridad: 1
+        });
+      }
+    });
+
+    if (cambios.length === 0) {
       this.mostrarAlerta('No se realizaron cambios en los permisos.', 'success');
       this.guardandoPermisos = false;
       this.cerrarModalPermisos();
       return;
     }
 
-    forkJoin(peticiones).subscribe({
+    const peticionesOrdenadas = cambios
+      .sort((a, b) => a.prioridad - b.prioridad)
+      .map(cambio => cambio.peticion);
+
+    concat(...peticionesOrdenadas).pipe(last()).subscribe({
       next: () => {
         this.guardandoPermisos = false;
         this.mostrarAlerta('Permisos actualizados correctamente.', 'success');
@@ -403,9 +487,12 @@ export class CreacionUsuariosComponent implements OnInit {
   }
 
   mostrarAlerta(msj: string, tipo: 'success' | 'error'): void {
-    this.alertMsj = msj;
-    this.alertTipo = tipo;
-    setTimeout(() => (this.alertMsj = null), 4000);
+    if (tipo === 'success') {
+      this.alertaService.mostrarExito(msj);
+      return;
+    }
+
+    this.alertaService.mostrarError(msj);
   }
 
   regresar(): void {

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 import { GarantiasService, GarantiaFormulario, GarantiaComentario } from '../../../services/garantias.service';
+import { AuthService } from '../../../services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 const DOC_LABELS: Record<string, string> = {
@@ -78,13 +79,30 @@ export class GarantiasUsuarioComponent implements OnInit {
   nuevaSerie = '';
   actualizandoSerie = false;
 
-  constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private svc: GarantiasService,
+    private cdr: ChangeDetectorRef,
+    private auth: AuthService,
+  ) {}
 
   ngOnInit(): void {}
+
+  get puedeVer(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
+
+  get puedeCrear(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
+
+  get puedeEditar(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
 
   // ── Navegación ──────────────────────────────────────────────────────────────
 
   verMisTickets(): void {
+    if (!this.puedeVer) return;
     this.vista = 'tickets';
     this.cargar();
     this.cdr.markForCheck();
@@ -160,7 +178,7 @@ export class GarantiasUsuarioComponent implements OnInit {
   }
 
   enviarComentario(): void {
-    if (!this.ticketSeleccionado || !this.nuevoComentario.trim() || this.enviandoComentario) return;
+    if (!this.puedeEditar || !this.ticketSeleccionado || !this.nuevoComentario.trim() || this.enviandoComentario) return;
     this.enviandoComentario = true;
     this.cdr.markForCheck();
     const autor = this.getNombreUsuario();
@@ -177,12 +195,13 @@ export class GarantiasUsuarioComponent implements OnInit {
   // ── Re-subida de documentos ───────────────────────────────────────────────────
 
   onReupload(event: Event, campo: string): void {
+    if (!this.puedeEditar) return;
     const input = event.target as HTMLInputElement;
     if (!input.files?.length || !this.ticketSeleccionado) return;
     const file = input.files[0];
     this.resubiendo[campo] = true;
     this.cdr.markForCheck();
-    this.svc.subirArchivo(file).subscribe({
+    this.svc.subirArchivo(file, 'editar').subscribe({
       next: (res) => {
         this.svc.actualizarDato(this.ticketSeleccionado!.id, campo, res.nombre).subscribe({
           next: (r) => {
@@ -205,7 +224,7 @@ export class GarantiasUsuarioComponent implements OnInit {
   // ── Re-entrada de número de serie ─────────────────────────────────────────────
 
   actualizarSerie(): void {
-    if (!this.ticketSeleccionado || !this.nuevaSerie.trim() || this.actualizandoSerie) return;
+    if (!this.puedeEditar || !this.ticketSeleccionado || !this.nuevaSerie.trim() || this.actualizandoSerie) return;
     this.actualizandoSerie = true;
     this.cdr.markForCheck();
     this.svc.actualizarDato(this.ticketSeleccionado.id, 'bici_serie', this.nuevaSerie.trim()).subscribe({

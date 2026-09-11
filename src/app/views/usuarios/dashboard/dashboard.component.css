@@ -71,13 +71,6 @@
   counter-reset: bento-counter; /* Inicializa el contador del grid */
 }
 
-/* En pantallas de escritorio, si 'Resumen de Temporada' está presente, ocupará 2 columnas de forma panorámica */
-@media (min-width: 992px) {
-  .card-resumen {
-    grid-column: span 2;
-  }
-}
-
 /* ── Base de cada card ── */
 .bento-card {
   position: relative;
@@ -259,6 +252,15 @@
 /* — 02. Resumen: Azul — */
 .card-resumen {
   background: linear-gradient(160deg, #0d1117 0%, #0a0e14 100%);
+  grid-column: auto;
+}
+
+/* Rol 2 tiene una tarjeta adicional de Gestión de Accesos: el resumen equilibra
+   esa rejilla de cinco elementos. Los usuarios hijo mantienen cards uniformes. */
+@media (min-width: 992px) {
+  .bento.bento--con-equipo .card-resumen {
+    grid-column: span 2;
+  }
 }
 .card-resumen .card-glow {
   background: radial-gradient(ellipse at 70% 50%, rgba(92,155,214,0.15) 0%, transparent 65%);
@@ -298,9 +300,6 @@
   .bento {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-  .card-resumen {
-    grid-column: span 1;
   }
   .bento-card { min-height: 200px; }
   .card-bg-num { font-size: 6rem; }

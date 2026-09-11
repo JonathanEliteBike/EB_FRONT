@@ -591,6 +591,116 @@
   color: var(--t1);
 }
 
+.ruta-picker {
+  position: relative;
+}
+
+.ruta-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ruta-search-wrap i {
+  color: var(--t3);
+  font-size: 0.78rem;
+}
+
+.ruta-search-wrap input {
+  min-width: 0;
+}
+
+.ruta-search-clear {
+  border: 0;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.ruta-search-clear:hover {
+  color: var(--orange);
+}
+
+.ruta-results {
+  max-height: 210px;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #101010;
+}
+
+.ruta-result {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: var(--t1);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ruta-result:last-of-type {
+  border-bottom: 0;
+}
+
+.ruta-result:hover:not(:disabled),
+.ruta-result-selected {
+  background: rgba(235, 94, 40, 0.14);
+}
+
+.ruta-result span {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.78rem;
+}
+
+.ruta-result small {
+  flex-shrink: 0;
+  color: #4ade80;
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.ruta-result-registered,
+.ruta-result:disabled {
+  color: var(--t3);
+  cursor: not-allowed;
+}
+
+.ruta-result-registered small,
+.ruta-result:disabled small {
+  color: var(--t3);
+}
+
+.ruta-results-empty {
+  margin: 0;
+  padding: 12px 10px;
+  color: var(--t3);
+  font-size: 0.78rem;
+}
+
+.form-group-readonly input {
+  color: var(--t3);
+  cursor: not-allowed;
+}
+
+.form-help {
+  color: var(--t3);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
 .checkbox-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

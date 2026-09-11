@@ -564,6 +564,10 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
 
   constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef, private auth: AuthService) {}
 
+  get puedeCrearGarantia(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
+
   // ── Alerta al recargar/cerrar pestaña ────────────────────────────────────
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(e: BeforeUnloadEvent): void {
@@ -771,6 +775,7 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   }
 
   onFileChange(event: Event, campo: string): void {
+    if (!this.puedeCrearGarantia) return;
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
     const file = input.files[0];
@@ -778,7 +783,7 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
     this.uploadProgress[campo] = 0;
     this.cdr.detectChanges();
 
-    this.svc.subirArchivo(file, (pct) => {
+    this.svc.subirArchivo(file, 'crear', (pct) => {
       this.uploadProgress[campo] = pct;
       this.cdr.detectChanges();
     }).subscribe({
@@ -799,6 +804,10 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
+    if (!this.puedeCrearGarantia) {
+      this.errorMensaje = 'No tienes permiso para crear garantías.';
+      return;
+    }
     if (!this.formData.terminos_aceptados) {
       this.errorMensaje = 'Debe aceptar los términos y condiciones para continuar.';
       return;
