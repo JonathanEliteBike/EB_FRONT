@@ -24,6 +24,16 @@ export class AsignacionesImportacionComponent implements OnInit {
   cargando = true;
   error = '';
 
+  /** Periodos seleccionables (YYYY-YYYY): un año antes y dos después del actual.
+   *  El backend exige este formato para poder ubicar cada mes en un año calendario;
+   *  antes era texto libre y se llegó a guardar "MY27", que rompía el reparto por mes. */
+  readonly periodos: string[] = (() => {
+    const y = new Date().getFullYear();
+    const out: string[] = [];
+    for (let i = -1; i <= 2; i++) out.push(`${y + i}-${y + i + 1}`);
+    return out;
+  })();
+
   periodoImport = '';
   archivoImport: File | null = null;
   archivoNombre = '';

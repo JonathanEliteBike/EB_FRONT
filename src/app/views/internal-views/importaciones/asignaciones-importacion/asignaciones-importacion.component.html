@@ -45,8 +45,10 @@
 
     <div class="import-panel">
       <div class="import-fila">
-        <input type="text" class="import-periodo" placeholder="Periodo (ej. 2026-2027)"
-               [(ngModel)]="periodoImport" name="periodoImport" />
+        <select class="import-periodo" [(ngModel)]="periodoImport" name="periodoImport">
+          <option value="" disabled selected>Periodo…</option>
+          <option *ngFor="let p of periodos" [value]="p">{{ p }}</option>
+        </select>
         <label class="import-file-label">
           <input type="file" accept=".xlsx,.xls" (change)="onArchivoSeleccionado($event)" />
           <span>{{ archivoNombre || 'Elegir archivo Excel…' }}</span>
