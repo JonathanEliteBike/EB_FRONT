@@ -8,15 +8,18 @@ import {
   AsignacionesImportacionService,
   AsignacionesGlobalResumen,
   AsignacionesProductosGlobal,
+  AsignacionesProductoGlobal,
   AsignacionesGlobalFiltros,
+  AsignacionesProducto,
 } from '../../../../../services/asignaciones-importacion.service';
+import { AsignacionesDetalleProductoComponent } from '../../asignaciones-importacion/asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 
 type Vista = 'embarques' | 'productos';
 
 @Component({
   selector: 'app-asignaciones-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AsignacionesDetalleProductoComponent],
   templateUrl: './asignaciones-panel.component.html',
   styleUrl: './asignaciones-panel.component.css',
 })
@@ -38,6 +41,10 @@ export class AsignacionesPanelComponent implements OnInit, OnChanges, OnDestroy 
   error = '';
   resumen: AsignacionesGlobalResumen | null = null;
   productos: AsignacionesProductosGlobal | null = null;
+
+  /** Detalle de reserva abierto en el propio panel (sin navegar al embarque). */
+  detalleImportacionId = 0;
+  detalleProducto: AsignacionesProducto | null = null;
 
   private recargar$ = new Subject<void>();
   private sub?: Subscription;
@@ -111,6 +118,48 @@ export class AsignacionesPanelComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   irAEmbarque(id: number): void {
-    this.router.navigate(['/importaciones', id, 'asignaciones']);
+    this.router.navigate(['/importaciones', id, 'asignaciones'], {
+      queryParams: { from: 'dashboard', tab: 'asignaciones' },
+    });
+  }
+
+  /** Abre el panel de reserva del producto sin salir del dashboard. */
+  abrirDetalle(p: AsignacionesProductoGlobal): void {
+    this.detalleImportacionId = p.importacion_id;
+    this.detalleProducto = this._productoParaDetalle(p);
+  }
+
+  cerrarDetalle(): void {
+    this.detalleProducto = null;
+  }
+
+  onCambioEnDetalle(): void {
+    this.cargar();
+  }
+
+  /** El panel de detalle recarga su propio estado al abrir; estos valores
+   *  solo se ven un instante mientras eso ocurre. */
+  private _productoParaDetalle(p: AsignacionesProductoGlobal): AsignacionesProducto {
+    const reservado = p.cantidad_asignada;
+    return {
+      id: p.producto_id,
+      importacion_id: p.importacion_id,
+      periodo: p.periodo,
+      sku: p.sku,
+      sku_norm: '',
+      descripcion: p.descripcion,
+      cantidad_embarcada: p.cantidad_embarcada,
+      cantidad_asignada: reservado,
+      cantidad_reservada: reservado,
+      reservado_inicial: Math.max(0, reservado - p.cantidad_pendiente),
+      reservado_reasignacion_pendiente: p.cantidad_pendiente,
+      reservado_confirmado: 0,
+      reservado_total: reservado,
+      cantidad_vendida: p.cantidad_vendida,
+      cantidad_sobrante: p.cantidad_sobrante,
+      cantidad_disponible: p.cantidad_disponible,
+      created_at: '',
+      updated_at: '',
+    };
   }
 }

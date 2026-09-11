@@ -33,6 +33,10 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   productoSeleccionado: AsignacionesProducto | null = null;
 
+  /** A dónde volver: por defecto el detalle del embarque; si se llegó desde el
+   *  dashboard (?from=dashboard&tab=...) se vuelve ahí en vez de "hacia adentro". */
+  private returnUrl = '';
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -41,6 +45,11 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   ngOnInit(): void {
     this.importacionId = Number(this.route.snapshot.paramMap.get('id'));
+    this.returnUrl = `/importaciones/${this.importacionId}`;
+    if (this.route.snapshot.queryParamMap.get('from') === 'dashboard') {
+      const tab = this.route.snapshot.queryParamMap.get('tab');
+      this.returnUrl = '/importaciones/dashboard' + (tab ? `?tab=${tab}` : '');
+    }
     this.cargar();
   }
 
@@ -57,7 +66,7 @@ export class AsignacionesImportacionComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/importaciones', this.importacionId]);
+    this.router.navigateByUrl(this.returnUrl);
   }
 
   onArchivoSeleccionado(event: Event): void {

@@ -82,10 +82,17 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of productos.productos" class="fila-click" (click)="irAEmbarque(p.importacion_id)">
+          <tr *ngFor="let p of productos.productos" class="fila-click"
+              title="Abrir reserva de este producto"
+              (click)="abrirDetalle(p)">
             <td><span class="ap-sku">{{ p.sku }}</span></td>
             <td class="ap-nombre">{{ p.descripcion || '—' }}</td>
-            <td class="ap-nombre">{{ p.referencia }}</td>
+            <td class="ap-nombre">
+              <button class="ap-link" title="Ver el embarque completo"
+                      (click)="irAEmbarque(p.importacion_id); $event.stopPropagation()">
+                {{ p.referencia }}
+              </button>
+            </td>
             <td>{{ p.periodo }}</td>
             <td class="num">{{ p.cantidad_embarcada }}</td>
             <td class="num">{{ p.cantidad_asignada }}</td>
@@ -122,3 +129,11 @@
     <p class="ap-vacio">No hay embarques con productos registrados para estos filtros.</p>
   </ng-template>
 </div>
+
+<app-asignaciones-detalle-producto
+  *ngIf="detalleProducto"
+  [importacionId]="detalleImportacionId"
+  [producto]="detalleProducto"
+  (cerrar)="cerrarDetalle()"
+  (cambio)="onCambioEnDetalle()"
+></app-asignaciones-detalle-producto>

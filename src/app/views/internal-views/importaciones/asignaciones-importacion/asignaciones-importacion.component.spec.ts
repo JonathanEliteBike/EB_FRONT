@@ -1,9 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AsignacionesImportacionComponent } from './asignaciones-importacion.component';
 import { AsignacionesImportacionService, AsignacionesResumen } from '../../../../services/asignaciones-importacion.service';
+
+function activatedRouteMock(id: string, queryParams: Record<string, string> = {}) {
+  return {
+    snapshot: {
+      paramMap: { get: () => id },
+      queryParamMap: { get: (k: string) => queryParams[k] ?? null },
+    },
+  };
+}
 
 describe('AsignacionesImportacionComponent', () => {
   let fixture: ComponentFixture<AsignacionesImportacionComponent>;
@@ -28,7 +37,7 @@ describe('AsignacionesImportacionComponent', () => {
       imports: [AsignacionesImportacionComponent, HttpClientTestingModule],
       providers: [
         { provide: AsignacionesImportacionService, useValue: svcSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
+        { provide: ActivatedRoute, useValue: activatedRouteMock('1') },
       ],
     }).compileComponents();
 
@@ -73,5 +82,30 @@ describe('AsignacionesImportacionComponent', () => {
     component.productoSeleccionado = { id: 5 } as any;
     component.cerrarDetalle();
     expect(component.productoSeleccionado).toBeNull();
+  });
+
+  it('volver() sin query params regresa al detalle del embarque', () => {
+    const routerSpy = jasmine.createSpyObj('Router', ['navigateByUrl']);
+    TestBed.overrideProvider(Router, { useValue: routerSpy });
+    component.volver();
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/importaciones/1');
+  });
+
+  it('volver() con from=dashboard regresa a la pestana del dashboard, no al embarque', async () => {
+    const routerSpy = jasmine.createSpyObj('Router', ['navigateByUrl']);
+    await TestBed.resetTestingModule().configureTestingModule({
+      imports: [AsignacionesImportacionComponent, HttpClientTestingModule],
+      providers: [
+        { provide: AsignacionesImportacionService, useValue: svcSpy },
+        { provide: ActivatedRoute, useValue: activatedRouteMock('1', { from: 'dashboard', tab: 'asignaciones' }) },
+        { provide: Router, useValue: routerSpy },
+      ],
+    }).compileComponents();
+
+    const f = TestBed.createComponent(AsignacionesImportacionComponent);
+    f.detectChanges();
+    f.componentInstance.volver();
+
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/importaciones/dashboard?tab=asignaciones');
   });
 });

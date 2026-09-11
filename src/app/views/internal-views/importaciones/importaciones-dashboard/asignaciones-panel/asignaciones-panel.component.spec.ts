@@ -76,8 +76,29 @@ describe('AsignacionesPanelComponent', () => {
     expect(svcSpy.resumenGlobal).toHaveBeenCalledTimes(1);
   }));
 
-  it('irAEmbarque navega a la pantalla por embarque', () => {
+  it('irAEmbarque navega a la pantalla por embarque marcando el origen dashboard', () => {
     component.irAEmbarque(12);
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/importaciones', 12, 'asignaciones']);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(
+      ['/importaciones', 12, 'asignaciones'],
+      { queryParams: { from: 'dashboard', tab: 'asignaciones' } },
+    );
+  });
+
+  it('abrirDetalle() abre el panel de reserva sin navegar', () => {
+    const p: any = {
+      importacion_id: 12, referencia: 'IMP-012', embarque_nombre: 'Scott', embarque_estado: 'activo',
+      producto_id: 100, sku: 'AB-1', descripcion: 'Bici', periodo: '2026-2027',
+      cantidad_embarcada: 20, cantidad_asignada: 15, cantidad_pendiente: 4,
+      cantidad_sobrante: 5, cantidad_vendida: 0, cantidad_disponible: 4,
+    };
+    component.abrirDetalle(p);
+    expect(component.detalleImportacionId).toBe(12);
+    expect(component.detalleProducto?.id).toBe(100);
+    expect(component.detalleProducto?.reservado_total).toBe(15);
+    expect(component.detalleProducto?.reservado_reasignacion_pendiente).toBe(4);
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+
+    component.cerrarDetalle();
+    expect(component.detalleProducto).toBeNull();
   });
 });
