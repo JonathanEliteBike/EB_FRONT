@@ -11,14 +11,14 @@
             </button>
 
             <!-- Botón Calculadora protegido -->
-            <button *ngIf="tieneAccesoModulo"
+            <button *ngIf="puedeAccederCalculadora"
                     class="btn-calculadora" 
                     [routerLink]="['/usuarios/calculadora-retroactivos']">
                 <i class="fas fa-calculator"></i> Calculadora de Retroactivos
             </button>
 
             <!-- Botón Solicitud protegido -->
-            <button *ngIf="tieneAccesoModulo"
+            <button *ngIf="puedeAccederSolicitudes"
                     class="btn-solicitud-retroactivos" 
                     [routerLink]="['/usuarios/solicitud-retroactivo']">
                 <i class="fa-solid fa-envelope"></i> Solicitud de retroactivos

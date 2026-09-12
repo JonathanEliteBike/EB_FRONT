@@ -80,7 +80,8 @@
               <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
               <div class="vertical-actions-tree" *ngIf="modulo.esAccesoModulo">
                 <label class="custom-checkbox-wrapper">
-                  <input type="checkbox" [(ngModel)]="modulo.asignado">
+                  <input type="checkbox" [(ngModel)]="modulo.asignado"
+                    [disabled]="!puedeModificarModulo(modulo)">
                   <span class="chip-accion-vertical">Acceso al módulo</span>
                 </label>
               </div>

@@ -65,8 +65,8 @@
     </a>
 
     <!-- 03. Retroactivos -->
-    <a *ngIf="authService.tieneModulo('usuarios_caratula_retroactivos')"
-       routerLink="/usuarios/caratula-retroactivos" 
+    <a *ngIf="tieneRetroactivos"
+       [routerLink]="rutaRetroactivos"
        class="bento-card card-retroactivos">
       <div class="card-bg-num"></div>
       <div class="card-glow"></div>
@@ -75,8 +75,8 @@
         <div class="card-icon-wrap"><i class="fas fa-undo"></i></div>
         <div class="card-bottom">
           <h2>Retroactivos</h2>
-          <p>Consulta tu carátula y su impacto en la compra anual.</p>
-          <div class="card-link">Ver carátula <i class="fas fa-arrow-right"></i></div>
+          <p>Consulta la información de tus retroactivos.</p>
+          <div class="card-link">{{ enlaceRetroactivos }} <i class="fas fa-arrow-right"></i></div>
         </div>
       </div>
     </a>

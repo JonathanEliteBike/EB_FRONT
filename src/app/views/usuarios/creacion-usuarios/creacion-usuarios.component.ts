@@ -407,6 +407,12 @@ export class CreacionUsuariosComponent implements OnInit {
     this.cargandoPermisos = false;
   }
 
+  puedeModificarModulo(modulo: ModuloNodo): boolean {
+    if (!modulo.esAccesoModulo || !modulo.padre_id) return true;
+    const padre = this.treePermisos.find(item => item.modulo_id === modulo.padre_id);
+    return !padre?.esAccesoModulo || !!padre.asignado;
+  }
+
   guardarPermisos(): void {
     if (!this.hijoSeleccionado) return;
     this.guardandoPermisos = true;

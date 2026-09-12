@@ -88,7 +88,17 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
   }
 
   get tieneAccesoModulo(): boolean {
-    return this.authService.tieneModulo('usuarios_caratula_retroactivos');
+    return this.authService.tieneModulo('usuarios_retroactivos');
+  }
+
+  get puedeAccederCalculadora(): boolean {
+    return this.authService.tieneModulo('usuarios_retroactivos') &&
+      this.authService.tieneModulo('usuarios_calculadora_retroactivos');
+  }
+
+  get puedeAccederSolicitudes(): boolean {
+    return this.authService.tieneModulo('usuarios_retroactivos') &&
+      this.authService.tieneModulo('usuarios_solicitudes_retroactivos');
   }
 
   get puedeVerMontos(): boolean {

@@ -234,7 +234,8 @@
                           <span class="modulo-nombre"><strong>{{ modulo.nombre }}</strong></span>
                           <div *ngIf="modulo.esAccesoModulo" class="acciones-list">
                             <label class="custom-checkbox-wrapper">
-                              <input type="checkbox" [(ngModel)]="modulo.asignado">
+                              <input type="checkbox" [(ngModel)]="modulo.asignado"
+                                [disabled]="!puedeModificarModulo(modulo)">
                               <div class="checkmark">
                                 <svg *ngIf="modulo.asignado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                   <polyline points="20 6 9 17 4 12"></polyline>

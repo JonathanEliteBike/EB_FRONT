@@ -178,6 +178,12 @@ export class CatalogoPermisosComponent implements OnInit {
     return this.treePermisos.filter(m => !m.es_raiz && m.padre_id === padreId);
   }
 
+  puedeModificarModulo(modulo: ModuloNodo): boolean {
+    if (!modulo.esAccesoModulo || !modulo.padre_id) return true;
+    const padre = this.treePermisos.find(item => item.modulo_id === modulo.padre_id);
+    return !padre?.esAccesoModulo || !!padre.asignado;
+  }
+
   guardarPermisos(): void {
     if (!this.hijoSeleccionadoId) return;
 

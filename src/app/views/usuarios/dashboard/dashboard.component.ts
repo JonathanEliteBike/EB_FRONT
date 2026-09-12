@@ -13,4 +13,16 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class DashboardComponent {
   public readonly authService = inject(AuthService);
+
+  get tieneRetroactivos(): boolean {
+    return this.authService.tieneModulo('usuarios_retroactivos');
+  }
+
+  get rutaRetroactivos(): string {
+    return '/usuarios/caratula-retroactivos';
+  }
+
+  get enlaceRetroactivos(): string {
+    return 'Ver carátula';
+  }
 }

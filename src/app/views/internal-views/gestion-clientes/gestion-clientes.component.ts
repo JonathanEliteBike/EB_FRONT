@@ -248,7 +248,10 @@ export class GestionClientesComponent implements OnInit {
     return identificador === 'usuarios_proyeccion_compras' ||
       identificador === 'usuarios_garantias' ||
       identificador === 'usuarios_caratula' ||
-      identificador === 'usuarios_caratula_retroactivos';
+      identificador === 'usuarios_retroactivos' ||
+      identificador === 'usuarios_caratula_retroactivos' ||
+      identificador === 'usuarios_calculadora_retroactivos' ||
+      identificador === 'usuarios_solicitudes_retroactivos';
   }
 
   getDescendientes(padreId: number): ModuloItem[] {
