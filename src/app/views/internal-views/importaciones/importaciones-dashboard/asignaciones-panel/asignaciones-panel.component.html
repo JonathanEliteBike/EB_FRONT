@@ -18,6 +18,9 @@
         <input type="checkbox" [(ngModel)]="soloDisponible" (ngModelChange)="pedirRecarga(true)" />
         Solo con disponible
       </label>
+      <button class="ap-btn-importar" (click)="abrirWizard()">
+        <i class="fas fa-file-excel"></i> Importar Excel
+      </button>
     </div>
   </div>
 
@@ -137,3 +140,9 @@
   (cerrar)="cerrarDetalle()"
   (cambio)="onCambioEnDetalle()"
 ></app-asignaciones-detalle-producto>
+
+<app-asignaciones-importar-wizard
+  *ngIf="wizardAbierto"
+  (cerrar)="cerrarWizard()"
+  (cambio)="onCambioEnWizard()"
+></app-asignaciones-importar-wizard>

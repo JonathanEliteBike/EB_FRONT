@@ -1,0 +1,138 @@
+<div class="panel-overlay" (click)="cerrarPanel()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <div class="panel-header">
+      <div>
+        <span class="panel-periodo">Importar Excel</span>
+        <h2 class="panel-titulo">Crear asignaciones desde un embarque existente</h2>
+      </div>
+      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- ── Paso 1: formulario ── -->
+    <ng-container *ngIf="paso === 'form'">
+      <div class="wiz-error" *ngIf="errorEmbarques">{{ errorEmbarques }}</div>
+
+      <div class="wiz-campo">
+        <label>1. Embarque (referencia)</label>
+        <select [(ngModel)]="embarqueId" [disabled]="cargandoEmbarques">
+          <option [ngValue]="null" disabled>{{ cargandoEmbarques ? 'Cargando…' : 'Selecciona una referencia…' }}</option>
+          <option *ngFor="let e of embarques" [ngValue]="e.id">{{ e.referencia }} — {{ e.nombre || 'Sin nombre' }}</option>
+        </select>
+      </div>
+
+      <div class="wiz-fila">
+        <div class="wiz-campo">
+          <label>2. Periodo</label>
+          <select [(ngModel)]="periodo">
+            <option value="" disabled>Periodo…</option>
+            <option *ngFor="let p of periodos" [value]="p">{{ p }}</option>
+          </select>
+        </div>
+        <div class="wiz-campo">
+          <label>3. Reservar desde</label>
+          <select [(ngModel)]="mesDesde">
+            <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+          </select>
+        </div>
+        <div class="wiz-campo">
+          <label>hasta</label>
+          <select [(ngModel)]="mesHasta">
+            <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="wiz-campo">
+        <label>4. Archivo Excel</label>
+        <label class="import-file-label">
+          <input type="file" accept=".xlsx,.xls" (change)="onArchivoSeleccionado($event)" />
+          <span>{{ archivoNombre || 'Elegir archivo Excel…' }}</span>
+        </label>
+        <p class="wiz-ayuda">
+          Columnas <b>SKU</b>, <b>Cantidad</b> y (opcional) <b>Descripción</b>. Los SKU existentes en el
+          embarque se actualizan; los nuevos se agregan. Al importar, el sistema calcula automáticamente
+          la propuesta de reserva para la ventana de meses elegida.
+        </p>
+      </div>
+
+      <div class="wiz-error" *ngIf="errorForm">{{ errorForm }}</div>
+
+      <div class="wiz-acciones">
+        <button class="btn-primary" [disabled]="procesando" (click)="importarYCalcular()">
+          {{ procesando ? 'Importando y calculando…' : 'Importar y calcular propuesta' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Paso 2: resumen de la propuesta ── -->
+    <ng-container *ngIf="paso === 'resumen'">
+      <div class="wiz-resultado-import" *ngIf="resultadoImport">
+        <span class="import-ok">{{ resultadoImport.insertados }} agregados</span>
+        <span class="import-ok">{{ resultadoImport.actualizados }} actualizados</span>
+        <span *ngIf="resultadoImport.errores.length" class="import-err">
+          {{ resultadoImport.errores.length }} con error
+        </span>
+        <span class="import-total">de {{ resultadoImport.total_filas }} filas del Excel</span>
+      </div>
+
+      <p class="wiz-subtitulo">
+        Propuesta de reserva calculada para <b>{{ mesDesde }} – {{ mesHasta }}</b>. Revisa y confirma para
+        reservar todo lo sugerido.
+      </p>
+
+      <table class="tabla-mini wiz-tabla-resumen" *ngIf="propuesta.length; else sinPropuesta">
+        <thead>
+          <tr>
+            <th>SKU</th><th>Descripción</th>
+            <th class="num">Embarcado</th><th class="num">Disponible</th>
+            <th class="num">Proyectado</th><th class="num">A reservar</th><th class="num">Faltante</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of propuesta">
+            <td><span class="cli-clave">{{ p.sku }}</span></td>
+            <td class="td-nombre">{{ p.descripcion || '—' }}</td>
+            <td class="num">{{ p.cantidad_embarcada }}</td>
+            <td class="num">{{ p.disponible }}</td>
+            <td class="num">{{ totalProyectado(p) }}</td>
+            <td class="num positivo">{{ totalSugerido(p) }}</td>
+            <td class="num" [class.negativo]="totalFaltante(p) > 0">{{ totalFaltante(p) }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5">Total a reservar</td>
+            <td class="num positivo">{{ totalGeneralSugerido() }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      <ng-template #sinPropuesta>
+        <p class="asig-vacio">No hay productos con propuesta de reserva para esta ventana de meses.</p>
+      </ng-template>
+
+      <div class="wiz-error" *ngIf="errorResumen">{{ errorResumen }}</div>
+
+      <div class="wiz-acciones">
+        <button class="btn-secundario" [disabled]="reservandoTodo" (click)="cerrarPanel()">Cerrar sin reservar</button>
+        <button class="btn-primary" [disabled]="reservandoTodo || !propuesta.length" (click)="reservarTodo()">
+          {{ reservandoTodo ? 'Reservando…' : 'Reservar todo' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Paso 3: resultado final ── -->
+    <ng-container *ngIf="paso === 'terminado'">
+      <p class="wiz-subtitulo">Resultado de las reservas:</p>
+      <ul class="wiz-resultados">
+        <li *ngFor="let r of resultados" [class.negativo]="!r.ok" [class.positivo]="r.ok">
+          <i class="fas" [ngClass]="r.ok ? 'fa-check' : 'fa-times'"></i>
+          {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+        </li>
+      </ul>
+      <div class="wiz-acciones">
+        <button class="btn-primary" (click)="cerrarPanel()">Cerrar</button>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -101,4 +101,18 @@ describe('AsignacionesPanelComponent', () => {
     component.cerrarDetalle();
     expect(component.detalleProducto).toBeNull();
   });
+
+  it('abrirWizard()/cerrarWizard() controlan la visibilidad del asistente de importación', () => {
+    expect(component.wizardAbierto).toBeFalse();
+    component.abrirWizard();
+    expect(component.wizardAbierto).toBeTrue();
+    component.cerrarWizard();
+    expect(component.wizardAbierto).toBeFalse();
+  });
+
+  it('onCambioEnWizard() recarga el panel', () => {
+    svcSpy.resumenGlobal.calls.reset();
+    component.onCambioEnWizard();
+    expect(svcSpy.resumenGlobal).toHaveBeenCalledTimes(1);
+  });
 });

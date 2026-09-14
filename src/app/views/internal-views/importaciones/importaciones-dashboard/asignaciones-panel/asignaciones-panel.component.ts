@@ -13,13 +13,14 @@ import {
   AsignacionesProducto,
 } from '../../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from '../../asignaciones-importacion/asignaciones-detalle-producto/asignaciones-detalle-producto.component';
+import { AsignacionesImportarWizardComponent } from './asignaciones-importar-wizard/asignaciones-importar-wizard.component';
 
 type Vista = 'embarques' | 'productos';
 
 @Component({
   selector: 'app-asignaciones-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, AsignacionesDetalleProductoComponent],
+  imports: [CommonModule, FormsModule, AsignacionesDetalleProductoComponent, AsignacionesImportarWizardComponent],
   templateUrl: './asignaciones-panel.component.html',
   styleUrl: './asignaciones-panel.component.css',
 })
@@ -45,6 +46,9 @@ export class AsignacionesPanelComponent implements OnInit, OnChanges, OnDestroy 
   /** Detalle de reserva abierto en el propio panel (sin navegar al embarque). */
   detalleImportacionId = 0;
   detalleProducto: AsignacionesProducto | null = null;
+
+  /** Asistente de importación de Excel + reserva, lanzado desde el panel. */
+  wizardAbierto = false;
 
   private recargar$ = new Subject<void>();
   private sub?: Subscription;
@@ -134,6 +138,18 @@ export class AsignacionesPanelComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   onCambioEnDetalle(): void {
+    this.cargar();
+  }
+
+  abrirWizard(): void {
+    this.wizardAbierto = true;
+  }
+
+  cerrarWizard(): void {
+    this.wizardAbierto = false;
+  }
+
+  onCambioEnWizard(): void {
     this.cargar();
   }
 
