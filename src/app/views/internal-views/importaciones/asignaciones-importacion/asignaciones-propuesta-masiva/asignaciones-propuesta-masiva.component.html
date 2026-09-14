@@ -45,7 +45,14 @@
     <ng-container *ngIf="paso === 'resumen'">
       <p class="wiz-subtitulo">
         Ventana <b>{{ mesDesde }} – {{ mesHasta }}</b>. Revisa y confirma para reservar todo lo sugerido.
+        Da clic en un SKU para ver a qué clientes de la lista de prioridad les corresponde.
       </p>
+
+      <div class="wiz-buscador">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar por SKU o descripción…" [(ngModel)]="busqueda" />
+        <span class="wiz-contador" *ngIf="busqueda.trim()">{{ filasFiltradas().length }} de {{ filas.length }}</span>
+      </div>
 
       <div class="wiz-tabla-scroll">
         <table class="tabla-mini wiz-tabla-resumen">
@@ -69,18 +76,50 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let f of filas">
-              <td><span class="cli-clave">{{ f.producto.sku }}</span></td>
-              <td class="td-nombre" [title]="f.producto.descripcion || ''">{{ f.producto.descripcion || '—' }}</td>
-              <td class="num">{{ f.producto.cantidad_embarcada }}</td>
-              <td class="num">{{ f.producto.reservado_total }}</td>
-              <td class="num">{{ f.producto.reservado_reasignacion_pendiente || '—' }}</td>
-              <td class="num">{{ f.producto.cantidad_sobrante }}</td>
-              <td class="num">{{ f.producto.cantidad_disponible }}</td>
-              <td class="num">{{ totalProyectado(f.prop) }}</td>
-              <td class="num positivo">{{ totalSugerido(f.prop) }}</td>
-              <td class="num" [class.negativo]="totalFaltante(f.prop) > 0">{{ totalFaltante(f.prop) }}</td>
-            </tr>
+            <ng-container *ngFor="let f of filasFiltradas()">
+              <tr class="fila-producto" [class.fila-expandida]="expandidos.has(f.producto.id)"
+                  (click)="toggleExpandido(f.producto.id)">
+                <td>
+                  <i class="fas fila-caret" *ngIf="f.prop && f.prop.propuesta.length"
+                     [ngClass]="expandidos.has(f.producto.id) ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                  <span class="cli-clave">{{ f.producto.sku }}</span>
+                </td>
+                <td class="td-nombre" [title]="f.producto.descripcion || ''">{{ f.producto.descripcion || '—' }}</td>
+                <td class="num">{{ f.producto.cantidad_embarcada }}</td>
+                <td class="num">{{ f.producto.reservado_total }}</td>
+                <td class="num">{{ f.producto.reservado_reasignacion_pendiente || '—' }}</td>
+                <td class="num">{{ f.producto.cantidad_sobrante }}</td>
+                <td class="num">{{ f.producto.cantidad_disponible }}</td>
+                <td class="num">{{ totalProyectado(f.prop) }}</td>
+                <td class="num positivo">{{ totalSugerido(f.prop) }}</td>
+                <td class="num" [class.negativo]="totalFaltante(f.prop) > 0">{{ totalFaltante(f.prop) }}</td>
+              </tr>
+              <tr class="fila-clientes" *ngIf="f.prop && expandidos.has(f.producto.id)">
+                <td [attr.colspan]="10">
+                  <table class="tabla-clientes" *ngIf="f.prop.propuesta.length; else sinClientes">
+                    <thead>
+                      <tr><th>P</th><th>Cliente</th><th>Mes</th>
+                        <th class="num">Proyectado</th><th class="num">Ya reservado</th><th class="num">A reservar</th></tr>
+                    </thead>
+                    <tbody>
+                      <ng-container *ngFor="let c of f.prop.propuesta">
+                        <tr *ngFor="let m of c.meses">
+                          <td>{{ c.prioridad }}</td>
+                          <td>{{ c.nombre_cliente }} <span class="cli-clave">({{ c.clave_cliente }})</span></td>
+                          <td>{{ m.mes }}</td>
+                          <td class="num">{{ m.proyectado }}</td>
+                          <td class="num">{{ m.vigente }}</td>
+                          <td class="num positivo">{{ m.sugerido }}</td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
+                  <ng-template #sinClientes>
+                    <p class="wiz-sin-clientes">Sin proyección por cliente para esta ventana de meses.</p>
+                  </ng-template>
+                </td>
+              </tr>
+            </ng-container>
           </tbody>
           <tfoot>
             <tr>

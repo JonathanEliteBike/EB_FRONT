@@ -134,4 +134,43 @@ describe('AsignacionesPropuestaMasivaComponent', () => {
     component.cerrarPanel();
     expect(component.cerrar.emit).toHaveBeenCalled();
   });
+
+  describe('busqueda y expansión por cliente', () => {
+    beforeEach(() => {
+      component.filas = [{ producto: prodBase, prop: propMock }, { producto: prodBase2, prop: propMock2 }];
+    });
+
+    it('filasFiltradas() sin texto devuelve todas las filas', () => {
+      expect(component.filasFiltradas().length).toBe(2);
+    });
+
+    it('filasFiltradas() filtra por SKU sin importar mayúsculas', () => {
+      component.busqueda = 'sku-2';
+      expect(component.filasFiltradas().map((f) => f.producto.sku)).toEqual(['SKU-2']);
+    });
+
+    it('filasFiltradas() filtra por descripción', () => {
+      component.filas = [
+        { producto: { ...prodBase, descripcion: 'Bicicleta Scott Scale' }, prop: propMock },
+        { producto: { ...prodBase2, descripcion: 'Bicicleta Megamo Track' }, prop: propMock2 },
+      ];
+      component.busqueda = 'megamo';
+      expect(component.filasFiltradas().map((f) => f.producto.sku)).toEqual(['SKU-2']);
+    });
+
+    it('toggleExpandido() agrega y quita del set de expandidos', () => {
+      component.toggleExpandido(10);
+      expect(component.expandidos.has(10)).toBeTrue();
+      component.toggleExpandido(10);
+      expect(component.expandidos.has(10)).toBeFalse();
+    });
+
+    it('ngOnChanges() reinicia la búsqueda y la expansión al reabrir con otra selección', () => {
+      component.busqueda = 'algo';
+      component.expandidos.add(10);
+      component.ngOnChanges();
+      expect(component.busqueda).toBe('');
+      expect(component.expandidos.size).toBe(0);
+    });
+  });
 });

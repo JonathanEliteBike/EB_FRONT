@@ -114,10 +114,44 @@
 .tabla-mini th.grupo.grupo-nueva { color: #4ade80; }
 .tabla-mini tr.fila-grupos th { border-bottom-width: 1px; }
 .tabla-mini td { padding: 10px 8px; border-bottom: 1px solid #1e2535; font-size: 13px; color: #e2e8f0; }
-.tabla-mini .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabla-mini .num { text-align: center; font-variant-numeric: tabular-nums; }
 .tabla-mini tfoot td { border-top: 2px solid #2d3748; border-bottom: none; font-weight: 700; color: #cbd5e1; background: #141a26; }
+.tabla-mini tfoot .num { text-align: right; }
 .td-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cbd5e1; }
 .cli-clave { font-family: ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; color: #60a5fa; white-space: nowrap; }
+
+/* ── Buscador ── */
+.wiz-buscador {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; margin-bottom: 10px;
+  border: 1px solid #2d3748; border-radius: 8px; background: #0f1623;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+.wiz-buscador:focus-within { border-color: #3b82f6; box-shadow: var(--focus-ring); }
+.wiz-buscador i { color: #64748b; font-size: 12px; }
+.wiz-buscador input {
+  flex: 1; border: none; background: none; color: #e2e8f0; font: inherit; outline: none;
+}
+.wiz-buscador input::placeholder { color: #64748b; }
+.wiz-contador { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+
+/* ── Filas expandibles con el detalle por cliente ── */
+.fila-producto { cursor: pointer; transition: background 120ms ease-out; }
+.fila-producto:hover { background: #1a2333; }
+.fila-producto.fila-expandida { background: #16233a; }
+.fila-caret { width: 12px; font-size: 10px; color: #60a5fa; margin-right: 6px; display: inline-block; }
+
+.fila-clientes td { padding: 0; border-bottom: 1px solid #1e2535; background: #0d1119; }
+.wiz-sin-clientes { color: #94a3b8; font-size: 12px; padding: 10px 16px; margin: 0; }
+
+.tabla-clientes { width: 100%; border-collapse: collapse; }
+.tabla-clientes th {
+  text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: .3px;
+  padding: 6px 12px 6px 36px; border-bottom: 1px solid #1e2535;
+}
+.tabla-clientes th.num, .tabla-clientes td.num { text-align: center; }
+.tabla-clientes td { padding: 7px 12px 7px 36px; font-size: 12px; color: #cbd5e1; border-bottom: 1px solid #171d2b; }
+.tabla-clientes tbody tr:last-child td { border-bottom: none; }
 
 .positivo { color: #4ade80; font-weight: 600; }
 .negativo { color: #f87171; font-weight: 600; }

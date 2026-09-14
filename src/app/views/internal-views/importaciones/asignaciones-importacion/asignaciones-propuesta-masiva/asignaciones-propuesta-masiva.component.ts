@@ -59,6 +59,8 @@ export class AsignacionesPropuestaMasivaComponent implements OnChanges {
   errorForm = '';
 
   filas: FilaConsolidada[] = [];
+  busqueda = '';
+  expandidos = new Set<number>();
   errorResumen = '';
   reservandoTodo = false;
   resultados: ResultadoReserva[] = [];
@@ -70,6 +72,8 @@ export class AsignacionesPropuestaMasivaComponent implements OnChanges {
     this.errorForm = '';
     this.errorResumen = '';
     this.filas = [];
+    this.busqueda = '';
+    this.expandidos.clear();
     this.resultados = [];
 
     const periodos = new Set(this.productos.map((p) => p.periodo));
@@ -124,6 +128,19 @@ export class AsignacionesPropuestaMasivaComponent implements OnChanges {
 
   totalGeneralSugerido(): number {
     return this.filas.reduce((s, f) => s + this.totalSugerido(f.prop), 0);
+  }
+
+  filasFiltradas(): FilaConsolidada[] {
+    const q = this.busqueda.trim().toLowerCase();
+    if (!q) return this.filas;
+    return this.filas.filter((f) =>
+      f.producto.sku.toLowerCase().includes(q)
+      || (f.producto.descripcion || '').toLowerCase().includes(q));
+  }
+
+  toggleExpandido(productoId: number): void {
+    if (this.expandidos.has(productoId)) this.expandidos.delete(productoId);
+    else this.expandidos.add(productoId);
   }
 
   private _reservasDe(prop: PropuestaProducto) {
