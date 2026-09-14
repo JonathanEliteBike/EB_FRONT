@@ -1,5 +1,5 @@
 <div class="panel-overlay" (click)="cerrarPanel()">
-  <div class="panel" (click)="$event.stopPropagation()">
+  <div class="panel" [class.panel-ancho]="paso !== 'form'" (click)="$event.stopPropagation()">
     <div class="panel-header">
       <div>
         <span class="panel-periodo">Propuesta de reserva</span>
@@ -49,9 +49,19 @@
 
       <div class="wiz-tabla-scroll">
         <table class="tabla-mini wiz-tabla-resumen">
+          <colgroup>
+            <col class="col-sku" /><col class="col-desc" />
+            <col class="col-num" /><col class="col-num" /><col class="col-num" />
+            <col class="col-num" /><col class="col-num" />
+            <col class="col-num" /><col class="col-num" /><col class="col-num" />
+          </colgroup>
           <thead>
+            <tr class="fila-grupos">
+              <th rowspan="2">SKU</th><th rowspan="2">Descripción</th>
+              <th colspan="5" class="grupo">Estado actual</th>
+              <th colspan="3" class="grupo grupo-nueva">Propuesta nueva</th>
+            </tr>
             <tr>
-              <th>SKU</th><th>Descripción</th>
               <th class="num">Embarcado</th><th class="num">Reservado</th>
               <th class="num" title="Reservas de reasignación pendientes de confirmar">Pend.</th>
               <th class="num">Sobrante</th><th class="num">Disponible</th>
@@ -61,7 +71,7 @@
           <tbody>
             <tr *ngFor="let f of filas">
               <td><span class="cli-clave">{{ f.producto.sku }}</span></td>
-              <td class="td-nombre">{{ f.producto.descripcion || '—' }}</td>
+              <td class="td-nombre" [title]="f.producto.descripcion || ''">{{ f.producto.descripcion || '—' }}</td>
               <td class="num">{{ f.producto.cantidad_embarcada }}</td>
               <td class="num">{{ f.producto.reservado_total }}</td>
               <td class="num">{{ f.producto.reservado_reasignacion_pendiente || '—' }}</td>
