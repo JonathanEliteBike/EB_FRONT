@@ -77,6 +77,15 @@ export class CreacionUsuariosComponent implements OnInit {
   private estadosAmbitosIniciales = new Map<string, boolean>();
   private cargaPermisosId = 0;
 
+  cambiarOcultamientoGlobal(seleccionado: boolean): void {
+    this.ocultarMontosGlobal = seleccionado;
+    if (!seleccionado) {
+      this.ambitosMontos.forEach(ambito => {
+        ambito.ocultar_montos = false;
+      });
+    }
+  }
+
   ngOnInit(): void {
     if (this.tieneAcceso) {
       this.cargarDatos();

@@ -183,7 +183,9 @@
 
           <section *ngIf="!cargandoPermisos" class="permisos-capacidad">
             <label class="custom-checkbox-wrapper">
-              <input type="checkbox" [(ngModel)]="ocultarMontosGlobal">
+              <input #ocultamientoGlobalCheckbox type="checkbox"
+                [checked]="ocultarMontosGlobal"
+                (change)="cambiarOcultamientoGlobal(ocultamientoGlobalCheckbox.checked)">
               <div class="checkmark">
                 <svg *ngIf="ocultarMontosGlobal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
@@ -194,9 +196,12 @@
             <div class="acciones-list" *ngIf="ambitosMontos.length">
               <strong>Configuración por módulo / vista</strong>
               <label *ngFor="let ambito of ambitosMontos" class="custom-checkbox-wrapper">
-                <input type="checkbox" [(ngModel)]="ambito.ocultar_montos" [disabled]="ocultarMontosGlobal">
+                <input #ambitoMontosCheckbox type="checkbox"
+                  [checked]="ocultarMontosGlobal || ambito.ocultar_montos"
+                  [disabled]="ocultarMontosGlobal"
+                  (change)="ambito.ocultar_montos = ambitoMontosCheckbox.checked">
                 <div class="checkmark">
-                  <svg *ngIf="ambito.ocultar_montos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <svg *ngIf="ocultarMontosGlobal || ambito.ocultar_montos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </div>
