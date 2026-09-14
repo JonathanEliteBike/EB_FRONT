@@ -1,29 +1,34 @@
 :host {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, .22);
 }
 
-/* ── Slide-in drawer (mismo patrón que el detalle de producto) ── */
+/* ── Modal centrado ── */
 .panel-overlay {
   position: fixed; inset: 0;
   background: rgba(3, 6, 12, .55);
-  display: flex; justify-content: flex-end;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
   z-index: 1000;
   animation: overlay-in 180ms ease-out;
 }
 @keyframes overlay-in { from { opacity: 0; } }
 
 .panel {
-  width: min(640px, 100%); height: 100%; overflow-y: auto;
+  width: min(680px, 100%); max-height: min(88vh, 820px); overflow-y: auto;
   padding: 24px; background: #12161f; color: #e2e8f0;
-  border-left: 1px solid #2d3748;
-  box-shadow: -16px 0 48px rgba(0, 0, 0, .45);
-  animation: panel-in 320ms var(--ease-drawer);
+  border: 1px solid #2d3748; border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .5), 0 4px 16px rgba(0, 0, 0, .35);
+  animation: panel-in 200ms var(--ease-out);
 }
-@keyframes panel-in { from { transform: translateX(100%); } }
+@keyframes panel-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } }
 
 @media (prefers-reduced-motion: reduce) { .panel-overlay, .panel { animation: none; } }
+
+@media (max-width: 560px) {
+  .panel-overlay { padding: 0; align-items: flex-end; }
+  .panel { width: 100%; max-height: 92vh; border-radius: 14px 14px 0 0; }
+}
 
 .panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
 .panel-periodo { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
