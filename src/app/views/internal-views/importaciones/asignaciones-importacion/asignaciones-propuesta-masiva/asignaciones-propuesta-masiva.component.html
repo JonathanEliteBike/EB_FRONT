@@ -1,0 +1,109 @@
+<div class="panel-overlay" (click)="cerrarPanel()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <div class="panel-header">
+      <div>
+        <span class="panel-periodo">Propuesta de reserva</span>
+        <h2 class="panel-titulo">{{ productos.length }} producto(s) seleccionado(s)</h2>
+      </div>
+      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- ── Paso 1: ventana de meses ── -->
+    <ng-container *ngIf="paso === 'form'">
+      <div class="wiz-error" *ngIf="errorPeriodo">{{ errorPeriodo }}</div>
+
+      <ng-container *ngIf="!errorPeriodo">
+        <p class="wiz-subtitulo">Periodo: <b>{{ periodoComun }}</b>. Elige la ventana de meses para calcular
+          lo proyectado y lo que falta por reservar.</p>
+
+        <div class="wiz-fila">
+          <div class="wiz-campo">
+            <label>Reservar desde</label>
+            <select [(ngModel)]="mesDesde">
+              <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="wiz-campo">
+            <label>Hasta</label>
+            <select [(ngModel)]="mesHasta">
+              <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="wiz-error" *ngIf="errorForm">{{ errorForm }}</div>
+
+        <div class="wiz-acciones">
+          <button class="btn-primary" [disabled]="calculando" (click)="calcular()">
+            {{ calculando ? 'Calculando…' : 'Calcular propuesta' }}
+          </button>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <!-- ── Paso 2: resumen consolidado ── -->
+    <ng-container *ngIf="paso === 'resumen'">
+      <p class="wiz-subtitulo">
+        Ventana <b>{{ mesDesde }} – {{ mesHasta }}</b>. Revisa y confirma para reservar todo lo sugerido.
+      </p>
+
+      <div class="wiz-tabla-scroll">
+        <table class="tabla-mini wiz-tabla-resumen">
+          <thead>
+            <tr>
+              <th>SKU</th><th>Descripción</th>
+              <th class="num">Embarcado</th><th class="num">Reservado</th>
+              <th class="num" title="Reservas de reasignación pendientes de confirmar">Pend.</th>
+              <th class="num">Sobrante</th><th class="num">Disponible</th>
+              <th class="num">Proyectado</th><th class="num">A reservar</th><th class="num">Faltante</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let f of filas">
+              <td><span class="cli-clave">{{ f.producto.sku }}</span></td>
+              <td class="td-nombre">{{ f.producto.descripcion || '—' }}</td>
+              <td class="num">{{ f.producto.cantidad_embarcada }}</td>
+              <td class="num">{{ f.producto.reservado_total }}</td>
+              <td class="num">{{ f.producto.reservado_reasignacion_pendiente || '—' }}</td>
+              <td class="num">{{ f.producto.cantidad_sobrante }}</td>
+              <td class="num">{{ f.producto.cantidad_disponible }}</td>
+              <td class="num">{{ totalProyectado(f.prop) }}</td>
+              <td class="num positivo">{{ totalSugerido(f.prop) }}</td>
+              <td class="num" [class.negativo]="totalFaltante(f.prop) > 0">{{ totalFaltante(f.prop) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8">Total a reservar</td>
+              <td class="num positivo">{{ totalGeneralSugerido() }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="wiz-error" *ngIf="errorResumen">{{ errorResumen }}</div>
+
+      <div class="wiz-acciones">
+        <button class="btn-secundario" [disabled]="reservandoTodo" (click)="cerrarPanel()">Cerrar sin reservar</button>
+        <button class="btn-primary" [disabled]="reservandoTodo" (click)="reservarTodo()">
+          {{ reservandoTodo ? 'Reservando…' : 'Reservar todo' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Paso 3: resultado final ── -->
+    <ng-container *ngIf="paso === 'terminado'">
+      <p class="wiz-subtitulo">Resultado de las reservas:</p>
+      <ul class="wiz-resultados">
+        <li *ngFor="let r of resultados" [class.negativo]="!r.ok" [class.positivo]="r.ok">
+          <i class="fas" [ngClass]="r.ok ? 'fa-check' : 'fa-times'"></i>
+          {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+        </li>
+      </ul>
+      <div class="wiz-acciones">
+        <button class="btn-primary" (click)="cerrarPanel()">Cerrar</button>
+      </div>
+    </ng-container>
+  </div>
+</div>

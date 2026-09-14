@@ -42,11 +42,16 @@
 .import-errores { margin: 8px 0 0; padding-left: 18px; color: #fca5a5; font-size: 12px; }
 .import-errores li { margin: 2px 0; }
 
-.asig-tabla { width: 100%; border-collapse: collapse; background: #12161f; border: 1px solid #2d3748; border-radius: 10px; overflow: hidden; }
-.asig-tabla th { text-align: left; font-size: 12px; color: #94a3b8; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #2d3748; }
+.asig-tabla { width: 100%; border-collapse: collapse; background: #12161f; border: 1px solid #2d3748; border-radius: 10px; }
+.asig-tabla th { text-align: left; font-size: 12px; color: #94a3b8; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #2d3748; position: sticky; top: 0; background: #12161f; z-index: 5; }
 .asig-tabla td { padding: 12px 10px; border-bottom: 1px solid #1e2535; color: #e2e8f0; }
 .fila-clickable { cursor: pointer; }
 .fila-clickable:hover { background: #1a2333; }
 .celda-disponible { font-weight: 700; color: #60a5fa; }
 .celda-desc { color: #cbd5e1; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .asig-vacio { color: #94a3b8; text-align: center; padding: 40px; }
+
+.celda-check { width: 36px; padding: 12px 10px 12px 14px !important; cursor: default; }
+.celda-check input { accent-color: #3b82f6; cursor: pointer; width: 15px; height: 15px; }
+.fila-sel { background: #16233a; }
+.fila-sel:hover { background: #1b2b46; }

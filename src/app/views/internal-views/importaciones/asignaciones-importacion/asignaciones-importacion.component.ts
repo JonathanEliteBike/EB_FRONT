@@ -10,11 +10,15 @@ import {
   ImportacionResultado,
 } from '../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto/asignaciones-detalle-producto.component';
+import { AsignacionesPropuestaMasivaComponent } from './asignaciones-propuesta-masiva/asignaciones-propuesta-masiva.component';
 
 @Component({
   selector: 'app-asignaciones-importacion',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, HomeBarComponent, AsignacionesDetalleProductoComponent],
+  imports: [
+    CommonModule, RouterModule, FormsModule, HomeBarComponent,
+    AsignacionesDetalleProductoComponent, AsignacionesPropuestaMasivaComponent,
+  ],
   templateUrl: './asignaciones-importacion.component.html',
   styleUrl: './asignaciones-importacion.component.css',
 })
@@ -42,6 +46,15 @@ export class AsignacionesImportacionComponent implements OnInit {
   resultadoImport: ImportacionResultado | null = null;
 
   productoSeleccionado: AsignacionesProducto | null = null;
+
+  /** Selección múltiple para la propuesta consolidada (embarcado/proyectado/
+   *  reservado/pendiente/sobrante/disponible de varios SKU a la vez). */
+  seleccionados = new Set<number>();
+  propuestaMasivaAbierta = false;
+  /** Snapshot fijo al abrir el modal: si fuera un método ligado en el template,
+   *  cada ciclo de detección de cambios generaría un array nuevo y reiniciaría
+   *  el estado interno del modal (ngOnChanges) en cada tick. */
+  productosParaPropuesta: AsignacionesProducto[] = [];
 
   /** A dónde volver: por defecto el detalle del embarque; si se llegó desde el
    *  dashboard (?from=dashboard&tab=...) se vuelve ahí en vez de "hacia adentro". */
@@ -123,6 +136,42 @@ export class AsignacionesImportacionComponent implements OnInit {
   }
 
   onCambioEnDetalle(): void {
+    this.cargar();
+  }
+
+  toggleSeleccion(productoId: number): void {
+    if (this.seleccionados.has(productoId)) this.seleccionados.delete(productoId);
+    else this.seleccionados.add(productoId);
+  }
+
+  todosSeleccionados(): boolean {
+    const productos = this.resumen?.productos || [];
+    return productos.length > 0 && productos.every((p) => this.seleccionados.has(p.id));
+  }
+
+  toggleTodos(event: Event): void {
+    const marcar = (event.target as HTMLInputElement).checked;
+    const productos = this.resumen?.productos || [];
+    if (marcar) productos.forEach((p) => this.seleccionados.add(p.id));
+    else this.seleccionados.clear();
+  }
+
+  productosSeleccionados(): AsignacionesProducto[] {
+    const productos = this.resumen?.productos || [];
+    return productos.filter((p) => this.seleccionados.has(p.id));
+  }
+
+  abrirPropuestaMasiva(): void {
+    this.productosParaPropuesta = this.productosSeleccionados();
+    this.propuestaMasivaAbierta = true;
+  }
+
+  cerrarPropuestaMasiva(): void {
+    this.propuestaMasivaAbierta = false;
+    this.seleccionados.clear();
+  }
+
+  onCambioEnPropuestaMasiva(): void {
     this.cargar();
   }
 }

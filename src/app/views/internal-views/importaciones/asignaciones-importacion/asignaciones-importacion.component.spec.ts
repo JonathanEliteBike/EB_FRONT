@@ -108,4 +108,60 @@ describe('AsignacionesImportacionComponent', () => {
 
     expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/importaciones/dashboard?tab=asignaciones');
   });
+
+  describe('selección múltiple para la propuesta consolidada', () => {
+    beforeEach(() => {
+      component.resumen = {
+        ...resumenMock,
+        productos: [
+          { id: 1, sku: 'A' } as any,
+          { id: 2, sku: 'B' } as any,
+        ],
+      };
+    });
+
+    it('toggleSeleccion() agrega y quita del set', () => {
+      component.toggleSeleccion(1);
+      expect(component.seleccionados.has(1)).toBeTrue();
+      component.toggleSeleccion(1);
+      expect(component.seleccionados.has(1)).toBeFalse();
+    });
+
+    it('todosSeleccionados() es true solo cuando están todos marcados', () => {
+      expect(component.todosSeleccionados()).toBeFalse();
+      component.toggleSeleccion(1);
+      component.toggleSeleccion(2);
+      expect(component.todosSeleccionados()).toBeTrue();
+    });
+
+    it('toggleTodos() marca o desmarca todos los productos', () => {
+      component.toggleTodos({ target: { checked: true } } as unknown as Event);
+      expect(component.seleccionados.size).toBe(2);
+      component.toggleTodos({ target: { checked: false } } as unknown as Event);
+      expect(component.seleccionados.size).toBe(0);
+    });
+
+    it('abrirPropuestaMasiva() fija un snapshot de los productos seleccionados', () => {
+      component.toggleSeleccion(2);
+      component.abrirPropuestaMasiva();
+      expect(component.productosParaPropuesta.map((p) => p.sku)).toEqual(['B']);
+      expect(component.propuestaMasivaAbierta).toBeTrue();
+    });
+
+    it('cerrarPropuestaMasiva() cierra el modal y limpia la selección', () => {
+      component.toggleSeleccion(1);
+      component.propuestaMasivaAbierta = true;
+      component.cerrarPropuestaMasiva();
+      expect(component.propuestaMasivaAbierta).toBeFalse();
+      expect(component.seleccionados.size).toBe(0);
+    });
+
+    it('onCambioEnPropuestaMasiva() recarga el resumen sin cerrar el modal', () => {
+      svcSpy.resumen.calls.reset();
+      component.propuestaMasivaAbierta = true;
+      component.onCambioEnPropuestaMasiva();
+      expect(svcSpy.resumen).toHaveBeenCalled();
+      expect(component.propuestaMasivaAbierta).toBeTrue();
+    });
+  });
 });

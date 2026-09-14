@@ -41,6 +41,9 @@
 
     <div class="asig-toolbar">
       <h2>Productos del embarque</h2>
+      <button class="btn-primary" *ngIf="seleccionados.size" (click)="abrirPropuestaMasiva()">
+        Ver propuesta ({{ seleccionados.size }})
+      </button>
     </div>
 
     <div class="import-panel">
@@ -84,23 +87,29 @@
     <table class="asig-tabla" *ngIf="resumen.productos.length; else sinProductos">
       <thead>
         <tr>
+          <th class="celda-check">
+            <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos($event)" />
+          </th>
           <th>SKU</th><th>Descripción</th><th>Periodo</th><th>Embarcado</th><th>Reservado</th>
           <th title="Reservas de reasignación pendientes de confirmar con el cliente">Pend.</th>
           <th>Sobrante</th><th>Vendido</th><th>Disponible</th><th></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of resumen.productos" (click)="abrirDetalle(p)" class="fila-clickable">
-          <td>{{ p.sku }}</td>
-          <td class="celda-desc">{{ p.descripcion || '—' }}</td>
-          <td>{{ p.periodo }}</td>
-          <td>{{ p.cantidad_embarcada }}</td>
-          <td>{{ p.reservado_total }}</td>
-          <td>{{ p.reservado_reasignacion_pendiente || '—' }}</td>
-          <td>{{ p.cantidad_sobrante }}</td>
-          <td>{{ p.cantidad_vendida }}</td>
-          <td class="celda-disponible">{{ p.cantidad_disponible }}</td>
-          <td><i class="fas fa-chevron-right"></i></td>
+        <tr *ngFor="let p of resumen.productos" class="fila-clickable" [class.fila-sel]="seleccionados.has(p.id)">
+          <td class="celda-check" (click)="$event.stopPropagation()">
+            <input type="checkbox" [checked]="seleccionados.has(p.id)" (change)="toggleSeleccion(p.id)" />
+          </td>
+          <td (click)="abrirDetalle(p)">{{ p.sku }}</td>
+          <td class="celda-desc" (click)="abrirDetalle(p)">{{ p.descripcion || '—' }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.periodo }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.cantidad_embarcada }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.reservado_total }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.reservado_reasignacion_pendiente || '—' }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.cantidad_sobrante }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.cantidad_vendida }}</td>
+          <td class="celda-disponible" (click)="abrirDetalle(p)">{{ p.cantidad_disponible }}</td>
+          <td (click)="abrirDetalle(p)"><i class="fas fa-chevron-right"></i></td>
         </tr>
       </tbody>
     </table>
@@ -121,3 +130,11 @@
   (cerrar)="cerrarDetalle()"
   (cambio)="onCambioEnDetalle()"
 ></app-asignaciones-detalle-producto>
+
+<app-asignaciones-propuesta-masiva
+  *ngIf="propuestaMasivaAbierta"
+  [importacionId]="importacionId"
+  [productos]="productosParaPropuesta"
+  (cerrar)="cerrarPropuestaMasiva()"
+  (cambio)="onCambioEnPropuestaMasiva()"
+></app-asignaciones-propuesta-masiva>
