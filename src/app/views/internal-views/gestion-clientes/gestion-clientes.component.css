@@ -462,6 +462,34 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
+.seleccionar-todos-modulos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--t1);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.seleccionar-todos-modulos input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--orange);
+}
+
+.seleccionar-todos-modulos input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.seleccionar-todos-modulos small {
+  display: block;
+  color: var(--t3);
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
 .modal-card.modal-large {
   max-width: 1320px !important;
   width: 96%;

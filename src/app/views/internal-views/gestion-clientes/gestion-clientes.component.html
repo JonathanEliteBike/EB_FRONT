@@ -148,6 +148,16 @@
         
         <!-- BÚSQUEDA POR NOMBRE VISIBLE DE MÓDULO O ACCIÓN -->
         <div class="table-subfilters-bar">
+          <label class="seleccionar-todos-modulos">
+            <input #seleccionTodos type="checkbox"
+              [checked]="todosModulosVisiblesSeleccionados"
+              [indeterminate]="seleccionModulosVisiblesParcial"
+              [disabled]="guardandoPermisos || modulosSeleccionablesVisibles.length === 0"
+              (change)="seleccionarTodosModulosVisibles(seleccionTodos.checked)">
+            <span>Seleccionar todos
+              <small>Módulos de esta página y sus submódulos, según la búsqueda.</small>
+            </span>
+          </label>
           <div class="search-box-modal" style="width: 280px; margin-left: auto;">
             <input 
               type="text" 

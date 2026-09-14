@@ -254,6 +254,39 @@ export class GestionClientesComponent implements OnInit {
       identificador === 'usuarios_solicitudes_retroactivos';
   }
 
+  /** Incluye las ramas de esta página, incluso si están contraídas. */
+  get modulosSeleccionablesVisibles(): ModuloItem[] {
+    const visibles = new Map<number, ModuloItem>();
+    this.modulosModalPaginados.forEach(raiz => {
+      [raiz, ...this.getDescendientes(raiz.id)].forEach(modulo => {
+        if (Number(modulo.activo) === 1 && Number(modulo.delegable_a_hijos) === 1 &&
+            !['creacion_usuarios_dis', 'usuarios_hijos'].includes(modulo.identificador) &&
+            this.esModuloMigrado(modulo.id)) {
+          visibles.set(modulo.id, modulo);
+        }
+      });
+    });
+    return Array.from(visibles.values());
+  }
+
+  get todosModulosVisiblesSeleccionados(): boolean {
+    const modulos = this.modulosSeleccionablesVisibles;
+    return modulos.length > 0 && modulos.every(modulo => !!this.modulosAcceso[modulo.id]);
+  }
+
+  get seleccionModulosVisiblesParcial(): boolean {
+    const modulos = this.modulosSeleccionablesVisibles;
+    const seleccionados = modulos.filter(modulo => !!this.modulosAcceso[modulo.id]).length;
+    return seleccionados > 0 && seleccionados < modulos.length;
+  }
+
+  seleccionarTodosModulosVisibles(seleccionado: boolean): void {
+    if (!this.clienteSeleccionado || this.cargandoModal || this.guardandoPermisos) return;
+    this.modulosSeleccionablesVisibles.forEach(modulo => {
+      this.modulosAcceso[modulo.id] = seleccionado;
+    });
+  }
+
   getDescendientes(padreId: number): ModuloItem[] {
     const descendientes: ModuloItem[] = [];
     const visitados = new Set<number>();
