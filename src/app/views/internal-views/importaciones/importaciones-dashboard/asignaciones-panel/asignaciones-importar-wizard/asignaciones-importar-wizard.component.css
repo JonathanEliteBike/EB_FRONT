@@ -15,7 +15,8 @@
 @keyframes overlay-in { from { opacity: 0; } }
 
 .panel {
-  width: min(680px, 100%); max-height: min(88vh, 820px); overflow-y: auto;
+  width: min(680px, 100%); max-height: min(88vh, 820px);
+  overflow-y: auto; overflow-x: hidden;
   padding: 24px; background: #12161f; color: #e2e8f0;
   border: 1px solid #2d3748; border-radius: 14px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, .5), 0 4px 16px rgba(0, 0, 0, .35);
@@ -110,6 +111,8 @@
 .wiz-subtitulo { font-size: 13px; color: #cbd5e1; margin: 0 0 12px; }
 
 /* ── Tabla resumen ── */
+.wiz-tabla-scroll { overflow-x: auto; border: 1px solid #2d3748; border-radius: 10px; margin-bottom: 12px; }
+.wiz-tabla-scroll .tabla-mini { margin-bottom: 0; min-width: 560px; }
 .tabla-mini { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
 .tabla-mini th {
   text-align: left; font-size: 11px; color: #94a3b8;

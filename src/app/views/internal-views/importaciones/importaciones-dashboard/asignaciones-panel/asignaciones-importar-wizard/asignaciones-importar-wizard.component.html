@@ -80,33 +80,35 @@
         reservar todo lo sugerido.
       </p>
 
-      <table class="tabla-mini wiz-tabla-resumen" *ngIf="propuesta.length; else sinPropuesta">
-        <thead>
-          <tr>
-            <th>SKU</th><th>Descripción</th>
-            <th class="num">Embarcado</th><th class="num">Disponible</th>
-            <th class="num">Proyectado</th><th class="num">A reservar</th><th class="num">Faltante</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of propuesta">
-            <td><span class="cli-clave">{{ p.sku }}</span></td>
-            <td class="td-nombre">{{ p.descripcion || '—' }}</td>
-            <td class="num">{{ p.cantidad_embarcada }}</td>
-            <td class="num">{{ p.disponible }}</td>
-            <td class="num">{{ totalProyectado(p) }}</td>
-            <td class="num positivo">{{ totalSugerido(p) }}</td>
-            <td class="num" [class.negativo]="totalFaltante(p) > 0">{{ totalFaltante(p) }}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="5">Total a reservar</td>
-            <td class="num positivo">{{ totalGeneralSugerido() }}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+      <div class="wiz-tabla-scroll" *ngIf="propuesta.length; else sinPropuesta">
+        <table class="tabla-mini wiz-tabla-resumen">
+          <thead>
+            <tr>
+              <th>SKU</th><th>Descripción</th>
+              <th class="num">Embarcado</th><th class="num">Disponible</th>
+              <th class="num">Proyectado</th><th class="num">A reservar</th><th class="num">Faltante</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of propuesta">
+              <td><span class="cli-clave">{{ p.sku }}</span></td>
+              <td class="td-nombre">{{ p.descripcion || '—' }}</td>
+              <td class="num">{{ p.cantidad_embarcada }}</td>
+              <td class="num">{{ p.disponible }}</td>
+              <td class="num">{{ totalProyectado(p) }}</td>
+              <td class="num positivo">{{ totalSugerido(p) }}</td>
+              <td class="num" [class.negativo]="totalFaltante(p) > 0">{{ totalFaltante(p) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5">Total a reservar</td>
+              <td class="num positivo">{{ totalGeneralSugerido() }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
       <ng-template #sinPropuesta>
         <p class="asig-vacio">No hay productos con propuesta de reserva para esta ventana de meses.</p>
       </ng-template>

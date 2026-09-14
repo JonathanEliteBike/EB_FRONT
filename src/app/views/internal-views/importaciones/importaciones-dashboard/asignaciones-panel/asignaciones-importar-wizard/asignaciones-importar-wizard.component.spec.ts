@@ -13,8 +13,9 @@ describe('AsignacionesImportarWizardComponent', () => {
   let importacionesSvcSpy: jasmine.SpyObj<ImportacionesService>;
 
   const embarques: Importacion[] = [
-    { id: 2, referencia: 'R26-002', nombre: 'Segundo', estado: 'ACTIVO', created_at: '', updated_at: '' },
-    { id: 1, referencia: 'R26-001', nombre: 'Primero', estado: 'ACTIVO', created_at: '', updated_at: '' },
+    { id: 2, referencia: 'R26-002', nombre: 'Segundo', estado: 'activo', created_at: '', updated_at: '' },
+    { id: 1, referencia: 'R26-001', nombre: 'Primero', estado: 'activo', created_at: '', updated_at: '' },
+    { id: 3, referencia: 'R26-000', nombre: 'Cerrado', estado: 'cerrado', created_at: '', updated_at: '' },
   ];
 
   const resultadoImport: ImportacionResultado = { insertados: 2, actualizados: 1, total_filas: 3, errores: [] };
@@ -55,7 +56,7 @@ describe('AsignacionesImportarWizardComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('carga y ordena los embarques existentes al iniciar', () => {
+  it('carga, filtra solo activos y ordena los embarques al iniciar', () => {
     expect(importacionesSvcSpy.listar).toHaveBeenCalled();
     expect(component.embarques.map((e) => e.referencia)).toEqual(['R26-001', 'R26-002']);
     expect(component.cargandoEmbarques).toBeFalse();

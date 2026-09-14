@@ -80,7 +80,9 @@ export class AsignacionesImportarWizardComponent implements OnInit {
   ngOnInit(): void {
     this.importacionesSvc.listar().subscribe({
       next: (data) => {
-        this.embarques = [...data].sort((a, b) => a.referencia.localeCompare(b.referencia));
+        this.embarques = data
+          .filter((e) => (e.estado || 'activo') === 'activo')
+          .sort((a, b) => a.referencia.localeCompare(b.referencia));
         this.cargandoEmbarques = false;
       },
       error: () => {
