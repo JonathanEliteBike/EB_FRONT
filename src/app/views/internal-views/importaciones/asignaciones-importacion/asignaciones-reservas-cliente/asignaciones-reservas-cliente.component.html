@@ -10,6 +10,12 @@
 
     <!-- ── Paso 1: cliente + ventana de meses ── -->
     <ng-container *ngIf="paso === 'form'">
+      <p class="wiz-subtitulo">
+        El periodo (p. ej. 2026-2027) ya quedó fijo al dar de alta cada producto. Aquí eliges,
+        dentro de ese periodo, en qué meses vas a trabajar la reserva ahora mismo — puede ser
+        solo una parte, no todo el periodo a la vez.
+      </p>
+
       <div class="wiz-error" *ngIf="errorClientes">{{ errorClientes }}</div>
 
       <div class="wiz-campo">

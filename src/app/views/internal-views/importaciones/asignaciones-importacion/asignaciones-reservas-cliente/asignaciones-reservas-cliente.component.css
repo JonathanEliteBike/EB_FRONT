@@ -15,9 +15,9 @@
 @keyframes overlay-in { from { opacity: 0; } }
 
 .panel {
-  width: min(96vw, 520px); max-height: min(88vh, 760px);
+  width: min(96vw, 640px); max-height: min(88vh, 760px);
   overflow-y: auto; overflow-x: hidden;
-  padding: 24px; background: #12161f; color: #e2e8f0;
+  padding: 28px; background: #12161f; color: #e2e8f0;
   border: 1px solid #2d3748; border-radius: 14px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, .5), 0 4px 16px rgba(0, 0, 0, .35);
   transition: width 220ms var(--ease-out);
