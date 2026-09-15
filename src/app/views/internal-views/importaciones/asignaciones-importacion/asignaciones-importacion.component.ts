@@ -11,6 +11,7 @@ import {
 } from '../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 import { AsignacionesPropuestaMasivaComponent } from './asignaciones-propuesta-masiva/asignaciones-propuesta-masiva.component';
+import { AsignacionesReservasClienteComponent } from './asignaciones-reservas-cliente/asignaciones-reservas-cliente.component';
 
 @Component({
   selector: 'app-asignaciones-importacion',
@@ -18,6 +19,7 @@ import { AsignacionesPropuestaMasivaComponent } from './asignaciones-propuesta-m
   imports: [
     CommonModule, RouterModule, FormsModule, HomeBarComponent,
     AsignacionesDetalleProductoComponent, AsignacionesPropuestaMasivaComponent,
+    AsignacionesReservasClienteComponent,
   ],
   templateUrl: './asignaciones-importacion.component.html',
   styleUrl: './asignaciones-importacion.component.css',
@@ -55,6 +57,9 @@ export class AsignacionesImportacionComponent implements OnInit {
    *  cada ciclo de detección de cambios generaría un array nuevo y reiniciaría
    *  el estado interno del modal (ngOnChanges) en cada tick. */
   productosParaPropuesta: AsignacionesProducto[] = [];
+
+  /** Buscador de reservas de este embarque por cliente. */
+  reservasClienteAbierto = false;
 
   /** A dónde volver: por defecto el detalle del embarque; si se llegó desde el
    *  dashboard (?from=dashboard&tab=...) se vuelve ahí en vez de "hacia adentro". */
@@ -173,5 +178,13 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   onCambioEnPropuestaMasiva(): void {
     this.cargar();
+  }
+
+  abrirReservasCliente(): void {
+    this.reservasClienteAbierto = true;
+  }
+
+  cerrarReservasCliente(): void {
+    this.reservasClienteAbierto = false;
   }
 }

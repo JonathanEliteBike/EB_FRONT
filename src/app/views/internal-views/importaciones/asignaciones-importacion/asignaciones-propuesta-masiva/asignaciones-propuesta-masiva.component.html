@@ -106,7 +106,7 @@
                         <tr *ngFor="let m of c.meses">
                           <td>{{ c.prioridad }}</td>
                           <td>{{ c.nombre_cliente }} <span class="cli-clave">({{ c.clave_cliente }})</span></td>
-                          <td>{{ m.mes }}</td>
+                          <td>{{ formatoMes(m.mes) }}</td>
                           <td class="num">{{ m.proyectado }}</td>
                           <td class="num">{{ m.vigente }}</td>
                           <td class="num positivo">{{ m.sugerido }}</td>

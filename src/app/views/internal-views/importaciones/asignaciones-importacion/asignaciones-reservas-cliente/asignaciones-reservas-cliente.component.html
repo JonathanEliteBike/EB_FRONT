@@ -1,0 +1,66 @@
+<div class="panel-overlay" (click)="cerrarPanel()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <div class="panel-header">
+      <div>
+        <span class="panel-periodo">Buscar por cliente</span>
+        <h2 class="panel-titulo">Reservas de este embarque</h2>
+      </div>
+      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="wiz-error" *ngIf="errorClientes">{{ errorClientes }}</div>
+
+    <div class="wiz-campo">
+      <label>Cliente (lista de prioridad)</label>
+      <select [(ngModel)]="claveSeleccionada" (ngModelChange)="onClienteChange()" [disabled]="cargandoClientes">
+        <option value="">{{ cargandoClientes ? 'Cargando…' : 'Selecciona un cliente…' }}</option>
+        <option *ngFor="let c of clientes" [value]="c.clave">
+          P{{ c.prioridad }} · {{ c.nombre }} ({{ c.clave }})
+        </option>
+      </select>
+    </div>
+
+    <div class="wiz-error" *ngIf="error">{{ error }}</div>
+    <p class="wiz-cargando" *ngIf="cargando">Cargando reservas…</p>
+
+    <ng-container *ngIf="!cargando && claveSeleccionada">
+      <div class="wiz-tabla-scroll" *ngIf="reservas.length; else sinReservas">
+        <table class="tabla-mini">
+          <thead>
+            <tr>
+              <th>SKU</th><th>Descripción</th><th>Mes</th><th>Origen</th><th>Estado</th>
+              <th class="num">Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of reservas">
+              <td><span class="cli-clave">{{ r.sku }}</span></td>
+              <td class="td-nombre" [title]="r.descripcion || ''">{{ r.descripcion || '—' }}</td>
+              <td>{{ formatoMes(r.mes_objetivo) }}</td>
+              <td>
+                <span class="badge" [ngClass]="r.origen === 'REASIGNACION' ? 'badge-reasignacion' : 'badge-inicial'">
+                  {{ origenLabel(r.origen) }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="'badge-estado-' + r.estado.toLowerCase()">
+                  {{ estadoLabel(r.estado) }}
+                </span>
+              </td>
+              <td class="num">{{ r.cantidad_asignada }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5">Total reservado a este cliente</td>
+              <td class="num positivo">{{ totalReservado() }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <ng-template #sinReservas>
+        <p class="asig-vacio">Este cliente no tiene reservas en este embarque.</p>
+      </ng-template>
+    </ng-container>
+  </div>
+</div>

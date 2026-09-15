@@ -96,4 +96,20 @@ describe('AsignacionesImportacionService', () => {
     expect(req.request.method).toBe('GET');
     req.flush([{ clave: 'LC657', nombre: 'Test', prioridad: 1 }]);
   });
+
+  it('reservasEmbarque() sin cliente hace GET sin querystring', () => {
+    service.reservasEmbarque(1).subscribe();
+
+    const req = httpMock.expectOne(`${base}/1/asignaciones/reservas`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ ok: true, data: [] });
+  });
+
+  it('reservasEmbarque() con cliente agrega clave_cliente como query param', () => {
+    service.reservasEmbarque(1, 'LC657').subscribe();
+
+    const req = httpMock.expectOne(`${base}/1/asignaciones/reservas?clave_cliente=LC657`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ ok: true, data: [] });
+  });
 });

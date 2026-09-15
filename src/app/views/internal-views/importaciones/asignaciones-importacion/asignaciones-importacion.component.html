@@ -41,9 +41,14 @@
 
     <div class="asig-toolbar">
       <h2>Productos del embarque</h2>
-      <button class="btn-primary" *ngIf="seleccionados.size" (click)="abrirPropuestaMasiva()">
-        Ver propuesta ({{ seleccionados.size }})
-      </button>
+      <div class="asig-toolbar-acciones">
+        <button class="btn-secundario" (click)="abrirReservasCliente()">
+          <i class="fas fa-search"></i> Buscar por cliente
+        </button>
+        <button class="btn-primary" *ngIf="seleccionados.size" (click)="abrirPropuestaMasiva()">
+          Ver propuesta ({{ seleccionados.size }})
+        </button>
+      </div>
     </div>
 
     <div class="import-panel">
@@ -138,3 +143,9 @@
   (cerrar)="cerrarPropuestaMasiva()"
   (cambio)="onCambioEnPropuestaMasiva()"
 ></app-asignaciones-propuesta-masiva>
+
+<app-asignaciones-reservas-cliente
+  *ngIf="reservasClienteAbierto"
+  [importacionId]="importacionId"
+  (cerrar)="cerrarReservasCliente()"
+></app-asignaciones-reservas-cliente>

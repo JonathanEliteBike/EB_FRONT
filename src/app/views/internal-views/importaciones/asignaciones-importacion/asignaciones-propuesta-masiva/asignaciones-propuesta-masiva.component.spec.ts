@@ -135,6 +135,12 @@ describe('AsignacionesPropuestaMasivaComponent', () => {
     expect(component.cerrar.emit).toHaveBeenCalled();
   });
 
+  it('formatoMes() convierte YYYY-MM a nombre de mes en español', () => {
+    expect(component.formatoMes('2026-12')).toBe('Diciembre 2026');
+    expect(component.formatoMes('2026-05')).toBe('Mayo 2026');
+    expect(component.formatoMes(null)).toBe('—');
+  });
+
   describe('busqueda y expansión por cliente', () => {
     beforeEach(() => {
       component.filas = [{ producto: prodBase, prop: propMock }, { producto: prodBase2, prop: propMock2 }];

@@ -34,6 +34,19 @@ const MESES: { valor: string; label: string }[] = [
   { valor: 'marzo', label: 'Marzo' }, { valor: 'abril', label: 'Abril' },
 ];
 
+const NOMBRES_MES = [
+  '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+/** 'YYYY-MM' -> 'Diciembre 2026'. Si no calza con el formato, regresa el valor tal cual. */
+function formatoMes(ym: string | null | undefined): string {
+  if (!ym) return '—';
+  const [anio, mes] = ym.split('-');
+  const idx = parseInt(mes, 10);
+  return NOMBRES_MES[idx] ? `${NOMBRES_MES[idx]} ${anio}` : ym;
+}
+
 @Component({
   selector: 'app-asignaciones-propuesta-masiva',
   standalone: true,
@@ -136,6 +149,10 @@ export class AsignacionesPropuestaMasivaComponent implements OnChanges {
     return this.filas.filter((f) =>
       f.producto.sku.toLowerCase().includes(q)
       || (f.producto.descripcion || '').toLowerCase().includes(q));
+  }
+
+  formatoMes(ym: string | null | undefined): string {
+    return formatoMes(ym);
   }
 
   toggleExpandido(productoId: number): void {

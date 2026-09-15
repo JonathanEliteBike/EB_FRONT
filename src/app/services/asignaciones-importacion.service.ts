@@ -113,6 +113,22 @@ export interface DetalleProducto {
   sobrantes_ventas: VentaSobrante[];
 }
 
+export interface ReservaEmbarque {
+  id: number;
+  importacion_producto_id: number;
+  sku: string;
+  descripcion: string | null;
+  periodo: string;
+  clave_cliente: string;
+  mes_objetivo: string | null;      // 'YYYY-MM'
+  origen: OrigenReserva;
+  estado: EstadoReserva;
+  cantidad_asignada: number;
+  cantidad_proyectada: number | null;
+  prioridad: number | null;
+  confirmada_at?: string | null;
+}
+
 export interface Movimiento {
   id: number;
   importacion_producto_id: number;
@@ -394,6 +410,15 @@ export class AsignacionesImportacionService {
   movimientos(importacionId: number): Observable<Movimiento[]> {
     return this.http
       .get<ApiOk<Movimiento[]>>(`${this.base}/${importacionId}/asignaciones/movimientos`)
+      .pipe(map(r => r.data));
+  }
+
+  /** Reservas del embarque (todos sus productos), opcionalmente filtradas por cliente. */
+  reservasEmbarque(importacionId: number, claveCliente?: string): Observable<ReservaEmbarque[]> {
+    let params = new HttpParams();
+    if (claveCliente) params = params.set('clave_cliente', claveCliente);
+    return this.http
+      .get<ApiOk<ReservaEmbarque[]>>(`${this.base}/${importacionId}/asignaciones/reservas`, { params })
       .pipe(map(r => r.data));
   }
 

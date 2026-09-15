@@ -164,4 +164,12 @@ describe('AsignacionesImportacionComponent', () => {
       expect(component.propuestaMasivaAbierta).toBeTrue();
     });
   });
+
+  it('abrirReservasCliente()/cerrarReservasCliente() controlan el buscador por cliente', () => {
+    expect(component.reservasClienteAbierto).toBeFalse();
+    component.abrirReservasCliente();
+    expect(component.reservasClienteAbierto).toBeTrue();
+    component.cerrarReservasCliente();
+    expect(component.reservasClienteAbierto).toBeFalse();
+  });
 });
