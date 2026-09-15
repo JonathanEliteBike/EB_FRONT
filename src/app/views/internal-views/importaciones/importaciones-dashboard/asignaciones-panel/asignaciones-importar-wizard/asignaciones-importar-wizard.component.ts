@@ -1,8 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { switchMap, catchError, map } from 'rxjs/operators';
-import { forkJoin, of } from 'rxjs';
+import { switchMap, catchError, concatMap, map, toArray } from 'rxjs/operators';
+import { from, of } from 'rxjs';
 import { ImportacionesService, Importacion } from '../../../../../../services/importaciones.service';
 import {
   AsignacionesImportacionService,
@@ -180,7 +180,10 @@ export class AsignacionesImportarWizardComponent implements OnInit {
       ),
     );
 
-    forkJoin(llamadas).subscribe((resultados) => {
+    // Secuencial (no forkJoin): varias reservas en paralelo para el mismo
+    // cliente compiten por el mismo registro de `clientes` en MySQL y producen
+    // deadlocks (error 1213). Una reserva a la vez evita la contención.
+    from(llamadas).pipe(concatMap((obs) => obs), toArray()).subscribe((resultados) => {
       this.reservandoTodo = false;
       this.resultados = resultados;
       this.paso = 'terminado';
