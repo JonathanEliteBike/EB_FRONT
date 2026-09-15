@@ -54,6 +54,8 @@
 .asig-tabla { width: 100%; border-collapse: collapse; background: #12161f; border: 1px solid #2d3748; border-radius: 10px; }
 .asig-tabla th { text-align: left; font-size: 12px; color: #94a3b8; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #2d3748; position: sticky; top: 0; background: #12161f; z-index: 5; }
 .asig-tabla td { padding: 12px 10px; border-bottom: 1px solid #1e2535; color: #e2e8f0; }
+.asig-tabla .num { text-align: center; font-variant-numeric: tabular-nums; }
+.asig-tabla th.num i { margin-left: 3px; color: #64748b; font-size: 10px; cursor: help; }
 .fila-clickable { cursor: pointer; }
 .fila-clickable:hover { background: #1a2333; }
 .celda-disponible { font-weight: 700; color: #60a5fa; }

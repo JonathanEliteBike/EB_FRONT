@@ -95,9 +95,12 @@
           <th class="celda-check">
             <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos($event)" />
           </th>
-          <th>SKU</th><th>Descripción</th><th>Periodo</th><th>Embarcado</th><th>Reservado</th>
-          <th title="Reservas de reasignación pendientes de confirmar con el cliente">Pend.</th>
-          <th>Sobrante</th><th>Vendido</th><th>Disponible</th><th></th>
+          <th>SKU</th><th>Descripción</th><th>Periodo</th>
+          <th class="num">Embarcado</th><th class="num">Reservado</th>
+          <th class="num" title="Reservas de una REASIGNACIÓN esperando que el cliente confirme si las quiere. Si no hay ninguna reasignación en curso, siempre se ve en 0.">
+            Pend. <i class="fas fa-circle-info"></i>
+          </th>
+          <th class="num">Sobrante</th><th class="num">Vendido</th><th class="num">Disponible</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -108,12 +111,12 @@
           <td (click)="abrirDetalle(p)">{{ p.sku }}</td>
           <td class="celda-desc" (click)="abrirDetalle(p)">{{ p.descripcion || '—' }}</td>
           <td (click)="abrirDetalle(p)">{{ p.periodo }}</td>
-          <td (click)="abrirDetalle(p)">{{ p.cantidad_embarcada }}</td>
-          <td (click)="abrirDetalle(p)">{{ p.reservado_total }}</td>
-          <td (click)="abrirDetalle(p)">{{ p.reservado_reasignacion_pendiente || '—' }}</td>
-          <td (click)="abrirDetalle(p)">{{ p.cantidad_sobrante }}</td>
-          <td (click)="abrirDetalle(p)">{{ p.cantidad_vendida }}</td>
-          <td class="celda-disponible" (click)="abrirDetalle(p)">{{ p.cantidad_disponible }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_embarcada }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.reservado_total }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.reservado_reasignacion_pendiente || '—' }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_sobrante }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_vendida }}</td>
+          <td class="num celda-disponible" (click)="abrirDetalle(p)">{{ p.cantidad_disponible }}</td>
           <td (click)="abrirDetalle(p)"><i class="fas fa-chevron-right"></i></td>
         </tr>
       </tbody>
