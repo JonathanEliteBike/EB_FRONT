@@ -1,66 +1,133 @@
 <div class="panel-overlay" (click)="cerrarPanel()">
-  <div class="panel" (click)="$event.stopPropagation()">
+  <div class="panel" [class.panel-ancho]="paso !== 'form'" (click)="$event.stopPropagation()">
     <div class="panel-header">
       <div>
-        <span class="panel-periodo">Buscar por cliente</span>
-        <h2 class="panel-titulo">Reservas de este embarque</h2>
+        <span class="panel-periodo">Propuesta por cliente</span>
+        <h2 class="panel-titulo">Qué le corresponde a un cliente en este embarque</h2>
       </div>
       <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
     </div>
 
-    <div class="wiz-error" *ngIf="errorClientes">{{ errorClientes }}</div>
+    <!-- ── Paso 1: cliente + ventana de meses ── -->
+    <ng-container *ngIf="paso === 'form'">
+      <div class="wiz-error" *ngIf="errorClientes">{{ errorClientes }}</div>
 
-    <div class="wiz-campo">
-      <label>Cliente (lista de prioridad)</label>
-      <select [(ngModel)]="claveSeleccionada" (ngModelChange)="onClienteChange()" [disabled]="cargandoClientes">
-        <option value="">{{ cargandoClientes ? 'Cargando…' : 'Selecciona un cliente…' }}</option>
-        <option *ngFor="let c of clientes" [value]="c.clave">
-          P{{ c.prioridad }} · {{ c.nombre }} ({{ c.clave }})
-        </option>
-      </select>
-    </div>
+      <div class="wiz-campo">
+        <label>Cliente (lista de prioridad)</label>
+        <div class="combo">
+          <input type="text" class="combo-input" autocomplete="off"
+                 placeholder="Escribe un nombre o una clave…"
+                 [(ngModel)]="busquedaCliente"
+                 [disabled]="cargandoClientes"
+                 (input)="onInputCliente()"
+                 (focus)="onFocusCliente()"
+                 (blur)="onBlurCliente()"
+                 (keydown)="onKeydownCliente($event)" />
+          <i class="fas combo-icono" [ngClass]="clienteElegido ? 'fa-circle-check' : 'fa-magnifying-glass'"></i>
 
-    <div class="wiz-error" *ngIf="error">{{ error }}</div>
-    <p class="wiz-cargando" *ngIf="cargando">Cargando reservas…</p>
+          <ul class="combo-list" *ngIf="mostrarLista">
+            <li *ngFor="let c of clientesFiltrados(); let i = index"
+                class="combo-opcion"
+                [class.sel]="clienteElegido?.clave === c.clave"
+                [class.activo]="indiceActivo === i"
+                (mousedown)="elegirCliente(c); $event.preventDefault()">
+              <span class="combo-nombre">{{ c.nombre }}</span>
+              <span class="combo-meta">
+                <span class="combo-clave">{{ c.clave }}</span>
+                <span class="combo-prio">P{{ c.prioridad }}</span>
+              </span>
+            </li>
+            <li class="combo-vacio" *ngIf="!clientesFiltrados().length">Sin resultados</li>
+          </ul>
+        </div>
+      </div>
 
-    <ng-container *ngIf="!cargando && claveSeleccionada">
-      <div class="wiz-tabla-scroll" *ngIf="reservas.length; else sinReservas">
+      <div class="wiz-fila">
+        <div class="wiz-campo">
+          <label>Reservar desde</label>
+          <select [(ngModel)]="mesDesde">
+            <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+          </select>
+        </div>
+        <div class="wiz-campo">
+          <label>Hasta</label>
+          <select [(ngModel)]="mesHasta">
+            <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="wiz-error" *ngIf="errorForm">{{ errorForm }}</div>
+
+      <div class="wiz-acciones">
+        <button class="btn-primary" [disabled]="calculando" (click)="calcular()">
+          {{ calculando ? 'Calculando…' : 'Ver propuesta de este cliente' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Paso 2: propuesta consolidada del cliente ── -->
+    <ng-container *ngIf="paso === 'resumen'">
+      <p class="wiz-subtitulo">
+        <b>{{ clienteElegido?.nombre }}</b> ({{ clienteElegido?.clave }}) ·
+        Ventana <b>{{ mesDesde }} – {{ mesHasta }}</b>.
+        Revisa y confirma para reservarle todo lo sugerido.
+      </p>
+
+      <div class="wiz-tabla-scroll" *ngIf="filas.length; else sinFilas">
         <table class="tabla-mini">
           <thead>
             <tr>
-              <th>SKU</th><th>Descripción</th><th>Mes</th><th>Origen</th><th>Estado</th>
-              <th class="num">Cantidad</th>
+              <th>SKU</th><th>Descripción</th><th>Mes</th>
+              <th class="num">Proyectado</th><th class="num">Ya reservado</th><th class="num">A reservar</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let r of reservas">
-              <td><span class="cli-clave">{{ r.sku }}</span></td>
-              <td class="td-nombre" [title]="r.descripcion || ''">{{ r.descripcion || '—' }}</td>
-              <td>{{ formatoMes(r.mes_objetivo) }}</td>
-              <td>
-                <span class="badge" [ngClass]="r.origen === 'REASIGNACION' ? 'badge-reasignacion' : 'badge-inicial'">
-                  {{ origenLabel(r.origen) }}
-                </span>
-              </td>
-              <td>
-                <span class="badge" [ngClass]="'badge-estado-' + r.estado.toLowerCase()">
-                  {{ estadoLabel(r.estado) }}
-                </span>
-              </td>
-              <td class="num">{{ r.cantidad_asignada }}</td>
+            <tr *ngFor="let f of filas">
+              <td><span class="cli-clave">{{ f.sku }}</span></td>
+              <td class="td-nombre" [title]="f.descripcion || ''">{{ f.descripcion || '—' }}</td>
+              <td>{{ formatoMes(f.mes) }}</td>
+              <td class="num">{{ f.proyectado }}</td>
+              <td class="num">{{ f.vigente }}</td>
+              <td class="num positivo">{{ f.sugerido }}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="5">Total reservado a este cliente</td>
-              <td class="num positivo">{{ totalReservado() }}</td>
+              <td colspan="5">Total a reservar</td>
+              <td class="num positivo">{{ totalGeneralSugerido() }}</td>
             </tr>
           </tfoot>
         </table>
       </div>
-      <ng-template #sinReservas>
-        <p class="asig-vacio">Este cliente no tiene reservas en este embarque.</p>
+      <ng-template #sinFilas>
+        <p class="asig-vacio">
+          Este cliente no tiene proyección en este embarque para la ventana {{ mesDesde }} – {{ mesHasta }}.
+        </p>
       </ng-template>
+
+      <div class="wiz-error" *ngIf="errorResumen">{{ errorResumen }}</div>
+
+      <div class="wiz-acciones">
+        <button class="btn-secundario" [disabled]="reservandoTodo" (click)="cerrarPanel()">Cerrar sin reservar</button>
+        <button class="btn-primary" [disabled]="reservandoTodo || !filas.length" (click)="reservarTodo()">
+          {{ reservandoTodo ? 'Reservando…' : 'Reservar todo a este cliente' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ── Paso 3: resultado final ── -->
+    <ng-container *ngIf="paso === 'terminado'">
+      <p class="wiz-subtitulo">Resultado de las reservas para <b>{{ clienteElegido?.nombre }}</b>:</p>
+      <ul class="wiz-resultados">
+        <li *ngFor="let r of resultados" [class.negativo]="!r.ok" [class.positivo]="r.ok">
+          <i class="fas" [ngClass]="r.ok ? 'fa-check' : 'fa-times'"></i>
+          {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+        </li>
+      </ul>
+      <div class="wiz-acciones">
+        <button class="btn-primary" (click)="cerrarPanel()">Cerrar</button>
+      </div>
     </ng-container>
   </div>
 </div>
