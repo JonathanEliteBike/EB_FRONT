@@ -97,4 +97,19 @@ describe('AsignacionesImportacionService', () => {
     req.flush([{ clave: 'LC657', nombre: 'Test', prioridad: 1 }]);
   });
 
+  it('periodosActivos() hace GET y desenvuelve data', () => {
+    service.periodosActivos().subscribe(res => expect(res).toEqual(['2026-2027']));
+
+    const req = httpMock.expectOne(`${base}/asignaciones/periodos`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ ok: true, data: ['2026-2027'] });
+  });
+
+  it('crearSiguientePeriodoActivo() hace POST y devuelve la lista actualizada', () => {
+    service.crearSiguientePeriodoActivo().subscribe(res => expect(res).toEqual(['2026-2027', '2027-2028']));
+
+    const req = httpMock.expectOne(`${base}/asignaciones/periodos/siguiente`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ ok: true, data: ['2026-2027', '2027-2028'] });
+  });
 });

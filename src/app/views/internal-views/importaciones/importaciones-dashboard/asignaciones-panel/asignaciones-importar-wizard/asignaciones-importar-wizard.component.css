@@ -60,6 +60,19 @@
 .wiz-fila { display: flex; gap: 12px; flex-wrap: wrap; }
 .wiz-fila .wiz-campo { flex: 1 1 140px; }
 
+.wiz-periodo-fila { display: flex; gap: 6px; }
+.wiz-periodo-fila select { flex: 1; min-width: 0; }
+.btn-periodo-siguiente {
+  flex-shrink: 0; width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #1a1f2e; border: 1px solid #2d3748; border-radius: 6px;
+  color: #60a5fa; cursor: pointer; font-size: 13px;
+  transition: background 150ms ease-out, border-color 150ms ease-out, transform 120ms ease-out;
+}
+.btn-periodo-siguiente:hover:not(:disabled) { background: #1e3a5f; border-color: #3b82f6; }
+.btn-periodo-siguiente:active:not(:disabled) { transform: scale(0.94); }
+.btn-periodo-siguiente:disabled { opacity: .5; cursor: not-allowed; }
+
 .import-file-label {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 10px; border: 1px dashed #3d4a5f; border-radius: 6px;

@@ -39,12 +39,11 @@ export class AsignacionesImportarWizardComponent implements OnInit {
   @Output() cambio = new EventEmitter<void>();
 
   readonly meses = MESES;
-  readonly periodos: string[] = (() => {
-    const y = new Date().getFullYear();
-    const out: string[] = [];
-    for (let i = -1; i <= 2; i++) out.push(`${y + i}-${y + i + 1}`);
-    return out;
-  })();
+  /** Lista explícita que trae el backend (no un rango calculado aquí);
+   *  crece solo cuando se decide abrir el siguiente periodo. */
+  periodos: string[] = [];
+  creandoSiguientePeriodo = false;
+  errorPeriodos = '';
 
   paso: Paso = 'form';
 
@@ -88,6 +87,35 @@ export class AsignacionesImportarWizardComponent implements OnInit {
       error: () => {
         this.errorEmbarques = 'No se pudo cargar la lista de embarques';
         this.cargandoEmbarques = false;
+      },
+    });
+    this.svc.periodosActivos().subscribe({
+      next: (data) => { this.periodos = data; },
+      error: () => { this.errorPeriodos = 'No se pudo cargar la lista de periodos'; },
+    });
+  }
+
+  /** Solo para el texto del botón/tooltip; el backend decide de verdad cuál
+   *  es el siguiente periodo al crearlo. */
+  siguientePeriodoPreview(): string {
+    if (!this.periodos.length) return '';
+    const ultimo = [...this.periodos].sort().at(-1)!;
+    const [y1, y2] = ultimo.split('-').map(Number);
+    return `${y1 + 1}-${y2 + 1}`;
+  }
+
+  crearSiguientePeriodo(): void {
+    this.creandoSiguientePeriodo = true;
+    this.errorPeriodos = '';
+    this.svc.crearSiguientePeriodoActivo().subscribe({
+      next: (data) => {
+        this.creandoSiguientePeriodo = false;
+        this.periodos = data;
+        this.periodo = data[data.length - 1];
+      },
+      error: (err) => {
+        this.creandoSiguientePeriodo = false;
+        this.errorPeriodos = err?.error?.error?.message || 'No se pudo crear el siguiente periodo';
       },
     });
   }

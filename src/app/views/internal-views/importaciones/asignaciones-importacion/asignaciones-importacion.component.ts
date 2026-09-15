@@ -30,15 +30,14 @@ export class AsignacionesImportacionComponent implements OnInit {
   cargando = true;
   error = '';
 
-  /** Periodos seleccionables (YYYY-YYYY): un año antes y dos después del actual.
-   *  El backend exige este formato para poder ubicar cada mes en un año calendario;
-   *  antes era texto libre y se llegó a guardar "MY27", que rompía el reparto por mes. */
-  readonly periodos: string[] = (() => {
-    const y = new Date().getFullYear();
-    const out: string[] = [];
-    for (let i = -1; i <= 2; i++) out.push(`${y + i}-${y + i + 1}`);
-    return out;
-  })();
+  /** Periodos disponibles para importar (YYYY-YYYY). Lista explícita que trae
+   *  el backend (no un rango calculado en el navegador): arranca con un solo
+   *  periodo vigente y solo crece cuando se decide abrir el siguiente, para
+   *  no tentar a elegir uno que todavía no toca (la misma familia de bug que
+   *  el "MY27" de texto libre). */
+  periodos: string[] = [];
+  creandoSiguientePeriodo = false;
+  errorPeriodos = '';
 
   periodoImport = '';
   archivoImport: File | null = null;
@@ -79,6 +78,39 @@ export class AsignacionesImportacionComponent implements OnInit {
       this.returnUrl = '/importaciones/dashboard' + (tab ? `?tab=${tab}` : '');
     }
     this.cargar();
+    this.cargarPeriodos();
+  }
+
+  cargarPeriodos(): void {
+    this.svc.periodosActivos().subscribe({
+      next: (data) => { this.periodos = data; },
+      error: () => { this.errorPeriodos = 'No se pudo cargar la lista de periodos'; },
+    });
+  }
+
+  /** Solo para el texto del botón/tooltip; el backend es quien decide de verdad
+   *  cuál es el siguiente periodo al crearlo. */
+  siguientePeriodoPreview(): string {
+    if (!this.periodos.length) return '';
+    const ultimo = [...this.periodos].sort().at(-1)!;
+    const [y1, y2] = ultimo.split('-').map(Number);
+    return `${y1 + 1}-${y2 + 1}`;
+  }
+
+  crearSiguientePeriodo(): void {
+    this.creandoSiguientePeriodo = true;
+    this.errorPeriodos = '';
+    this.svc.crearSiguientePeriodoActivo().subscribe({
+      next: (data) => {
+        this.creandoSiguientePeriodo = false;
+        this.periodos = data;
+        this.periodoImport = data[data.length - 1];
+      },
+      error: (err) => {
+        this.creandoSiguientePeriodo = false;
+        this.errorPeriodos = err?.error?.error?.message || 'No se pudo crear el siguiente periodo';
+      },
+    });
   }
 
   cargar(): void {

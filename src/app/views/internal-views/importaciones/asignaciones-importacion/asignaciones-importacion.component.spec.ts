@@ -30,8 +30,11 @@ describe('AsignacionesImportacionComponent', () => {
   };
 
   beforeEach(async () => {
-    svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', ['resumen', 'importarProductos']);
+    svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', [
+      'resumen', 'importarProductos', 'periodosActivos', 'crearSiguientePeriodoActivo',
+    ]);
     svcSpy.resumen.and.returnValue(of(resumenMock));
+    svcSpy.periodosActivos.and.returnValue(of(['2026-2027']));
 
     await TestBed.configureTestingModule({
       imports: [AsignacionesImportacionComponent, HttpClientTestingModule],
@@ -171,5 +174,23 @@ describe('AsignacionesImportacionComponent', () => {
     expect(component.reservasClienteAbierto).toBeTrue();
     component.cerrarReservasCliente();
     expect(component.reservasClienteAbierto).toBeFalse();
+  });
+
+  it('carga los periodos activos al iniciar', () => {
+    expect(svcSpy.periodosActivos).toHaveBeenCalled();
+    expect(component.periodos).toEqual(['2026-2027']);
+  });
+
+  it('siguientePeriodoPreview() calcula el periodo cronológicamente siguiente al más reciente', () => {
+    component.periodos = ['2025-2026', '2026-2027'];
+    expect(component.siguientePeriodoPreview()).toBe('2027-2028');
+  });
+
+  it('crearSiguientePeriodo() actualiza la lista y preselecciona el nuevo periodo', () => {
+    svcSpy.crearSiguientePeriodoActivo.and.returnValue(of(['2026-2027', '2027-2028']));
+    component.crearSiguientePeriodo();
+    expect(component.periodos).toEqual(['2026-2027', '2027-2028']);
+    expect(component.periodoImport).toBe('2027-2028');
+    expect(component.creandoSiguientePeriodo).toBeFalse();
   });
 });

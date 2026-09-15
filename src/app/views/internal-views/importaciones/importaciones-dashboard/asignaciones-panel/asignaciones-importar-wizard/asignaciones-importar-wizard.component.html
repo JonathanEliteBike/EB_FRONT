@@ -23,10 +23,18 @@
       <div class="wiz-fila">
         <div class="wiz-campo">
           <label>2. Periodo</label>
-          <select [(ngModel)]="periodo">
-            <option value="" disabled>Periodo…</option>
-            <option *ngFor="let p of periodos" [value]="p">{{ p }}</option>
-          </select>
+          <div class="wiz-periodo-fila">
+            <select [(ngModel)]="periodo">
+              <option value="" disabled>Periodo…</option>
+              <option *ngFor="let p of periodos" [value]="p">{{ p }}</option>
+            </select>
+            <button type="button" class="btn-periodo-siguiente"
+                    [disabled]="creandoSiguientePeriodo || !periodos.length"
+                    [title]="'Abrir el siguiente periodo (' + siguientePeriodoPreview() + ')'"
+                    (click)="crearSiguientePeriodo()">
+              <i class="fas" [ngClass]="creandoSiguientePeriodo ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+            </button>
+          </div>
         </div>
         <div class="wiz-campo">
           <label>3. Reservar desde</label>
@@ -56,6 +64,7 @@
       </div>
 
       <div class="wiz-error" *ngIf="errorForm">{{ errorForm }}</div>
+      <div class="wiz-error" *ngIf="errorPeriodos">{{ errorPeriodos }}</div>
 
       <div class="wiz-acciones">
         <button class="btn-primary" [disabled]="procesando" (click)="importarYCalcular()">

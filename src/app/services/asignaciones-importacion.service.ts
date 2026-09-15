@@ -400,4 +400,19 @@ export class AsignacionesImportacionService {
   prioridadClientes(): Observable<ClientePrioridad[]> {
     return this.http.get<ClientePrioridad[]>(`${environment.apiUrl}/clientes/prioridad`);
   }
+
+  /** Periodos disponibles para elegir al dar de alta/importar productos. Lista
+   *  explícita (no un rango calculado): crece solo cuando alguien decide abrir
+   *  el siguiente periodo con crearSiguientePeriodoActivo(). */
+  periodosActivos(): Observable<string[]> {
+    return this.http
+      .get<ApiOk<string[]>>(`${this.base}/asignaciones/periodos`)
+      .pipe(map(r => r.data));
+  }
+
+  crearSiguientePeriodoActivo(): Observable<string[]> {
+    return this.http
+      .post<ApiOk<string[]>>(`${this.base}/asignaciones/periodos/siguiente`, {})
+      .pipe(map(r => r.data));
+  }
 }

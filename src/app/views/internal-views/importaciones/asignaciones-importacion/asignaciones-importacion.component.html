@@ -57,6 +57,11 @@
           <option value="" disabled selected>Periodo…</option>
           <option *ngFor="let p of periodos" [value]="p">{{ p }}</option>
         </select>
+        <button type="button" class="btn-periodo-siguiente" [disabled]="creandoSiguientePeriodo || !periodos.length"
+                [title]="'Abrir el siguiente periodo (' + siguientePeriodoPreview() + ')'"
+                (click)="crearSiguientePeriodo()">
+          <i class="fas" [ngClass]="creandoSiguientePeriodo ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+        </button>
         <label class="import-file-label">
           <input type="file" accept=".xlsx,.xls" (change)="onArchivoSeleccionado($event)" />
           <span>{{ archivoNombre || 'Elegir archivo Excel…' }}</span>
@@ -71,6 +76,7 @@
         (opcional) <b>Descripción</b>. Los SKU que ya existan en el embarque se actualizan; los nuevos se agregan.
       </p>
       <div class="form-error" *ngIf="errorImport">{{ errorImport }}</div>
+      <div class="form-error" *ngIf="errorPeriodos">{{ errorPeriodos }}</div>
 
       <div class="import-resultado" *ngIf="resultadoImport">
         <p class="import-resumen">
