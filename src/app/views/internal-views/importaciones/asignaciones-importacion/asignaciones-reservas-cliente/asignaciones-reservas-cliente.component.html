@@ -80,6 +80,15 @@
         Revisa y confirma para reservarle todo lo sugerido.
       </p>
 
+      <div class="wiz-filtro-mes" *ngIf="mesesDisponibles().length > 1">
+        <label>Filtrar por mes</label>
+        <select [(ngModel)]="filtroMes">
+          <option value="">Todos los meses</option>
+          <option *ngFor="let m of mesesDisponibles()" [value]="m">{{ formatoMes(m) }}</option>
+        </select>
+        <span class="wiz-filtro-nota" *ngIf="filtroMes">"Reservar todo" sigue incluyendo todos los meses, no solo el filtrado</span>
+      </div>
+
       <div class="wiz-tabla-scroll" *ngIf="filas.length; else sinFilas">
         <table class="tabla-mini">
           <thead>
@@ -89,7 +98,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let f of filas">
+            <tr *ngFor="let f of filasFiltradas()">
               <td><span class="cli-clave">{{ f.sku }}</span></td>
               <td class="td-nombre" [title]="f.descripcion || ''">{{ f.descripcion || '—' }}</td>
               <td>{{ formatoMes(f.mes) }}</td>

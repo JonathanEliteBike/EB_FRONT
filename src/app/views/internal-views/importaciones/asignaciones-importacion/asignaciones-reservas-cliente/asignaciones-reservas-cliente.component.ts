@@ -80,6 +80,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
 
   // ── Resultado ──
   filas: FilaCliente[] = [];
+  filtroMes = '';
   errorResumen = '';
   reservandoTodo = false;
   resultados: ResultadoReserva[] = [];
@@ -188,6 +189,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
           }
         }
         this.filas = filas;
+        this.filtroMes = '';
         this.paso = 'resumen';
       },
       error: (err) => {
@@ -195,6 +197,24 @@ export class AsignacionesReservasClienteComponent implements OnInit {
         this.errorForm = err?.error?.error?.message || 'No se pudo calcular la propuesta';
       },
     });
+  }
+
+  /** Meses presentes en el resultado, en el orden en que aparecen (cronológico,
+   *  ya que vienen de la ventana elegida). Para el filtro de la tabla. */
+  mesesDisponibles(): string[] {
+    const vistos = new Set<string>();
+    const orden: string[] = [];
+    for (const f of this.filas) {
+      if (!vistos.has(f.mes)) { vistos.add(f.mes); orden.push(f.mes); }
+    }
+    return orden;
+  }
+
+  /** Solo afecta la vista: "Reservar todo" sigue operando sobre todos los
+   *  meses calculados, no solo el mes filtrado. */
+  filasFiltradas(): FilaCliente[] {
+    if (!this.filtroMes) return this.filas;
+    return this.filas.filter((f) => f.mes === this.filtroMes);
   }
 
   formatoMes(ym: string | null | undefined): string {

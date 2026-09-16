@@ -149,6 +149,19 @@
   padding: 12px 10px; font-size: 12px; color: #94a3b8; text-align: center; cursor: default;
 }
 
+/* ── Filtro por mes ── */
+.wiz-filtro-mes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.wiz-filtro-mes label {
+  font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; font-weight: 600;
+}
+.wiz-filtro-mes select {
+  padding: 7px 10px; border: 1px solid #2d3748; border-radius: 6px;
+  background: #0f1623; color: #e2e8f0; font: inherit; cursor: pointer;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+.wiz-filtro-mes select:focus { outline: none; border-color: #3b82f6; box-shadow: var(--focus-ring); }
+.wiz-filtro-nota { font-size: 11px; color: #fbbf24; }
+
 /* ── Tabla resumen ── */
 .wiz-tabla-scroll { overflow-x: auto; border: 1px solid #2d3748; border-radius: 10px; }
 .tabla-mini { width: 100%; border-collapse: collapse; }

@@ -125,6 +125,25 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.totalGeneralSugerido()).toBe(7);
   });
 
+  it('mesesDisponibles() devuelve los meses únicos en el orden en que aparecen', () => {
+    component.filas = [
+      { producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+      { producto_id: 3, sku: 'C', descripcion: null, mes: '2026-10', proyectado: 1, vigente: 0, sugerido: 1 },
+    ];
+    expect(component.mesesDisponibles()).toEqual(['2026-10', '2026-11']);
+  });
+
+  it('filasFiltradas() sin filtro devuelve todas las filas; con filtro solo el mes elegido', () => {
+    component.filas = [
+      { producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+    ];
+    expect(component.filasFiltradas().length).toBe(2);
+    component.filtroMes = '2026-11';
+    expect(component.filasFiltradas().map((f) => f.sku)).toEqual(['B']);
+  });
+
   it('reservarTodo() agrupa las filas por producto y llama a reservar() una vez por SKU', () => {
     svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0 }));
     component.elegirCliente(clientes[1]); // LC657
