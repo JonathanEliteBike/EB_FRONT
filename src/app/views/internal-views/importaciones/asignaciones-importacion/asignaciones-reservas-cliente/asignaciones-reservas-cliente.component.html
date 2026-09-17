@@ -19,7 +19,18 @@
       <div class="wiz-error" *ngIf="errorClientes">{{ errorClientes }}</div>
 
       <div class="wiz-campo">
-        <label>Clientes (lista de prioridad)</label>
+        <div class="wiz-campo-header">
+          <label>Clientes (lista de prioridad)</label>
+          <div class="wiz-campo-acciones">
+            <button type="button" class="link-accion" (click)="agregarTodosFiltrados()"
+                    [disabled]="cargandoClientes || !clientesFiltrados().length">
+              Seleccionar {{ busquedaCliente.trim() ? 'todos los filtrados' : 'todos' }}
+            </button>
+            <button type="button" class="link-accion" *ngIf="clientesElegidos.length" (click)="quitarTodosClientes()">
+              Quitar todos
+            </button>
+          </div>
+        </div>
 
         <div class="chips" *ngIf="clientesElegidos.length">
           <span class="chip" *ngFor="let c of clientesElegidos">
@@ -42,6 +53,13 @@
           <i class="fas combo-icono" [ngClass]="clientesElegidos.length ? 'fa-circle-check' : 'fa-magnifying-glass'"></i>
 
           <ul class="combo-list" *ngIf="mostrarLista">
+            <li class="combo-opcion combo-opcion-todos" *ngIf="clientesFiltrados().length > 1"
+                (mousedown)="agregarTodosFiltrados(); $event.preventDefault()">
+              <span class="combo-nombre">
+                <i class="fas fa-check-double"></i>
+                Seleccionar {{ busquedaCliente.trim() ? 'los ' + clientesFiltrados().length + ' filtrados' : 'todos (' + clientesFiltrados().length + ')' }}
+              </span>
+            </li>
             <li *ngFor="let c of clientesFiltrados(); let i = index"
                 class="combo-opcion"
                 [class.activo]="indiceActivo === i"

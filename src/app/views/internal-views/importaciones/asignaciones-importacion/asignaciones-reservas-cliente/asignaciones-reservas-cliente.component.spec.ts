@@ -90,6 +90,33 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.clientesElegidos).toEqual([clienteMC677]);
   });
 
+  it('agregarTodosFiltrados() agrega de un tiro todos los que calzan con la búsqueda', () => {
+    component.busquedaCliente = 'scjm';
+    component.agregarTodosFiltrados();
+    expect(component.clientesElegidos).toEqual([clienteMC677]);
+    expect(component.busquedaCliente).toBe('');
+    expect(component.mostrarLista).toBeFalse();
+  });
+
+  it('agregarTodosFiltrados() sin búsqueda agrega absolutamente todos', () => {
+    component.agregarTodosFiltrados();
+    expect(component.clientesElegidos.map((c) => c.clave).sort()).toEqual(['LC657', 'MC677']);
+  });
+
+  it('agregarTodosFiltrados() no hace nada si ya no queda ningún candidato', () => {
+    component.elegirCliente(clienteLC657);
+    component.elegirCliente(clienteMC677);
+    component.agregarTodosFiltrados();
+    expect(component.clientesElegidos).toEqual([clienteLC657, clienteMC677]);
+  });
+
+  it('quitarTodosClientes() vacía toda la selección', () => {
+    component.elegirCliente(clienteLC657);
+    component.elegirCliente(clienteMC677);
+    component.quitarTodosClientes();
+    expect(component.clientesElegidos).toEqual([]);
+  });
+
   it('onKeydownCliente() navega con flechas, selecciona con Enter y quita con Backspace vacío', () => {
     component.busquedaCliente = '';
     component.mostrarLista = true;

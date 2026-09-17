@@ -166,6 +166,26 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     this.filas = [];
   }
 
+  /** Agrega de un tiro todos los clientes que calzan con la búsqueda actual
+   *  (o todos, si el buscador está vacío) en vez de uno por uno. */
+  agregarTodosFiltrados(): void {
+    const disponibles = this.clientesFiltrados();
+    if (!disponibles.length) return;
+    this.clientesElegidos = [...this.clientesElegidos, ...disponibles];
+    this.busquedaCliente = '';
+    this.mostrarLista = false;
+    this.indiceActivo = -1;
+    this.errorForm = '';
+    this.paso = 'form';
+    this.filas = [];
+  }
+
+  quitarTodosClientes(): void {
+    this.clientesElegidos = [];
+    this.paso = 'form';
+    this.filas = [];
+  }
+
   // ── Cálculo de la propuesta para los clientes elegidos ──────────────────
 
   calcular(): void {
