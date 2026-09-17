@@ -40,10 +40,19 @@ export class AsignacionesReservasDetalleComponent implements OnInit {
   filtroEstado: EstadoReserva | '' = '';
   filtroTexto = '';
 
+  /** clave -> nombre, para mostrar el cliente identificable y no solo la clave. */
+  private nombresPorClave = new Map<string, string>();
+
   constructor(private svc: AsignacionesImportacionService) {}
 
   ngOnInit(): void {
     this.filtroEstado = this.estadoInicial || '';
+    this.svc.prioridadClientes().subscribe({
+      next: (data) => {
+        this.nombresPorClave = new Map(data.map((c) => [c.clave, c.nombre]));
+      },
+      error: () => { /* si falla, se sigue mostrando solo la clave */ },
+    });
     this.svc.reservasEmbarque(this.importacionId).subscribe({
       next: (data) => { this.reservas = data; this.cargando = false; },
       error: (err) => {
@@ -53,12 +62,17 @@ export class AsignacionesReservasDetalleComponent implements OnInit {
     });
   }
 
+  nombreCliente(clave: string): string {
+    return this.nombresPorClave.get(clave) || '';
+  }
+
   reservasFiltradas(): ReservaEmbarque[] {
     const q = this.filtroTexto.trim().toLowerCase();
     return this.reservas
       .filter((r) => !this.filtroEstado || r.estado === this.filtroEstado)
       .filter((r) => !q
         || r.clave_cliente.toLowerCase().includes(q)
+        || this.nombreCliente(r.clave_cliente).toLowerCase().includes(q)
         || r.sku.toLowerCase().includes(q)
         || (r.descripcion || '').toLowerCase().includes(q)
         || (r.odoo_order_name || '').toLowerCase().includes(q));

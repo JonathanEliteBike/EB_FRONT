@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AsignacionesReservasDetalleComponent } from './asignaciones-reservas-detalle.component';
 import {
-  AsignacionesImportacionService, ReservaEmbarque,
+  AsignacionesImportacionService, ClientePrioridad, ReservaEmbarque,
 } from '../../../../../services/asignaciones-importacion.service';
 
 describe('AsignacionesReservasDetalleComponent', () => {
@@ -25,9 +25,15 @@ describe('AsignacionesReservasDetalleComponent', () => {
     },
   ];
 
+  const clientes: ClientePrioridad[] = [
+    { clave: 'LC657', nombre: 'Víctor Hugo Villanueva Guzman', prioridad: 1 },
+    { clave: 'MC677', nombre: 'BICICLETAS SCJM', prioridad: 2 },
+  ];
+
   beforeEach(async () => {
-    svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', ['reservasEmbarque']);
+    svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', ['reservasEmbarque', 'prioridadClientes']);
     svcSpy.reservasEmbarque.and.returnValue(of(reservas));
+    svcSpy.prioridadClientes.and.returnValue(of(clientes));
 
     await TestBed.configureTestingModule({
       imports: [AsignacionesReservasDetalleComponent],
@@ -67,6 +73,16 @@ describe('AsignacionesReservasDetalleComponent', () => {
     component.filtroTexto = 's00042';
     expect(component.reservasFiltradas().map((r) => r.id)).toEqual([1]);
     component.filtroTexto = 'mc677';
+    expect(component.reservasFiltradas().map((r) => r.id)).toEqual([2]);
+  });
+
+  it('nombreCliente() resuelve el nombre a partir de la lista de prioridad', () => {
+    expect(component.nombreCliente('LC657')).toBe('Víctor Hugo Villanueva Guzman');
+    expect(component.nombreCliente('DESCONOCIDO')).toBe('');
+  });
+
+  it('reservasFiltradas() también busca por el nombre del cliente, no solo la clave', () => {
+    component.filtroTexto = 'scjm';
     expect(component.reservasFiltradas().map((r) => r.id)).toEqual([2]);
   });
 

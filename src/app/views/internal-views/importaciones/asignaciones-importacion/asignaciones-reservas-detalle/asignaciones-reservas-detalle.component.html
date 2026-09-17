@@ -44,7 +44,10 @@
           </thead>
           <tbody>
             <tr *ngFor="let r of reservasFiltradas()">
-              <td class="cli-clave">{{ r.clave_cliente }}</td>
+              <td class="td-cliente" [title]="nombreCliente(r.clave_cliente)">
+                <span class="cli-nombre">{{ nombreCliente(r.clave_cliente) || '—' }}</span>
+                <span class="cli-clave">({{ r.clave_cliente }})</span>
+              </td>
               <td><span class="cli-clave">{{ r.sku }}</span></td>
               <td class="td-nombre" [title]="r.descripcion || ''">{{ r.descripcion || '—' }}</td>
               <td>{{ formatoMes(r.mes_objetivo) }}</td>
