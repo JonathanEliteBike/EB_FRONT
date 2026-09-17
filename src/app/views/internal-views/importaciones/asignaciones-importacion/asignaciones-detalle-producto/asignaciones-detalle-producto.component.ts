@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -42,7 +42,7 @@ const MESES: { valor: string; label: string }[] = [
   templateUrl: './asignaciones-detalle-producto.component.html',
   styleUrl: './asignaciones-detalle-producto.component.css',
 })
-export class AsignacionesDetalleProductoComponent implements OnChanges {
+export class AsignacionesDetalleProductoComponent implements OnChanges, OnInit {
   @Input() importacionId!: number;
   @Input() producto!: AsignacionesProducto;
   @Output() cerrar = new EventEmitter<void>();
@@ -82,7 +82,21 @@ export class AsignacionesDetalleProductoComponent implements OnChanges {
   cargandoMovimientos = false;
   errorMovimientos = '';
 
+  /** clave -> nombre, para mostrar el cliente identificable en la pestaña de reservas. */
+  private nombresPorClave = new Map<string, string>();
+
   constructor(private svc: AsignacionesImportacionService) {}
+
+  ngOnInit(): void {
+    this.svc.prioridadClientes().subscribe({
+      next: (data) => { this.nombresPorClave = new Map(data.map((c) => [c.clave, c.nombre])); },
+      error: () => { /* si falla, se sigue mostrando solo la clave */ },
+    });
+  }
+
+  nombreCliente(clave: string): string {
+    return this.nombresPorClave.get(clave) || '';
+  }
 
   ngOnChanges(): void {
     this.tab = 'proyecciones';

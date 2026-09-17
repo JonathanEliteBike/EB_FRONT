@@ -123,7 +123,9 @@
           <tbody>
             <tr *ngFor="let r of detalle!.reservas"
                 [class.fila-cerrada]="r.estado === 'CANCELADA' || r.estado === 'RECHAZADA'">
-              <td><span class="cli-clave">{{ r.clave_cliente }}</span></td>
+              <td class="td-nombre" [title]="nombreCliente(r.clave_cliente)">
+                <span class="cli-clave">{{ r.clave_cliente }}</span> {{ nombreCliente(r.clave_cliente) || '—' }}
+              </td>
               <td>{{ r.mes_objetivo || '—' }}</td>
               <td>
                 <span class="badge" [ngClass]="r.origen === 'REASIGNACION' ? 'badge-reasignacion' : 'badge-inicial'">

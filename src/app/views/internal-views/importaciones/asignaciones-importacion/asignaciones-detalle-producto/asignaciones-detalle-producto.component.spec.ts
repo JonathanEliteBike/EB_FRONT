@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto.component';
 import {
-  AsignacionesImportacionService, DetalleProducto, AsignacionesProducto, PropuestaProducto,
+  AsignacionesImportacionService, ClientePrioridad, DetalleProducto, AsignacionesProducto, PropuestaProducto,
 } from '../../../../../services/asignaciones-importacion.service';
 
 describe('AsignacionesDetalleProductoComponent', () => {
@@ -35,11 +35,17 @@ describe('AsignacionesDetalleProductoComponent', () => {
     }],
   };
 
+  const clientes: ClientePrioridad[] = [
+    { clave: 'LC657', nombre: 'Víctor Hugo Villanueva Guzman', prioridad: 1 },
+  ];
+
   beforeEach(async () => {
     svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', [
       'detalleProducto', 'recalcular', 'proponerReasignacion', 'reservar', 'confirmarReasignacion',
       'resolverReserva', 'cancelarAsignacion', 'ventaSobrante', 'validarOdoo', 'cancelarVenta', 'movimientos',
+      'prioridadClientes',
     ]);
+    svcSpy.prioridadClientes.and.returnValue(of(clientes));
     svcSpy.detalleProducto.and.returnValue(of(detalleMock));
     svcSpy.recalcular.and.returnValue(of([propMock]));
     svcSpy.proponerReasignacion.and.returnValue(of([{ ...propMock, origen: 'REASIGNACION' }]));
@@ -66,6 +72,12 @@ describe('AsignacionesDetalleProductoComponent', () => {
   it('carga el detalle al recibir el producto', () => {
     expect(svcSpy.detalleProducto).toHaveBeenCalledWith(1, 10);
     expect(component.detalle).toEqual(detalleMock);
+  });
+
+  it('nombreCliente() resuelve el nombre a partir de la lista de prioridad', () => {
+    expect(svcSpy.prioridadClientes).toHaveBeenCalled();
+    expect(component.nombreCliente('LC657')).toBe('Víctor Hugo Villanueva Guzman');
+    expect(component.nombreCliente('DESCONOCIDO')).toBe('');
   });
 
   it('recalcular() aplana la propuesta en filas por (cliente, mes) con sugerido como cantidad', () => {
