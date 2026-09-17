@@ -77,6 +77,10 @@ export class CreacionUsuariosComponent implements OnInit {
   private estadosAmbitosIniciales = new Map<string, boolean>();
   private cargaPermisosId = 0;
 
+  private esModuloVisibleEnGestion(identificador: string): boolean {
+    return identificador !== 'usuarios_caratula_retroactivos';
+  }
+
   cambiarOcultamientoGlobal(seleccionado: boolean): void {
     this.ocultarMontosGlobal = seleccionado;
     if (!seleccionado) {
@@ -349,7 +353,8 @@ export class CreacionUsuariosComponent implements OnInit {
     const asignadosHijo = respuesta.permisosAntiguosHijo.permisos || [];
     const modMap = new Map<number, ModuloNodo>();
     this.estadoInicial.clear();
-    const modulosDelegables = respuesta.modulosDelegables.modulos || [];
+    const modulosDelegables = (respuesta.modulosDelegables.modulos || [])
+      .filter((modulo: any) => this.esModuloVisibleEnGestion(modulo.identificador));
     const idsDeModulosNuevos = new Set<number>(
       modulosDelegables.map((modulo: any) => modulo.modulo_id)
     );
@@ -357,7 +362,8 @@ export class CreacionUsuariosComponent implements OnInit {
     // La matriz heredada queda sólo para módulos aún no migrados al acceso por módulo.
     (respuesta.delegablesAntiguos.permisos_delegables || [])
       .filter((item: any) => {
-        return !idsDeModulosNuevos.has(item.modulo_id);
+        return this.esModuloVisibleEnGestion(item.identificador || '') &&
+          !idsDeModulosNuevos.has(item.modulo_id);
       })
       .forEach((item: any) => {
         const moduloId = item.modulo_id;
@@ -413,13 +419,42 @@ export class CreacionUsuariosComponent implements OnInit {
       this.ambitosMontos.map(ambito => [ambito.identificador, !!ambito.ocultar_montos])
     );
     this.treePermisos = Array.from(modMap.values());
+    this.treePermisos
+      .filter(modulo => modulo.esAccesoModulo && modulo.padre_id && !this.puedeModificarModulo(modulo))
+      .forEach(modulo => this.cambiarAsignacionModulo(modulo, false));
     this.cargandoPermisos = false;
   }
 
   puedeModificarModulo(modulo: ModuloNodo): boolean {
     if (!modulo.esAccesoModulo || !modulo.padre_id) return true;
     const padre = this.treePermisos.find(item => item.modulo_id === modulo.padre_id);
-    return !padre?.esAccesoModulo || !!padre.asignado;
+    return !!padre?.esAccesoModulo && !!padre.asignado;
+  }
+
+  cambiarAsignacionModulo(modulo: ModuloNodo, asignado: boolean): void {
+    modulo.asignado = asignado;
+    if (!asignado) {
+      this.desmarcarDescendientes(modulo.modulo_id);
+    }
+  }
+
+  private desmarcarDescendientes(padreId: number): void {
+    this.getSubmodulos(padreId).forEach(hijo => {
+      hijo.asignado = false;
+      this.desmarcarDescendientes(hijo.modulo_id);
+    });
+  }
+
+  private obtenerNivelModulo(modulo: ModuloNodo): number {
+    let nivel = 0;
+    let padreId = modulo.padre_id;
+    const visitados = new Set<number>();
+    while (padreId && !visitados.has(padreId)) {
+      visitados.add(padreId);
+      nivel += 1;
+      padreId = this.treePermisos.find(item => item.modulo_id === padreId)?.padre_id;
+    }
+    return nivel;
   }
 
   guardarPermisos(): void {
@@ -436,7 +471,9 @@ export class CreacionUsuariosComponent implements OnInit {
             peticion: m.asignado
               ? this.adminService.asignarModuloHijo(this.hijoSeleccionado!.id, m.modulo_id)
               : this.adminService.revocarModuloHijo(this.hijoSeleccionado!.id, m.modulo_id),
-            prioridad: 0
+            prioridad: m.asignado
+              ? this.obtenerNivelModulo(m)
+              : 100 - this.obtenerNivelModulo(m)
           });
         }
         return;

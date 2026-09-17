@@ -11,7 +11,26 @@
     </div>
   </header>
 
-  <main class="bento" [class.bento--con-equipo]="authService.getRol() === 2">
+  <section *ngIf="(authService.accesosCargados$ | async) === false" class="dashboard-status" aria-live="polite">
+    <div class="dashboard-status__icon dashboard-status__icon--loading" aria-hidden="true">
+      <i class="fas fa-circle-notch fa-spin"></i>
+    </div>
+    <p>Cargando tus accesos...</p>
+  </section>
+
+  <section *ngIf="(authService.accesosCargados$ | async) && mostrarEstadoSinAccesos"
+    class="dashboard-status dashboard-status--empty" aria-live="polite">
+    <div class="dashboard-status__icon" aria-hidden="true">
+      <i class="fas fa-layer-group"></i>
+    </div>
+    <div>
+      <h2>No tienes accesos disponibles</h2>
+      <p>Tu cuenta no tiene módulos habilitados actualmente. Contacta a tu administrador para solicitar acceso.</p>
+    </div>
+  </section>
+
+  <main *ngIf="(authService.accesosCargados$ | async) && !mostrarEstadoSinAccesos"
+    class="bento" [class.bento--con-equipo]="authService.getRol() === 2">
 
     <!-- 00. Gestión de Equipo (Exclusivo para Admin Cliente - Rol 2) -->
     <a *ngIf="authService.getRol() === 2" 

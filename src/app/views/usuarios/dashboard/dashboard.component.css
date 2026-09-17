@@ -55,6 +55,61 @@
   color: #EB5E28;
 }
 
+.dashboard-status {
+  width: min(100%, 760px);
+  min-height: 220px;
+  margin: 32px auto auto;
+  padding: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  text-align: left;
+  color: rgba(204, 197, 185, 0.72);
+}
+
+.dashboard-status--empty {
+  background: linear-gradient(145deg, rgba(20, 18, 16, 0.96), rgba(12, 12, 12, 0.98));
+  border: 1px solid rgba(235, 94, 40, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.dashboard-status__icon {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #EB5E28;
+  background: rgba(235, 94, 40, 0.1);
+  border: 1px solid rgba(235, 94, 40, 0.2);
+  font-size: 1.3rem;
+}
+
+.dashboard-status__icon--loading {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  background: transparent;
+  border: 0;
+}
+
+.dashboard-status h2 {
+  margin: 0 0 10px;
+  color: #FFFCF2;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  line-height: 1.2;
+}
+
+.dashboard-status p {
+  max-width: 560px;
+  margin: 0;
+  line-height: 1.65;
+}
+
 /* ══════════════════════════════════════════
    BENTO GRID REJILLA DINÁMICA AUTOMÁTICA
 ══════════════════════════════════════════ */
@@ -313,6 +368,12 @@
   .dash-page { padding: 16px 12px 32px; }
   .bento { gap: 10px; }
   .bento-card { min-height: 180px; }
+  .dashboard-status {
+    margin-top: 16px;
+    padding: 30px 22px;
+    flex-direction: column;
+    text-align: center;
+  }
   .card-content.horizontal { flex-direction: column; align-items: flex-start; gap: 14px; }
   .card-content.horizontal .card-icon-wrap { width: 48px; height: 48px; font-size: 1.2rem; }
   .greeting-title { font-size: 1.4rem; }

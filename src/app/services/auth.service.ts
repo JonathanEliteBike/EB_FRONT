@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, BehaviorSubject, of, forkJoin } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { tap, catchError, map, finalize } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { jwtDecode } from 'jwt-decode';
 
@@ -31,6 +31,8 @@ export class AuthService {
   // Infraestructura nueva: no sustituye aún la matriz temporal por acción.
   private modulosPermitidos = new Set<string>();
   private capacidadesPermitidas = new Set<string>();
+  private accesosCargadosSubject = new BehaviorSubject<boolean>(false);
+  public readonly accesosCargados$ = this.accesosCargadosSubject.asObservable();
   private ocultarMontosGlobal = true;
   private ambitosMontosOcultos = new Set<string>();
 
@@ -40,7 +42,7 @@ export class AuthService {
 
     if (this.isLoggedIn()) {
       this.obtenerPermisosEnVivo().subscribe();
-      this.obtenerAccesosEnVivo().subscribe();
+      this.obtenerAccesosEnVivo(true).subscribe();
       this.obtenerPoliticaMontosEnVivo().subscribe();
     }
   }
@@ -97,12 +99,16 @@ export class AuthService {
   }
 
   /** Carga la base nueva módulo/capacidad sin alterar permisos por acción. */
-  obtenerAccesosEnVivo(): Observable<{ modulos: Set<string>, capacidades: Set<string> }> {
+  obtenerAccesosEnVivo(mostrarCargaInicial = false): Observable<{ modulos: Set<string>, capacidades: Set<string> }> {
     const rol = this.getRol();
+    if (mostrarCargaInicial) {
+      this.accesosCargadosSubject.next(false);
+    }
     if (rol === 1) {
       this.modulosPermitidos = new Set(['*']);
       this.capacidadesPermitidas = new Set(['*']);
       this.guardarAccesosLocales();
+      this.accesosCargadosSubject.next(true);
       return of({ modulos: this.modulosPermitidos, capacidades: this.capacidadesPermitidas });
     }
 
@@ -115,6 +121,7 @@ export class AuthService {
       modulosUrl = `${this.apiUrl}/api/permisos/mis-modulos`;
       capacidadesUrl = `${this.apiUrl}/api/permisos/mis-capacidades`;
     } else {
+      this.accesosCargadosSubject.next(true);
       return of({ modulos: this.modulosPermitidos, capacidades: this.capacidadesPermitidas });
     }
 
@@ -148,7 +155,8 @@ export class AuthService {
       catchError(err => {
         console.warn('Error al obtener accesos por módulo/capacidad:', err);
         return of({ modulos: this.modulosPermitidos, capacidades: this.capacidadesPermitidas });
-      })
+      }),
+      finalize(() => this.accesosCargadosSubject.next(true))
     );
   }
 
@@ -328,6 +336,10 @@ export class AuthService {
     return !!normalizado && this.modulosPermitidos.has(normalizado);
   }
 
+  tieneModulosEfectivos(): boolean {
+    return this.modulosPermitidos.size > 0;
+  }
+
   /** Comprueba capacidades globales; una capacidad no da acceso a módulos. */
   tieneCapacidad(capacidad: string): boolean {
     // "Mostrar montos" y demás capacidades son propias del distribuidor.
@@ -444,7 +456,7 @@ export class AuthService {
           this.setToken(response.token);
           this.authState.next(true);
           this.obtenerPermisosEnVivo().subscribe();
-          this.obtenerAccesosEnVivo().subscribe();
+          this.obtenerAccesosEnVivo(true).subscribe();
           this.obtenerPoliticaMontosEnVivo().subscribe();
         }
       })

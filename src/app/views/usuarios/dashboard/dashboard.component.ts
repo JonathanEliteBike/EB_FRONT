@@ -14,6 +14,10 @@ import { AuthService } from '../../../services/auth.service';
 export class DashboardComponent {
   public readonly authService = inject(AuthService);
 
+  get mostrarEstadoSinAccesos(): boolean {
+    return this.authService.getRol() === 3 && !this.authService.tieneModulosEfectivos();
+  }
+
   get tieneRetroactivos(): boolean {
     return this.authService.tieneModulo('usuarios_retroactivos');
   }
