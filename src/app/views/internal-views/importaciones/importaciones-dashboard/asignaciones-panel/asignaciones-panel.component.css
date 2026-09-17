@@ -54,16 +54,29 @@
 .ap-cargando { color: #94a3b8; text-align: center; padding: 32px; }
 .ap-vacio { color: #94a3b8; text-align: center; padding: 40px; font-size: 13px; }
 
-/* ── Tabla ── */
-.ap-tabla-scroll { overflow-x: auto; border: 1px solid #2d3748; border-radius: 10px; }
-.ap-tabla { width: 100%; border-collapse: collapse; background: #12161f; font-size: 13px; }
+/* ── Tabla ──
+   table-layout:fixed + colgroup reparten el ancho a proposito (columnas
+   angostas para SKU/numeros, mas espacio para descripcion) en vez de dejar
+   que cada columna crezca con su contenido, que es lo que forzaba el scroll
+   horizontal constante. El wrapper con overflow-x:auto queda solo como red
+   de seguridad en pantallas muy angostas. */
+.ap-tabla-scroll { overflow-x: auto; border: 1px solid #2d3748; border-radius: 10px; max-height: 70vh; overflow-y: auto; }
+.ap-tabla { width: 100%; table-layout: fixed; border-collapse: collapse; background: #12161f; font-size: 13px; }
+
+.ap-col-ref { width: 11%; } .ap-col-nombre { width: 29%; } .ap-col-estado { width: 10%; }
+.ap-col-sku { width: 13%; } .ap-col-desc { width: 25%; } .ap-col-ref-sm { width: 10%; } .ap-col-periodo { width: 8%; }
+.ap-col-num { width: 8%; } .ap-col-chevron { width: 3%; }
+
+.ap-tabla thead { position: sticky; top: 0; z-index: 5; }
 .ap-tabla th {
   text-align: left; padding: 10px 12px;
   font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8;
-  border-bottom: 2px solid #2d3748; white-space: nowrap;
+  border-bottom: 2px solid #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: #12161f;
 }
-.ap-tabla td { padding: 11px 12px; border-bottom: 1px solid #1e2535; color: #e2e8f0; white-space: nowrap; }
-.ap-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+.ap-tabla td { padding: 11px 12px; border-bottom: 1px solid #1e2535; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-tabla .num { text-align: center; font-variant-numeric: tabular-nums; }
+.ap-tabla tfoot .num { text-align: right; }
 .ap-tabla tbody tr:last-child td { border-bottom: none; }
 
 .fila-click { cursor: pointer; transition: background 120ms ease-out; }
@@ -75,7 +88,7 @@
 }
 
 .ap-ref, .ap-sku { font-weight: 600; color: #60a5fa; }
-.ap-nombre { color: #cbd5e1; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.ap-nombre { color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; }
 .ap-disp { font-weight: 700; color: #60a5fa; }
 .ap-chevron { color: #475569; text-align: right; }
 
@@ -97,6 +110,8 @@
 }
 
 .ap-link {
+  display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  vertical-align: bottom;
   background: none; border: none; padding: 0; font: inherit; cursor: pointer;
   color: #cbd5e1; text-decoration: underline; text-decoration-color: transparent;
   text-underline-offset: 2px; transition: color 120ms ease-out, text-decoration-color 120ms ease-out;

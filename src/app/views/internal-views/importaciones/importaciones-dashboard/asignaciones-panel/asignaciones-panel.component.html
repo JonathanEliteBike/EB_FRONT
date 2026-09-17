@@ -31,6 +31,12 @@
   <ng-container *ngIf="!cargando && vista === 'embarques' && resumen">
     <div class="ap-tabla-scroll" *ngIf="resumen.embarques.length; else vacio">
       <table class="ap-tabla">
+        <colgroup>
+          <col class="ap-col-ref" /><col class="ap-col-nombre" /><col class="ap-col-estado" />
+          <col class="ap-col-num" /><col class="ap-col-num" /><col class="ap-col-num" />
+          <col class="ap-col-num" /><col class="ap-col-num" /><col class="ap-col-num" />
+          <col class="ap-col-chevron" />
+        </colgroup>
         <thead>
           <tr>
             <th>Referencia</th><th>Embarque</th><th>Estado</th><th class="num">Productos</th>
@@ -76,6 +82,12 @@
   <ng-container *ngIf="!cargando && vista === 'productos' && productos">
     <div class="ap-tabla-scroll" *ngIf="productos.productos.length; else vacio">
       <table class="ap-tabla">
+        <colgroup>
+          <col class="ap-col-sku" /><col class="ap-col-desc" /><col class="ap-col-ref-sm" /><col class="ap-col-periodo" />
+          <col class="ap-col-num" /><col class="ap-col-num" /><col class="ap-col-num" />
+          <col class="ap-col-num" /><col class="ap-col-num" />
+          <col class="ap-col-chevron" />
+        </colgroup>
         <thead>
           <tr>
             <th>SKU</th><th>Descripción</th><th>Embarque</th><th>Periodo</th>
