@@ -15,16 +15,18 @@
 @keyframes overlay-in { from { opacity: 0; } }
 
 .panel {
-  width: min(680px, 100%); max-height: min(88vh, 820px);
+  width: min(96vw, 680px); max-height: min(88vh, 820px);
   overflow-y: auto; overflow-x: hidden;
   padding: 24px; background: #12161f; color: #e2e8f0;
   border: 1px solid #2d3748; border-radius: 14px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, .5), 0 4px 16px rgba(0, 0, 0, .35);
+  transition: width 220ms var(--ease-out);
   animation: panel-in 200ms var(--ease-out);
 }
+.panel.panel-ancho { width: min(96vw, 1020px); }
 @keyframes panel-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } }
 
-@media (prefers-reduced-motion: reduce) { .panel-overlay, .panel { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .panel-overlay, .panel { animation: none; transition: none; } }
 
 @media (max-width: 560px) {
   .panel-overlay { padding: 0; align-items: flex-end; }
@@ -123,20 +125,28 @@
 
 .wiz-subtitulo { font-size: 13px; color: #cbd5e1; margin: 0 0 12px; }
 
-/* ── Tabla resumen ── */
-.wiz-tabla-scroll { overflow-x: auto; border: 1px solid #2d3748; border-radius: 10px; margin-bottom: 12px; }
-.wiz-tabla-scroll .tabla-mini { margin-bottom: 0; min-width: 560px; }
-.tabla-mini { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+/* ── Tabla resumen ──
+   table-layout:fixed + colgroup reparten el ancho a proposito en vez de dejar
+   que cada columna crezca con su contenido, que era lo que forzaba el scroll
+   horizontal. El wrapper con overflow-x:auto queda solo como red de
+   seguridad en pantallas angostas. */
+.wiz-tabla-scroll { overflow-x: auto; overflow-y: auto; max-height: 46vh; border: 1px solid #2d3748; border-radius: 10px; margin-bottom: 12px; }
+.wiz-tabla-scroll .tabla-mini { margin-bottom: 0; }
+.tabla-mini { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 12px; }
+.col-sku { width: 15%; } .col-desc { width: 27%; } .col-num { width: 11.6%; }
+.tabla-mini thead { position: sticky; top: 0; z-index: 5; }
 .tabla-mini th {
   text-align: left; font-size: 11px; color: #94a3b8;
   text-transform: uppercase; letter-spacing: .4px;
   padding: 8px; border-bottom: 1px solid #2d3748;
+  background: #12161f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tabla-mini td { padding: 10px 8px; border-bottom: 1px solid #1e2535; font-size: 13px; color: #e2e8f0; }
-.tabla-mini .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabla-mini .num { text-align: center; font-variant-numeric: tabular-nums; }
+.tabla-mini tfoot .num { text-align: right; }
 .tabla-mini tfoot td { border-top: 2px solid #2d3748; border-bottom: none; font-weight: 700; color: #cbd5e1; background: #141a26; }
-.td-nombre { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cbd5e1; }
-.cli-clave { font-family: ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; color: #60a5fa; }
+.td-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cbd5e1; }
+.cli-clave { font-family: ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; color: #60a5fa; white-space: nowrap; }
 
 .positivo { color: #4ade80; font-weight: 600; }
 .negativo { color: #f87171; font-weight: 600; }

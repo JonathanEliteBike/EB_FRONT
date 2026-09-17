@@ -1,5 +1,5 @@
 <div class="panel-overlay" (click)="cerrarPanel()">
-  <div class="panel" (click)="$event.stopPropagation()">
+  <div class="panel" [class.panel-ancho]="paso !== 'form'" (click)="$event.stopPropagation()">
     <div class="panel-header">
       <div>
         <span class="panel-periodo">Importar Excel</span>
@@ -91,6 +91,11 @@
 
       <div class="wiz-tabla-scroll" *ngIf="propuesta.length; else sinPropuesta">
         <table class="tabla-mini wiz-tabla-resumen">
+          <colgroup>
+            <col class="col-sku" /><col class="col-desc" />
+            <col class="col-num" /><col class="col-num" />
+            <col class="col-num" /><col class="col-num" /><col class="col-num" />
+          </colgroup>
           <thead>
             <tr>
               <th>SKU</th><th>Descripción</th>
@@ -101,7 +106,7 @@
           <tbody>
             <tr *ngFor="let p of propuesta">
               <td><span class="cli-clave">{{ p.sku }}</span></td>
-              <td class="td-nombre">{{ p.descripcion || '—' }}</td>
+              <td class="td-nombre" [title]="p.descripcion || ''">{{ p.descripcion || '—' }}</td>
               <td class="num">{{ p.cantidad_embarcada }}</td>
               <td class="num">{{ p.disponible }}</td>
               <td class="num">{{ totalProyectado(p) }}</td>
