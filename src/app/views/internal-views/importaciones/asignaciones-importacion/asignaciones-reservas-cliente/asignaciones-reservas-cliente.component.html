@@ -127,7 +127,8 @@
       </div>
 
       <p class="wiz-tabla-hint">
-        Marca la casilla de un mes puntual para reservar solo ese; si no marcas nada, "Reservar este cliente" reserva todo el grupo.
+        Marca la casilla de un cliente completo (o de un mes puntual dentro de uno) para reservar varios a la vez con
+        "Reservar todo" de abajo, sin tener que recalcular entre uno y otro.
       </p>
 
         <div class="wiz-tabla-scroll" *ngIf="grupos.length; else sinFilas">
@@ -143,6 +144,9 @@
                 <tr class="fila-grupo" (click)="toggleGrupo(g.clave_cliente)">
                   <td colspan="7">
                     <div class="fila-grupo-inner">
+                      <input type="checkbox" class="chk-grupo" [checked]="grupoSeleccionado(g)"
+                             (click)="$event.stopPropagation()" (change)="toggleGrupoSeleccion(g)"
+                             [title]="'Marcar todo ' + g.nombre_cliente + ' para reservarlo junto con otros clientes'" />
                       <i class="fas" [ngClass]="grupoExpandido(g.clave_cliente, grupos.length) ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
                       <span class="cli-prio">P{{ g.prioridad }}</span>
                       <span class="grupo-nombre">{{ g.nombre_cliente }}</span>
@@ -191,7 +195,8 @@
       <div class="wiz-acciones">
         <button class="btn-secundario" [disabled]="reservandoTodo || !!reservandoClave" (click)="cerrarPanel()">Cerrar sin reservar</button>
         <button class="btn-primary" [disabled]="reservandoTodo || !!reservandoClave || !filas.length" (click)="reservarTodo()">
-          {{ reservandoTodo ? 'Reservando…' : 'Reservar todo' }}
+          {{ reservandoTodo ? 'Reservando…'
+            : (totalClientesSeleccionados() > 0 ? 'Reservar seleccionados (' + totalClientesSeleccionados() + ' cliente(s))' : 'Reservar todo') }}
         </button>
       </div>
     </ng-container>

@@ -339,6 +339,31 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     return grupo.filas.filter((f) => this.filaSeleccionada(f)).length;
   }
 
+  /** true si TODAS las filas del grupo están marcadas -- para la casilla
+   *  de "seleccionar este cliente completo" en el encabezado del grupo. */
+  grupoSeleccionado(grupo: GrupoCliente): boolean {
+    return grupo.filas.length > 0 && grupo.filas.every((f) => this.filaSeleccionada(f));
+  }
+
+  /** Marca o desmarca TODAS las filas del grupo de un tiro, para poder
+   *  elegir varios clientes completos (p. ej. 2 de 8) y reservarlos juntos
+   *  con un solo "Reservar seleccionados", sin tener que marcar mes por mes
+   *  ni cerrar y volver a calcular la propuesta entre uno y otro. */
+  toggleGrupoSeleccion(grupo: GrupoCliente): void {
+    const marcarTodo = !this.grupoSeleccionado(grupo);
+    for (const f of grupo.filas) {
+      const k = this.claveFila(f);
+      if (marcarTodo) this.filasSeleccionadas.add(k);
+      else this.filasSeleccionadas.delete(k);
+    }
+  }
+
+  /** Cuántos clientes distintos tienen al menos una fila marcada -- para el
+   *  botón general de abajo ("Reservar seleccionados (N clientes)"). */
+  totalClientesSeleccionados(): number {
+    return new Set(this.filas.filter((f) => this.filaSeleccionada(f)).map((f) => f.clave_cliente)).size;
+  }
+
   formatoMes(ym: string | null | undefined): string {
     return formatoMes(ym);
   }
@@ -379,8 +404,14 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     return from(llamadas).pipe(concatMap((obs) => obs), toArray());
   }
 
+  /** Si hay filas marcadas (de uno o de varios clientes), reserva solo esas
+   *  en una sola pasada -- así se pueden elegir 2, 3 o los que sean de los
+   *  27 clientes y reservarlos juntos sin cerrar y recalcular entre uno y
+   *  otro. Sin nada marcado, reserva todo lo calculado como antes. */
   reservarTodo(): void {
-    const porProducto = this.agruparPorProducto(this.filas);
+    const seleccionadas = this.filas.filter((f) => this.filaSeleccionada(f));
+    const filasAReservar = seleccionadas.length ? seleccionadas : this.filas;
+    const porProducto = this.agruparPorProducto(filasAReservar);
     if (!porProducto.size) {
       this.errorResumen = 'No hay ninguna cantidad sugerida mayor a 0 para reservar';
       return;
@@ -390,6 +421,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     this.ejecutarReservas(porProducto).subscribe((resultados) => {
       this.reservandoTodo = false;
       this.resultados = resultados;
+      for (const f of filasAReservar) this.filasSeleccionadas.delete(this.claveFila(f));
       this.paso = 'terminado';
     });
   }

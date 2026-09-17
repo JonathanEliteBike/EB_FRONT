@@ -332,6 +332,55 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.paso).toBe('terminado');
   });
 
+  it('reservarTodo() con filas marcadas de varios clientes solo reserva esas, en una sola pasada', () => {
+    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
+    const filaLC657 = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 };
+    const filaMC677 = { clave_cliente: 'MC677', nombre_cliente: 'Y', prioridad: 2, producto_id: 11, sku: 'SKU-2', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 };
+    const filaSinMarcar = { clave_cliente: 'GC411', nombre_cliente: 'Z', prioridad: 3, producto_id: 12, sku: 'SKU-3', descripcion: null, mes: '2026-10', proyectado: 2, vigente: 0, sugerido: 2 };
+    component.filas = [filaLC657, filaMC677, filaSinMarcar];
+
+    component.toggleFila(filaLC657);
+    component.toggleFila(filaMC677);
+    component.reservarTodo();
+
+    expect(svcSpy.reservar).toHaveBeenCalledTimes(2); // dos productos distintos, uno por cliente marcado
+    expect(svcSpy.reservar).toHaveBeenCalledWith(1, 10, [{ clave_cliente: 'LC657', mes_objetivo: '2026-10', cantidad: 5, proyectado: 5 }]);
+    expect(svcSpy.reservar).toHaveBeenCalledWith(1, 11, [{ clave_cliente: 'MC677', mes_objetivo: '2026-10', cantidad: 3, proyectado: 3 }]);
+    // GC411 no estaba marcado -- no debió reservarse.
+    expect(svcSpy.reservar).not.toHaveBeenCalledWith(1, 12, jasmine.anything());
+    expect(component.paso).toBe('terminado');
+  });
+
+  it('grupoSeleccionado()/toggleGrupoSeleccion() marcan y desmarcan todas las filas de un cliente de un tiro', () => {
+    const filaOctubre = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 };
+    const filaNoviembre = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 11, sku: 'SKU-2', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 };
+    const grupo = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, totalSugerido: 7, filas: [filaOctubre, filaNoviembre] };
+
+    expect(component.grupoSeleccionado(grupo)).toBeFalse();
+    component.toggleGrupoSeleccion(grupo);
+    expect(component.grupoSeleccionado(grupo)).toBeTrue();
+    expect(component.filaSeleccionada(filaOctubre)).toBeTrue();
+    expect(component.filaSeleccionada(filaNoviembre)).toBeTrue();
+
+    component.toggleGrupoSeleccion(grupo);
+    expect(component.grupoSeleccionado(grupo)).toBeFalse();
+    expect(component.filaSeleccionada(filaOctubre)).toBeFalse();
+  });
+
+  it('totalClientesSeleccionados() cuenta clientes distintos con al menos una fila marcada', () => {
+    const filaLC657 = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 };
+    const filaLC657b = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 11, sku: 'SKU-2', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 };
+    const filaMC677 = { clave_cliente: 'MC677', nombre_cliente: 'Y', prioridad: 2, producto_id: 12, sku: 'SKU-3', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 };
+    component.filas = [filaLC657, filaLC657b, filaMC677];
+
+    expect(component.totalClientesSeleccionados()).toBe(0);
+    component.toggleFila(filaLC657);
+    component.toggleFila(filaLC657b);
+    expect(component.totalClientesSeleccionados()).toBe(1); // dos filas, un solo cliente
+    component.toggleFila(filaMC677);
+    expect(component.totalClientesSeleccionados()).toBe(2);
+  });
+
   it('reservarTodo() no llama al servicio si no hay nada sugerido y muestra un error', () => {
     component.filas = [
       { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 5, sugerido: 0 },

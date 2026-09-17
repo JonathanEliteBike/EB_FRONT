@@ -253,6 +253,7 @@
 .fila-hija td:first-child { border-left: 2px solid #2d3748; }
 .td-check { width: 28px; text-align: center; }
 .td-check input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #3b82f6; }
+.chk-grupo { width: 15px; height: 15px; cursor: pointer; accent-color: #4ade80; flex-shrink: 0; }
 
 .positivo { color: #4ade80; font-weight: 600; }
 .negativo { color: #f87171; font-weight: 600; }
