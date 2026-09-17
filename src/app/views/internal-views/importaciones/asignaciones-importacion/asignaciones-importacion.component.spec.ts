@@ -168,6 +168,42 @@ describe('AsignacionesImportacionComponent', () => {
     });
   });
 
+  describe('filtro de sobrantes en la tabla (tarjeta de KPI "Sobrantes")', () => {
+    beforeEach(() => {
+      component.resumen = {
+        ...resumenMock,
+        productos: [
+          { id: 1, sku: 'A', cantidad_sobrante: 3 } as any,
+          { id: 2, sku: 'B', cantidad_sobrante: 0 } as any,
+          { id: 3, sku: 'C', cantidad_sobrante: 5 } as any,
+        ],
+      };
+    });
+
+    it('productosFiltrados() sin filtro devuelve todos los productos', () => {
+      expect(component.productosFiltrados().map((p) => p.sku)).toEqual(['A', 'B', 'C']);
+    });
+
+    it('toggleFiltroSobrantes() prende y apaga el filtro de solo-sobrantes', () => {
+      expect(component.soloSobrantes).toBeFalse();
+      component.toggleFiltroSobrantes();
+      expect(component.soloSobrantes).toBeTrue();
+      expect(component.productosFiltrados().map((p) => p.sku)).toEqual(['A', 'C']);
+      component.toggleFiltroSobrantes();
+      expect(component.soloSobrantes).toBeFalse();
+      expect(component.productosFiltrados().map((p) => p.sku)).toEqual(['A', 'B', 'C']);
+    });
+
+    it('toggleTodos() con el filtro activo solo marca/desmarca los productos visibles', () => {
+      component.toggleFiltroSobrantes();
+      component.toggleTodos({ target: { checked: true } } as unknown as Event);
+      expect([...component.seleccionados]).toEqual([1, 3]); // no incluye a B (sin sobrante, oculto)
+
+      component.toggleTodos({ target: { checked: false } } as unknown as Event);
+      expect(component.seleccionados.size).toBe(0);
+    });
+  });
+
   it('abrirReservasCliente()/cerrarReservasCliente() controlan el buscador por cliente', () => {
     expect(component.reservasClienteAbierto).toBeFalse();
     component.abrirReservasCliente();

@@ -50,6 +50,10 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   productoSeleccionado: AsignacionesProducto | null = null;
 
+  /** Filtro activado desde la tarjeta de KPI "Sobrantes": muestra en la
+   *  tabla solo los productos con algo de sobrante. */
+  soloSobrantes = false;
+
   /** Selección múltiple para la propuesta consolidada (embarcado/proyectado/
    *  reservado/pendiente/sobrante/disponible de varios SKU a la vez). */
   seleccionados = new Set<number>();
@@ -188,16 +192,27 @@ export class AsignacionesImportacionComponent implements OnInit {
     else this.seleccionados.add(productoId);
   }
 
-  todosSeleccionados(): boolean {
+  /** Solo los productos con sobrante > 0 cuando el filtro de la tarjeta
+   *  "Sobrantes" está activo; si no, todos. */
+  productosFiltrados(): AsignacionesProducto[] {
     const productos = this.resumen?.productos || [];
+    return this.soloSobrantes ? productos.filter((p) => p.cantidad_sobrante > 0) : productos;
+  }
+
+  toggleFiltroSobrantes(): void {
+    this.soloSobrantes = !this.soloSobrantes;
+  }
+
+  todosSeleccionados(): boolean {
+    const productos = this.productosFiltrados();
     return productos.length > 0 && productos.every((p) => this.seleccionados.has(p.id));
   }
 
   toggleTodos(event: Event): void {
     const marcar = (event.target as HTMLInputElement).checked;
-    const productos = this.resumen?.productos || [];
+    const productos = this.productosFiltrados();
     if (marcar) productos.forEach((p) => this.seleccionados.add(p.id));
-    else this.seleccionados.clear();
+    else productos.forEach((p) => this.seleccionados.delete(p.id));
   }
 
   productosSeleccionados(): AsignacionesProducto[] {

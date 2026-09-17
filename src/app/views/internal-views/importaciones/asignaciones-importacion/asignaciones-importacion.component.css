@@ -10,7 +10,6 @@
 
 .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
 .kpi-card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
-.kpi-highlight { background: #1e3a5f; border-color: #3b82f6; }
 .kpi-num { font-size: 24px; font-weight: 700; color: #e2e8f0; }
 .kpi-label { font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 5px; }
 
@@ -22,6 +21,17 @@
 .kpi-clickable:active { transform: scale(0.98); }
 .kpi-icono { font-size: 9px; color: #475569; transition: color 150ms ease-out; }
 .kpi-clickable:hover .kpi-icono { color: #60a5fa; }
+
+.kpi-card.kpi-activo { background: #12251a; border-color: #1f3a28; }
+.kpi-card.kpi-activo .kpi-num { color: #4ade80; }
+.kpi-card.kpi-activo .kpi-icono { color: #4ade80; }
+
+.filtro-activo-nota { font-size: 12px; font-weight: 400; color: #4ade80; margin-left: 6px; }
+.filtro-quitar {
+  background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer;
+  font-size: 12px; font-weight: 600; color: #60a5fa; text-decoration: underline;
+}
+.filtro-quitar:hover { color: #93c5fd; }
 
 .asig-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .asig-toolbar h2 { color: #e2e8f0; }

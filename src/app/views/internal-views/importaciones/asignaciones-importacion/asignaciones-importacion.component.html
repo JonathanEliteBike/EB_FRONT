@@ -21,27 +21,28 @@
         <span class="kpi-num">{{ resumen.kpis.unidades_reservadas }}</span>
         <span class="kpi-label">Reservadas <i class="fas fa-arrow-up-right-from-square kpi-icono"></i></span>
       </div>
-      <div class="kpi-card kpi-clickable" title="Ver reservas pendientes de confirmación"
-           (click)="abrirReservasDetalle('PENDIENTE_CONFIRMACION')">
-        <span class="kpi-num">{{ resumen.kpis.reservado_reasignacion_pendiente }}</span>
-        <span class="kpi-label">Pend. confirmación <i class="fas fa-arrow-up-right-from-square kpi-icono"></i></span>
-      </div>
-      <div class="kpi-card">
+      <div class="kpi-card kpi-clickable" [class.kpi-activo]="soloSobrantes"
+           title="Filtrar la tabla de abajo para ver solo los productos con sobrante"
+           (click)="toggleFiltroSobrantes()">
         <span class="kpi-num">{{ resumen.kpis.unidades_sobrantes }}</span>
-        <span class="kpi-label">Sobrantes</span>
+        <span class="kpi-label">
+          Sobrantes <i class="fas kpi-icono" [ngClass]="soloSobrantes ? 'fa-filter-circle-xmark' : 'fa-filter'"></i>
+        </span>
       </div>
       <div class="kpi-card">
         <span class="kpi-num">{{ resumen.kpis.unidades_vendidas }}</span>
         <span class="kpi-label">Vendidas (sobrante)</span>
       </div>
-      <div class="kpi-card kpi-highlight">
-        <span class="kpi-num">{{ resumen.kpis.unidades_disponibles }}</span>
-        <span class="kpi-label">Disponibles</span>
-      </div>
     </div>
 
     <div class="asig-toolbar">
-      <h2>Productos del embarque</h2>
+      <h2>
+        Productos del embarque
+        <span class="filtro-activo-nota" *ngIf="soloSobrantes">
+          · mostrando solo sobrantes
+          <button type="button" class="filtro-quitar" (click)="toggleFiltroSobrantes()">Quitar filtro</button>
+        </span>
+      </h2>
       <div class="asig-toolbar-acciones">
         <button class="btn-secundario" (click)="abrirReservasCliente()">
           <i class="fas fa-search"></i> Buscar por cliente
@@ -96,7 +97,7 @@
       </div>
     </div>
 
-    <table class="asig-tabla" *ngIf="resumen.productos.length; else sinProductos">
+    <table class="asig-tabla" *ngIf="productosFiltrados().length; else sinProductos">
       <thead>
         <tr>
           <th class="celda-check">
@@ -107,11 +108,11 @@
           <th class="num" title="Reservas de una REASIGNACIÓN esperando que el cliente confirme si las quiere. Si no hay ninguna reasignación en curso, siempre se ve en 0.">
             Pend. <i class="fas fa-circle-info"></i>
           </th>
-          <th class="num">Sobrante</th><th class="num">Vendido</th><th class="num">Disponible</th><th></th>
+          <th class="num">Sobrante</th><th class="num">Vendido</th><th></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of resumen.productos" class="fila-clickable" [class.fila-sel]="seleccionados.has(p.id)">
+        <tr *ngFor="let p of productosFiltrados()" class="fila-clickable" [class.fila-sel]="seleccionados.has(p.id)">
           <td class="celda-check" (click)="$event.stopPropagation()">
             <input type="checkbox" [checked]="seleccionados.has(p.id)" (change)="toggleSeleccion(p.id)" />
           </td>
@@ -121,15 +122,19 @@
           <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_embarcada }}</td>
           <td class="num" (click)="abrirDetalle(p)">{{ p.reservado_total }}</td>
           <td class="num" (click)="abrirDetalle(p)">{{ p.reservado_reasignacion_pendiente || '—' }}</td>
-          <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_sobrante }}</td>
+          <td class="num celda-disponible" (click)="abrirDetalle(p)">{{ p.cantidad_sobrante }}</td>
           <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_vendida }}</td>
-          <td class="num celda-disponible" (click)="abrirDetalle(p)">{{ p.cantidad_disponible }}</td>
           <td (click)="abrirDetalle(p)"><i class="fas fa-chevron-right"></i></td>
         </tr>
       </tbody>
     </table>
     <ng-template #sinProductos>
-      <p class="asig-vacio">Este embarque todavía no tiene productos registrados.</p>
+      <p class="asig-vacio" *ngIf="soloSobrantes; else sinProductosRegistrados">
+        Ningún producto tiene sobrante con este filtro.
+      </p>
+      <ng-template #sinProductosRegistrados>
+        <p class="asig-vacio">Este embarque todavía no tiene productos registrados.</p>
+      </ng-template>
     </ng-template>
   </ng-container>
 </div>
