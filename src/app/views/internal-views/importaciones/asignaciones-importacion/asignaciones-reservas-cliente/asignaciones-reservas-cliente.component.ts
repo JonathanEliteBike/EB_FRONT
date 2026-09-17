@@ -106,6 +106,10 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   /** claves de los grupos que el usuario desplegó manualmente. */
   private gruposExpandidos = new Set<string>();
 
+  /** filas marcadas a mano, para reservar solo un mes puntual de un cliente
+   *  en vez de todo el grupo (identificadas por producto+mes+cliente). */
+  private filasSeleccionadas = new Set<string>();
+
   constructor(private svc: AsignacionesImportacionService) {}
 
   ngOnInit(): void {
@@ -238,6 +242,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
         this.filas = filas;
         this.filtroMes = '';
         this.filtroCliente = '';
+        this.filasSeleccionadas.clear();
         this.paso = 'resumen';
       },
       error: (err) => {
@@ -297,6 +302,26 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     else this.gruposExpandidos.add(clave);
   }
 
+  private claveFila(f: FilaCliente): string {
+    return `${f.producto_id}|${f.mes}|${f.clave_cliente}`;
+  }
+
+  filaSeleccionada(f: FilaCliente): boolean {
+    return this.filasSeleccionadas.has(this.claveFila(f));
+  }
+
+  toggleFila(f: FilaCliente): void {
+    const k = this.claveFila(f);
+    if (this.filasSeleccionadas.has(k)) this.filasSeleccionadas.delete(k);
+    else this.filasSeleccionadas.add(k);
+  }
+
+  /** Cuántas filas de este grupo están marcadas a mano — si hay alguna,
+   *  "Reservar este cliente" se limita a esas en vez de reservar todo. */
+  seleccionadasEnGrupo(grupo: GrupoCliente): number {
+    return grupo.filas.filter((f) => this.filaSeleccionada(f)).length;
+  }
+
   formatoMes(ym: string | null | undefined): string {
     return formatoMes(ym);
   }
@@ -352,10 +377,14 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     });
   }
 
-  /** Reserva solo lo de un cliente, para que cada EVAC pueda avanzar el suyo
-   *  sin esperar a que los demás terminen de revisar el propio. */
+  /** Reserva lo de un cliente, para que cada EVAC pueda avanzar el suyo sin
+   *  esperar a que los demás terminen de revisar el propio. Si el usuario
+   *  marcó filas puntuales (p. ej. un solo mes), reserva solo esas; si no
+   *  marcó ninguna, reserva el grupo completo. */
   reservarGrupo(grupo: GrupoCliente): void {
-    const porProducto = this.agruparPorProducto(grupo.filas);
+    const seleccionadas = grupo.filas.filter((f) => this.filaSeleccionada(f));
+    const filasAReservar = seleccionadas.length ? seleccionadas : grupo.filas;
+    const porProducto = this.agruparPorProducto(filasAReservar);
     if (!porProducto.size) {
       this.errorResumen = `${grupo.nombre_cliente} no tiene ninguna cantidad sugerida mayor a 0`;
       return;
@@ -365,6 +394,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     this.ejecutarReservas(porProducto).subscribe((resultados) => {
       this.reservandoClave = null;
       this.resultados = resultados;
+      for (const f of filasAReservar) this.filasSeleccionadas.delete(this.claveFila(f));
       this.paso = 'terminado';
     });
   }

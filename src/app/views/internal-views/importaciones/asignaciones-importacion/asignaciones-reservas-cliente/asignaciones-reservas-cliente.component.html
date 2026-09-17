@@ -126,6 +126,10 @@
         </span>
       </div>
 
+      <p class="wiz-tabla-hint">
+        Marca la casilla de un mes puntual para reservar solo ese; si no marcas nada, "Reservar este cliente" reserva todo el grupo.
+      </p>
+
       <ng-container *ngIf="gruposFiltrados() as grupos">
         <div class="wiz-tabla-scroll" *ngIf="grupos.length; else sinFilas">
           <table class="tabla-mini">
@@ -148,13 +152,17 @@
                       <button type="button" class="btn-grupo-reservar"
                               [disabled]="reservandoTodo || !!reservandoClave"
                               (click)="reservarGrupo(g); $event.stopPropagation()">
-                        {{ reservandoClave === g.clave_cliente ? 'Reservando…' : 'Reservar este cliente' }}
+                        {{ reservandoClave === g.clave_cliente ? 'Reservando…'
+                          : (seleccionadasEnGrupo(g) > 0 ? 'Reservar seleccionadas (' + seleccionadasEnGrupo(g) + ')' : 'Reservar este cliente') }}
                       </button>
                     </div>
                   </td>
                 </tr>
                 <tr class="fila-hija" *ngFor="let f of g.filas" [hidden]="!grupoExpandido(g.clave_cliente, grupos.length)">
-                  <td></td>
+                  <td class="td-check">
+                    <input type="checkbox" [checked]="filaSeleccionada(f)" (change)="toggleFila(f)"
+                           [title]="'Marcar solo ' + formatoMes(f.mes) + ' para reservarlo por separado'" />
+                  </td>
                   <td><span class="cli-clave">{{ f.sku }}</span></td>
                   <td class="td-nombre" [title]="f.descripcion || ''">{{ f.descripcion || '—' }}</td>
                   <td>{{ formatoMes(f.mes) }}</td>

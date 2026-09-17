@@ -249,6 +249,43 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.reservandoClave).toBeNull();
   });
 
+  it('toggleFila()/filaSeleccionada() marcan y desmarcan una fila puntual', () => {
+    const fila = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 };
+    expect(component.filaSeleccionada(fila)).toBeFalse();
+    component.toggleFila(fila);
+    expect(component.filaSeleccionada(fila)).toBeTrue();
+    component.toggleFila(fila);
+    expect(component.filaSeleccionada(fila)).toBeFalse();
+  });
+
+  it('reservarGrupo() con filas marcadas solo reserva esas, no todo el grupo', () => {
+    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
+    const filaOctubre = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 };
+    const filaNoviembre = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 };
+    const grupo = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, totalSugerido: 7, filas: [filaOctubre, filaNoviembre] };
+
+    component.toggleFila(filaNoviembre); // solo marca noviembre
+    component.reservarGrupo(grupo);
+
+    expect(svcSpy.reservar).toHaveBeenCalledTimes(1);
+    expect(svcSpy.reservar).toHaveBeenCalledWith(1, 10, [
+      { clave_cliente: 'LC657', mes_objetivo: '2026-11', cantidad: 2, proyectado: 2 },
+    ]);
+    // se limpia la marca de lo que sí se reservó
+    expect(component.filaSeleccionada(filaNoviembre)).toBeFalse();
+  });
+
+  it('seleccionadasEnGrupo() cuenta solo las filas de ese grupo que están marcadas', () => {
+    const filaLC657 = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 };
+    const filaMC677 = { clave_cliente: 'MC677', nombre_cliente: 'Y', prioridad: 2, producto_id: 11, sku: 'SKU-2', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 };
+    const grupoLC657 = { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, totalSugerido: 5, filas: [filaLC657] };
+
+    component.toggleFila(filaLC657);
+    component.toggleFila(filaMC677);
+
+    expect(component.seleccionadasEnGrupo(grupoLC657)).toBe(1);
+  });
+
   it('reservarGrupo() no llama al servicio si el cliente no tiene nada sugerido y lo dice en el error', () => {
     const grupo = {
       clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, totalSugerido: 0,
