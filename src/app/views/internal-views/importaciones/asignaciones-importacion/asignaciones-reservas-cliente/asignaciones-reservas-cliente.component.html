@@ -3,12 +3,12 @@
     <div class="panel-header">
       <div>
         <span class="panel-periodo">Propuesta por cliente</span>
-        <h2 class="panel-titulo">Qué le corresponde a un cliente en este embarque</h2>
+        <h2 class="panel-titulo">Qué le corresponde a uno o varios clientes en este embarque</h2>
       </div>
       <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- ── Paso 1: cliente + ventana de meses ── -->
+    <!-- ── Paso 1: clientes + ventana de meses ── -->
     <ng-container *ngIf="paso === 'form'">
       <p class="wiz-subtitulo">
         El periodo (p. ej. 2026-2027) ya quedó fijo al dar de alta cada producto. Aquí eliges,
@@ -19,22 +19,31 @@
       <div class="wiz-error" *ngIf="errorClientes">{{ errorClientes }}</div>
 
       <div class="wiz-campo">
-        <label>Cliente (lista de prioridad)</label>
+        <label>Clientes (lista de prioridad)</label>
+
+        <div class="chips" *ngIf="clientesElegidos.length">
+          <span class="chip" *ngFor="let c of clientesElegidos">
+            {{ c.nombre }} <span class="chip-clave">{{ c.clave }}</span>
+            <button type="button" class="chip-quitar" title="Quitar" (click)="quitarCliente(c)">
+              <i class="fas fa-times"></i>
+            </button>
+          </span>
+        </div>
+
         <div class="combo">
           <input type="text" class="combo-input" autocomplete="off"
-                 placeholder="Escribe un nombre o una clave…"
+                 [placeholder]="clientesElegidos.length ? 'Agregar otro cliente…' : 'Escribe un nombre o una clave…'"
                  [(ngModel)]="busquedaCliente"
                  [disabled]="cargandoClientes"
                  (input)="onInputCliente()"
                  (focus)="onFocusCliente()"
                  (blur)="onBlurCliente()"
                  (keydown)="onKeydownCliente($event)" />
-          <i class="fas combo-icono" [ngClass]="clienteElegido ? 'fa-circle-check' : 'fa-magnifying-glass'"></i>
+          <i class="fas combo-icono" [ngClass]="clientesElegidos.length ? 'fa-circle-check' : 'fa-magnifying-glass'"></i>
 
           <ul class="combo-list" *ngIf="mostrarLista">
             <li *ngFor="let c of clientesFiltrados(); let i = index"
                 class="combo-opcion"
-                [class.sel]="clienteElegido?.clave === c.clave"
                 [class.activo]="indiceActivo === i"
                 (mousedown)="elegirCliente(c); $event.preventDefault()">
               <span class="combo-nombre">{{ c.nombre }}</span>
@@ -67,38 +76,52 @@
 
       <div class="wiz-acciones">
         <button class="btn-primary" [disabled]="calculando" (click)="calcular()">
-          {{ calculando ? 'Calculando…' : 'Ver propuesta de este cliente' }}
+          {{ calculando ? 'Calculando…' : 'Ver propuesta' }}
         </button>
       </div>
     </ng-container>
 
-    <!-- ── Paso 2: propuesta consolidada del cliente ── -->
+    <!-- ── Paso 2: propuesta consolidada de los clientes elegidos ── -->
     <ng-container *ngIf="paso === 'resumen'">
       <p class="wiz-subtitulo">
-        <b>{{ clienteElegido?.nombre }}</b> ({{ clienteElegido?.clave }}) ·
-        Ventana <b>{{ mesDesde }} – {{ mesHasta }}</b>.
-        Revisa y confirma para reservarle todo lo sugerido.
+        <b>{{ clientesElegidos.length }}</b> cliente(s) · Ventana <b>{{ mesDesde }} – {{ mesHasta }}</b>.
+        Revisa y confirma para reservar todo lo sugerido.
       </p>
 
-      <div class="wiz-filtro-mes" *ngIf="mesesDisponibles().length > 1">
-        <label>Filtrar por mes</label>
-        <select [(ngModel)]="filtroMes">
-          <option value="">Todos los meses</option>
-          <option *ngFor="let m of mesesDisponibles()" [value]="m">{{ formatoMes(m) }}</option>
-        </select>
-        <span class="wiz-filtro-nota" *ngIf="filtroMes">"Reservar todo" sigue incluyendo todos los meses, no solo el filtrado</span>
+      <div class="wiz-filtros">
+        <div class="wiz-filtro-mes" *ngIf="mesesDisponibles().length > 1">
+          <label>Filtrar por mes</label>
+          <select [(ngModel)]="filtroMes">
+            <option value="">Todos los meses</option>
+            <option *ngFor="let m of mesesDisponibles()" [value]="m">{{ formatoMes(m) }}</option>
+          </select>
+        </div>
+        <div class="wiz-filtro-mes" *ngIf="clientesElegidos.length > 1">
+          <label>Filtrar por cliente</label>
+          <select [(ngModel)]="filtroCliente">
+            <option value="">Todos los clientes</option>
+            <option *ngFor="let c of clientesElegidos" [value]="c.clave">{{ c.nombre }} ({{ c.clave }})</option>
+          </select>
+        </div>
+        <span class="wiz-filtro-nota" *ngIf="filtroMes || filtroCliente">
+          "Reservar todo" sigue incluyendo todo lo calculado, no solo lo filtrado
+        </span>
       </div>
 
       <div class="wiz-tabla-scroll" *ngIf="filas.length; else sinFilas">
         <table class="tabla-mini">
           <thead>
             <tr>
-              <th>SKU</th><th>Descripción</th><th>Mes</th>
+              <th>Cliente</th><th>SKU</th><th>Descripción</th><th>Mes</th>
               <th class="num">Proyectado</th><th class="num">Ya reservado</th><th class="num">A reservar</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let f of filasFiltradas()">
+              <td>
+                <span class="cli-prio">P{{ f.prioridad }}</span>
+                {{ f.nombre_cliente }} <span class="cli-clave">({{ f.clave_cliente }})</span>
+              </td>
               <td><span class="cli-clave">{{ f.sku }}</span></td>
               <td class="td-nombre" [title]="f.descripcion || ''">{{ f.descripcion || '—' }}</td>
               <td>{{ formatoMes(f.mes) }}</td>
@@ -109,7 +132,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="5">Total a reservar</td>
+              <td colspan="6">Total a reservar</td>
               <td class="num positivo">{{ totalGeneralSugerido() }}</td>
             </tr>
           </tfoot>
@@ -117,7 +140,7 @@
       </div>
       <ng-template #sinFilas>
         <p class="asig-vacio">
-          Este cliente no tiene proyección en este embarque para la ventana {{ mesDesde }} – {{ mesHasta }}.
+          Ningún cliente elegido tiene proyección en este embarque para la ventana {{ mesDesde }} – {{ mesHasta }}.
         </p>
       </ng-template>
 
@@ -126,18 +149,23 @@
       <div class="wiz-acciones">
         <button class="btn-secundario" [disabled]="reservandoTodo" (click)="cerrarPanel()">Cerrar sin reservar</button>
         <button class="btn-primary" [disabled]="reservandoTodo || !filas.length" (click)="reservarTodo()">
-          {{ reservandoTodo ? 'Reservando…' : 'Reservar todo a este cliente' }}
+          {{ reservandoTodo ? 'Reservando…' : 'Reservar todo' }}
         </button>
       </div>
     </ng-container>
 
     <!-- ── Paso 3: resultado final ── -->
     <ng-container *ngIf="paso === 'terminado'">
-      <p class="wiz-subtitulo">Resultado de las reservas para <b>{{ clienteElegido?.nombre }}</b>:</p>
+      <p class="wiz-subtitulo">Resultado de las reservas:</p>
       <ul class="wiz-resultados">
         <li *ngFor="let r of resultados" [class.negativo]="!r.ok" [class.positivo]="r.ok">
           <i class="fas" [ngClass]="r.ok ? 'fa-check' : 'fa-times'"></i>
-          {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+          <span>
+            {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+            <span class="wiz-orden-odoo" *ngIf="r.ordenesOdoo?.length">
+              · Odoo: {{ r.ordenesOdoo!.join(', ') }}
+            </span>
+          </span>
         </li>
       </ul>
       <div class="wiz-acciones">

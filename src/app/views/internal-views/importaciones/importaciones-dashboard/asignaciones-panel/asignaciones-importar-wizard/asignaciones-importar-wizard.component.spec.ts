@@ -111,7 +111,10 @@ describe('AsignacionesImportarWizardComponent', () => {
   });
 
   it('reservarTodo() reserva cada producto con cantidad sugerida > 0 y reporta el resultado', () => {
-    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0 }));
+    svcSpy.reservar.and.returnValue(of({
+      producto_id: 10, disponible_restante: 0,
+      ordenes_odoo: [{ clave_cliente: 'LC657', mes_objetivo: '2026-10', order_id: 1, order_name: 'S00042' }],
+    }));
     component.embarqueId = 1;
     component.propuesta = [propMock];
 
@@ -121,7 +124,7 @@ describe('AsignacionesImportarWizardComponent', () => {
       { clave_cliente: 'LC657', mes_objetivo: '2026-10', cantidad: 5, proyectado: 5 },
       { clave_cliente: 'LC657', mes_objetivo: '2026-11', cantidad: 2, proyectado: 4 },
     ]);
-    expect(component.resultados).toEqual([{ sku: 'SKU-1', ok: true }]);
+    expect(component.resultados).toEqual([{ sku: 'SKU-1', ok: true, ordenesOdoo: ['S00042'] }]);
     expect(component.paso).toBe('terminado');
   });
 

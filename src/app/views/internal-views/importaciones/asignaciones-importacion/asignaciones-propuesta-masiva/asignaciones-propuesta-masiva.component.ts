@@ -15,6 +15,7 @@ interface ResultadoReserva {
   sku: string;
   ok: boolean;
   error?: string;
+  ordenesOdoo?: string[];
 }
 
 /** Fila consolidada: lo que el producto ya trae (embarcado/reservado/pendiente/
@@ -187,7 +188,10 @@ export class AsignacionesPropuestaMasivaComponent implements OnChanges {
     this.errorResumen = '';
     const llamadas = candidatos.map((x) =>
       this.svc.reservar(this.importacionId, x.f.producto.id, x.reservas).pipe(
-        map((): ResultadoReserva => ({ sku: x.f.producto.sku, ok: true })),
+        map((res): ResultadoReserva => ({
+          sku: x.f.producto.sku, ok: true,
+          ordenesOdoo: res.ordenes_odoo.map((o) => o.order_name),
+        })),
         catchError((err) => of<ResultadoReserva>({
           sku: x.f.producto.sku, ok: false,
           error: err?.error?.error?.message || 'No se pudo reservar',

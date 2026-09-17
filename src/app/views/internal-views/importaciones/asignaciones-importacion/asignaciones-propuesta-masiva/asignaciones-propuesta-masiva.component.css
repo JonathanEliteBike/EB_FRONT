@@ -163,3 +163,4 @@
   padding: 8px 10px; border-radius: 6px; background: #0f1623; border: 1px solid #2d3748;
 }
 .wiz-resultados li i { width: 14px; text-align: center; }
+.wiz-orden-odoo { color: #60a5fa; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }

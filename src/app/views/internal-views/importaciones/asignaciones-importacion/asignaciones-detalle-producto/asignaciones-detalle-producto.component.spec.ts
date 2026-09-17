@@ -43,8 +43,8 @@ describe('AsignacionesDetalleProductoComponent', () => {
     svcSpy.detalleProducto.and.returnValue(of(detalleMock));
     svcSpy.recalcular.and.returnValue(of([propMock]));
     svcSpy.proponerReasignacion.and.returnValue(of([{ ...propMock, origen: 'REASIGNACION' }]));
-    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0 }));
-    svcSpy.confirmarReasignacion.and.returnValue(of({ producto_id: 10, disponible_restante: 0 }));
+    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
+    svcSpy.confirmarReasignacion.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
     svcSpy.resolverReserva.and.returnValue(of({} as any));
 
     await TestBed.configureTestingModule({

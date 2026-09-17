@@ -143,7 +143,12 @@
       <ul class="wiz-resultados">
         <li *ngFor="let r of resultados" [class.negativo]="!r.ok" [class.positivo]="r.ok">
           <i class="fas" [ngClass]="r.ok ? 'fa-check' : 'fa-times'"></i>
-          {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+          <span>
+            {{ r.sku }} — {{ r.ok ? 'reservado' : r.error }}
+            <span class="wiz-orden-odoo" *ngIf="r.ordenesOdoo?.length">
+              · Odoo: {{ r.ordenesOdoo!.join(', ') }}
+            </span>
+          </span>
         </li>
       </ul>
       <div class="wiz-acciones">

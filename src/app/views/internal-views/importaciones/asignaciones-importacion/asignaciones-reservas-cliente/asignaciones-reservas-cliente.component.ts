@@ -14,10 +14,15 @@ interface ResultadoReserva {
   sku: string;
   ok: boolean;
   error?: string;
+  ordenesOdoo?: string[];
 }
 
-/** Una fila por (producto, mes) con proyección para el cliente elegido. */
+/** Una fila por (cliente, producto, mes) con proyección para alguno de los
+ *  clientes elegidos. */
 interface FilaCliente {
+  clave_cliente: string;
+  nombre_cliente: string;
+  prioridad: number;
   producto_id: number;
   sku: string;
   descripcion: string | null;
@@ -63,14 +68,14 @@ export class AsignacionesReservasClienteComponent implements OnInit {
 
   paso: Paso = 'form';
 
-  // ── Combobox de cliente ──
+  // ── Combobox de cliente (selección múltiple) ──
   clientes: ClientePrioridad[] = [];
   cargandoClientes = true;
   errorClientes = '';
   busquedaCliente = '';
   mostrarLista = false;
   indiceActivo = -1;
-  clienteElegido: ClientePrioridad | null = null;
+  clientesElegidos: ClientePrioridad[] = [];
 
   // ── Ventana de meses ──
   mesDesde = 'octubre';
@@ -81,6 +86,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   // ── Resultado ──
   filas: FilaCliente[] = [];
   filtroMes = '';
+  filtroCliente = '';
   errorResumen = '';
   reservandoTodo = false;
   resultados: ResultadoReserva[] = [];
@@ -103,19 +109,16 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   // ── Combobox ─────────────────────────────────────────────────────────────
 
   clientesFiltrados(): ClientePrioridad[] {
+    const elegidas = new Set(this.clientesElegidos.map((c) => c.clave));
     const q = this.busquedaCliente.trim().toLowerCase();
-    if (!q) return this.clientes;
-    return this.clientes.filter((c) =>
-      c.nombre.toLowerCase().includes(q) || c.clave.toLowerCase().includes(q));
+    return this.clientes
+      .filter((c) => !elegidas.has(c.clave))
+      .filter((c) => !q || c.nombre.toLowerCase().includes(q) || c.clave.toLowerCase().includes(q));
   }
 
   onInputCliente(): void {
     this.mostrarLista = true;
     this.indiceActivo = -1;
-    const etiquetaActual = this.clienteElegido ? this._etiqueta(this.clienteElegido) : '';
-    if (this.clienteElegido && this.busquedaCliente !== etiquetaActual) {
-      this.clienteElegido = null;
-    }
   }
 
   onFocusCliente(): void {
@@ -140,56 +143,66 @@ export class AsignacionesReservasClienteComponent implements OnInit {
         event.preventDefault();
         this.elegirCliente(opciones[this.indiceActivo]);
       }
+    } else if (event.key === 'Backspace' && !this.busquedaCliente && this.clientesElegidos.length) {
+      this.quitarCliente(this.clientesElegidos[this.clientesElegidos.length - 1]);
     } else if (event.key === 'Escape') {
       this.mostrarLista = false;
     }
   }
 
-  private _etiqueta(c: ClientePrioridad): string {
-    return `${c.nombre} (${c.clave})`;
-  }
-
+  /** Agrega el cliente a la selección (multi) y deja el buscador listo para el siguiente. */
   elegirCliente(c: ClientePrioridad): void {
-    this.clienteElegido = c;
-    this.busquedaCliente = this._etiqueta(c);
-    this.mostrarLista = false;
+    this.clientesElegidos.push(c);
+    this.busquedaCliente = '';
+    this.indiceActivo = -1;
     this.errorForm = '';
     this.paso = 'form';
     this.filas = [];
   }
 
-  // ── Cálculo de la propuesta para el cliente elegido ─────────────────────
+  quitarCliente(c: ClientePrioridad): void {
+    this.clientesElegidos = this.clientesElegidos.filter((x) => x.clave !== c.clave);
+    this.paso = 'form';
+    this.filas = [];
+  }
+
+  // ── Cálculo de la propuesta para los clientes elegidos ──────────────────
 
   calcular(): void {
     this.errorForm = '';
-    if (!this.clienteElegido) {
-      this.errorForm = 'Selecciona un cliente de la lista';
+    if (!this.clientesElegidos.length) {
+      this.errorForm = 'Selecciona al menos un cliente de la lista';
       return;
     }
     if (!this.mesDesde || !this.mesHasta) {
       this.errorForm = 'Selecciona la ventana de meses';
       return;
     }
-    const clave = this.clienteElegido.clave;
+    const porClave = new Map(this.clientesElegidos.map((c) => [c.clave, c]));
     this.calculando = true;
     this.svc.recalcular(this.importacionId, this.mesDesde, this.mesHasta).subscribe({
       next: (propuestas) => {
         this.calculando = false;
         const filas: FilaCliente[] = [];
         for (const p of propuestas) {
-          const cli = p.propuesta.find((c) => c.clave_cliente === clave);
-          if (!cli) continue;
-          for (const m of cli.meses) {
-            if (m.proyectado > 0 || m.vigente > 0 || m.sugerido > 0) {
-              filas.push({
-                producto_id: p.producto_id, sku: p.sku, descripcion: p.descripcion,
-                mes: m.mes, proyectado: m.proyectado, vigente: m.vigente, sugerido: m.sugerido,
-              });
+          for (const cli of p.propuesta) {
+            const elegido = porClave.get(cli.clave_cliente);
+            if (!elegido) continue;
+            for (const m of cli.meses) {
+              if (m.proyectado > 0 || m.vigente > 0 || m.sugerido > 0) {
+                filas.push({
+                  clave_cliente: cli.clave_cliente, nombre_cliente: elegido.nombre, prioridad: elegido.prioridad,
+                  producto_id: p.producto_id, sku: p.sku, descripcion: p.descripcion,
+                  mes: m.mes, proyectado: m.proyectado, vigente: m.vigente, sugerido: m.sugerido,
+                });
+              }
             }
           }
         }
+        filas.sort((a, b) => a.prioridad - b.prioridad || a.mes.localeCompare(b.mes));
         this.filas = filas;
         this.filtroMes = '';
+        this.filtroCliente = '';
         this.paso = 'resumen';
       },
       error: (err) => {
@@ -199,8 +212,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     });
   }
 
-  /** Meses presentes en el resultado, en el orden en que aparecen (cronológico,
-   *  ya que vienen de la ventana elegida). Para el filtro de la tabla. */
+  /** Meses presentes en el resultado, en orden cronológico. Para el filtro de la tabla. */
   mesesDisponibles(): string[] {
     const vistos = new Set<string>();
     const orden: string[] = [];
@@ -210,11 +222,12 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     return orden;
   }
 
-  /** Solo afecta la vista: "Reservar todo" sigue operando sobre todos los
-   *  meses calculados, no solo el mes filtrado. */
+  /** Solo afecta la vista: "Reservar todo" sigue operando sobre todo lo
+   *  calculado, no solo lo filtrado. */
   filasFiltradas(): FilaCliente[] {
-    if (!this.filtroMes) return this.filas;
-    return this.filas.filter((f) => f.mes === this.filtroMes);
+    return this.filas
+      .filter((f) => !this.filtroMes || f.mes === this.filtroMes)
+      .filter((f) => !this.filtroCliente || f.clave_cliente === this.filtroCliente);
   }
 
   formatoMes(ym: string | null | undefined): string {
@@ -226,14 +239,12 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   }
 
   reservarTodo(): void {
-    if (!this.clienteElegido) return;
-    const clave = this.clienteElegido.clave;
     const porProducto = new Map<number, { sku: string; reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[] }>();
     for (const f of this.filas) {
       if (f.sugerido <= 0) continue;
       if (!porProducto.has(f.producto_id)) porProducto.set(f.producto_id, { sku: f.sku, reservas: [] });
       porProducto.get(f.producto_id)!.reservas.push({
-        clave_cliente: clave, mes_objetivo: f.mes, cantidad: f.sugerido, proyectado: f.proyectado,
+        clave_cliente: f.clave_cliente, mes_objetivo: f.mes, cantidad: f.sugerido, proyectado: f.proyectado,
       });
     }
 
@@ -246,7 +257,10 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     this.errorResumen = '';
     const llamadas = [...porProducto.entries()].map(([productoId, x]) =>
       this.svc.reservar(this.importacionId, productoId, x.reservas).pipe(
-        map((): ResultadoReserva => ({ sku: x.sku, ok: true })),
+        map((res): ResultadoReserva => ({
+          sku: x.sku, ok: true,
+          ordenesOdoo: res.ordenes_odoo.map((o) => o.order_name),
+        })),
         catchError((err) => of<ResultadoReserva>({
           sku: x.sku, ok: false,
           error: err?.error?.error?.message || 'No se pudo reservar',

@@ -10,10 +10,9 @@ describe('AsignacionesReservasClienteComponent', () => {
   let component: AsignacionesReservasClienteComponent;
   let svcSpy: jasmine.SpyObj<AsignacionesImportacionService>;
 
-  const clientes: ClientePrioridad[] = [
-    { clave: 'MC677', nombre: 'BICICLETAS SCJM', prioridad: 2 },
-    { clave: 'LC657', nombre: 'Víctor Hugo Villanueva Guzman', prioridad: 1 },
-  ];
+  const clienteLC657: ClientePrioridad = { clave: 'LC657', nombre: 'Víctor Hugo Villanueva Guzman', prioridad: 1 };
+  const clienteMC677: ClientePrioridad = { clave: 'MC677', nombre: 'BICICLETAS SCJM', prioridad: 2 };
+  const clientes: ClientePrioridad[] = [clienteMC677, clienteLC657];
 
   const propuestaMock: PropuestaProducto[] = [
     {
@@ -31,8 +30,8 @@ describe('AsignacionesReservasClienteComponent', () => {
         },
         {
           clave_cliente: 'MC677', nombre_cliente: 'BICICLETAS SCJM', prioridad: 2,
-          proyectado_total: 0, sugerido_total: 0, faltante_total: 0,
-          meses: [{ mes: '2026-10', proyectado: 0, vigente: 0, sugerido: 0 }],
+          proyectado_total: 3, sugerido_total: 3, faltante_total: 0,
+          meses: [{ mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 }],
         },
       ],
     },
@@ -69,21 +68,29 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.clientesFiltrados().map((c) => c.clave)).toEqual(['LC657']);
   });
 
-  it('elegirCliente() fija el cliente y escribe su etiqueta en el input', () => {
-    component.elegirCliente(clientes[1]);
-    expect(component.clienteElegido).toEqual(clientes[1]);
-    expect(component.busquedaCliente).toBe('Víctor Hugo Villanueva Guzman (LC657)');
+  it('clientesFiltrados() excluye a los ya elegidos', () => {
+    component.elegirCliente(clienteLC657);
+    expect(component.clientesFiltrados().map((c) => c.clave)).toEqual(['MC677']);
+  });
+
+  it('elegirCliente() agrega el cliente a la selección y limpia el buscador', () => {
+    component.elegirCliente(clienteLC657);
+    expect(component.clientesElegidos).toEqual([clienteLC657]);
+    expect(component.busquedaCliente).toBe('');
     expect(component.mostrarLista).toBeFalse();
+
+    component.elegirCliente(clienteMC677);
+    expect(component.clientesElegidos).toEqual([clienteLC657, clienteMC677]);
   });
 
-  it('onInputCliente() limpia la selección si el texto ya no calza con la etiqueta elegida', () => {
-    component.elegirCliente(clientes[1]);
-    component.busquedaCliente = 'otra cosa';
-    component.onInputCliente();
-    expect(component.clienteElegido).toBeNull();
+  it('quitarCliente() lo saca de la selección', () => {
+    component.elegirCliente(clienteLC657);
+    component.elegirCliente(clienteMC677);
+    component.quitarCliente(clienteLC657);
+    expect(component.clientesElegidos).toEqual([clienteMC677]);
   });
 
-  it('onKeydownCliente() navega con flechas y selecciona con Enter', () => {
+  it('onKeydownCliente() navega con flechas, selecciona con Enter y quita con Backspace vacío', () => {
     component.busquedaCliente = '';
     component.mostrarLista = true;
     const down = new KeyboardEvent('keydown', { key: 'ArrowDown' });
@@ -92,64 +99,86 @@ describe('AsignacionesReservasClienteComponent', () => {
 
     const enter = new KeyboardEvent('keydown', { key: 'Enter' });
     component.onKeydownCliente(enter);
-    expect(component.clienteElegido?.clave).toBe(clientes[0].clave);
+    expect(component.clientesElegidos.map((c) => c.clave)).toEqual([clientes[0].clave]);
+
+    const backspace = new KeyboardEvent('keydown', { key: 'Backspace' });
+    component.onKeydownCliente(backspace);
+    expect(component.clientesElegidos.length).toBe(0);
   });
 
-  it('calcular() exige un cliente elegido antes de llamar al servicio', () => {
+  it('calcular() exige al menos un cliente elegido antes de llamar al servicio', () => {
     component.calcular();
     expect(component.errorForm).toContain('cliente');
     expect(svcSpy.recalcular).not.toHaveBeenCalled();
   });
 
-  it('calcular() llama a recalcular() sin periodo y filtra las filas al cliente elegido', () => {
+  it('calcular() llama a recalcular() sin periodo y filtra las filas a los clientes elegidos', () => {
     svcSpy.recalcular.and.returnValue(of(propuestaMock));
-    component.elegirCliente(clientes[1]); // LC657
+    component.elegirCliente(clienteLC657);
     component.mesDesde = 'octubre';
     component.mesHasta = 'noviembre';
 
     component.calcular();
 
     expect(svcSpy.recalcular).toHaveBeenCalledWith(1, 'octubre', 'noviembre');
-    expect(component.filas.map((f) => [f.sku, f.mes, f.sugerido])).toEqual([
-      ['SKU-1', '2026-10', 5],
-      ['SKU-1', '2026-11', 2],
+    expect(component.filas.map((f) => [f.clave_cliente, f.sku, f.mes, f.sugerido])).toEqual([
+      ['LC657', 'SKU-1', '2026-10', 5],
+      ['LC657', 'SKU-1', '2026-11', 2],
     ]);
     expect(component.paso).toBe('resumen');
   });
 
+  it('calcular() con varios clientes elegidos junta las filas de todos, ordenadas por prioridad y mes', () => {
+    svcSpy.recalcular.and.returnValue(of(propuestaMock));
+    component.elegirCliente(clienteMC677); // prioridad 2
+    component.elegirCliente(clienteLC657); // prioridad 1
+
+    component.calcular();
+
+    expect(component.filas.map((f) => [f.clave_cliente, f.mes])).toEqual([
+      ['LC657', '2026-10'],
+      ['LC657', '2026-11'],
+      ['MC677', '2026-10'],
+    ]);
+  });
+
   it('totalGeneralSugerido() suma lo sugerido de todas las filas', () => {
     component.filas = [
-      { producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
-      { producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
     ];
     expect(component.totalGeneralSugerido()).toBe(7);
   });
 
   it('mesesDisponibles() devuelve los meses únicos en el orden en que aparecen', () => {
     component.filas = [
-      { producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
-      { producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
-      { producto_id: 3, sku: 'C', descripcion: null, mes: '2026-10', proyectado: 1, vigente: 0, sugerido: 1 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 3, sku: 'C', descripcion: null, mes: '2026-10', proyectado: 1, vigente: 0, sugerido: 1 },
     ];
     expect(component.mesesDisponibles()).toEqual(['2026-10', '2026-11']);
   });
 
-  it('filasFiltradas() sin filtro devuelve todas las filas; con filtro solo el mes elegido', () => {
+  it('filasFiltradas() combina el filtro de mes y el de cliente', () => {
     component.filas = [
-      { producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
-      { producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+      { clave_cliente: 'MC677', nombre_cliente: 'Y', prioridad: 2, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 },
     ];
-    expect(component.filasFiltradas().length).toBe(2);
-    component.filtroMes = '2026-11';
-    expect(component.filasFiltradas().map((f) => f.sku)).toEqual(['B']);
+    expect(component.filasFiltradas().length).toBe(3);
+
+    component.filtroMes = '2026-10';
+    expect(component.filasFiltradas().map((f) => f.clave_cliente)).toEqual(['LC657', 'MC677']);
+
+    component.filtroCliente = 'MC677';
+    expect(component.filasFiltradas().map((f) => f.sku)).toEqual(['A']);
   });
 
-  it('reservarTodo() agrupa las filas por producto y llama a reservar() una vez por SKU', () => {
-    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0 }));
-    component.elegirCliente(clientes[1]); // LC657
+  it('reservarTodo() agrupa por producto e incluye la clave de cada fila (varios clientes en un mismo producto)', () => {
+    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
     component.filas = [
-      { producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
-      { producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-11', proyectado: 4, vigente: 0, sugerido: 2 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { clave_cliente: 'MC677', nombre_cliente: 'Y', prioridad: 2, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 },
     ];
 
     component.reservarTodo();
@@ -157,29 +186,39 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(svcSpy.reservar).toHaveBeenCalledTimes(1);
     expect(svcSpy.reservar).toHaveBeenCalledWith(1, 10, [
       { clave_cliente: 'LC657', mes_objetivo: '2026-10', cantidad: 5, proyectado: 5 },
-      { clave_cliente: 'LC657', mes_objetivo: '2026-11', cantidad: 2, proyectado: 4 },
+      { clave_cliente: 'MC677', mes_objetivo: '2026-10', cantidad: 3, proyectado: 3 },
     ]);
     expect(component.paso).toBe('terminado');
   });
 
   it('reservarTodo() no llama al servicio si no hay nada sugerido y muestra un error', () => {
-    component.elegirCliente(clientes[1]);
     component.filas = [
-      { producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 5, sugerido: 0 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 5, sugerido: 0 },
     ];
     component.reservarTodo();
     expect(svcSpy.reservar).not.toHaveBeenCalled();
     expect(component.errorResumen).toContain('sugerida');
   });
 
-  it('reservarTodo() reporta el error de un producto sin bloquear el resto', () => {
+  it('reservarTodo() reporta el error de un producto sin bloquear el resto y muestra la orden de Odoo en éxito', () => {
     svcSpy.reservar.and.returnValue(throwError(() => ({ error: { error: { message: 'Sin disponible' } } })));
-    component.elegirCliente(clientes[1]);
     component.filas = [
-      { producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
     ];
     component.reservarTodo();
     expect(component.resultados).toEqual([{ sku: 'SKU-1', ok: false, error: 'Sin disponible' }]);
+  });
+
+  it('reservarTodo() incluye el nombre de la orden de Odoo en el resultado exitoso', () => {
+    svcSpy.reservar.and.returnValue(of({
+      producto_id: 10, disponible_restante: 0,
+      ordenes_odoo: [{ clave_cliente: 'LC657', mes_objetivo: '2026-10', order_id: 1, order_name: 'S00042' }],
+    }));
+    component.filas = [
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+    ];
+    component.reservarTodo();
+    expect(component.resultados).toEqual([{ sku: 'SKU-1', ok: true, ordenesOdoo: ['S00042'] }]);
   });
 
   it('formatoMes() convierte YYYY-MM a nombre de mes en español', () => {

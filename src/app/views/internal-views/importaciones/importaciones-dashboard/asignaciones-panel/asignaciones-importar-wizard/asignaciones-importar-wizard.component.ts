@@ -16,6 +16,7 @@ interface ResultadoReserva {
   sku: string;
   ok: boolean;
   error?: string;
+  ordenesOdoo?: string[];
 }
 
 const MESES: { valor: string; label: string }[] = [
@@ -200,7 +201,10 @@ export class AsignacionesImportarWizardComponent implements OnInit {
     this.errorResumen = '';
     const llamadas = candidatos.map((x) =>
       this.svc.reservar(embarqueId, x.p.producto_id, x.reservas).pipe(
-        map((): ResultadoReserva => ({ sku: x.p.sku, ok: true })),
+        map((res): ResultadoReserva => ({
+          sku: x.p.sku, ok: true,
+          ordenesOdoo: res.ordenes_odoo.map((o) => o.order_name),
+        })),
         catchError((err) => of<ResultadoReserva>({
           sku: x.p.sku, ok: false,
           error: err?.error?.error?.message || 'No se pudo reservar',

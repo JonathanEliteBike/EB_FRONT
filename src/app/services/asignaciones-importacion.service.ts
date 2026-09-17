@@ -129,6 +129,20 @@ export interface ClientePrioridad {
   prioridad: number;
 }
 
+/** Una orden de venta de Odoo creada o completada por esta reserva. */
+export interface OrdenOdoo {
+  clave_cliente: string;
+  mes_objetivo: string;   // 'YYYY-MM'
+  order_id: number;
+  order_name: string;     // p. ej. 'S00042'
+}
+
+export interface ReservarResultado {
+  producto_id: number;
+  disponible_restante: number;
+  ordenes_odoo: OrdenOdoo[];
+}
+
 export interface ImportacionErrorFila {
   fila: number | null;
   sku: string | null;
@@ -322,9 +336,9 @@ export class AsignacionesImportacionService {
     importacionId: number,
     productoId: number,
     reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[]
-  ): Observable<{ producto_id: number; disponible_restante: number }> {
+  ): Observable<ReservarResultado> {
     return this.http
-      .post<ApiOk<{ producto_id: number; disponible_restante: number }>>(
+      .post<ApiOk<ReservarResultado>>(
         `${this.base}/${importacionId}/asignaciones/productos/${productoId}/reservar`,
         this._reservarBody(reservas)
       )
@@ -336,9 +350,9 @@ export class AsignacionesImportacionService {
     importacionId: number,
     productoId: number,
     reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[]
-  ): Observable<{ producto_id: number; disponible_restante: number }> {
+  ): Observable<ReservarResultado> {
     return this.http
-      .post<ApiOk<{ producto_id: number; disponible_restante: number }>>(
+      .post<ApiOk<ReservarResultado>>(
         `${this.base}/${importacionId}/asignaciones/productos/${productoId}/reasignar`,
         this._reservarBody(reservas)
       )

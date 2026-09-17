@@ -94,7 +94,10 @@ describe('AsignacionesPropuestaMasivaComponent', () => {
 
   it('reservarTodo() reserva cada producto con propuesta y cantidad sugerida > 0', () => {
     svcSpy.recalcular.and.returnValue(of([propMock, propMock2]));
-    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0 }));
+    svcSpy.reservar.and.returnValue(of({
+      producto_id: 10, disponible_restante: 0,
+      ordenes_odoo: [{ clave_cliente: 'LC657', mes_objetivo: '2026-10', order_id: 1, order_name: 'S00042' }],
+    }));
     component.calcular();
 
     component.reservarTodo();
@@ -105,6 +108,7 @@ describe('AsignacionesPropuestaMasivaComponent', () => {
       { clave_cliente: 'LC657', mes_objetivo: '2026-11', cantidad: 2, proyectado: 4 },
     ]);
     expect(component.resultados.length).toBe(2);
+    expect(component.resultados[0].ordenesOdoo).toEqual(['S00042']);
     expect(component.paso).toBe('terminado');
   });
 
