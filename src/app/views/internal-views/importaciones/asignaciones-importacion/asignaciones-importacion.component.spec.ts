@@ -176,6 +176,20 @@ describe('AsignacionesImportacionComponent', () => {
     expect(component.reservasClienteAbierto).toBeFalse();
   });
 
+  it('abrirReservasDetalle()/cerrarReservasDetalle() controlan el detalle de las tarjetas de KPI', () => {
+    expect(component.reservasDetalleAbierto).toBeFalse();
+    component.abrirReservasDetalle('PENDIENTE_CONFIRMACION');
+    expect(component.reservasDetalleAbierto).toBeTrue();
+    expect(component.reservasDetalleEstadoInicial).toBe('PENDIENTE_CONFIRMACION');
+    component.cerrarReservasDetalle();
+    expect(component.reservasDetalleAbierto).toBeFalse();
+  });
+
+  it('abrirReservasDetalle() sin argumento no preselecciona estado', () => {
+    component.abrirReservasDetalle();
+    expect(component.reservasDetalleEstadoInicial).toBeUndefined();
+  });
+
   it('carga los periodos activos al iniciar', () => {
     expect(svcSpy.periodosActivos).toHaveBeenCalled();
     expect(component.periodos).toEqual(['2026-2027']);

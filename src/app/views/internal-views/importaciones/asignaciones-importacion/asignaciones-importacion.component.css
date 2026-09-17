@@ -12,7 +12,16 @@
 .kpi-card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
 .kpi-highlight { background: #1e3a5f; border-color: #3b82f6; }
 .kpi-num { font-size: 24px; font-weight: 700; color: #e2e8f0; }
-.kpi-label { font-size: 12px; color: #94a3b8; }
+.kpi-label { font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 5px; }
+
+.kpi-clickable {
+  cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, transform 120ms ease-out;
+}
+.kpi-clickable:hover { background: #202940; border-color: #3d4a5f; }
+.kpi-clickable:active { transform: scale(0.98); }
+.kpi-icono { font-size: 9px; color: #475569; transition: color 150ms ease-out; }
+.kpi-clickable:hover .kpi-icono { color: #60a5fa; }
 
 .asig-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .asig-toolbar h2 { color: #e2e8f0; }

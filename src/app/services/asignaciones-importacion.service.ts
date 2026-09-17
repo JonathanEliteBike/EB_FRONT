@@ -129,6 +129,24 @@ export interface ClientePrioridad {
   prioridad: number;
 }
 
+/** Una reserva del embarque (de cualquier producto), con la orden de Odoo
+ *  tocada -- para las tarjetas de KPI interactivas. */
+export interface ReservaEmbarque {
+  id: number;
+  importacion_producto_id: number;
+  clave_cliente: string;
+  mes_objetivo: string | null;      // 'YYYY-MM'
+  origen: OrigenReserva;
+  estado: EstadoReserva;
+  cantidad_asignada: number;
+  odoo_order_id: number | null;
+  odoo_order_name: string | null;
+  confirmada_at?: string | null;
+  sku: string;
+  descripcion: string | null;
+  periodo: string;
+}
+
 /** Una orden de venta de Odoo creada o completada por esta reserva. */
 export interface OrdenOdoo {
   clave_cliente: string;
@@ -408,6 +426,16 @@ export class AsignacionesImportacionService {
   movimientos(importacionId: number): Observable<Movimiento[]> {
     return this.http
       .get<ApiOk<Movimiento[]>>(`${this.base}/${importacionId}/asignaciones/movimientos`)
+      .pipe(map(r => r.data));
+  }
+
+  /** Reservas del embarque (todos sus productos), con la orden de Odoo tocada.
+   *  Alimenta las tarjetas de KPI interactivas. */
+  reservasEmbarque(importacionId: number, estado?: EstadoReserva): Observable<ReservaEmbarque[]> {
+    let params = new HttpParams();
+    if (estado) params = params.set('estado', estado);
+    return this.http
+      .get<ApiOk<ReservaEmbarque[]>>(`${this.base}/${importacionId}/asignaciones/reservas`, { params })
       .pipe(map(r => r.data));
   }
 

@@ -1,0 +1,86 @@
+<div class="panel-overlay" (click)="cerrarPanel()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <div class="panel-header">
+      <div>
+        <span class="panel-periodo">Reservas de este embarque</span>
+        <h2 class="panel-titulo">Quién tiene qué reservado, y con qué orden en Odoo</h2>
+      </div>
+      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="wiz-error" *ngIf="error">{{ error }}</div>
+    <p class="wiz-cargando" *ngIf="cargando">Cargando…</p>
+
+    <ng-container *ngIf="!cargando">
+      <div class="wiz-filtros">
+        <div class="wiz-filtro-mes">
+          <label>Estado</label>
+          <select [(ngModel)]="filtroEstado">
+            <option value="">Todos</option>
+            <option value="RESERVADA">Reservada</option>
+            <option value="PENDIENTE_CONFIRMACION">Pendiente conf.</option>
+            <option value="CONFIRMADA">Confirmada</option>
+            <option value="RECHAZADA">Rechazada</option>
+            <option value="CANCELADA">Cancelada</option>
+          </select>
+        </div>
+        <div class="wiz-buscador">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar por cliente, SKU u orden…" [(ngModel)]="filtroTexto" />
+        </div>
+      </div>
+
+      <div class="wiz-tabla-scroll" *ngIf="reservasFiltradas().length; else sinReservas">
+        <table class="tabla-mini">
+          <colgroup>
+            <col class="col-cliente" /><col class="col-sku" /><col class="col-desc" /><col class="col-mes" />
+            <col class="col-num" /><col class="col-estado" /><col class="col-estado" /><col class="col-orden" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Cliente</th><th>SKU</th><th>Descripción</th><th>Mes</th>
+              <th class="num">Cantidad</th><th>Estado</th><th>Origen</th><th>Orden Odoo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of reservasFiltradas()">
+              <td class="cli-clave">{{ r.clave_cliente }}</td>
+              <td><span class="cli-clave">{{ r.sku }}</span></td>
+              <td class="td-nombre" [title]="r.descripcion || ''">{{ r.descripcion || '—' }}</td>
+              <td>{{ formatoMes(r.mes_objetivo) }}</td>
+              <td class="num">{{ r.cantidad_asignada }}</td>
+              <td>
+                <span class="badge" [ngClass]="'badge-estado-' + r.estado.toLowerCase()">
+                  {{ estadoLabel(r.estado) }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="r.origen === 'REASIGNACION' ? 'badge-reasignacion' : 'badge-inicial'">
+                  {{ origenLabel(r.origen) }}
+                </span>
+              </td>
+              <td>
+                <span class="orden-odoo" *ngIf="r.odoo_order_name">{{ r.odoo_order_name }}</span>
+                <span class="sin-orden" *ngIf="!r.odoo_order_name">—</span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">{{ reservasFiltradas().length }} reserva(s)</td>
+              <td class="num">{{ totalCantidad() }}</td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <ng-template #sinReservas>
+        <p class="asig-vacio">No hay reservas que calcen con este filtro.</p>
+      </ng-template>
+    </ng-container>
+
+    <div class="wiz-acciones">
+      <button class="btn-primary" (click)="cerrarPanel()">Cerrar</button>
+    </div>
+  </div>
+</div>

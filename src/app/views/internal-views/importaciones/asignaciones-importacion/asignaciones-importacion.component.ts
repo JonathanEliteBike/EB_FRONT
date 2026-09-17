@@ -8,10 +8,12 @@ import {
   AsignacionesResumen,
   AsignacionesProducto,
   ImportacionResultado,
+  EstadoReserva,
 } from '../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 import { AsignacionesPropuestaMasivaComponent } from './asignaciones-propuesta-masiva/asignaciones-propuesta-masiva.component';
 import { AsignacionesReservasClienteComponent } from './asignaciones-reservas-cliente/asignaciones-reservas-cliente.component';
+import { AsignacionesReservasDetalleComponent } from './asignaciones-reservas-detalle/asignaciones-reservas-detalle.component';
 
 @Component({
   selector: 'app-asignaciones-importacion',
@@ -19,7 +21,7 @@ import { AsignacionesReservasClienteComponent } from './asignaciones-reservas-cl
   imports: [
     CommonModule, RouterModule, FormsModule, HomeBarComponent,
     AsignacionesDetalleProductoComponent, AsignacionesPropuestaMasivaComponent,
-    AsignacionesReservasClienteComponent,
+    AsignacionesReservasClienteComponent, AsignacionesReservasDetalleComponent,
   ],
   templateUrl: './asignaciones-importacion.component.html',
   styleUrl: './asignaciones-importacion.component.css',
@@ -59,6 +61,11 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   /** Buscador de reservas de este embarque por cliente. */
   reservasClienteAbierto = false;
+
+  /** Detalle de reservas al hacer clic en las tarjetas de KPI (quién tiene
+   *  qué reservado y con qué orden de Odoo). */
+  reservasDetalleAbierto = false;
+  reservasDetalleEstadoInicial: EstadoReserva | undefined = undefined;
 
   /** A dónde volver: por defecto el detalle del embarque; si se llegó desde el
    *  dashboard (?from=dashboard&tab=...) se vuelve ahí en vez de "hacia adentro". */
@@ -218,5 +225,14 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   cerrarReservasCliente(): void {
     this.reservasClienteAbierto = false;
+  }
+
+  abrirReservasDetalle(estadoInicial?: EstadoReserva): void {
+    this.reservasDetalleEstadoInicial = estadoInicial;
+    this.reservasDetalleAbierto = true;
+  }
+
+  cerrarReservasDetalle(): void {
+    this.reservasDetalleAbierto = false;
   }
 }

@@ -17,13 +17,14 @@
         <span class="kpi-num">{{ resumen.kpis.unidades_embarcadas }}</span>
         <span class="kpi-label">Embarcadas</span>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card kpi-clickable" title="Ver quién tiene qué reservado" (click)="abrirReservasDetalle()">
         <span class="kpi-num">{{ resumen.kpis.unidades_reservadas }}</span>
-        <span class="kpi-label">Reservadas</span>
+        <span class="kpi-label">Reservadas <i class="fas fa-arrow-up-right-from-square kpi-icono"></i></span>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card kpi-clickable" title="Ver reservas pendientes de confirmación"
+           (click)="abrirReservasDetalle('PENDIENTE_CONFIRMACION')">
         <span class="kpi-num">{{ resumen.kpis.reservado_reasignacion_pendiente }}</span>
-        <span class="kpi-label">Pend. confirmación</span>
+        <span class="kpi-label">Pend. confirmación <i class="fas fa-arrow-up-right-from-square kpi-icono"></i></span>
       </div>
       <div class="kpi-card">
         <span class="kpi-num">{{ resumen.kpis.unidades_sobrantes }}</span>
@@ -158,3 +159,10 @@
   [importacionId]="importacionId"
   (cerrar)="cerrarReservasCliente()"
 ></app-asignaciones-reservas-cliente>
+
+<app-asignaciones-reservas-detalle
+  *ngIf="reservasDetalleAbierto"
+  [importacionId]="importacionId"
+  [estadoInicial]="reservasDetalleEstadoInicial"
+  (cerrar)="cerrarReservasDetalle()"
+></app-asignaciones-reservas-detalle>
