@@ -153,6 +153,7 @@ describe('AsignacionesReservasClienteComponent', () => {
       ['LC657', 'SKU-1', '2026-11', 2],
     ]);
     expect(component.paso).toBe('resumen');
+    expect(component.grupos.map((g) => g.clave_cliente)).toEqual(['LC657']);
   });
 
   it('calcular() con varios clientes elegidos junta las filas de todos, ordenadas por prioridad y mes', () => {
@@ -209,17 +210,33 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.filasFiltradas().map((f) => f.sku)).toEqual(['B']);
   });
 
-  it('gruposFiltrados() agrupa las filas filtradas por cliente, ordenadas por prioridad', () => {
+  it('recomputarGrupos() agrupa las filas filtradas por cliente, ordenadas por prioridad', () => {
     component.filas = [
       { clave_cliente: 'MC677', nombre_cliente: 'BICICLETAS SCJM', prioridad: 2, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 },
       { clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
       { clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
     ];
-    const grupos = component.gruposFiltrados();
+    component.recomputarGrupos();
+    const grupos = component.grupos;
     expect(grupos.map((g) => g.clave_cliente)).toEqual(['LC657', 'MC677']);
     expect(grupos[0].filas.length).toBe(2);
     expect(grupos[0].totalSugerido).toBe(7);
     expect(grupos[1].totalSugerido).toBe(3);
+  });
+
+  it('recomputarGrupos() no se llama desde el template -- marcar una casilla no debe reconstruir los grupos', () => {
+    // Esto es justo el bug que se reportó: si `grupos` se recalculara en
+    // cada detección de cambios (p. ej. llamado directo desde el template),
+    // Angular destruye y recrea los <input type="checkbox"> en cada clic y
+    // la marca nunca se ve. Fijar la referencia del arreglo es la garantía
+    // de que eso no puede volver a pasar.
+    component.filas = [
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+    ];
+    component.recomputarGrupos();
+    const referenciaPrevia = component.grupos;
+    component.toggleFila(component.grupos[0].filas[0]);
+    expect(component.grupos).toBe(referenciaPrevia);
   });
 
   it('grupoExpandido() siempre muestra el único grupo, pero respeta el toggle manual cuando hay varios', () => {

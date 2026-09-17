@@ -109,14 +109,14 @@
       <div class="wiz-filtros">
         <div class="wiz-filtro-mes" *ngIf="mesesDisponibles().length > 1">
           <label>Filtrar por mes</label>
-          <select [(ngModel)]="filtroMes">
+          <select [(ngModel)]="filtroMes" (ngModelChange)="onFiltroCambiado()">
             <option value="">Todos los meses</option>
             <option *ngFor="let m of mesesDisponibles()" [value]="m">{{ formatoMes(m) }}</option>
           </select>
         </div>
         <div class="wiz-filtro-mes" *ngIf="clientesElegidos.length > 1">
           <label>Filtrar por cliente</label>
-          <select [(ngModel)]="filtroCliente">
+          <select [(ngModel)]="filtroCliente" (ngModelChange)="onFiltroCambiado()">
             <option value="">Todos los clientes</option>
             <option *ngFor="let c of clientesElegidos" [value]="c.clave">{{ c.nombre }} ({{ c.clave }})</option>
           </select>
@@ -130,7 +130,6 @@
         Marca la casilla de un mes puntual para reservar solo ese; si no marcas nada, "Reservar este cliente" reserva todo el grupo.
       </p>
 
-      <ng-container *ngIf="gruposFiltrados() as grupos">
         <div class="wiz-tabla-scroll" *ngIf="grupos.length; else sinFilas">
           <table class="tabla-mini">
             <thead>
@@ -186,7 +185,6 @@
             (puede que ya esté todo reservado, o que no haya proyección con este filtro).
           </p>
         </ng-template>
-      </ng-container>
 
       <div class="wiz-error" *ngIf="errorResumen">{{ errorResumen }}</div>
 

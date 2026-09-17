@@ -97,6 +97,13 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   filas: FilaCliente[] = [];
   filtroMes = '';
   filtroCliente = '';
+  /** Copia agrupada de filasFiltradas(), recalculada solo cuando cambian los
+   *  datos o los filtros -- NO en cada detección de cambios. Si se recalculara
+   *  en el template (p. ej. llamando a un método ahí), cada clic en una
+   *  casilla dispararía un ciclo de CD que reconstruye por completo las filas
+   *  con objetos nuevos; Angular destruye y recrea los <input type="checkbox">
+   *  y el tick nativo del navegador se pierde -- la casilla nunca se ve marcada. */
+  grupos: GrupoCliente[] = [];
   errorResumen = '';
   reservandoTodo = false;
   /** clave del cliente cuyo grupo se está reservando por separado (o null). */
@@ -243,6 +250,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
         this.filtroMes = '';
         this.filtroCliente = '';
         this.filasSeleccionadas.clear();
+        this.recomputarGrupos();
         this.paso = 'resumen';
       },
       error: (err) => {
@@ -273,9 +281,18 @@ export class AsignacionesReservasClienteComponent implements OnInit {
       .filter((f) => !this.filtroCliente || f.clave_cliente === this.filtroCliente);
   }
 
+  /** Se dispara al cambiar los selects de mes/cliente -- ahí sí toca
+   *  recalcular los grupos, a diferencia de marcar una casilla o desplegar
+   *  un grupo, que no cambian qué filas hay, solo cómo se ven. */
+  onFiltroCambiado(): void {
+    this.recomputarGrupos();
+  }
+
   /** Agrupa las filas filtradas por cliente, para poder revisar y reservar
-   *  a un distribuidor a la vez en vez de a todos juntos. */
-  gruposFiltrados(): GrupoCliente[] {
+   *  a un distribuidor a la vez en vez de a todos juntos. Se llama a mano
+   *  (no desde el template) cada vez que cambian los datos o los filtros;
+   *  ver el comentario en `grupos` sobre por qué. */
+  recomputarGrupos(): void {
     const mapa = new Map<string, GrupoCliente>();
     for (const f of this.filasFiltradas()) {
       let g = mapa.get(f.clave_cliente);
@@ -289,7 +306,7 @@ export class AsignacionesReservasClienteComponent implements OnInit {
       g.filas.push(f);
       g.totalSugerido += f.sugerido;
     }
-    return [...mapa.values()].sort((a, b) => a.prioridad - b.prioridad);
+    this.grupos = [...mapa.values()].sort((a, b) => a.prioridad - b.prioridad);
   }
 
   /** Un solo grupo no tiene nada que ocultar: se muestra siempre desplegado. */
