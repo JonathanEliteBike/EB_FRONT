@@ -32,6 +32,16 @@ interface FilaCliente {
   sugerido: number;
 }
 
+/** Filas agrupadas por cliente, para poder reservarle a uno a la vez sin
+ *  esperar a que los demás EVAC terminen de revisar el suyo. */
+interface GrupoCliente {
+  clave_cliente: string;
+  nombre_cliente: string;
+  prioridad: number;
+  filas: FilaCliente[];
+  totalSugerido: number;
+}
+
 const MESES: { valor: string; label: string }[] = [
   { valor: 'mayo', label: 'Mayo' }, { valor: 'junio', label: 'Junio' },
   { valor: 'julio', label: 'Julio' }, { valor: 'agosto', label: 'Agosto' },
@@ -89,7 +99,12 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   filtroCliente = '';
   errorResumen = '';
   reservandoTodo = false;
+  /** clave del cliente cuyo grupo se está reservando por separado (o null). */
+  reservandoClave: string | null = null;
   resultados: ResultadoReserva[] = [];
+
+  /** claves de los grupos que el usuario desplegó manualmente. */
+  private gruposExpandidos = new Set<string>();
 
   constructor(private svc: AsignacionesImportacionService) {}
 
@@ -243,11 +258,43 @@ export class AsignacionesReservasClienteComponent implements OnInit {
   }
 
   /** Solo afecta la vista: "Reservar todo" sigue operando sobre todo lo
-   *  calculado, no solo lo filtrado. */
+   *  calculado, no solo lo filtrado. Las filas sin nada pendiente (ya
+   *  reservadas por completo) se quitan de la vista: no hay nada que hacer
+   *  con ellas y solo estorban al revisar, sobre todo en meses pasados. */
   filasFiltradas(): FilaCliente[] {
     return this.filas
+      .filter((f) => f.sugerido > 0)
       .filter((f) => !this.filtroMes || f.mes === this.filtroMes)
       .filter((f) => !this.filtroCliente || f.clave_cliente === this.filtroCliente);
+  }
+
+  /** Agrupa las filas filtradas por cliente, para poder revisar y reservar
+   *  a un distribuidor a la vez en vez de a todos juntos. */
+  gruposFiltrados(): GrupoCliente[] {
+    const mapa = new Map<string, GrupoCliente>();
+    for (const f of this.filasFiltradas()) {
+      let g = mapa.get(f.clave_cliente);
+      if (!g) {
+        g = {
+          clave_cliente: f.clave_cliente, nombre_cliente: f.nombre_cliente,
+          prioridad: f.prioridad, filas: [], totalSugerido: 0,
+        };
+        mapa.set(f.clave_cliente, g);
+      }
+      g.filas.push(f);
+      g.totalSugerido += f.sugerido;
+    }
+    return [...mapa.values()].sort((a, b) => a.prioridad - b.prioridad);
+  }
+
+  /** Un solo grupo no tiene nada que ocultar: se muestra siempre desplegado. */
+  grupoExpandido(clave: string, totalGrupos: number): boolean {
+    return totalGrupos === 1 || this.gruposExpandidos.has(clave);
+  }
+
+  toggleGrupo(clave: string): void {
+    if (this.gruposExpandidos.has(clave)) this.gruposExpandidos.delete(clave);
+    else this.gruposExpandidos.add(clave);
   }
 
   formatoMes(ym: string | null | undefined): string {
@@ -258,23 +305,19 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     return this.filas.reduce((s, f) => s + f.sugerido, 0);
   }
 
-  reservarTodo(): void {
+  private agruparPorProducto(filas: FilaCliente[]) {
     const porProducto = new Map<number, { sku: string; reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[] }>();
-    for (const f of this.filas) {
+    for (const f of filas) {
       if (f.sugerido <= 0) continue;
       if (!porProducto.has(f.producto_id)) porProducto.set(f.producto_id, { sku: f.sku, reservas: [] });
       porProducto.get(f.producto_id)!.reservas.push({
         clave_cliente: f.clave_cliente, mes_objetivo: f.mes, cantidad: f.sugerido, proyectado: f.proyectado,
       });
     }
+    return porProducto;
+  }
 
-    if (!porProducto.size) {
-      this.errorResumen = 'No hay ninguna cantidad sugerida mayor a 0 para reservar';
-      return;
-    }
-
-    this.reservandoTodo = true;
-    this.errorResumen = '';
+  private ejecutarReservas(porProducto: Map<number, { sku: string; reservas: { clave_cliente: string; mes_objetivo: string; cantidad: number; proyectado?: number }[] }>) {
     const llamadas = [...porProducto.entries()].map(([productoId, x]) =>
       this.svc.reservar(this.importacionId, productoId, x.reservas).pipe(
         map((res): ResultadoReserva => ({
@@ -291,8 +334,36 @@ export class AsignacionesReservasClienteComponent implements OnInit {
     // Secuencial (no forkJoin): varios POST /reservar en paralelo para el mismo
     // cliente compiten por el mismo registro de `clientes` en MySQL y producen
     // deadlocks (error 1213). Una reserva a la vez evita la contención.
-    from(llamadas).pipe(concatMap((obs) => obs), toArray()).subscribe((resultados) => {
+    return from(llamadas).pipe(concatMap((obs) => obs), toArray());
+  }
+
+  reservarTodo(): void {
+    const porProducto = this.agruparPorProducto(this.filas);
+    if (!porProducto.size) {
+      this.errorResumen = 'No hay ninguna cantidad sugerida mayor a 0 para reservar';
+      return;
+    }
+    this.reservandoTodo = true;
+    this.errorResumen = '';
+    this.ejecutarReservas(porProducto).subscribe((resultados) => {
       this.reservandoTodo = false;
+      this.resultados = resultados;
+      this.paso = 'terminado';
+    });
+  }
+
+  /** Reserva solo lo de un cliente, para que cada EVAC pueda avanzar el suyo
+   *  sin esperar a que los demás terminen de revisar el propio. */
+  reservarGrupo(grupo: GrupoCliente): void {
+    const porProducto = this.agruparPorProducto(grupo.filas);
+    if (!porProducto.size) {
+      this.errorResumen = `${grupo.nombre_cliente} no tiene ninguna cantidad sugerida mayor a 0`;
+      return;
+    }
+    this.reservandoClave = grupo.clave_cliente;
+    this.errorResumen = '';
+    this.ejecutarReservas(porProducto).subscribe((resultados) => {
+      this.reservandoClave = null;
       this.resultados = resultados;
       this.paso = 'terminado';
     });

@@ -201,6 +201,66 @@ describe('AsignacionesReservasClienteComponent', () => {
     expect(component.filasFiltradas().map((f) => f.sku)).toEqual(['A']);
   });
 
+  it('filasFiltradas() quita las filas que ya están reservadas por completo (sugerido 0)', () => {
+    component.filas = [
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 5, sugerido: 0 },
+      { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+    ];
+    expect(component.filasFiltradas().map((f) => f.sku)).toEqual(['B']);
+  });
+
+  it('gruposFiltrados() agrupa las filas filtradas por cliente, ordenadas por prioridad', () => {
+    component.filas = [
+      { clave_cliente: 'MC677', nombre_cliente: 'BICICLETAS SCJM', prioridad: 2, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 3, vigente: 0, sugerido: 3 },
+      { clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, producto_id: 1, sku: 'A', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      { clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, producto_id: 2, sku: 'B', descripcion: null, mes: '2026-11', proyectado: 2, vigente: 0, sugerido: 2 },
+    ];
+    const grupos = component.gruposFiltrados();
+    expect(grupos.map((g) => g.clave_cliente)).toEqual(['LC657', 'MC677']);
+    expect(grupos[0].filas.length).toBe(2);
+    expect(grupos[0].totalSugerido).toBe(7);
+    expect(grupos[1].totalSugerido).toBe(3);
+  });
+
+  it('grupoExpandido() siempre muestra el único grupo, pero respeta el toggle manual cuando hay varios', () => {
+    expect(component.grupoExpandido('LC657', 1)).toBeTrue();
+    expect(component.grupoExpandido('LC657', 2)).toBeFalse();
+    component.toggleGrupo('LC657');
+    expect(component.grupoExpandido('LC657', 2)).toBeTrue();
+    component.toggleGrupo('LC657');
+    expect(component.grupoExpandido('LC657', 2)).toBeFalse();
+  });
+
+  it('reservarGrupo() solo reserva las filas de ese cliente', () => {
+    svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
+    const grupo = {
+      clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, totalSugerido: 5,
+      filas: [
+        { clave_cliente: 'LC657', nombre_cliente: 'X', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 0, sugerido: 5 },
+      ],
+    };
+
+    component.reservarGrupo(grupo);
+
+    expect(svcSpy.reservar).toHaveBeenCalledWith(1, 10, [
+      { clave_cliente: 'LC657', mes_objetivo: '2026-10', cantidad: 5, proyectado: 5 },
+    ]);
+    expect(component.paso).toBe('terminado');
+    expect(component.reservandoClave).toBeNull();
+  });
+
+  it('reservarGrupo() no llama al servicio si el cliente no tiene nada sugerido y lo dice en el error', () => {
+    const grupo = {
+      clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, totalSugerido: 0,
+      filas: [
+        { clave_cliente: 'LC657', nombre_cliente: 'Víctor Hugo', prioridad: 1, producto_id: 10, sku: 'SKU-1', descripcion: null, mes: '2026-10', proyectado: 5, vigente: 5, sugerido: 0 },
+      ],
+    };
+    component.reservarGrupo(grupo);
+    expect(svcSpy.reservar).not.toHaveBeenCalled();
+    expect(component.errorResumen).toContain('Víctor Hugo');
+  });
+
   it('reservarTodo() agrupa por producto e incluye la clave de cada fila (varios clientes en un mismo producto)', () => {
     svcSpy.reservar.and.returnValue(of({ producto_id: 10, disponible_restante: 0, ordenes_odoo: [] }));
     component.filas = [

@@ -126,47 +126,65 @@
         </span>
       </div>
 
-      <div class="wiz-tabla-scroll" *ngIf="filas.length; else sinFilas">
-        <table class="tabla-mini">
-          <thead>
-            <tr>
-              <th>Cliente</th><th>SKU</th><th>Descripción</th><th>Mes</th>
-              <th class="num">Proyectado</th><th class="num">Ya reservado</th><th class="num">A reservar</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let f of filasFiltradas()">
-              <td>
-                <span class="cli-prio">P{{ f.prioridad }}</span>
-                {{ f.nombre_cliente }} <span class="cli-clave">({{ f.clave_cliente }})</span>
-              </td>
-              <td><span class="cli-clave">{{ f.sku }}</span></td>
-              <td class="td-nombre" [title]="f.descripcion || ''">{{ f.descripcion || '—' }}</td>
-              <td>{{ formatoMes(f.mes) }}</td>
-              <td class="num">{{ f.proyectado }}</td>
-              <td class="num">{{ f.vigente }}</td>
-              <td class="num positivo">{{ f.sugerido }}</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="6">Total a reservar</td>
-              <td class="num positivo">{{ totalGeneralSugerido() }}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <ng-template #sinFilas>
-        <p class="asig-vacio">
-          Ningún cliente elegido tiene proyección en este embarque para la ventana {{ mesDesde }} – {{ mesHasta }}.
-        </p>
-      </ng-template>
+      <ng-container *ngIf="gruposFiltrados() as grupos">
+        <div class="wiz-tabla-scroll" *ngIf="grupos.length; else sinFilas">
+          <table class="tabla-mini">
+            <thead>
+              <tr>
+                <th>Cliente</th><th>SKU</th><th>Descripción</th><th>Mes</th>
+                <th class="num">Proyectado</th><th class="num">Ya reservado</th><th class="num">A reservar</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let g of grupos">
+                <tr class="fila-grupo" (click)="toggleGrupo(g.clave_cliente)">
+                  <td colspan="7">
+                    <div class="fila-grupo-inner">
+                      <i class="fas" [ngClass]="grupoExpandido(g.clave_cliente, grupos.length) ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+                      <span class="cli-prio">P{{ g.prioridad }}</span>
+                      <span class="grupo-nombre">{{ g.nombre_cliente }}</span>
+                      <span class="cli-clave">({{ g.clave_cliente }})</span>
+                      <span class="grupo-meta">{{ g.filas.length }} producto(s) · a reservar: <b>{{ g.totalSugerido }}</b></span>
+                      <button type="button" class="btn-grupo-reservar"
+                              [disabled]="reservandoTodo || !!reservandoClave"
+                              (click)="reservarGrupo(g); $event.stopPropagation()">
+                        {{ reservandoClave === g.clave_cliente ? 'Reservando…' : 'Reservar este cliente' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="fila-hija" *ngFor="let f of g.filas" [hidden]="!grupoExpandido(g.clave_cliente, grupos.length)">
+                  <td></td>
+                  <td><span class="cli-clave">{{ f.sku }}</span></td>
+                  <td class="td-nombre" [title]="f.descripcion || ''">{{ f.descripcion || '—' }}</td>
+                  <td>{{ formatoMes(f.mes) }}</td>
+                  <td class="num">{{ f.proyectado }}</td>
+                  <td class="num">{{ f.vigente }}</td>
+                  <td class="num positivo">{{ f.sugerido }}</td>
+                </tr>
+              </ng-container>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6">Total a reservar</td>
+                <td class="num positivo">{{ totalGeneralSugerido() }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <ng-template #sinFilas>
+          <p class="asig-vacio">
+            Ningún cliente elegido tiene pendientes por reservar en la ventana {{ mesDesde }} – {{ mesHasta }}
+            (puede que ya esté todo reservado, o que no haya proyección con este filtro).
+          </p>
+        </ng-template>
+      </ng-container>
 
       <div class="wiz-error" *ngIf="errorResumen">{{ errorResumen }}</div>
 
       <div class="wiz-acciones">
-        <button class="btn-secundario" [disabled]="reservandoTodo" (click)="cerrarPanel()">Cerrar sin reservar</button>
-        <button class="btn-primary" [disabled]="reservandoTodo || !filas.length" (click)="reservarTodo()">
+        <button class="btn-secundario" [disabled]="reservandoTodo || !!reservandoClave" (click)="cerrarPanel()">Cerrar sin reservar</button>
+        <button class="btn-primary" [disabled]="reservandoTodo || !!reservandoClave || !filas.length" (click)="reservarTodo()">
           {{ reservandoTodo ? 'Reservando…' : 'Reservar todo' }}
         </button>
       </div>
