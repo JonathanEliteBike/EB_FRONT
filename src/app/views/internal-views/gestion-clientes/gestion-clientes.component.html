@@ -90,10 +90,10 @@
       <div class="paginador-selector-wrap">
         <span class="selector-label">Mostrar:</span>
         <div class="selector-pills">
-          <button 
-            *ngFor="let cant of opcionesPorPagina" 
-            class="btn-pill" 
-            [class.activa]="elementosPorPagina === cant" 
+          <button
+            *ngFor="let cant of opcionesPorPagina"
+            class="btn-pill"
+            [class.activa]="elementosPorPagina === cant"
             (click)="cambiarElementosPorPagina(cant)">
             {{ cant }}
           </button>
@@ -109,10 +109,10 @@
         </button>
 
         <div class="paginas-numeros">
-          <button 
-            *ngFor="let pagina of obtenerRangoPaginas()" 
-            class="btn-page" 
-            [class.activa]="pagina === paginaActual" 
+          <button
+            *ngFor="let pagina of obtenerRangoPaginas()"
+            class="btn-page"
+            [class.activa]="pagina === paginaActual"
             [disabled]="pagina === -1"
             (click)="pagina !== -1 && cambiarPagina(pagina)">
             {{ pagina === -1 ? '...' : pagina }}
@@ -134,7 +134,7 @@
         <h3>Permisos delegables — {{ clienteSeleccionado?.nombre }}</h3>
       <button type="button" class="close-btn" (click)="cerrarModalBolsa()">&times;</button>
     </div>
-    
+
     <div class="modal-body-custom">
       <p class="modal-desc">
         Selecciona los permisos que este administrador podrá asignar posteriormente a sus usuarios.
@@ -145,7 +145,7 @@
 
       <!-- CONTENEDOR UNIFICADO DEL MODAL -->
       <div *ngIf="!cargandoModal" class="modal-table-box">
-        
+
         <!-- BÚSQUEDA POR NOMBRE VISIBLE DE MÓDULO O ACCIÓN -->
         <div class="table-subfilters-bar">
           <label class="seleccionar-todos-modulos">
@@ -159,11 +159,11 @@
             </span>
           </label>
           <div class="search-box-modal" style="width: 280px; margin-left: auto;">
-            <input 
-              type="text" 
+            <input
+              type="text"
               class="input-base"
-              [(ngModel)]="filtroBusquedaModal" 
-              (ngModelChange)="onBusquedaModalChange()" 
+              [(ngModel)]="filtroBusquedaModal"
+              (ngModelChange)="onBusquedaModalChange()"
               placeholder="Buscar módulo o acción..."
               style="width: 100%; padding: 6px 12px; background: #121212; border: 1px solid var(--border2); color: #fff; border-radius: 6px; font-size: 0.82rem; outline: none;"
             />
@@ -242,10 +242,10 @@
           <div class="paginador-selector-wrap">
             <span class="selector-label">Mostrar:</span>
             <div class="selector-pills">
-              <button 
-                *ngFor="let cant of opcionesPorPaginaModal" 
-                class="btn-pill" 
-                [class.activa]="itemsPorPaginaModal === cant" 
+              <button
+                *ngFor="let cant of opcionesPorPaginaModal"
+                class="btn-pill"
+                [class.activa]="itemsPorPaginaModal === cant"
                 (click)="cambiarItemsPorPaginaModal(cant)">
                 {{ cant }}
               </button>
@@ -261,10 +261,10 @@
             </button>
 
             <div class="paginas-numeros">
-              <button 
-                *ngFor="let p of obtenerRangoPaginasModal()" 
-                class="btn-page" 
-                [class.activa]="p === paginaModal" 
+              <button
+                *ngFor="let p of obtenerRangoPaginasModal()"
+                class="btn-page"
+                [class.activa]="p === paginaModal"
                 [disabled]="p === -1"
                 (click)="cambiarPaginaDirectaModal(p)">
                 {{ p === -1 ? '...' : p }}
@@ -289,6 +289,6 @@
         {{ guardandoPermisos ? 'Guardando...' : 'Guardar Permisos' }}
       </button>
     </div>
-    
+
   </div>
 </div>

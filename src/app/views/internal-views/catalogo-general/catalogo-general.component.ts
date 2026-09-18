@@ -76,7 +76,7 @@ export class CatalogoGeneralComponent implements OnInit {
     this.adminService.getAcciones().subscribe({
       next: (resAcciones) => {
         this.accionesGlobales = resAcciones.acciones || [];
-        
+
         this.adminService.getModulos().subscribe({
           next: (resModulos) => {
             this.modulos = resModulos.modulos || [];
@@ -84,7 +84,7 @@ export class CatalogoGeneralComponent implements OnInit {
               this.modulos.filter(m => this.getSubmodulos(m.id).length > 0).map(m => m.id)
             );
             this.generarListaRutas();
-            
+
             this.pageModulos = 1;
             this.pageAcciones = 1;
             this.pageRutas = 1;
@@ -106,9 +106,9 @@ export class CatalogoGeneralComponent implements OnInit {
 
   generarListaRutas(): void {
     const rutasIgnoradas = [
-      '', 'login', 'home', '**', 
-      'recuperacion/enviar-correo', 
-      'recuperacion/verificar-codigo', 
+      '', 'login', 'home', '**',
+      'recuperacion/enviar-correo',
+      'recuperacion/verificar-codigo',
       'recuperacion/restablecer-contrasena'
     ];
 
@@ -118,9 +118,9 @@ export class CatalogoGeneralComponent implements OnInit {
       if (!path || rutasIgnoradas.includes(path) || path.includes(':')) return;
 
       const identificador = this.generarIdentificadorDesdeRuta(path);
-      const existe = this.modulos.find(m => 
-        m.identificador === identificador || 
-        m.identificador === path || 
+      const existe = this.modulos.find(m =>
+        m.identificador === identificador ||
+        m.identificador === path ||
         m.identificador === path.replace(/^usuarios\//, '')
       );
 
