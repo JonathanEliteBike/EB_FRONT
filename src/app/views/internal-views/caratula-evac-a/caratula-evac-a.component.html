@@ -7,16 +7,7 @@
         <button class="btn btn-secondary" [routerLink]="['/inicio-caratulas']">
             <i class="fas fa-arrow-left"></i> Volver
         </button>
-
-        <app-temporada-selector *ngIf="temporadasDisponibles.length"
-            [temporadas]="temporadasDisponibles"
-            [seleccionada]="temporadaHistoricaSeleccionada"
-            (cambio)="verTemporadaPasada($event)">
-        </app-temporada-selector>
     </div>
-
-    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
-        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div class="caratula-content">
         <!-- Fecha en la esquina superior derecha -->
@@ -44,7 +35,7 @@
 
                 <!-- Fila EB -->
                 <div class="fila-data">
-                    <div class="col-categoria categoria-eb">EB</div>
+                    <div class="col-categoria categoria-eb">Meta Gral. Comercializadora</div>
                     <div class="col-numero">{{ obtenerMetaTotal() }}</div>
                     <div class="col-numero verde">{{ obtenerAcumuladoTotal() }}</div>
                     <div class="col-numero">{{ obtenerAvanceProyectadoTotalFormateado() }}</div>
@@ -53,7 +44,7 @@
 
                 <!-- Filas MY25 -->
                 <div class="fila-data">
-                    <div class="col-categoria categoria-my25" rowspan="2">MY26</div>
+                    <div class="col-categoria categoria-my25">Meta Cumplimiento Categoría</div>
                     <div class="col-numero">{{ my25_monto1 | currency:'USD':'$':'1.2-2' }}</div>
                     <div class="col-numero verde">{{ my25_monto3 | currency:'USD':'$':'1.2-2' }}</div>
                     <div class="col-numero">{{ avance_proyectado_monto1 | currency:'USD':'$':'1.2-2' }}</div>
@@ -61,7 +52,7 @@
                 </div>
 
                 <div class="fila-data">
-                    <div class="col-categoria"></div>
+                    <div class="col-categoria">Distribuidor</div>
                     <div class="col-numero">{{ my25_monto2 | currency:'USD':'$':'1.2-2' }}</div>
                     <div class="col-numero verde">{{ my25_monto4 | currency:'USD':'$':'1.2-2' }}</div>
                     <div class="col-numero">{{ avance_proyectado_monto2 | currency:'USD':'$':'1.2-2' }}</div>
@@ -86,7 +77,7 @@
 
                 <!-- SCOTT -->
                 <div class="fila-categoria scott-row">
-                    <div class="col-categoria-linea categoria-scott">SCOTT</div>
+                    <div class="col-categoria-linea categoria-scott">BICICLETAS</div>
                     <div class="col-numero-linea">{{ montoCompromisoScott | currency:'USD':'$':'1.2-2' }}</div>
                     <div class="col-numero-linea verde">{{ avanceGlobalScott | currency:'USD':'$':'1.2-2' }}</div>
                     <div class="col-numero-linea">{{ avance_proyectado_scott | currency:'USD':'$':'1.2-2' }}</div>
@@ -182,13 +173,9 @@
                     </div>
 
                     <div class="fila-detalle" *ngIf="cliente.expanded">
-                        <div class="banner-cliente-cerrado" *ngIf="modoHistorico && cliente.temporada_cerrada">
-                            <i class="fas fa-lock"></i>
-                            TEMPORADA CERRADA EL {{ fechaCierreClienteFormateada(cliente) }}
-                        </div>
                         <div class="detalle-grid">
                             <div class="detalle-card scott">
-                                <div class="detalle-titulo">Faltante SCOTT (Acumulado)</div>
+                                <div class="detalle-titulo">Faltante BICICLETAS (Acumulado)</div>
                                 <div class="detalle-valor" [class.rojo]="getFaltanteScott(cliente) > 0"
                                     [class.verde]="getFaltanteScott(cliente) === 0">
                                     {{ getFaltanteScott(cliente) | currency:'USD':'$':'1.2-2' }}

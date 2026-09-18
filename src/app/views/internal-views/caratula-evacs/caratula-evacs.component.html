@@ -1,210 +1,444 @@
 <app-home-bar></app-home-bar>
 
 <div class="caratula-evac-container">
-    <h2>Carátula EVACs</h2>
 
-    <div class="acciones-monitor">
-        <button class="btn btn-secondary" [routerLink]="['/inicio-caratulas']">
-            <i class="fas fa-arrow-left"></i> Volver
+  <!-- =========================================================
+       CABECERA
+  ========================================================== -->
+  <div class="cabecera-principal">
+    <div class="cabecera-centro">
+      <h2>Carátula EVACs</h2>
+
+      <div class="acciones-monitor">
+        <button
+          class="btn btn-secondary"
+          [routerLink]="['/inicio-caratulas']">
+          <i class="fas fa-arrow-left"></i>
+          Volver
         </button>
-        <button class="btn btn-secondary" (click)="exportarExcel()">
-            <i class="fas fa-file-excel"></i> Exportar Excel
+
+        <button
+          class="btn btn-secondary"
+          (click)="exportarExcel()">
+          <i class="fas fa-file-excel"></i>
+          Exportar Excel
         </button>
+      </div>
     </div>
 
-    <!-- Fecha en la esquina superior derecha -->
-    <div class="fecha-header-mejorada">
-        <div class="fecha-principal">
-            {{ obtenerFechaHoy() }}
+    <div class="fecha-header">
+      <div class="fecha-principal">
+        {{ obtenerFechaHoy() }}
+      </div>
+
+      <div class="semana-info">
+        Semana ISO: {{ obtenerSemanaISO() }}
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================
+       ESTADO DE LA CONSULTA
+  ========================================================== -->
+  <section
+    class="estado-consulta"
+    [class.estado-consulta-oficial]="modoVistaOficial"
+    [class.estado-consulta-filtrado]="!modoVistaOficial">
+
+    <ng-container *ngIf="modoVistaOficial; else vistaFiltrada">
+      <div class="estado-consulta-icono">
+        <i class="fas fa-chart-line"></i>
+      </div>
+
+      <div class="estado-consulta-contenido">
+        <strong>Vista oficial MY27</strong>
+        <span>
+          Acumulado oficial de la temporada. Incluye ventas anticipadas
+          válidas según la fecha de inicio de cada cliente.
+        </span>
+      </div>
+    </ng-container>
+
+    <ng-template #vistaFiltrada>
+      <div class="estado-consulta-icono">
+        <i class="fas fa-filter"></i>
+      </div>
+
+      <div class="estado-consulta-contenido">
+        <strong>Filtro personalizado</strong>
+        <span>
+          {{ formatearFechaVista(fechaInicio) }}
+          →
+          {{ formatearFechaVista(fechaFin) }}
+        </span>
+      </div>
+    </ng-template>
+  </section>
+
+
+  <!-- =========================================================
+       FILTRO
+  ========================================================== -->
+  <section class="bloque-filtro">
+    <h3>Filtro manual por fechas</h3>
+
+    <div class="controles-fecha">
+      <div class="control-fecha">
+        <label for="fechaInicio">Desde:</label>
+
+        <div class="input-container">
+          <i class="fas fa-calendar-alt input-icon"></i>
+          <input
+            type="date"
+            id="fechaInicio"
+            [(ngModel)]="fechaInicio"
+            class="input-fecha">
         </div>
-        <div class="semana-info-mejorada">
-            <div class="info-linea">Semana ISO: {{ obtenerSemanaISO() }}</div>
-            <!--<div class="info-linea">Día: {{ obtenerDiaTemporada() }}</div>-->
+      </div>
+
+      <div class="control-fecha">
+        <label for="fechaFin">Hasta:</label>
+
+        <div class="input-container">
+          <i class="fas fa-calendar-alt input-icon"></i>
+          <input
+            type="date"
+            id="fechaFin"
+            [(ngModel)]="fechaFin"
+            class="input-fecha">
         </div>
+      </div>
+
+      <button
+        class="btn btn-filtrar"
+        (click)="aplicarFiltros()">
+        <i class="fas fa-filter"></i>
+        Aplicar filtro
+      </button>
+
+      <button
+        *ngIf="!modoVistaOficial"
+        class="btn btn-secondary btn-restablecer"
+        (click)="restablecerVistaMy27()">
+        <i class="fas fa-rotate-left"></i>
+        Restablecer MY27
+      </button>
+    </div>
+  </section>
+
+
+  <!-- =========================================================
+       ERROR / CARGA
+  ========================================================== -->
+  <div *ngIf="error" class="mensaje-error">
+    {{ error }}
+  </div>
+
+  <div class="spinner-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <span>Cargando clientes...</span>
+  </div>
+
+  <div class="spinner-container" *ngIf="loadingFacturas">
+    <div class="spinner"></div>
+    <span>Cargando facturas...</span>
+  </div>
+
+
+  <!-- =========================================================
+       RESUMEN
+  ========================================================== -->
+  <section
+    class="resumen-totales"
+    *ngIf="!loading && !loadingFacturas">
+
+    <h3 class="titulo-seccion">Resumen de Totales</h3>
+
+    <div class="total-general-destacado">
+      <span>Total General</span>
+      <strong>
+        {{ totalGeneral | currency:'USD':'$':'1.2-2' }}
+      </strong>
     </div>
 
-    <div class="filtros-fecha-mejorado">
-        <h3 class="titulo-filtros">Filtrar por fecha</h3>
-        <div class="controles-fecha-mejorado">
-            <div class="control-fecha-mejorado">
-                <label for="fechaInicio" class="label-fecha">Desde:</label>
-                <div class="input-container">
-                    <i class="fas fa-calendar-alt input-icon"></i>
-                    <input type="date" id="fechaInicio" [(ngModel)]="fechaInicio" (change)="aplicarFiltros()"
-                        class="input-fecha">
-                </div>
-            </div>
-            <div class="control-fecha-mejorado">
-                <label for="fechaFin" class="label-fecha">Hasta:</label>
-                <div class="input-container">
-                    <i class="fas fa-calendar-alt input-icon"></i>
-                    <input type="date" id="fechaFin" [(ngModel)]="fechaFin" (change)="aplicarFiltros()"
-                        class="input-fecha">
-                </div>
-            </div>
-            <button class="btn btn-filtrar-mejorado" (click)="aplicarFiltros()">
-                <i class="fas fa-filter"></i>
-                <span>Aplicar Filtro</span>
-            </button>
-        </div>
-    </div>
 
-    <!-- Totales generales - VERSIÓN MEJORADA -->
-    <div class="totales-generales-mejorado" *ngIf="!loading">
-        <h3 class="titulo-totales">Resumen de Totales</h3>
+    <!-- EVACS -->
+    <div class="subseccion-resumen">
+      <h4>Total General por EVAC</h4>
 
-        <div class="contenedor-totales">
-            <!-- Total General centrado -->
-            <div class="seccion-totales total-general-container">
-                <div class="total-item total-principal">
-                    <span class="total-label">Total General</span>
-                    <span class="total-valor">{{ totalGeneral | currency:'USD':'$':'1.2-2' }}</span>
-                </div>
-            </div>
-
-            <!-- Sección de totales por EVAC -->
-            <div class="seccion-totales">
-                <h4 class="subtitulo-totales">Total General por EVAC</h4>
-                <div class="grid-totales">
-                    <div class="total-item total-evac-a">
-                        <span class="total-label">EVAC A</span>
-                        <span class="total-valor">{{ totalEvacA | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                    <div class="total-item total-evac-b">
-                        <span class="total-label">EVAC B</span>
-                        <span class="total-valor">{{ totalEvacB | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                    <div class="total-item total-evac-go">
-                        <span class="total-label">EVAC GO</span>
-                        <span class="total-valor">{{ totalEvacGO | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección de totales por marca -->
-            <div class="seccion-totales">
-                <h4 class="subtitulo-totales">Totales por Marca</h4>
-                <div class="grid-totales">
-                    <div class="total-item total-scott">
-                        <span class="total-label">SCOTT (No Apparel)</span>
-                        <span class="total-valor">{{ totalScott | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                    <div class="total-item total-apparel">
-                        <span class="total-label">APPAREL</span>
-                        <span class="total-valor">{{ totalApparel | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                    <div class="total-item total-vittoria">
-                        <span class="total-label">VITTORIA</span>
-                        <span class="total-valor">{{ totalVittoria | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                    <div class="total-item total-syncros">
-                        <span class="total-label">SYNCROS</span>
-                        <span class="total-valor">{{ totalSyncros | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                    <div class="total-item total-bold">
-                        <span class="total-label">BOLD</span>
-                        <span class="total-valor">{{ totalBold | currency:'USD':'$':'1.2-2' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Spinner de carga -->
-    <div class="spinner-container" *ngIf="loading">
-        <div class="spinner"></div>
-        <span class="spinner-text">Cargando clientes...</span>
-    </div>
-
-    <div class="spinner-container" *ngIf="loadingFacturas">
-        <div class="spinner"></div>
-        <span class="spinner-text">Cargando facturas...</span>
-    </div>
-
-    <!-- Contenedor de las tres tablas -->
-    <div class="tablas-evacs-container" *ngIf="!loading && !loadingFacturas">
-        <!-- Tabla EVAC A -->
-        <div class="tabla-evac">
-            <h3 class="titulo-tabla-evac">EVAC A</h3>
-            <div class="contenedor-tabla">
-                <div class="fila-header-tabla">
-                    <div class="columna-clave">CLAVE</div>
-                    <div class="columna-nombre">NOMBRE DEL CLIENTE</div>
-                    <div class="columna-total">Total</div>
-                    <div class="columna-total">SCOTT</div>
-                    <div class="columna-total">APPAREL</div>
-                    <div class="columna-total">VITTORIA</div>
-                    <div class="columna-total">SYNCROS</div>
-                    <div class="columna-total">BOLD</div>
-                </div>
-                <div class="fila-cliente-tabla" *ngFor="let cliente of clientesA">
-                    <div class="columna-clave">{{ cliente.clave }}</div>
-                    <div class="columna-nombre">{{ cliente.nombre_cliente }}</div>
-                    <div class="columna-total">{{ cliente.totalGeneral | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalScott | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalApparel | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalVittoria | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalSyncros | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalBold | currency:'USD':'$':'1.2-2' }}</div>
-                </div>
-                <div class="total-clientes">Total: {{ clientesA.length }} clientes</div>
-            </div>
+      <div class="grid-evacs">
+        <div class="tarjeta-total">
+          <span>EVAC A</span>
+          <strong>
+            {{ totalEvacA | currency:'USD':'$':'1.2-2' }}
+          </strong>
         </div>
 
-        <!-- Tabla EVAC B -->
-        <div class="tabla-evac">
-            <h3 class="titulo-tabla-evac">EVAC B</h3>
-            <div class="contenedor-tabla">
-                <div class="fila-header-tabla">
-                    <div class="columna-clave">CLAVE</div>
-                    <div class="columna-nombre">NOMBRE DEL CLIENTE</div>
-                    <div class="columna-total">Total</div>
-                    <div class="columna-total">SCOTT</div>
-                    <div class="columna-total">APPAREL</div>
-                    <div class="columna-total">VITTORIA</div>
-                    <div class="columna-total">SYNCROS</div>
-                    <div class="columna-total">BOLD</div>
-                </div>
-                <div class="fila-cliente-tabla" *ngFor="let cliente of clientesB">
-                    <div class="columna-clave">{{ cliente.clave }}</div>
-                    <div class="columna-nombre">{{ cliente.nombre_cliente }}</div>
-                    <div class="columna-total">{{ cliente.totalGeneral | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalScott | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalApparel | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalVittoria | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalSyncros | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalBold | currency:'USD':'$':'1.2-2' }}</div>
-                </div>
-                <div class="total-clientes">Total: {{ clientesB.length }} clientes</div>
-            </div>
+        <div class="tarjeta-total">
+          <span>EVAC B</span>
+          <strong>
+            {{ totalEvacB | currency:'USD':'$':'1.2-2' }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- MARCAS -->
+    <div class="subseccion-resumen">
+      <h4>Totales por Línea / Marca</h4>
+
+      <div class="grid-marcas">
+        <div class="tarjeta-total">
+          <span>SCOTT</span>
+          <strong>{{ totalScott | currency:'USD':'$':'1.2-2' }}</strong>
         </div>
 
-        <!-- Tabla EVAC GO -->
-        <div class="tabla-evac">
-            <h3 class="titulo-tabla-evac">EVAC GO</h3>
-            <div class="contenedor-tabla">
-                <div class="fila-header-tabla">
-                    <div class="columna-clave">CLAVE</div>
-                    <div class="columna-nombre">NOMBRE DEL CLIENTE</div>
-                    <div class="columna-total">Total</div>
-                    <div class="columna-total">SCOTT</div>
-                    <div class="columna-total">APPAREL</div>
-                    <div class="columna-total">VITTORIA</div>
-                    <div class="columna-total">SYNCROS</div>
-                    <div class="columna-total">BOLD</div>
-                </div>
-                <div class="fila-cliente-tabla" *ngFor="let cliente of clientesGO">
-                    <div class="columna-clave">{{ cliente.clave }}</div>
-                    <div class="columna-nombre">{{ cliente.nombre_cliente }}</div>
-                    <div class="columna-total">{{ cliente.totalGeneral | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalScott | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalApparel | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalVittoria | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalSyncros | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="columna-total">{{ cliente.totalBold | currency:'USD':'$':'1.2-2' }}</div>
-                </div>
-                <div class="total-clientes">Total: {{ clientesGO.length }} distribuidores</div>
-            </div>
+        <div class="tarjeta-total">
+          <span>MEGAMO</span>
+          <strong>{{ totalMegamo | currency:'USD':'$':'1.2-2' }}</strong>
         </div>
+
+        <div class="tarjeta-total">
+          <span>BOLD</span>
+          <strong>{{ totalBold | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+
+        <div class="tarjeta-total">
+          <span>APPAREL</span>
+          <strong>{{ totalApparel | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+
+        <div class="tarjeta-total">
+          <span>VITTORIA</span>
+          <strong>{{ totalVittoria | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+
+        <div class="tarjeta-total">
+          <span>SYNCROS</span>
+          <strong>{{ totalSyncros | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+
+        <div class="tarjeta-total">
+          <span>OTROS</span>
+          <strong>{{ totalOtros | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+      </div>
     </div>
+
+
+    <!-- AGRUPACIÓN NUEVA -->
+    <div class="subseccion-resumen agrupacion-comercial">
+      <h4>Agrupación Comercial</h4>
+
+      <div class="grid-agrupacion">
+        <div class="tarjeta-total tarjeta-agrupacion">
+          <span>BICICLETAS</span>
+          <strong>
+            {{ totalBicicletas | currency:'USD':'$':'1.2-2' }}
+          </strong>
+        </div>
+
+        <div class="tarjeta-total tarjeta-agrupacion">
+          <span>APPAREL / SYNCROS / VITTORIA</span>
+          <strong>
+            {{ totalCategoriaApparel | currency:'USD':'$':'1.2-2' }}
+          </strong>
+        </div>
+
+        <div class="tarjeta-total tarjeta-agrupacion">
+          <span>OTROS</span>
+          <strong>
+            {{ totalOtros | currency:'USD':'$':'1.2-2' }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- =========================================================
+       TABLAS EVAC A / B
+  ========================================================== -->
+  <section
+    class="tablas-evacs-container"
+    *ngIf="!loading && !loadingFacturas">
+
+    <!-- EVAC A -->
+    <div class="tabla-evac">
+      <h3 class="titulo-tabla-evac">EVAC A</h3>
+
+      <div class="contenedor-tabla">
+        <div class="fila-header-tabla">
+          <div class="columna-clave">CLAVE</div>
+          <div class="columna-nombre">NOMBRE DEL CLIENTE</div>
+          <div class="columna-total">TOTAL</div>
+          <div class="columna-total">SCOTT</div>
+          <div class="columna-total">MEGAMO</div>
+          <div class="columna-total">APPAREL</div>
+          <div class="columna-total">VITTORIA</div>
+          <div class="columna-total">SYNCROS</div>
+          <div class="columna-total">BOLD</div>
+          <div class="columna-total">OTROS</div>
+        </div>
+
+        <div
+          class="fila-cliente-tabla"
+          [class.fila-residual]="cliente.esResidual"
+          *ngFor="let cliente of filasA">
+
+          <div class="columna-clave">
+            {{ cliente.clave }}
+          </div>
+
+          <div class="columna-nombre">
+            {{ cliente.nombre_cliente }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalGeneral | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalScott | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalMegamo | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalApparel | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalVittoria | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalSyncros | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalBold | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalOtros | currency:'USD':'$':'1.2-2' }}
+          </div>
+        </div>
+
+        <div class="total-clientes">
+          Total EVAC A:
+          {{ totalEvacA | currency:'USD':'$':'1.2-2' }}
+          ·
+          {{ clientesA.length }} clientes registrados
+        </div>
+      </div>
+    </div>
+
+
+    <!-- EVAC B -->
+    <div class="tabla-evac">
+      <h3 class="titulo-tabla-evac">EVAC B</h3>
+
+      <div class="contenedor-tabla">
+        <div class="fila-header-tabla">
+          <div class="columna-clave">CLAVE</div>
+          <div class="columna-nombre">NOMBRE DEL CLIENTE</div>
+          <div class="columna-total">TOTAL</div>
+          <div class="columna-total">SCOTT</div>
+          <div class="columna-total">MEGAMO</div>
+          <div class="columna-total">APPAREL</div>
+          <div class="columna-total">VITTORIA</div>
+          <div class="columna-total">SYNCROS</div>
+          <div class="columna-total">BOLD</div>
+          <div class="columna-total">OTROS</div>
+        </div>
+
+        <div
+          class="fila-cliente-tabla"
+          [class.fila-residual]="cliente.esResidual"
+          *ngFor="let cliente of filasB">
+
+          <div class="columna-clave">
+            {{ cliente.clave }}
+          </div>
+
+          <div class="columna-nombre">
+            {{ cliente.nombre_cliente }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalGeneral | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalScott | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalMegamo | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalApparel | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalVittoria | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalSyncros | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalBold | currency:'USD':'$':'1.2-2' }}
+          </div>
+
+          <div class="columna-total">
+            {{ cliente.totalOtros | currency:'USD':'$':'1.2-2' }}
+          </div>
+        </div>
+
+        <div class="total-clientes">
+          Total EVAC B:
+          {{ totalEvacB | currency:'USD':'$':'1.2-2' }}
+          ·
+          {{ clientesB.length }} clientes registrados
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- =========================================================
+       VENTAS NO CLASIFICADAS
+  ========================================================== -->
+  <section
+    class="ventas-no-clasificadas"
+    *ngIf="!loading && !loadingFacturas && cantidadSinEvac > 0">
+
+    <div class="ventas-no-clasificadas-info">
+      <div>
+        <strong>Ventas no clasificadas en cartera</strong>
+        <span>{{ cantidadSinEvac }} registros</span>
+      </div>
+
+      <strong class="monto-no-clasificado">
+        {{ totalSinEvac | currency:'USD':'$':'1.2-2' }}
+      </strong>
+    </div>
+
+    <p>
+      Estas ventas sí forman parte del Total General, pero no se asignan
+      a EVAC A ni EVAC B porque no fue posible relacionarlas con seguridad
+      con la cartera vigente.
+    </p>
+  </section>
+
 </div>

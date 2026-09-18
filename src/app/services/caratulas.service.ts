@@ -15,9 +15,6 @@ export interface SugerenciaCliente {
   nombre_cliente?: string;
   evac?: string;
   nivel_firmado?: string;
-  grupo_integral?: number | null;
-  es_integral?: number;
-  id_grupo?: number | null;
 }
 
 // Interface para la respuesta de búsqueda
@@ -59,62 +56,35 @@ export class CaratulasService {
             datos = response;
           }
 
-          const _mapItem = (item: any): SugerenciaCliente => ({
-            clave: item.clave || '',
-            razon_social: item.nombre_cliente || '',
-            nombre_cliente: item.nombre_cliente || '',
-            evac: item.clave || '',
-            nivel_firmado: item.nivel || '',
-            grupo_integral: item.grupo_integral ?? null,
-            es_integral: item.es_integral ?? 0,
-            id_grupo: item.id_grupo ?? null
-          });
-
           // Si no hay término o está vacío, devolver todos para el cache
           if (!termino || termino.trim().length === 0) {
-            return datos.map(_mapItem);
+            return datos.map(item => ({
+              clave: item.clave || '',
+              razon_social: item.nombre_cliente || '',
+              nombre_cliente: item.nombre_cliente || '',
+              evac: item.clave || '',
+              nivel_firmado: item.nivel || ''
+            }));
           }
 
+          // Si hay término, filtrar normalmente
           if (termino.length < 2) {
             return [];
           }
 
           const terminoLower = termino.toLowerCase().trim();
-
-          // Paso 1: coincidencias directas por clave o nombre
-          const directos = datos.filter(item =>
+          const resultadosFiltrados = datos.filter(item =>
             item.clave?.toLowerCase().includes(terminoLower) ||
             item.nombre_cliente?.toLowerCase().includes(terminoLower)
           );
 
-          // Paso 2: recolectar id_grupo de los resultados directos
-          // id_grupo viene del JOIN clientes: funciona tanto para individuales como para integrales
-          const gruposEncontrados = new Set<number>(
-            directos
-              .filter(item => item.id_grupo != null)
-              .map(item => item.id_grupo as number)
-          );
-
-          // Paso 3: agregar todos los demás miembros del mismo grupo
-          let ampliados: any[] = [...directos];
-          if (gruposEncontrados.size > 0) {
-            const miembrosExtra = datos.filter(item =>
-              item.id_grupo != null &&
-              gruposEncontrados.has(item.id_grupo) &&
-              !directos.includes(item)
-            );
-            ampliados = [...directos, ...miembrosExtra];
-          }
-
-          // Deduplicar por clave y limitar
-          const vistos = new Set<string>();
-          const resultadosFiltrados = ampliados.filter(item => {
-            if (vistos.has(item.clave)) return false;
-            vistos.add(item.clave);
-            return true;
-          });
-
-          return resultadosFiltrados.slice(0, 15).map(_mapItem);
+          return resultadosFiltrados.slice(0, 10).map(item => ({
+            clave: item.clave || '',
+            razon_social: item.nombre_cliente || '',
+            nombre_cliente: item.nombre_cliente || '',
+            evac: item.clave || '',
+            nivel_firmado: item.nivel || ''
+          }));
         }),
         catchError(this.handleError)
       );
@@ -246,19 +216,65 @@ export class CaratulasService {
       .substring(0, 100); // Limitar longitud
   }
 
-  getClientesEvacA(): Observable<any> {
-    if (this.clientesEvacACache.value) return of(this.clientesEvacACache.value);
+  getClientesEvacA(
+    fechaDesde?: string,
+    fechaHasta?: string
+  ): Observable<any> {
+    const usaRango = !!fechaDesde && !!fechaHasta;
 
-    return this.http.get<any>(`${this.apiUrl}/clientes_a`).pipe(
-      tap(data => this.clientesEvacACache.next(data))
+    if (!usaRango && this.clientesEvacACache.value) {
+      return of(this.clientesEvacACache.value);
+    }
+
+    let params = new HttpParams();
+
+    if (usaRango) {
+      params = params
+        .set('fecha_desde', fechaDesde!)
+        .set('fecha_hasta', fechaHasta!);
+    }
+
+    return this.http.get<any>(
+      `${this.apiUrl}/clientes_a`,
+      { params }
+    ).pipe(
+      tap(data => {
+        // El cache solo representa la vista MY27 por defecto.
+        // Nunca guardamos una respuesta de rango personalizado.
+        if (!usaRango) {
+          this.clientesEvacACache.next(data);
+        }
+      })
     );
   }
 
-  getClientesEvacB(): Observable<any> {
-    if (this.clientesEvacBCache.value) return of(this.clientesEvacBCache.value);
+  getClientesEvacB(
+    fechaDesde?: string,
+    fechaHasta?: string
+  ): Observable<any> {
+    const usaRango = !!fechaDesde && !!fechaHasta;
 
-    return this.http.get<any>(`${this.apiUrl}/clientes_b`).pipe(
-      tap(data => this.clientesEvacBCache.next(data))
+    if (!usaRango && this.clientesEvacBCache.value) {
+      return of(this.clientesEvacBCache.value);
+    }
+
+    let params = new HttpParams();
+
+    if (usaRango) {
+      params = params
+        .set('fecha_desde', fechaDesde!)
+        .set('fecha_hasta', fechaHasta!);
+    }
+
+    return this.http.get<any>(
+      `${this.apiUrl}/clientes_b`,
+      { params }
+    ).pipe(
+      tap(data => {
+        if (!usaRango) {
+          this.clientesEvacBCache.next(data);
+        }
+      })
     );
   }
 
@@ -290,6 +306,24 @@ export class CaratulasService {
 
   getDatosPrevio(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/datos_previo`);
+  }
+
+  getResumenCaratulasMy27(
+    fechaDesde?: string,
+    fechaHasta?: string
+  ): Observable<any> {
+    let params = new HttpParams();
+
+    if (fechaDesde && fechaHasta) {
+      params = params
+        .set('fecha_desde', fechaDesde)
+        .set('fecha_hasta', fechaHasta);
+    }
+
+    return this.http.get<any>(
+      `${this.apiUrl}/resumen_caratulas_my27`,
+      { params }
+    );
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -326,33 +360,46 @@ export class CaratulasService {
     return this.http.get<any>(`${this.apiUrl}/verificar_grupo_cliente`, { params: { clave } });
   }
 
+
   getTemporadasDisponibles(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/temporadas_disponibles`);
   }
 
   getTemporadas(): Observable<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]> {
-    return this.http.get<any>(`${this.apiUrl}/temporadas`);
+    return this.http.get<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]>(
+      `${this.apiUrl}/temporadas`
+    );
   }
 
   getDatosPrevioHistorico(temporada: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/datos_previo_historico`, { params: { temporada } });
+    return this.http.get<any>(`${this.apiUrl}/datos_previo_historico`, {
+      params: { temporada }
+    });
   }
 
   getDatosEvacAHistorico(temporada: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/datos_evac_a_historico`, { params: { temporada } });
+    return this.http.get<any>(`${this.apiUrl}/datos_evac_a_historico`, {
+      params: { temporada }
+    });
   }
 
   getDatosEvacBHistorico(temporada: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/datos_evac_b_historico`, { params: { temporada } });
+    return this.http.get<any>(`${this.apiUrl}/datos_evac_b_historico`, {
+      params: { temporada }
+    });
   }
 
-  /** Ventas de `monitor` sin cliente registrado (ni por clave ni por nombre),
-   * clasificadas por marca. Carátula Global las suma a sus totales para que
-   * las ventas reales cuenten aunque el cliente aún no tenga alta formal. */
   getVentasNoRegistradas(fechaDesde?: string, fechaHasta?: string): Observable<any> {
-    const params: any = {};
-    if (fechaDesde) params.fecha_desde = fechaDesde;
-    if (fechaHasta) params.fecha_hasta = fechaHasta;
+    let params = new HttpParams();
+
+    if (fechaDesde) {
+      params = params.set('fecha_desde', fechaDesde);
+    }
+
+    if (fechaHasta) {
+      params = params.set('fecha_hasta', fechaHasta);
+    }
+
     return this.http.get<any>(`${this.apiUrl}/ventas_no_registradas`, { params });
   }
 }

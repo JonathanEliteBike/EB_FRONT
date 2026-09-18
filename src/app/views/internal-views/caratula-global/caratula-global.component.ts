@@ -6,13 +6,11 @@ import { HomeBarComponent } from "../../../components/home-bar/home-bar.componen
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
-import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
 @Component({
   selector: 'app-caratula-global',
   standalone: true,
-  imports: [HomeBarComponent, CommonModule, RouterModule, TemporadaSelectorComponent, AvisoHistoricoComponent],
+  imports: [HomeBarComponent, CommonModule, RouterModule],
   templateUrl: './caratula-global.component.html',
   styleUrl: './caratula-global.component.css'
 })
@@ -33,7 +31,7 @@ export class CaratulaGlobalComponent implements OnInit {
 
   acumuladoGeneral: number = 0;
 
-  metaPrincipal = 185000000.00;
+  metaPrincipal = 0;
 
   porcentajeMonto1: number | null = null;
   porcentajeMonto2: number | null = null;
@@ -59,15 +57,6 @@ export class CaratulaGlobalComponent implements OnInit {
 
   diferencia1: number = 0;
 
-  temporadasDisponibles: string[] = [];
-  modoHistorico = false;
-  temporadaHistoricaSeleccionada: string | null = null;
-
-  /** Inicio real de la temporada actualmente abierta -- se sobreescribe en
-   * ngOnInit con el valor real de /temporadas (estado='abierta'). El valor
-   * aqui es solo un fallback por si esa consulta falla. */
-  private fechaInicioTemporadaActual: Date = new Date(2025, 6, 1);
-
   constructor(
     private caratulasService: CaratulasService,
     private router: Router,
@@ -75,130 +64,17 @@ export class CaratulaGlobalComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.caratulasService.getTemporadas().subscribe({
-      next: (temporadas) => {
-        const abierta = temporadas.find(t => t.estado === 'abierta');
-        if (abierta) {
-          const [y, m, d] = abierta.fecha_inicio.split('-').map(Number);
-          this.fechaInicioTemporadaActual = new Date(y, m - 1, d);
-        }
-        this.inicializarCalculos();
-      },
-      error: (err) => {
-        console.error('Error cargando temporada actual, usando fallback:', err);
-        this.inicializarCalculos();
-      }
-    });
-  }
-
-  private inicializarCalculos(): void {
     this.semanasTranscurridas = this.obtenerSemanasTranscurridas();
 
-    this.calculateTotalMeta();
-    this.calculateTotalMeta2();
+    // MY27: todas las metas de Global salen del mismo resumen maestro del backend.
+    this.cargarMetasMy27();
+
+    // Partner→PEP y Distribuidor siguen tomando el universo MY27 depurado.
     this.calculateTotalAcumulado();
     this.calculateTotalAcumulado2();
-    this.calculateAcumuladoGeneral();
-    this.calculateAcumuladoScott();
-    this.calculateAcumuladoApparel();
 
-    this.calcularMetaVittoria();
-    this.calcularMetaSyncros();
-    this.calcularMetaApparel();
-    this.calcularMetaScott();
-
-    this.calcularProyectadoMonto3();
-    this.calcularPorcentajeMonto2();
-    this.calcularProyectadoVittoria();
-    this.calcularProyectadoSyncros();
-    this.calcularProyectadoApparel();
-    this.calcularProyectadoScott();
-    this.calcularPorcentajeScott();
-    this.calcularPorcentajeApparel();
-    this.calcularPorcentajeScott_2();
-    this.calcularPorcentajeApparel_2();
-    this.calcularDiferencia1();
-
-    this.cargarTemporadasDisponibles();
-  }
-
-  cargarTemporadasDisponibles(): void {
-    this.caratulasService.getTemporadasDisponibles().subscribe({
-      next: (temporadas) => this.temporadasDisponibles = temporadas,
-      error: (err) => console.error('Error cargando temporadas disponibles:', err)
-    });
-  }
-
-  // Mismos miembros de Grupos Integral que excluye /datos_previo en vivo: su
-  // avance ya esta representado por la fila "Integral N" -- sumarlos aparte
-  // duplicaria el monto (previo_historico no aplica esa exclusion como si lo
-  // hace el endpoint en vivo, asi que se replica aqui para el total general).
-  private readonly CLAVES_INTEGRAL_MIEMBROS = new Set([
-    'JC539', 'EC216', 'LC657',
-    'GC411', 'MC679', 'MC677',
-    'LC625', 'LC626', 'LC627',
-    'LD653', 'MD680', 'ID492',
-    'LD660', 'NA718', '7C042'
-  ]);
-
-  private readonly NIVELES_PARTNER_PLUS = new Set(['Partner', 'Partner Elite', 'Partner Elite Plus']);
-
-  verTemporadaPasada(temporada: string): void {
-    if (!temporada) {
-      this.volverATemporadaActual();
-      return;
-    }
-    this.modoHistorico = true;
-    this.temporadaHistoricaSeleccionada = temporada;
-    this.caratulasService.getDatosPrevioHistorico(temporada).subscribe({
-      next: (datos) => {
-        const datosSinDuplicados = datos.filter((item: any) => !this.CLAVES_INTEGRAL_MIEMBROS.has(item.clave));
-
-        this.acumuladoGeneral = datosSinDuplicados
-          .reduce((total: number, item: any) => total + (Number(item.acumulado_anticipado) || 0), 0);
-
-        this.totalAcumulado = datosSinDuplicados
-          .filter((item: any) => this.NIVELES_PARTNER_PLUS.has(item.nivel))
-          .reduce((total: number, item: any) => total + (Number(item.acumulado_anticipado) || 0), 0);
-
-        this.totalAcumulado_2 = datosSinDuplicados
-          .filter((item: any) => item.nivel === 'Distribuidor')
-          .reduce((total: number, item: any) => total + (Number(item.acumulado_anticipado) || 0), 0);
-
-        // Seccion b) Especifico -- por categoria de producto (SCOTT / APPAREL-SYNCROS-VITTORIA),
-        // no por nivel de cliente. Multimarcas no aplica a temporadas cerradas.
-        this.acumuladoScott = datosSinDuplicados.reduce((total: number, item: any) =>
-          total + (Number(item.avance_global_scott) || 0) + (Number(item.acumulado_bold) || 0), 0);
-
-        this.acumuladoApparel = datosSinDuplicados.reduce((total: number, item: any) =>
-          total + (Number(item.avance_global_apparel_syncros_vittoria) || 0), 0);
-
-        // Temporada cerrada -> "Avance Proyectado" ya no es una fraccion de semanas
-        // transcurridas (eso es para la temporada EN CURSO): la proyeccion de una
-        // temporada terminada es su propia meta completa (100%).
-        this.avance_proyectado_monto3 = this.metaPrincipal;
-        this.avance_proyectado_monto1 = this.totalMetaMY25;
-        this.avance_proyectado_monto2 = this.totalMetaMY25_2;
-        this.proyectadoScott = this.metaScott;
-        this.proyectadoApparel = this.metaApparel;
-
-        this.calcularPorcentajeMonto1();
-        this.calcularPorcentajeMonto2();
-        this.calcularPorcentajeMonto3();
-        this.calcularPorcentajeScott();
-        this.calcularPorcentajeApparel();
-        this.calcularPorcentajeScott_2();
-        this.calcularPorcentajeApparel_2();
-        this.calcularDiferencia1();
-      },
-      error: (err) => console.error('Error cargando temporada historica:', err)
-    });
-  }
-
-  volverATemporadaActual(): void {
-    this.modoHistorico = false;
-    this.temporadaHistoricaSeleccionada = null;
-    this.ngOnInit();
+    // General, BICICLETAS y APPAREL/SYNCROS/VITTORIA ya llegan
+    // calculados por el mismo resumen maestro del backend.
   }
 
   get totalAcumuladoCategorias(): number {
@@ -233,27 +109,58 @@ export class CaratulaGlobalComponent implements OnInit {
 
   obtenerDiaTemporada(): number {
     const semanaISO = this.obtenerSemanaISO();
-    return semanaISO - 26;
+    const semanaInicioTemporada = 26;
+
+    if (semanaISO < semanaInicioTemporada) {
+      return (52 - semanaInicioTemporada) + semanaISO;
+    }
+
+    return semanaISO - semanaInicioTemporada;
   }
 
-  calculateTotalMeta(): void {
-    forkJoin([
-      this.caratulasService.getDatosEvacA(),
-      this.caratulasService.getDatosEvacB()
-    ]).subscribe({
-      next: ([datosA, datosB]) => {
-        const my25A = datosA.find((item: any) => item.categoria === 'MY25');
-        const my25B = datosB.find((item: any) => item.categoria === 'MY25');
+  cargarMetasMy27(): void {
+    this.caratulasService.getResumenCaratulasMy27().subscribe({
+      next: (resumen) => {
+        const global = resumen?.global;
 
-        if (my25A && my25B) {
-          this.totalMetaMY25 = my25A.meta + my25B.meta;
-          this.calcularProyectadoMonto1();
-        } else {
-          console.error('No se encontraron datos MY25 en uno o ambos conjuntos');
+        if (!global) {
+          console.error('El backend no devolvió el resumen Global MY27');
+          return;
         }
+
+        // METAS
+        this.metaPrincipal = Number(global.meta) || 0;
+        this.totalMetaMY25 = Number(global.categoria) || 0;
+        this.totalMetaMY25_2 = Number(global.distribuidor) || 0;
+        this.metaApparel = Number(global.apparel) || 0;
+        this.metaScott = Number(global.bicicletas) || 0;
+
+        // ACUMULADOS MAESTROS MY27
+        // BICICLETAS = SCOTT + BOLD + MEGAMO
+        this.acumuladoGeneral = Number(global.acumulado_general) || 0;
+        this.acumuladoScott = Number(global.acumulado_bicicletas) || 0;
+        this.acumuladoApparel = Number(global.acumulado_apparel) || 0;
+        this.diferencia1 = Number(global.acumulado_otros) || 0;
+
+        this.calcularProyectadoMonto1();
+        this.calcularProyectadoMonto2();
+        this.calcularProyectadoMonto3();
+        this.calcularProyectadoApparel();
+        this.calcularProyectadoScott();
+
+        this.calcularPorcentajeMonto1();
+        this.calcularPorcentajeMonto2();
+        this.calcularPorcentajeMonto3();
+        this.calcularPorcentajeApparel();
+        this.calcularPorcentajeScott();
+        this.calcularPorcentajeApparel_2();
+        this.calcularPorcentajeScott_2();
+
+        // No recalcular "Otros" en el front: usar el valor conciliado
+        // que ya entrega el backend.
       },
       error: (err) => {
-        console.error('Error al obtener los datos:', err);
+        console.error('Error cargando resumen MY27:', err);
       }
     });
   }
@@ -264,43 +171,6 @@ export class CaratulaGlobalComponent implements OnInit {
 
   calcularMetaSyncros(): void {
     this.metaSyncros = 4874083.92 * 1.8;
-  }
-
-  calcularMetaApparel(): void {
-    this.caratulasService.getDatosPrevio().subscribe({
-      next: (datosPrevio) => {
-        try {
-          this.metaApparel = datosPrevio.reduce((total: number, item: any) => {
-            return total + (Number(item.compromiso_apparel_syncros_vittoria) || 0);
-          }, 0);
-
-          this.calcularMetaScott();
-          this.calcularProyectadoApparel();
-          this.calcularPorcentajeApparel();
-          this.calcularPorcentajeApparel_2();
-
-        } catch (e) {
-          console.error('Error calculando meta apparel:', e);
-          this.metaApparel = 0;
-          this.calcularMetaScott();
-          this.calcularProyectadoApparel();
-        }
-      },
-      error: (err) => {
-        console.error('Error obteniendo datos previos:', err);
-        this.metaApparel = 0;
-      }
-    });
-  }
-
-  calcularMetaScott(): void {
-    const metaApparelValue = Number(this.metaApparel) || 0;
-
-    this.metaScott = this.metaPrincipal - metaApparelValue;
-
-    this.calcularProyectadoScott();
-    this.calcularPorcentajeScott();
-    this.calcularPorcentajeScott_2();
   }
 
   calcularProyectadoVittoria(): void {
@@ -331,68 +201,36 @@ export class CaratulaGlobalComponent implements OnInit {
     this.proyectadoScott = Math.round(this.proyectadoScott * 100) / 100;
   }
 
-  calculateTotalMeta2(): void {
-    forkJoin([
-      this.caratulasService.getDatosEvacA(),
-      this.caratulasService.getDatosEvacB()
-    ]).subscribe({
-      next: ([datosA, datosB]) => {
-        const my25A = datosA.find((item: any) => item.categoria === 'MY25_2');
-        const my25B = datosB.find((item: any) => item.categoria === 'MY25_2');
-
-        if (my25A && my25B) {
-          this.totalMetaMY25_2 = my25A.meta + my25B.meta;
-          this.calcularProyectadoMonto2();
-        } else {
-          console.error('No se encontraron datos MY25_2 en uno o ambos conjuntos');
-        }
-      },
-      error: (err) => {
-        console.error('Error al obtener los datos:', err);
-      }
-    });
-  }
-
   calculateTotalAcumulado(): void {
-    forkJoin([
-      this.caratulasService.getDatosEvacA(),
-      this.caratulasService.getDatosEvacB()
-    ]).subscribe({
-      next: ([datosA, datosB]) => {
-        const my25A = datosA.find((item: any) => item.categoria === 'MY25');
-        const my25B = datosB.find((item: any) => item.categoria === 'MY25');
+    const nivelesCategoria = ['Partner', 'Partner Elite', 'Partner Elite Plus'];
 
-        if (my25A && my25B) {
-          this.totalAcumulado = my25A.acumulado_real + my25B.acumulado_real;
-          this.calcularPorcentajeMonto2();
-        } else {
-          console.error('No se encontraron datos MY25 en uno o ambos conjuntos');
-        }
+    this.caratulasService.getDatosPrevio().subscribe({
+      next: (datosPrevio) => {
+        this.totalAcumulado = datosPrevio
+          .filter((item: any) => nivelesCategoria.includes(item.nivel))
+          .reduce((total: number, item: any) =>
+            total + (Number(item.acumulado_anticipado) || 0), 0);
+
+        this.calcularPorcentajeMonto2();
       },
       error: (err) => {
-        console.error('Error al obtener los datos:', err);
+        console.error('Error calculando acumulado Partner→PEP:', err);
       }
     });
   }
 
   calculateTotalAcumulado2(): void {
-    forkJoin([
-      this.caratulasService.getDatosEvacA(),
-      this.caratulasService.getDatosEvacB()
-    ]).subscribe({
-      next: ([datosA, datosB]) => {
-        const my25A = datosA.find((item: any) => item.categoria === 'MY25_2');
-        const my25B = datosB.find((item: any) => item.categoria === 'MY25_2');
+    this.caratulasService.getDatosPrevio().subscribe({
+      next: (datosPrevio) => {
+        this.totalAcumulado_2 = datosPrevio
+          .filter((item: any) => item.nivel === 'Distribuidor')
+          .reduce((total: number, item: any) =>
+            total + (Number(item.acumulado_anticipado) || 0), 0);
 
-        if (my25A && my25B) {
-          this.totalAcumulado_2 = my25A.acumulado_real + my25B.acumulado_real;
-          this.calcularPorcentajeMonto3();
-        } else {
-          console.error('No se encontraron datos MY25_2 en uno o ambos conjuntos');
-        }
+        this.calcularPorcentajeMonto3();
       },
       error: (err) => {
-        console.error('Error al obtener los datos:', err);
+        console.error('Error calculando acumulado Distribuidor:', err);
       }
     });
   }
@@ -405,22 +243,10 @@ export class CaratulaGlobalComponent implements OnInit {
     return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
   }
 
-  /** Semanas transcurridas desde el inicio REAL de la temporada (1 jul 2025),
-   * no desde "la semana ISO 26 mas reciente" -- ese calculo por modulo de
-   * calendario se reiniciaba cada año en la semana 26 (~fin de junio),
-   * dando semanas absurdamente bajas (p. ej. 3) apenas pasaba esa semana en
-   * 2026 aunque la temporada llevara +50 semanas corriendo. Acotado a
-   * [0, 52] para que el proyectado nunca exceda la meta una vez terminada
-   * la duracion normal de una temporada. */
   obtenerSemanasTranscurridas(): number {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const dias = Math.floor((hoy.getTime() - this.fechaInicioTemporadaActual.getTime()) / 86400000);
-    if (dias < 0) return 0;
-    // Numero de semana ACTUAL (1-indexado), no semanas completas transcurridas:
-    // el dia 16 (17 jul, temporada inicia 1 jul) cae en la semana 3 (dias 14-20),
-    // asi que el proyectado debe multiplicar por 3, no por floor(16/7)=2.
-    return Math.min(52, Math.floor(dias / 7) + 1);
+    // La pantalla muestra la semana en curso, pero el proyectado usa
+    // únicamente semanas cerradas. Ej.: Semana 9 => 8 semanas cerradas.
+    return Math.max(0, this.obtenerDiaTemporada() - 1);
   }
 
   calcularProyectadoMonto1(): void {
@@ -450,10 +276,9 @@ export class CaratulaGlobalComponent implements OnInit {
   calculateAcumuladoGeneral(): void {
     forkJoin([
       this.caratulasService.getDatosPrevio(),
-      this.multimarcasService.getMultimarcasTodo(),
-      this.caratulasService.getVentasNoRegistradas()
+      this.multimarcasService.getMultimarcasTodo()
     ]).subscribe({
-      next: ([datosPrevio, multimarcas, ventasNoRegistradas]) => {
+      next: ([datosPrevio, multimarcas]) => {
         try {
           const sumPrevio = datosPrevio.reduce((total: number, item: any) => {
             return total + (Number(item.acumulado_anticipado) || 0);
@@ -463,9 +288,7 @@ export class CaratulaGlobalComponent implements OnInit {
             return total + (Number(item.avance_global) || 0);
           }, 0);
 
-          const sumNoRegistradas = Number(ventasNoRegistradas?.total) || 0;
-
-          this.acumuladoGeneral = sumPrevio + sumMultimarcas + sumNoRegistradas;
+          this.acumuladoGeneral = sumPrevio + sumMultimarcas;
 
           this.calcularPorcentajeMonto1();
           this.calcularDiferencia1();
@@ -483,10 +306,9 @@ export class CaratulaGlobalComponent implements OnInit {
   calculateAcumuladoScott(): void {
     forkJoin([
       this.caratulasService.getDatosPrevio(),
-      this.multimarcasService.getMultimarcasTodo(),
-      this.caratulasService.getVentasNoRegistradas()
+      this.multimarcasService.getMultimarcasTodo()
     ]).subscribe({
-      next: ([datosPrevio, multimarcas, ventasNoRegistradas]) => {
+      next: ([datosPrevio, multimarcas]) => {
         try {
           const sumPrevio = datosPrevio.reduce((total: number, item: any) => {
             return total
@@ -498,10 +320,7 @@ export class CaratulaGlobalComponent implements OnInit {
             return total + (Number(item.avance_global_scott) || 0);
           }, 0);
 
-          const sumNoRegistradas =
-            (Number(ventasNoRegistradas?.scott) || 0) + (Number(ventasNoRegistradas?.bold) || 0);
-
-          this.acumuladoScott = sumPrevio + sumMultimarcas + sumNoRegistradas;
+          this.acumuladoScott = sumPrevio + sumMultimarcas;
 
           this.calcularPorcentajeScott();
           this.calcularPorcentajeScott_2();
@@ -520,10 +339,9 @@ export class CaratulaGlobalComponent implements OnInit {
   calculateAcumuladoApparel(): void {
     forkJoin([
       this.caratulasService.getDatosPrevio(),
-      this.multimarcasService.getMultimarcasTodo(),
-      this.caratulasService.getVentasNoRegistradas()
+      this.multimarcasService.getMultimarcasTodo()
     ]).subscribe({
-      next: ([datosPrevio, multimarcas, ventasNoRegistradas]) => {
+      next: ([datosPrevio, multimarcas]) => {
         try {
           const sumPrevio = datosPrevio.reduce((total: number, item: any) => {
             return total + (Number(item.avance_global_apparel_syncros_vittoria) || 0);
@@ -538,12 +356,7 @@ export class CaratulaGlobalComponent implements OnInit {
             return total + sumItem;
           }, 0);
 
-          const sumNoRegistradas =
-            (Number(ventasNoRegistradas?.vittoria) || 0) +
-            (Number(ventasNoRegistradas?.syncros) || 0) +
-            (Number(ventasNoRegistradas?.apparel) || 0);
-
-          this.acumuladoApparel = sumPrevio + sumMultimarcas + sumNoRegistradas;
+          this.acumuladoApparel = sumPrevio + sumMultimarcas;
 
           this.calcularPorcentajeApparel();
           this.calcularPorcentajeApparel_2();

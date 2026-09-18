@@ -1,223 +1,753 @@
 <app-home-bar></app-home-bar>
 
 <div class="caratula-evac-container">
+
     <h2>Carátula EVAC-B</h2>
 
+    <!-- =====================================================
+         BOTÓN VOLVER
+    ====================================================== -->
     <div class="acciones-monitor">
-        <button class="btn btn-secondary" [routerLink]="['/inicio-caratulas']">
-            <i class="fas fa-arrow-left"></i> Volver
-        </button>
+        <button
+            class="btn btn-secondary"
+            [routerLink]="['/inicio-caratulas']">
 
-        <app-temporada-selector *ngIf="temporadasDisponibles.length"
-            [temporadas]="temporadasDisponibles"
-            [seleccionada]="temporadaHistoricaSeleccionada"
-            (cambio)="verTemporadaPasada($event)">
-        </app-temporada-selector>
+            <i class="fas fa-arrow-left"></i>
+            Volver
+
+        </button>
     </div>
 
-    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
-        (volver)="volverATemporadaActual()"></app-aviso-historico>
 
     <div class="caratula-content">
-        <!-- Fecha en la esquina superior derecha -->
+
+
+        <!-- =================================================
+             FECHA / SEMANA
+        ================================================== -->
         <div class="fecha-header-mejorada">
+
             <div class="fecha-principal">
                 {{ obtenerFechaHoy() }}
             </div>
+
             <div class="semana-info-mejorada">
-                <div class="info-linea">Semana ISO: {{ obtenerSemanaISO() }}</div>
-                <div class="info-linea">Semana: {{ obtenerDiaTemporada() }}</div>
+
+                <div class="info-linea">
+                    Semana ISO: {{ obtenerSemanaISO() }}
+                </div>
+
+                <div class="info-linea">
+                    Semana: {{ obtenerDiaTemporada() }}
+                </div>
+
             </div>
+
         </div>
 
-        <!-- Sección EB y MY25 -->
+
+
+        <!-- =================================================
+             SECCIÓN PRINCIPAL
+             EB / CATEGORÍA / DISTRIBUIDOR
+        ================================================== -->
         <div class="seccion-principal">
+
             <div class="tabla-principal">
-                <!-- Header -->
+
+
+                <!-- =========================================
+                     HEADER
+                ========================================== -->
                 <div class="fila-header">
+
                     <div class="col-categoria"></div>
-                    <div class="col-numero">Meta</div>
-                    <div class="col-numero">Acumulado Real</div>
-                    <div class="col-numero">Avance Proyectado</div>
-                    <div class="col-porcentaje">%</div>
-                </div>
-                
-                <!-- Fila EB -->
-                <div class="fila-data">
-                    <div class="col-categoria categoria-eb">EB</div>
-                    <div class="col-numero">{{ obtenerMetaTotal() }}</div>
-                    <div class="col-numero verde">{{ obtenerAcumuladoTotal() }}</div>
-                    <div class="col-numero">{{ obtenerAvanceProyectadoTotalFormateado() }}</div>
-                    <div class="col-porcentaje verde-claro">{{ calcularPorcentajeEB() }}</div>
+
+                    <div class="col-numero">
+                        Meta
+                    </div>
+
+                    <div class="col-numero">
+                        Acumulado Real
+                    </div>
+
+                    <div class="col-numero">
+                        Avance Proyectado
+                    </div>
+
+                    <div class="col-porcentaje">
+                        %
+                    </div>
+
                 </div>
 
-                <!-- Filas MY25 -->
+
+
+                <!-- =========================================
+                     META GENERAL COMERCIALIZADORA
+                ========================================== -->
                 <div class="fila-data">
-                    <div class="col-categoria categoria-my25" rowspan="2">MY26</div>
-                    <div class="col-numero">{{ my25_monto1 | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero verde">{{ my25_monto3 | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero">{{ avance_proyectado_monto1 | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-porcentaje verde-claro">{{ calcularPorcentajeMonto1() }}</div>
+
+                    <div class="col-categoria categoria-eb">
+                        Meta Gral. Comercializadora
+                    </div>
+
+                    <div class="col-numero">
+                        {{ obtenerMetaTotal() }}
+                    </div>
+
+                    <!--
+                        FIX MY27:
+                        Ya no usamos acumuladoTotalCalculado.
+
+                        Ahora el componente obtiene directamente
+                        evac_b.acumulado_general del resumen maestro.
+                    -->
+                    <div class="col-numero verde">
+                        {{ obtenerAcumuladoTotal() }}
+                    </div>
+
+                    <div class="col-numero">
+                        {{ obtenerAvanceProyectadoTotalFormateado() }}
+                    </div>
+
+                    <div class="col-porcentaje verde-claro">
+                        {{ calcularPorcentajeEB() }}
+                    </div>
+
                 </div>
 
+
+
+                <!-- =========================================
+                     META CUMPLIMIENTO CATEGORÍA
+                ========================================== -->
                 <div class="fila-data">
-                    <div class="col-categoria"></div>
-                    <div class="col-numero">{{ my25_monto2 | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero verde">{{ my25_monto4 | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero">{{ avance_proyectado_monto2 | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-porcentaje verde-claro">{{ calcularPorcentajeMonto2() }}</div>
+
+                    <div class="col-categoria categoria-my25">
+                        Meta Cumplimiento Categoría
+                    </div>
+
+                    <div class="col-numero">
+                        {{
+                            my25_monto1
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero verde">
+                        {{
+                            my25_monto3
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero">
+                        {{
+                            avance_proyectado_monto1
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-porcentaje verde-claro">
+                        {{ calcularPorcentajeMonto1() }}
+                    </div>
+
                 </div>
+
+
+
+                <!-- =========================================
+                     DISTRIBUIDOR
+                ========================================== -->
+                <div class="fila-data">
+
+                    <div class="col-categoria">
+                        Distribuidor
+                    </div>
+
+                    <div class="col-numero">
+                        {{
+                            my25_monto2
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero verde">
+                        {{
+                            my25_monto4
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero">
+                        {{
+                            avance_proyectado_monto2
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-porcentaje verde-claro">
+                        {{ calcularPorcentajeMonto2() }}
+                    </div>
+
+                </div>
+
+
             </div>
+
         </div>
 
-        <!-- Sección b) Línea -->
+
+
+        <!-- =================================================
+             SECCIÓN B) LÍNEA
+        ================================================== -->
         <div class="seccion-linea">
-            <h3 class="seccion-titulo">b) Línea</h3>
+
+            <h3 class="seccion-titulo">
+                b) Línea
+            </h3>
+
 
             <div class="tabla-linea">
-                <!-- Header línea -->
+
+
+                <!-- =========================================
+                     HEADER LÍNEA
+                ========================================== -->
                 <div class="fila-header-linea">
+
                     <div class="col-categoria-linea"></div>
-                    <div class="col-numero-linea">Meta</div>
-                    <div class="col-numero-linea">Acumulado Real</div>
-                    <div class="col-numero-linea">Avance Proyectado</div>
-                    <div class="col-porcentaje-linea">%</div>
-                </div>
 
-                <!-- SCOTT -->
-                <div class="fila-categoria scott-row">
-                    <div class="col-categoria-linea categoria-scott">SCOTT</div>
-                    <div class="col-numero-linea">{{ montoCompromisoScott | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero-linea verde">{{ avanceGlobalScott | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero-linea">{{ avance_proyectado_scott | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-porcentaje-linea verde-claro">{{ calcularPorcentajeScott() }}</div>
-                </div>
-
-                <!-- APPAREL, SYNCROS, VITTORIA -->
-                <div class="fila-categoria apparel-row">
-                    <div class="col-categoria-linea categoria-apparel">APPAREL, SYNCROS, VITTORIA</div>
-                    <div class="col-numero-linea">{{ montoCompromisoApparel | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero-linea verde">{{ avanceGlobaApparel | currency:'USD':'$':'1.2-2' }}</div>
-                    <div class="col-numero-linea">{{ avance_proyectado_apparel | currency:'USD':'$':'1.2-2' }}
+                    <div class="col-numero-linea">
+                        Meta
                     </div>
-                    <div class="col-porcentaje-linea verde-claro">{{ calcularPorcentajeApparel() }}</div>
+
+                    <div class="col-numero-linea">
+                        Acumulado Real
+                    </div>
+
+                    <div class="col-numero-linea">
+                        Avance Proyectado
+                    </div>
+
+                    <div class="col-porcentaje-linea">
+                        %
+                    </div>
+
                 </div>
+
+
+
+                <!-- =========================================
+                     BICICLETAS
+                ========================================== -->
+                <div class="fila-categoria scott-row">
+
+                    <div class="col-categoria-linea categoria-scott">
+                        BICICLETAS
+                    </div>
+
+                    <div class="col-numero-linea">
+                        {{
+                            montoCompromisoScott
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero-linea verde">
+                        {{
+                            avanceGlobalScott
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero-linea">
+                        {{
+                            avance_proyectado_scott
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-porcentaje-linea verde-claro">
+                        {{ calcularPorcentajeScott() }}
+                    </div>
+
+                </div>
+
+
+
+                <!-- =========================================
+                     APPAREL / SYNCROS / VITTORIA
+                ========================================== -->
+                <div class="fila-categoria apparel-row">
+
+                    <div class="col-categoria-linea categoria-apparel">
+                        APPAREL, SYNCROS, VITTORIA
+                    </div>
+
+                    <div class="col-numero-linea">
+                        {{
+                            montoCompromisoApparel
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero-linea verde">
+                        {{
+                            avanceGlobaApparel
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-numero-linea">
+                        {{
+                            avance_proyectado_apparel
+                            | currency:'USD':'$':'1.2-2'
+                        }}
+                    </div>
+
+                    <div class="col-porcentaje-linea verde-claro">
+                        {{ calcularPorcentajeApparel() }}
+                    </div>
+
+                </div>
+
+
             </div>
+
         </div>
 
-        <!-- Sección c) Clientes -->
+
+
+        <!-- =================================================
+             SECCIÓN C) CLIENTES
+        ================================================== -->
         <div class="seccion-clientes">
-            <h3 class="seccion-titulo">Clientes</h3>
+
+            <h3 class="seccion-titulo">
+                Clientes
+            </h3>
+
 
             <div class="tabla-clientes">
-                <!-- Header -->
+
+
+                <!-- =========================================
+                     HEADER CLIENTES
+                ========================================== -->
                 <div class="fila-header-clientes">
+
+
+                    <!-- NOMBRE -->
                     <div class="col-nombre columna-con-filtro">
-                        <span class="header-label">NOMBRE</span>
-                        <app-filtro *ngIf="filtroOpciones.nombre_cliente.length > 0" filtroId="nombre_cliente"
-                            [options]="filtroOpciones.nombre_cliente" [title]="'Filtrar por Nombre'"
-                            [searchPlaceholder]="'Buscar nombre...'" (apply)="aplicarFiltro('nombre_cliente', $event)"
-                            (clear)="limpiarFiltro('nombre_cliente')">
+
+                        <span class="header-label">
+                            NOMBRE
+                        </span>
+
+                        <app-filtro
+                            *ngIf="filtroOpciones.nombre_cliente.length > 0"
+
+                            filtroId="nombre_cliente"
+
+                            [options]="filtroOpciones.nombre_cliente"
+
+                            [title]="'Filtrar por Nombre'"
+
+                            [searchPlaceholder]="'Buscar nombre...'"
+
+                            (apply)="aplicarFiltro(
+                                'nombre_cliente',
+                                $event
+                            )"
+
+                            (clear)="limpiarFiltro(
+                                'nombre_cliente'
+                            )">
+
                         </app-filtro>
+
                     </div>
 
+
+
+                    <!-- NIVEL -->
                     <div class="col-nivel columna-con-filtro">
-                        <span class="header-label">NIVEL</span>
-                        <app-filtro *ngIf="filtroOpciones.nivel.length > 0" filtroId="nivel"
-                            [options]="filtroOpciones.nivel" [title]="'Filtrar por Nivel'"
-                            [searchPlaceholder]="'Buscar nivel...'" (apply)="aplicarFiltro('nivel', $event)"
-                            (clear)="limpiarFiltro('nivel')">
+
+                        <span class="header-label">
+                            NIVEL
+                        </span>
+
+                        <app-filtro
+                            *ngIf="filtroOpciones.nivel.length > 0"
+
+                            filtroId="nivel"
+
+                            [options]="filtroOpciones.nivel"
+
+                            [title]="'Filtrar por Nivel'"
+
+                            [searchPlaceholder]="'Buscar nivel...'"
+
+                            (apply)="aplicarFiltro(
+                                'nivel',
+                                $event
+                            )"
+
+                            (clear)="limpiarFiltro(
+                                'nivel'
+                            )">
+
                         </app-filtro>
+
                     </div>
+
+
+
+                    <!-- COMPROMISO -->
                     <div class="col-compromiso columna-con-filtro">
-                        <span class="header-label">COMPROMISO ANUAL</span>
-                        <app-filtro-orden label="" (ordenCambio)="ordenarColumna('compromiso', $event)">
+
+                        <span class="header-label">
+                            COMPROMISO ANUAL
+                        </span>
+
+                        <app-filtro-orden
+                            label=""
+                            (ordenCambio)="ordenarColumna(
+                                'compromiso',
+                                $event
+                            )">
+
                         </app-filtro-orden>
+
                     </div>
 
+
+
+                    <!-- ACUMULADO -->
                     <div class="col-acumulado columna-con-filtro">
-                        <span class="header-label">ACUMULADO REAL</span>
-                        <app-filtro-orden label="" (ordenCambio)="ordenarColumna('acumulado', $event)">
+
+                        <span class="header-label">
+                            ACUMULADO REAL
+                        </span>
+
+                        <app-filtro-orden
+                            label=""
+                            (ordenCambio)="ordenarColumna(
+                                'acumulado',
+                                $event
+                            )">
+
                         </app-filtro-orden>
+
                     </div>
 
+
+
+                    <!-- PROYECTADO -->
                     <div class="col-proyectado columna-con-filtro">
-                        <span class="header-label">AVANCE PROY. SEM.</span>
-                        <app-filtro-orden label="" (ordenCambio)="ordenarColumna('proyectado', $event)">
+
+                        <span class="header-label">
+                            AVANCE PROY. SEM.
+                        </span>
+
+                        <app-filtro-orden
+                            label=""
+                            (ordenCambio)="ordenarColumna(
+                                'proyectado',
+                                $event
+                            )">
+
                         </app-filtro-orden>
+
                     </div>
 
+
+
+                    <!-- DIFERENCIA -->
                     <div class="col-diferencia columna-con-filtro">
-                        <span class="header-label">DIFERENCIA</span>
-                        <app-filtro-orden label="" (ordenCambio)="ordenarColumna('diferencia', $event)">
+
+                        <span class="header-label">
+                            DIFERENCIA
+                        </span>
+
+                        <app-filtro-orden
+                            label=""
+                            (ordenCambio)="ordenarColumna(
+                                'diferencia',
+                                $event
+                            )">
+
                         </app-filtro-orden>
+
                     </div>
+
+
                 </div>
 
-                <!-- Filas de datos -->
-                <div class="grupo-cliente" *ngFor="let cliente of clientesFiltrados">
 
-                    <div class="fila-cliente" (click)="toggleCliente(cliente)" [class.fila-activa]="cliente.expanded">
 
+                <!-- =========================================
+                     FILAS DE CLIENTES
+                ========================================== -->
+                <div
+                    class="grupo-cliente"
+                    *ngFor="let cliente of clientesFiltrados">
+
+
+                    <!-- =====================================
+                         FILA PRINCIPAL DEL CLIENTE
+                    ====================================== -->
+                    <div
+                        class="fila-cliente"
+
+                        (click)="toggleCliente(cliente)"
+
+                        [class.fila-activa]="cliente.expanded">
+
+
+                        <!-- NOMBRE -->
                         <div class="col-nombre nombre-clicable">
-                            <i class="fas" [ngClass]="cliente.expanded ? 'fa-chevron-up' : 'fa-chevron-down'"
-                                style="margin-right: 8px; font-size: 0.8em; opacity: 0.7;"></i>
+
+                            <i
+                                class="fas"
+
+                                [ngClass]="
+                                    cliente.expanded
+                                        ? 'fa-chevron-up'
+                                        : 'fa-chevron-down'
+                                "
+
+                                style="
+                                    margin-right: 8px;
+                                    font-size: 0.8em;
+                                    opacity: 0.7;
+                                ">
+                            </i>
+
 
                             {{ cliente.nombre_cliente }}
 
-                            <i class="fas fa-external-link-alt icono-link"
-                                (click)="$event.stopPropagation(); irACaratula(cliente.nombre_cliente)"
-                                title="Ver detalle completo"></i>
+
+                            <i
+                                class="
+                                    fas
+                                    fa-external-link-alt
+                                    icono-link
+                                "
+
+                                (click)="
+                                    $event.stopPropagation();
+                                    irACaratula(
+                                        cliente.nombre_cliente
+                                    )
+                                "
+
+                                title="Ver detalle completo">
+                            </i>
+
                         </div>
 
-                        <div class="col-nivel">{{ cliente.nivel }}</div>
-                        <div class="col-compromiso">{{ cliente.compra_minima_anual | currency:'USD':'$':'1.2-2' }}
+
+
+                        <!-- NIVEL -->
+                        <div class="col-nivel">
+                            {{ cliente.nivel }}
                         </div>
-                        <div class="col-acumulado verde">{{ cliente.acumulado_anticipado |
-                            currency:'USD':'$':'1.2-2' }}</div>
-                        <div class="col-proyectado">{{ calcularAvanceProyectadoCliente(cliente.compra_minima_anual) |
-                            currency:'USD':'$':'1.2-2' }}</div>
-                        <div class="col-diferencia">{{ calcularDiferencia(cliente) | currency:'USD':'$':'1.2-2' }}
+
+
+
+                        <!-- COMPROMISO -->
+                        <div class="col-compromiso">
+
+                            {{
+                                cliente.compra_minima_anual
+                                | currency:'USD':'$':'1.2-2'
+                            }}
+
                         </div>
+
+
+
+                        <!-- ACUMULADO -->
+                        <div class="col-acumulado verde">
+
+                            {{
+                                cliente.acumulado_anticipado
+                                | currency:'USD':'$':'1.2-2'
+                            }}
+
+                        </div>
+
+
+
+                        <!-- PROYECTADO -->
+                        <div class="col-proyectado">
+
+                            {{
+                                calcularAvanceProyectadoCliente(
+                                    cliente.compra_minima_anual
+                                )
+                                | currency:'USD':'$':'1.2-2'
+                            }}
+
+                        </div>
+
+
+
+                        <!-- DIFERENCIA -->
+                        <div class="col-diferencia">
+
+                            {{
+                                calcularDiferencia(cliente)
+                                | currency:'USD':'$':'1.2-2'
+                            }}
+
+                        </div>
+
+
                     </div>
 
-                    <div class="fila-detalle" *ngIf="cliente.expanded">
-                        <div class="banner-cliente-cerrado" *ngIf="modoHistorico && cliente.temporada_cerrada">
-                            <i class="fas fa-lock"></i>
-                            TEMPORADA CERRADA EL {{ fechaCierreClienteFormateada(cliente) }}
-                        </div>
+
+
+                    <!-- =====================================
+                         DETALLE EXPANDIBLE
+                    ====================================== -->
+                    <div
+                        class="fila-detalle"
+                        *ngIf="cliente.expanded">
+
+
                         <div class="detalle-grid">
 
+
+                            <!-- =============================
+                                 BICICLETAS
+                            ============================== -->
                             <div class="detalle-card scott">
-                                <div class="detalle-titulo">Faltante SCOTT (Acumulado)</div>
-                                <div class="detalle-valor" [class.rojo]="getFaltanteScott(cliente) > 0"
-                                    [class.verde]="getFaltanteScott(cliente) === 0">
-                                    {{ getFaltanteScott(cliente) | currency:'USD':'$':'1.2-2' }}
+
+                                <div class="detalle-titulo">
+                                    Faltante BICICLETAS
+                                    (Acumulado)
                                 </div>
+
+
+                                <div
+                                    class="detalle-valor"
+
+                                    [class.rojo]="
+                                        getFaltanteScott(cliente) > 0
+                                    "
+
+                                    [class.verde]="
+                                        getFaltanteScott(cliente) === 0
+                                    ">
+
+                                    {{
+                                        getFaltanteScott(cliente)
+                                        | currency:'USD':'$':'1.2-2'
+                                    }}
+
+                                </div>
+
+
                                 <div class="detalle-sub">
-                                    (Meta al día: {{ getMetaAcumuladaScott(cliente) | currency:'USD':'$':'1.2-2' }})
+
+                                    (Meta al día:
+
+                                    {{
+                                        getMetaAcumuladaScott(cliente)
+                                        | currency:'USD':'$':'1.2-2'
+                                    }}
+
+                                    )
+
                                 </div>
+
                             </div>
 
+
+
+                            <!-- =============================
+                                 APPAREL
+                            ============================== -->
                             <div class="detalle-card apparel">
-                                <div class="detalle-titulo">Faltante APPAREL (Acumulado)</div>
-                                <div class="detalle-valor" [class.rojo]="getFaltanteApparel(cliente) > 0"
-                                    [class.verde]="getFaltanteApparel(cliente) === 0">
-                                    {{ getFaltanteApparel(cliente) | currency:'USD':'$':'1.2-2' }}
+
+                                <div class="detalle-titulo">
+                                    Faltante APPAREL
+                                    (Acumulado)
                                 </div>
+
+
+                                <div
+                                    class="detalle-valor"
+
+                                    [class.rojo]="
+                                        getFaltanteApparel(cliente) > 0
+                                    "
+
+                                    [class.verde]="
+                                        getFaltanteApparel(cliente) === 0
+                                    ">
+
+                                    {{
+                                        getFaltanteApparel(cliente)
+                                        | currency:'USD':'$':'1.2-2'
+                                    }}
+
+                                </div>
+
+
                                 <div class="detalle-sub">
-                                    (Meta al día: {{ getMetaAcumuladaApparel(cliente) | currency:'USD':'$':'1.2-2' }})
+
+                                    (Meta al día:
+
+                                    {{
+                                        getMetaAcumuladaApparel(cliente)
+                                        | currency:'USD':'$':'1.2-2'
+                                    }}
+
+                                    )
+
                                 </div>
+
                             </div>
+
 
                         </div>
+
                     </div>
+
                 </div>
 
-                <div *ngIf="clientesFiltrados.length === 0 && clientes.length > 0" class="sin-resultados">
-                    <p>No se encontraron clientes que coincidan con los filtros aplicados.</p>
+
+
+                <!-- =========================================
+                     SIN RESULTADOS
+                ========================================== -->
+                <div
+                    *ngIf="
+                        clientesFiltrados.length === 0 &&
+                        clientes.length > 0
+                    "
+
+                    class="sin-resultados">
+
+                    <p>
+                        No se encontraron clientes que coincidan
+                        con los filtros aplicados.
+                    </p>
+
                 </div>
+
+
             </div>
+
         </div>
+
+
     </div>
+
 </div>
