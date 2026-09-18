@@ -103,10 +103,10 @@
       <div class="paginador-selector-wrap">
         <span class="selector-label">Mostrar:</span>
         <div class="selector-pills">
-          <button 
-            *ngFor="let cant of opcionesPorPagina" 
-            class="btn-pill" 
-            [class.activa]="itemsPerPage === cant" 
+          <button
+            *ngFor="let cant of opcionesPorPagina"
+            class="btn-pill"
+            [class.activa]="itemsPerPage === cant"
             (click)="cambiarItemsPorPagina(cant)">
             {{ cant }}
           </button>
@@ -122,10 +122,10 @@
         </button>
 
         <div class="paginas-numeros">
-          <button 
-            *ngFor="let pagina of obtenerRangoPaginas(pageModulos, totalPagesModulos)" 
-            class="btn-page" 
-            [class.activa]="pagina === pageModulos" 
+          <button
+            *ngFor="let pagina of obtenerRangoPaginas(pageModulos, totalPagesModulos)"
+            class="btn-page"
+            [class.activa]="pagina === pageModulos"
             [disabled]="pagina === -1"
             (click)="cambiarPaginaDirecta('modulos', pagina)">
             {{ pagina === -1 ? '...' : pagina }}
@@ -141,7 +141,7 @@
 
   <!-- TABLA UNIFICADA DE PERMISOS GENERALES CON SUBFILTROS -->
   <div *ngIf="!cargando && pestanaActiva === 'rutas'" class="table-wrap tab-fade-in">
-    
+
     <!-- SUBFILTROS DE ÁMBITO -->
     <div class="table-subfilters-bar">
       <span class="subfilter-label">Filtrar por ámbito:</span>
@@ -211,10 +211,10 @@
       <div class="paginador-selector-wrap">
         <span class="selector-label">Mostrar:</span>
         <div class="selector-pills">
-          <button 
-            *ngFor="let cant of opcionesPorPagina" 
-            class="btn-pill" 
-            [class.activa]="itemsPerPage === cant" 
+          <button
+            *ngFor="let cant of opcionesPorPagina"
+            class="btn-pill"
+            [class.activa]="itemsPerPage === cant"
             (click)="cambiarItemsPorPagina(cant)">
             {{ cant }}
           </button>
@@ -230,10 +230,10 @@
         </button>
 
         <div class="paginas-numeros">
-          <button 
-            *ngFor="let pagina of obtenerRangoPaginas(pageRutas, totalPagesRutas)" 
-            class="btn-page" 
-            [class.activa]="pagina === pageRutas" 
+          <button
+            *ngFor="let pagina of obtenerRangoPaginas(pageRutas, totalPagesRutas)"
+            class="btn-page"
+            [class.activa]="pagina === pageRutas"
             [disabled]="pagina === -1"
             (click)="cambiarPaginaDirecta('rutas', pagina)">
             {{ pagina === -1 ? '...' : pagina }}

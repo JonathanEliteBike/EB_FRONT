@@ -37,7 +37,7 @@ const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: Htt
 
       if (esRuta401 && !esRenovacion && !esLogin && !_renovando) {
         _renovando = true;
-        
+
         // Se resuelve AuthService bajo demanda únicamente al atrapar el error
         const authService = injector.get(AuthService);
 

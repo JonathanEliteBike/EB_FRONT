@@ -598,7 +598,7 @@ export class AuthService {
  */
   getUserEmail(): string | null {
     const keys = ['usuario', 'user', 'currentUser', 'auth_user'];
-    
+
     for (const key of keys) {
       const data = localStorage.getItem(key) || sessionStorage.getItem(key);
       if (data) {
