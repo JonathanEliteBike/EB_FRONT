@@ -81,7 +81,7 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
       this.isLoading = false;
       return;
     }
-    
+
     this.cargarDatosUsuarioActual();
     this.cargarTemporadasDisponibles();
     this.cargarTemporadaActual();

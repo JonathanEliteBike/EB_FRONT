@@ -33,8 +33,8 @@
     class="bento" [class.bento--con-equipo]="authService.getRol() === 2">
 
     <!-- 00. Gestión de Equipo (Exclusivo para Admin Cliente - Rol 2) -->
-    <a *ngIf="authService.getRol() === 2" 
-       routerLink="/usuarios/creacion-usuarios" 
+    <a *ngIf="authService.getRol() === 2"
+       routerLink="/usuarios/creacion-usuarios"
        class="bento-card card-equipo">
       <div class="card-bg-num"></div>
       <div class="card-glow"></div>
@@ -51,7 +51,7 @@
 
     <!-- 01. Proyección de Compra -->
     <a *ngIf="authService.tieneModulo('usuarios_proyeccion_compras')"
-       routerLink="/usuarios/proyeccion-compras" 
+       routerLink="/usuarios/proyeccion-compras"
        class="bento-card card-proyeccion">
       <div class="card-bg-num"></div>
       <div class="card-glow"></div>
@@ -68,7 +68,7 @@
 
     <!-- 02. Resumen de Temporada -->
     <a *ngIf="authService.tieneModulo('usuarios_caratula')"
-       routerLink="/usuarios/caratula" 
+       routerLink="/usuarios/caratula"
        class="bento-card card-resumen">
       <div class="card-bg-num"></div>
       <div class="card-glow"></div>
@@ -102,7 +102,7 @@
 
     <!-- 04. Garantías -->
     <a *ngIf="authService.tieneModulo('usuarios_garantias')"
-       routerLink="/usuarios/garantias" 
+       routerLink="/usuarios/garantias"
        class="bento-card card-garantias">
       <div class="card-bg-num"></div>
       <div class="card-glow"></div>
