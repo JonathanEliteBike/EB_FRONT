@@ -35,7 +35,7 @@ export class GestionClientesComponent implements OnInit {
   administradores: AdminClienteItem[] = [];
   modulos: ModuloItem[] = [];
   catalogoModulosAcciones: PermisoDelegableFila[] = [];
-  
+
   estadoInicial: { [key: string]: boolean } = {};
   modulosAcceso: { [key: number]: boolean } = {};
   estadoInicialModulos: { [key: number]: boolean } = {};

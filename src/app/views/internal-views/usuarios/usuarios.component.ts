@@ -40,11 +40,11 @@ interface FiltroOpciones {
   selector: 'app-usuarios',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    RouterModule, 
-    HomeBarComponent, 
-    AlertaComponent, 
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    HomeBarComponent,
+    AlertaComponent,
     FiltroComponent
   ],
   templateUrl: './usuarios.component.html',
@@ -308,7 +308,7 @@ export class UsuariosComponent implements OnInit {
     };
     this.mostrarFormularioRegistroVisible = true;
     this.mostrarFormularioEdicion = false;
-    
+
     this.asociarCliente = false;
     this.clienteBusqueda = '';
     this.clienteSeleccionadoId = null;
@@ -631,7 +631,7 @@ export class UsuariosComponent implements OnInit {
       range.push(totalPages);
     }
 
-    return range.filter((page, index, array) => 
+    return range.filter((page, index, array) =>
       page !== -1 || array[index - 1] !== -1
     );
   }

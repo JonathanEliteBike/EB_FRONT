@@ -26,9 +26,9 @@
           <i class="fas fa-user-shield"></i> Administrar Distribuidores
         </button>
 
-        <button 
-          *ngIf="!mostrarFormularioRegistroVisible && !mostrarFormularioEdicion" 
-          class="btn btn-primary" 
+        <button
+          *ngIf="!mostrarFormularioRegistroVisible && !mostrarFormularioEdicion"
+          class="btn btn-primary"
           (click)="mostrarFormularioRegistro()">
           <i class="fas fa-user-plus"></i> Agregar Usuario
         </button>
@@ -249,10 +249,10 @@
       <div class="paginador-selector-wrap">
         <span class="selector-label">Mostrar:</span>
         <div class="selector-pills">
-          <button 
-            *ngFor="let cant of opcionesPorPagina" 
-            class="btn-pill" 
-            [class.activa]="usuariosPorPagina === cant" 
+          <button
+            *ngFor="let cant of opcionesPorPagina"
+            class="btn-pill"
+            [class.activa]="usuariosPorPagina === cant"
             (click)="cambiarUsuariosPorPagina(cant)">
             {{ cant }}
           </button>
@@ -268,10 +268,10 @@
         </button>
 
         <div class="paginas-numeros">
-          <button 
-            *ngFor="let pagina of obtenerRangoPaginas()" 
-            class="btn-page" 
-            [class.activa]="pagina === paginaActual" 
+          <button
+            *ngFor="let pagina of obtenerRangoPaginas()"
+            class="btn-page"
+            [class.activa]="pagina === paginaActual"
             [disabled]="pagina === -1"
             (click)="pagina !== -1 && cambiarPagina(pagina)">
             {{ pagina === -1 ? '...' : pagina }}
