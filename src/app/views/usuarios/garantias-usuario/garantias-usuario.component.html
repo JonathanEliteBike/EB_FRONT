@@ -212,13 +212,15 @@
              [class.doc-rechazado]="validacionDocs[doc.key] === 'rechazado'"
              [class.doc-valido]="validacionDocs[doc.key] === 'valido'">
           <div class="doc-info">
-            <a [href]="archivoVerUrl(doc.nombre)" target="_blank" class="doc-link">
-              <i class="fas doc-icon" [ngClass]="iconoArchivo(doc.nombre)"></i>
+            <a [attr.href]="archivoListo(doc.nombre) ? archivoSrc(doc.nombre) : null"
+               [class.doc-cargando]="!archivoListo(doc.nombre)"
+               target="_blank" class="doc-link">
+              <i class="fas doc-icon" [ngClass]="archivoListo(doc.nombre) ? iconoArchivo(doc.nombre) : 'fa-spinner fa-spin'"></i>
               <div class="doc-texts">
                 <span class="doc-label">{{ doc.label }}</span>
                 <span class="doc-filename">{{ doc.legible }} <i class="fas fa-external-link-alt"></i></span>
               </div>
-              <img *ngIf="esImagen(doc.nombre)" [src]="archivoVerUrl(doc.nombre)" class="doc-thumb" alt="">
+              <img *ngIf="esImagen(doc.nombre) && archivoListo(doc.nombre)" [src]="archivoSrc(doc.nombre)" class="doc-thumb" alt="">
             </a>
             <span *ngIf="validacionDocs[doc.key] === 'valido'" class="val-chip valid"><i class="fas fa-check"></i> Válido</span>
             <span *ngIf="validacionDocs[doc.key] === 'rechazado'" class="val-chip rejected"><i class="fas fa-times"></i> Rechazado</span>

@@ -1,6 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import {
@@ -89,7 +91,7 @@ const COLOR_PIEZA: Record<string, string> = {
   styleUrl: './garantias-tickets.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GarantiasTicketsComponent implements OnInit {
+export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   readonly estatuses      = ESTATUSES;
   readonly estatusesPieza = ESTATUSES_PIEZA;
 
@@ -235,8 +237,14 @@ export class GarantiasTicketsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private location: Location,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer,
   ) {
     this.vieneDeDeepLink = !!this.route.snapshot.queryParamMap.get('id');
+  }
+
+  ngOnDestroy(): void {
+    this.limpiarArchivoUrls();
   }
 
   get esAdmin(): boolean { return this.auth.isAdmin(); }
@@ -477,6 +485,7 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   seleccionarTicket(t: GarantiaFormulario): void {
+    this.limpiarArchivoUrls();
     this.selected = t;
     this.comentarios = [];
     this.nuevoComentario = '';
@@ -516,6 +525,7 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   cerrarDetalle(): void {
+    this.limpiarArchivoUrls();
     this.selected = null;
     this.confirmandoEliminacion = false;
     this.cdr.markForCheck();
@@ -528,6 +538,7 @@ export class GarantiasTicketsComponent implements OnInit {
     this.svc.eliminarFormulario(this.selected.id).subscribe({
       next: () => {
         this.tickets = this.tickets.filter(t => t.id !== this.selected!.id);
+        this.limpiarArchivoUrls();
         this.selected = null;
         this.confirmandoEliminacion = false;
         this.eliminando = false;
@@ -551,6 +562,7 @@ export class GarantiasTicketsComponent implements OnInit {
         this.validandoDoc      = {};
         this.piezaSeleccionada = f.pieza_reemplazo ?? '';
         this.cargandoDetalle   = false;
+        this.cargarArchivosSeguros();
         this.cdr.markForCheck();
       },
       error: () => { this.cargandoDetalle = false; this.cdr.markForCheck(); },
@@ -952,8 +964,42 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   // ── Helpers de archivo ──────────────────────────────────────────────────
-  archivoVerUrl(nombre: string): string {
-    return `${environment.apiUrl}/garantias/archivo/${nombre}`;
+  // La ruta /garantias/archivo/<nombre> exige JWT (Authorization header), así
+  // que no se puede usar directo en [src]/[href]: el navegador no manda el
+  // token en esas peticiones. Se descarga vía HttpClient (sí lleva el token
+  // por el interceptor) y se expone como blob URL.
+  private archivoUrls: Map<string, SafeUrl> = new Map();
+  private archivoRawUrls: Map<string, string> = new Map();
+
+  private limpiarArchivoUrls(): void {
+    for (const url of this.archivoRawUrls.values()) URL.revokeObjectURL(url);
+    this.archivoUrls.clear();
+    this.archivoRawUrls.clear();
+  }
+
+  private cargarArchivosSeguros(): void {
+    for (const doc of this.documentos) {
+      const nombre = doc.nombre;
+      if (this.archivoUrls.has(nombre)) continue;
+      this.http.get(`${environment.apiUrl}/garantias/archivo/${nombre}`, { responseType: 'blob' })
+        .subscribe({
+          next: (blob) => {
+            const raw = URL.createObjectURL(blob);
+            this.archivoRawUrls.set(nombre, raw);
+            this.archivoUrls.set(nombre, this.sanitizer.bypassSecurityTrustUrl(raw));
+            this.cdr.markForCheck();
+          },
+          error: () => { /* se deja sin URL: el doc-unit no será clicable */ },
+        });
+    }
+  }
+
+  archivoListo(nombre: string): boolean {
+    return this.archivoUrls.has(nombre);
+  }
+
+  archivoSrc(nombre: string): SafeUrl | null {
+    return this.archivoUrls.get(nombre) ?? null;
   }
 
   esImagen(nombre: string): boolean {
