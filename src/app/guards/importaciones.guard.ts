@@ -13,7 +13,7 @@ export const importacionesGuard: CanActivateFn = () => {
 
   try {
     const decoded: any = jwtDecode(token);
-    if (decoded.rol === 1) {
+    if (decoded.rol === 1 || decoded.rol === 99) {
       return true;
     }
     // Distribuidor o usuario hijo → su dashboard; cualquier otro → login
