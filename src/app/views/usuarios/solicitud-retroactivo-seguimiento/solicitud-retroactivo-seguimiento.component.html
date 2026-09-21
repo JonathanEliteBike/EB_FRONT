@@ -22,6 +22,10 @@
 
     <!-- Botones de Acción en el Encabezado -->
     <div class="header-actions" *ngIf="vista === 'lista'">
+      <button type="button" class="btn-exportar" [disabled]="cargando || descargandoExcel" (click)="exportarExcel()">
+        <i class="fas" [ngClass]="descargandoExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+        {{ descargandoExcel ? 'Generando Excel...' : 'Descargar Excel' }}
+      </button>
       <button type="button" class="btn-mis-productos" (click)="verMisProductos()">
         <i class="fas fa-boxes-stacked"></i> Ver Mis Productos
       </button>
@@ -42,10 +46,68 @@
     </div>
 
     <div *ngIf="error" class="alert-error">{{ error }}</div>
+    <div *ngIf="mensajeExportacion" class="alert-info">{{ mensajeExportacion }}</div>
+
+    <ng-container *ngIf="!cargando && dashboard as dashboard">
+      <div class="dashboard-cards">
+        <div class="dashboard-card">
+          <span class="dashboard-card-label">Total bicicletas</span>
+          <strong>{{ dashboard.totales.total_solicitudes }}</strong>
+        </div>
+        <div class="dashboard-card">
+          <span class="dashboard-card-label">Pendientes</span>
+          <strong>{{ dashboard.totales.pendientes }}</strong>
+        </div>
+        <div class="dashboard-card">
+          <span class="dashboard-card-label">Solicitudes validadas</span>
+          <strong>{{ dashboard.totales.validadas }}</strong>
+        </div>
+        <div class="dashboard-card">
+          <span class="dashboard-card-label">NC capturadas</span>
+          <strong>{{ dashboard.totales.notas_credito_capturadas }}</strong>
+        </div>
+        <div class="dashboard-card">
+          <span class="dashboard-card-label">NC validadas</span>
+          <strong>{{ dashboard.totales.notas_credito_validadas }}</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-monto" *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined">
+          <span class="dashboard-card-label">Monto estimado</span>
+          <strong>{{ dashboard.totales.monto_total_estimado | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div class="notas-resumen" *ngIf="dashboard.notas_credito.length">
+        <div class="notas-resumen-title"><i class="fas fa-file-invoice-dollar"></i> Notas de crédito</div>
+        <div class="tabla-wrap notas-tabla-wrap">
+          <table class="solicitudes-tabla">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Estado</th>
+                <th>Solicitudes relacionadas</th>
+                <th *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined">Monto estimado registrado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let nota of dashboard.notas_credito" class="tabla-row-static">
+                <td class="col-principal">#{{ nota.numero_nota_credito }}</td>
+                <td class="col-estatus">
+                  <span class="tc-badge" [ngClass]="nota.estado === 'validada' ? 'badge-validado' : 'badge-pendiente'">
+                    {{ nota.estado === 'validada' ? 'Validada' : 'En validación' }}
+                  </span>
+                </td>
+                <td class="col-secundario">{{ nota.cantidad_solicitudes_relacionadas }}</td>
+                <td *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined" class="col-monto">{{ nota.monto_asociado_estimado | currency:'USD':'$':'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
 
     <div class="empty-state" *ngIf="!cargando && !solicitudes.length">
       <i class="fas fa-inbox fa-2x"></i>
-      <p>Aún no has registrado ninguna solicitud.</p>
+      <p>Aún no hay solicitudes registradas para este distribuidor.</p>
       <a routerLink="/usuarios/solicitud-retroactivo" class="btn-nueva btn-nueva-inline">
         <i class="fas fa-plus"></i> Registrar la primera
       </a>
@@ -202,6 +264,7 @@
         <div *ngIf="puedeVerMontos"><span class="ig-label">Precio Público</span><span class="ig-value">{{ s.precio_publico | currency:'USD':'$':'1.2-2' }}</span></div>
         <div *ngIf="puedeVerMontos"><span class="ig-label">Monto de Retroactivo</span><span class="ig-value ig-value-accent">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</span></div>
         <div><span class="ig-label">Nota de Crédito</span><span class="ig-value">{{ estatusNotaCredito(s.nota_credito, s.nota_credito_estatus).texto }}</span></div>
+        <div *ngIf="s.usuario_registro"><span class="ig-label">Registrada por</span><span class="ig-value">{{ s.usuario_registro }}</span></div>
         <div><span class="ig-label">Registrada</span><span class="ig-value">{{ s.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span></div>
       </div>
     </div>

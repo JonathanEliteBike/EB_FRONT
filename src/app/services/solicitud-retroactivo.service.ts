@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -28,6 +28,7 @@ export interface ItemHistorial {
 export interface SolicitudRetroactivo {
   id: number;
   id_usuario?: number;
+  usuario_registro?: string;
   id_formulario: number;
   nombre_formulario: string;
   id_marca_bicicleta: number | null;
@@ -111,6 +112,45 @@ export interface ProductoCampania {
   marca_id: number | null;
 }
 
+export interface TotalesDashboardDistribuidor {
+  total_solicitudes: number;
+  pendientes: number;
+  validadas: number;
+  rechazadas: number;
+  notas_credito_capturadas: number;
+  notas_credito_validadas: number;
+  monto_total_estimado?: string;
+}
+
+export interface NotaCreditoDistribuidor {
+  numero_nota_credito: string;
+  estado: 'pendiente' | 'validada';
+  cantidad_solicitudes_relacionadas: number;
+  monto_asociado_estimado?: string;
+}
+
+export interface DashboardDistribuidor {
+  totales: TotalesDashboardDistribuidor;
+  notas_credito: NotaCreditoDistribuidor[];
+  solicitudes: SolicitudRetroactivo[];
+}
+
+export interface SerieDisponible {
+  numero_serie: string;
+  product_id_odoo: number;
+  sku: string;
+  nombre_producto: string;
+  sale_order: string;
+  picking: string;
+  fecha_entrega: string;
+  cantidad_realizada: number;
+}
+
+export interface SeriesDisponiblesResponse {
+  estado: string;
+  series: SerieDisponible[];
+}
+
 // GUÍA: HttpClient ya manda el JWT solo (interceptors/auth.interceptor.ts),
 // no hace falta armar headers de Authorization a mano aquí.
 @Injectable({ providedIn: 'root' })
@@ -147,6 +187,10 @@ export class SolicitudRetroactivoService {
     return this.http.get<SolicitudRetroactivo[]>(`${this.base}/mis-solicitudes`);
   }
 
+  dashboardDistribuidor(): Observable<DashboardDistribuidor> {
+    return this.http.get<DashboardDistribuidor>(`${this.base}/dashboard-distribuidor`);
+  }
+
   actualizarVenta(id: number, formData: FormData): Observable<any> {
     return this.http.put(`${this.base}/venta/${id}`, formData);
   }
@@ -165,5 +209,10 @@ export class SolicitudRetroactivoService {
 
   productosPorCampania(idCampania: number): Observable<ProductoCampania[]> {
     return this.http.get<ProductoCampania[]>(`${this.base}/campania/${idCampania}/productos`);
+  }
+
+  seriesDisponibles(sku: string): Observable<SeriesDisponiblesResponse> {
+    const params = new HttpParams().set('sku', sku);
+    return this.http.get<SeriesDisponiblesResponse>(`${this.base}/series-disponibles`, { params });
   }
 }

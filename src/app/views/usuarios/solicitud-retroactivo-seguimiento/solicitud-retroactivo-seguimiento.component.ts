@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 import { AuthService } from '../../../services/auth.service';
@@ -9,7 +11,8 @@ import {
   SolicitudRetroactivoService,
   SolicitudRetroactivo,
   EstatusNotaCredito,
-  ItemHistorial
+  ItemHistorial,
+  DashboardDistribuidor
 } from '../../../services/solicitud-retroactivo.service';
 
 const COLOR_ESTATUS: Record<string, string> = {
@@ -28,7 +31,10 @@ const COLOR_ESTATUS: Record<string, string> = {
 export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
   cargando = true;
   error = '';
+  mensajeExportacion = '';
+  descargandoExcel = false;
   solicitudes: SolicitudRetroactivo[] = [];
+  dashboard: DashboardDistribuidor | null = null;
 
   // Ampliamos el control de vistas para incluir la tabla de mis productos
   vista: 'lista' | 'detalle' | 'productos' = 'lista';
@@ -65,13 +71,14 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
 
   cargar(): void {
     this.cargando = true;
-    this.service.misSolicitudes().subscribe({
+    this.service.dashboardDistribuidor().subscribe({
       next: (res) => {
-        this.solicitudes = res;
+        this.dashboard = res;
+        this.solicitudes = res.solicitudes;
         this.cargando = false;
       },
       error: () => {
-        this.error = 'No se pudieron cargar tus solicitudes.';
+        this.error = 'No se pudo cargar el dashboard de solicitudes.';
         this.cargando = false;
       }
     });
@@ -193,6 +200,84 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
     this.paginaActual = 1;
   }
 
+  exportarExcel(): void {
+    const dashboard = this.dashboard;
+    const solicitudes = this.solicitudesFiltradas;
+    if (!dashboard || solicitudes.length === 0) {
+      this.mensajeExportacion = 'No hay solicitudes para exportar con los filtros actuales.';
+      return;
+    }
+
+    this.mensajeExportacion = '';
+    this.descargandoExcel = true;
+    try {
+      const incluirMontos = this.puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined;
+      const resumen = [
+        { Indicador: 'Total bicicletas', Valor: dashboard.totales.total_solicitudes },
+        { Indicador: 'Pendientes', Valor: dashboard.totales.pendientes },
+        { Indicador: 'Solicitudes validadas', Valor: dashboard.totales.validadas },
+        { Indicador: 'Rechazadas', Valor: dashboard.totales.rechazadas },
+        { Indicador: 'NC capturadas', Valor: dashboard.totales.notas_credito_capturadas },
+        { Indicador: 'NC validadas', Valor: dashboard.totales.notas_credito_validadas },
+        ...(incluirMontos ? [{ Indicador: 'Monto estimado', Valor: Number(dashboard.totales.monto_total_estimado) }] : []),
+      ];
+
+      const notasCredito = dashboard.notas_credito.map(nota => ({
+        'Número NC': this.textoExcel(nota.numero_nota_credito),
+        Estado: nota.estado === 'validada' ? 'Validada' : 'En validación',
+        'Cantidad de solicitudes': nota.cantidad_solicitudes_relacionadas,
+        ...(incluirMontos ? { 'Monto asociado estimado': Number(nota.monto_asociado_estimado ?? 0) } : {}),
+      }));
+
+      const detalle = solicitudes.map(solicitud => ({
+        ID: solicitud.id,
+        Campaña: solicitud.nombre_formulario ?? '',
+        Modelo: solicitud.modelo_bicicleta ?? '',
+        'Número de serie': this.textoExcel(solicitud.numero_serie),
+        Fecha: solicitud.fecha_venta ?? '',
+        MSI: solicitud.plazo_meses ?? '',
+        'Usuario que registró': solicitud.usuario_registro ?? '',
+        'Estatus documental': solicitud.estatus ?? '',
+        'Nota de crédito': this.textoExcel(solicitud.nota_credito),
+        'Estado nota de crédito': this.estadoNotaCreditoParaExcel(solicitud.nota_credito, solicitud.nota_credito_estatus),
+        ...(incluirMontos ? { 'Monto estimado': Number(solicitud.monto_pagar ?? 0) } : {}),
+      }));
+
+      const hojaResumen = XLSX.utils.json_to_sheet(resumen);
+      XLSX.utils.sheet_add_aoa(hojaResumen, [[], ['Notas de crédito']], { origin: -1 });
+      XLSX.utils.sheet_add_json(hojaResumen, notasCredito, { origin: -1 });
+      hojaResumen['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 26 }];
+
+      const hojaDetalle = XLSX.utils.json_to_sheet(detalle);
+      hojaDetalle['!cols'] = [
+        { wch: 10 }, { wch: 24 }, { wch: 34 }, { wch: 24 }, { wch: 14 },
+        { wch: 10 }, { wch: 22 }, { wch: 18 }, { wch: 20 }, { wch: 22 }, { wch: 18 },
+      ];
+
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hojaResumen, 'Resumen');
+      XLSX.utils.book_append_sheet(libro, hojaDetalle, 'Detalle');
+
+      const contenido = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
+      const fecha = new Date().toISOString().slice(0, 10);
+      saveAs(
+        new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        `retroactivos_distribuidor_${fecha}.xlsx`
+      );
+    } finally {
+      this.descargandoExcel = false;
+    }
+  }
+
+  private textoExcel(valor: string | number | null | undefined): string {
+    return valor === null || valor === undefined ? '' : String(valor);
+  }
+
+  private estadoNotaCreditoParaExcel(nota: string | undefined, estatus?: EstatusNotaCredito): string {
+    if (!nota || nota.trim() === '' || nota.trim() === '0') return 'En proceso';
+    return estatus === 'validada' ? 'Validada' : 'En validación';
+  }
+
   // ── Vista de detalle ──────────────────────────────────────────────────
 
   verDetalle(s: SolicitudRetroactivo): void {
@@ -266,10 +351,11 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
   }
 
   private recargarSeleccionada(id: number): void {
-    this.service.misSolicitudes().subscribe({
+    this.service.dashboardDistribuidor().subscribe({
       next: (res) => {
-        this.solicitudes = res;
-        this.seleccionada = res.find(s => s.id === id) ?? null;
+        this.dashboard = res;
+        this.solicitudes = res.solicitudes;
+        this.seleccionada = res.solicitudes.find(s => s.id === id) ?? null;
       }
     });
   }

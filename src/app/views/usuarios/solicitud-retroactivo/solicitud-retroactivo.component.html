@@ -153,8 +153,18 @@
                     </div>
 
                     <div class="form-group" [class.campo-invalid]="esCampoInvalido('numero_serie')">
-                        <label>Número de Serie:</label>
-                        <input type="text" formControlName="numero_serie" placeholder="WTU123456789">
+                        <label for="numero_serie">Número de Serie:</label>
+                        <select id="numero_serie" formControlName="numero_serie" [disabled]="cargandoSeries">
+                            <option value="" disabled>
+                                {{ cargandoSeries ? 'Cargando números de serie...' : (productoSeleccionado ? '-- Selecciona un número de serie --' : 'Selecciona primero una bicicleta') }}
+                            </option>
+                            <option *ngFor="let serie of seriesDisponibles" [value]="serie.numero_serie">
+                                {{ serie.numero_serie }}
+                            </option>
+                        </select>
+                        <span class="campo-error-text" *ngIf="productoSeleccionado && cargandoSeries">Cargando números de serie...</span>
+                        <span class="campo-error-text" *ngIf="productoSeleccionado && seriesConsultadas && !cargandoSeries && !errorSeries && seriesDisponibles.length === 0">No se encontraron números de serie disponibles para esta bicicleta.</span>
+                        <span class="campo-error-text" *ngIf="productoSeleccionado && errorSeries">No fue posible cargar los números de serie. Intenta seleccionar nuevamente la bicicleta.</span>
                         <span class="campo-error-text" *ngIf="esCampoInvalido('numero_serie')">Este campo es obligatorio</span>
                     </div>
 

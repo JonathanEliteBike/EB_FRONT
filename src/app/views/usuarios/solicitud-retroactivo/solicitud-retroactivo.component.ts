@@ -13,7 +13,8 @@ import {
   SolicitudRetroactivoService,
   SolicitudRetroactivo,
   MarcaCampania,
-  ProductoCampania
+  ProductoCampania,
+  SerieDisponible
 } from '../../../services/solicitud-retroactivo.service';
 
 interface Msi {
@@ -97,6 +98,11 @@ export class SolicitudRetroactivoComponent implements OnInit {
   // vez que cambia id_formulario.
   productosDisponibles: ProductoCampania[] = [];
   productoSeleccionado: ProductoCampania | null = null;
+  seriesDisponibles: SerieDisponible[] = [];
+  cargandoSeries = false;
+  seriesConsultadas = false;
+  errorSeries = false;
+  private solicitudSeriesActual = 0;
 
   productosModal = {
     abierto: false,
@@ -335,6 +341,11 @@ export class SolicitudRetroactivoComponent implements OnInit {
       formData.append(key, datosFormulario[key] ?? '');
     });
 
+    if (this.productoSeleccionado) {
+      formData.append('producto_detalle_id', String(this.productoSeleccionado.id));
+      formData.append('sku', this.productoSeleccionado.sku);
+    }
+
     if (clienteSel) {
       formData.append('nombre_completo', clienteSel.nombre_cliente);
     }
@@ -425,6 +436,7 @@ export class SolicitudRetroactivoComponent implements OnInit {
     this.ventaForm.get('id_marca_bicicleta')?.valueChanges.subscribe(() => {
       this.productoSeleccionado = null;
       this.ventaForm.get('modelo_bicicleta')?.setValue('');
+      this.limpiarSeriesDisponibles();
     });
 
     this.ventaForm.get('id_cliente')?.valueChanges.subscribe((clienteId) => {
@@ -463,6 +475,7 @@ export class SolicitudRetroactivoComponent implements OnInit {
           this.productosDisponibles = [];
           this.productoSeleccionado = null;
           this.ventaForm.get('modelo_bicicleta')?.setValue('');
+          this.limpiarSeriesDisponibles();
 
           if (!valor) {
             this.listaMarca = [];
@@ -679,10 +692,48 @@ export class SolicitudRetroactivoComponent implements OnInit {
     if (producto.talla && producto.talla !== 'N/A') partes.push(`Talla: ${producto.talla}`);
     this.ventaForm.get('modelo_bicicleta')?.setValue(partes.join(' — '));
     this.cerrarProductosModal();
+    this.cargarSeriesDisponibles(producto.sku);
   }
 
   quitarProductoSeleccionado(): void {
     this.productoSeleccionado = null;
     this.ventaForm.get('modelo_bicicleta')?.setValue('');
+    this.limpiarSeriesDisponibles();
+  }
+
+  private limpiarSeriesDisponibles(): void {
+    this.solicitudSeriesActual++;
+    this.seriesDisponibles = [];
+    this.cargandoSeries = false;
+    this.seriesConsultadas = false;
+    this.errorSeries = false;
+
+    const controlSerie = this.ventaForm.get('numero_serie');
+    controlSerie?.setValue('');
+    controlSerie?.markAsPristine();
+    controlSerie?.markAsUntouched();
+    this.camposFaltantes.delete('numero_serie');
+  }
+
+  private cargarSeriesDisponibles(sku: string): void {
+    this.limpiarSeriesDisponibles();
+    const solicitudActual = ++this.solicitudSeriesActual;
+    this.cargandoSeries = true;
+
+    this.solicitudService.seriesDisponibles(sku).subscribe({
+      next: (respuesta) => {
+        if (solicitudActual !== this.solicitudSeriesActual) return;
+        this.cargandoSeries = false;
+        this.seriesConsultadas = true;
+        this.seriesDisponibles = Array.isArray(respuesta.series) ? respuesta.series : [];
+      },
+      error: (err) => {
+        if (solicitudActual !== this.solicitudSeriesActual) return;
+        console.error('Error al cargar números de serie disponibles:', err);
+        this.cargandoSeries = false;
+        this.seriesConsultadas = true;
+        this.errorSeries = true;
+      }
+    });
   }
 }
