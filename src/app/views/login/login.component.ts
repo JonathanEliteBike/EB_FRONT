@@ -42,6 +42,8 @@ export class LoginComponent {
           this.router.navigate(['/home']);
         } else if (rol === 2 || rol === 3) {
           this.router.navigate(['/usuarios/dashboard']);
+        } else if (rol === 99) {
+          this.router.navigate(['/importaciones']);
         } else {
           this.router.navigate(['/login']);
         }
