@@ -70,9 +70,17 @@
           <span class="dashboard-card-label">NC validadas</span>
           <strong>{{ dashboard.totales.notas_credito_validadas }}</strong>
         </div>
+        <div class="dashboard-card">
+          <span class="dashboard-card-label">Bicicletas aplicadas</span>
+          <strong>{{ dashboard.totales.bicicletas_aplicadas }}</strong>
+        </div>
         <div class="dashboard-card dashboard-card-monto" *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined">
           <span class="dashboard-card-label">Monto estimado</span>
           <strong>{{ dashboard.totales.monto_total_estimado | currency:'USD':'$':'1.2-2' }}</strong>
+        </div>
+        <div class="dashboard-card dashboard-card-monto" *ngIf="puedeVerMontos && dashboard.totales.monto_total_aplicado !== undefined">
+          <span class="dashboard-card-label">Monto aplicado</span>
+          <strong>{{ dashboard.totales.monto_total_aplicado | currency:'USD':'$':'1.2-2' }}</strong>
         </div>
       </div>
 

@@ -554,18 +554,14 @@ export class SolicitudRetroactivoComponent implements OnInit {
   }
 
   async buscarTipoFormulario(): Promise<Formulario[]> {
-    const res = await fetch(`${environment.apiUrl}/api/solicitud-retroactivo/formulario`);
-    if (!res.ok) throw new Error("Error API");
-    return res.json();
+    return firstValueFrom(this.solicitudService.buscarFormularios());
   }
 
   // GUÍA: los plazos MSI disponibles (y su %) dependen de la campaña
   // elegida -- ya no es un catálogo global fijo, cada campaña liga los
   // suyos con su propio porcentaje (ver módulo de Campañas).
   async buscarMsi(idFormulario: number): Promise<Msi[]> {
-    const res = await fetch(`${environment.apiUrl}/api/solicitud-retroactivo/campania/${idFormulario}/msi`);
-    if (!res.ok) throw new Error("Error API");
-    return res.json();
+    return firstValueFrom(this.solicitudService.buscarMsiPorCampania(idFormulario));
   }
 
   async buscarMarcasCampania(idCampania: number): Promise<MarcaCampania[]> {
@@ -634,8 +630,13 @@ export class SolicitudRetroactivoComponent implements OnInit {
   }
 
   abrirProductosModal(): void {
-    if (this.productosDisponibles.length === 0) {
+    const idCampania = this.ventaForm.get('id_formulario')?.value;
+    if (!idCampania) {
       this.mensajeError = 'Primero selecciona una Campaña para ver sus productos disponibles.';
+      return;
+    }
+    if (this.productosDisponibles.length === 0) {
+      this.mensajeError = 'No hay productos disponibles para la campaña seleccionada.';
       return;
     }
     if (this.faltaElegirMarcaParaModelo) {

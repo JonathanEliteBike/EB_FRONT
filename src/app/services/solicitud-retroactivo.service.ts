@@ -93,6 +93,11 @@ export interface Tienda {
   cliente_id: number;
 }
 
+export interface FormularioRetroactivo {
+  id: number;
+  nombre: string;
+}
+
 export interface MarcaCampania {
   id: number;
   nombre: string;
@@ -119,7 +124,9 @@ export interface TotalesDashboardDistribuidor {
   rechazadas: number;
   notas_credito_capturadas: number;
   notas_credito_validadas: number;
+  bicicletas_aplicadas: number;
   monto_total_estimado?: string;
+  monto_total_aplicado?: string;
 }
 
 export interface NotaCreditoDistribuidor {
@@ -201,6 +208,14 @@ export class SolicitudRetroactivoService {
 
   buscarTiendas(clienteId: number): Observable<Tienda[]> {
     return this.http.get<Tienda[]>(`${this.base}/tiendas/${clienteId}`);
+  }
+
+  buscarFormularios(): Observable<FormularioRetroactivo[]> {
+    return this.http.get<FormularioRetroactivo[]>(`${this.base}/formulario`);
+  }
+
+  buscarMsiPorCampania(idCampania: number): Observable<{ id: number; plazo_meses: number; porcentaje?: number }[]> {
+    return this.http.get<{ id: number; plazo_meses: number; porcentaje?: number }[]>(`${this.base}/campania/${idCampania}/msi`);
   }
 
   marcasPorCampania(idCampania: number): Observable<MarcaCampania[]> {

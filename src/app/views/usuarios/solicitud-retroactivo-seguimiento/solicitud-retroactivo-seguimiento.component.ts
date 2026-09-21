@@ -212,6 +212,7 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
     this.descargandoExcel = true;
     try {
       const incluirMontos = this.puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined;
+      const incluirMontoAplicado = this.puedeVerMontos && dashboard.totales.monto_total_aplicado !== undefined;
       const resumen = [
         { Indicador: 'Total bicicletas', Valor: dashboard.totales.total_solicitudes },
         { Indicador: 'Pendientes', Valor: dashboard.totales.pendientes },
@@ -219,7 +220,9 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
         { Indicador: 'Rechazadas', Valor: dashboard.totales.rechazadas },
         { Indicador: 'NC capturadas', Valor: dashboard.totales.notas_credito_capturadas },
         { Indicador: 'NC validadas', Valor: dashboard.totales.notas_credito_validadas },
+        { Indicador: 'Bicicletas aplicadas', Valor: dashboard.totales.bicicletas_aplicadas },
         ...(incluirMontos ? [{ Indicador: 'Monto estimado', Valor: Number(dashboard.totales.monto_total_estimado) }] : []),
+        ...(incluirMontoAplicado ? [{ Indicador: 'Monto aplicado', Valor: Number(dashboard.totales.monto_total_aplicado) }] : []),
       ];
 
       const notasCredito = dashboard.notas_credito.map(nota => ({
