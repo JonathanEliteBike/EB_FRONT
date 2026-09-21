@@ -225,6 +225,27 @@
 .dashboard-card strong { color: var(--t1); font-size: 1.45rem; line-height: 1; }
 .dashboard-card-monto { border-color: var(--orange-gl); background: var(--orange-g); }
 .dashboard-card-monto strong { color: var(--orange); }
+.dashboard-card-clickable {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  color: inherit;
+  transition: background-color .18s ease, border-color .18s ease, opacity .15s ease, transform .15s ease, box-shadow .18s ease;
+}
+.dashboard-card-clickable:hover { border-color: var(--orange); background: var(--orange-g); }
+.dashboard-card-clickable:active { opacity: .86; transform: scale(.98); transition-duration: .12s; }
+.dashboard-card-clickable:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.dashboard-card-activa { border-color: var(--orange); background: var(--orange-g); box-shadow: inset 0 0 0 1px rgba(235,94,40,.28); opacity: 1; }
+.dashboard-card-activa .dashboard-card-label,
+.dashboard-card-activa strong { color: var(--orange); }
+.filtro-card-activo { font-size: 0.78rem; color: var(--orange); font-weight: 700; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-card-clickable { transition: none; }
+  .dashboard-card-clickable:active { transform: none; }
+}
 
 .notas-resumen { margin: 0 0 18px; }
 .notas-resumen-title {
@@ -508,5 +529,7 @@
   .filtros-bar { flex-direction: column; align-items: stretch; }
   .filtro-search { min-width: unset; }
   .solicitudes-tabla th:nth-child(2), .solicitudes-tabla td:nth-child(2) { display: none; }
+  .tabla-productos-wrap { overflow-x: auto; }
+  .tabla-productos th:nth-child(2), .tabla-productos td:nth-child(2) { display: table-cell; }
   .info-grid { grid-template-columns: 1fr 1fr; }
 }

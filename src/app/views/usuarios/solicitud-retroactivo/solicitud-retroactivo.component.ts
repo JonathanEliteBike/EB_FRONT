@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
@@ -78,7 +78,7 @@ interface ProductoGrupo {
 
 @Component({
   selector: 'app-solicitud-retroactivo',
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TopBarUsuariosComponent, DatePickerComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, TopBarUsuariosComponent, DatePickerComponent],
   templateUrl: './solicitud-retroactivo.component.html',
   styleUrl: './solicitud-retroactivo.component.css'
 })
@@ -110,6 +110,12 @@ export class SolicitudRetroactivoComponent implements OnInit {
     grupos: [] as ProductoGrupo[],
     grupoActivo: null as ProductoGrupo | null,
     colorActivo: null as string | null,
+  };
+
+  seriesModal = {
+    abierto: false,
+    query: '',
+    mensaje: '',
   };
 
   ventaForm: FormGroup;
@@ -686,14 +692,14 @@ export class SolicitudRetroactivoComponent implements OnInit {
     return grupo.colores.find((c) => c.color === color)?.tallas ?? [];
   }
 
-  confirmarProducto(producto: ProductoCampania): void {
+  confirmarProducto(producto: ProductoCampania, numeroSerie?: string): void {
     this.productoSeleccionado = producto;
     const partes = [producto.modelo || producto.codigo];
     if (producto.color && producto.color !== 'N/A') partes.push(`Color: ${producto.color}`);
     if (producto.talla && producto.talla !== 'N/A') partes.push(`Talla: ${producto.talla}`);
     this.ventaForm.get('modelo_bicicleta')?.setValue(partes.join(' — '));
     this.cerrarProductosModal();
-    this.cargarSeriesDisponibles(producto.sku);
+    this.cargarSeriesDisponibles(producto.sku, numeroSerie);
   }
 
   quitarProductoSeleccionado(): void {
@@ -702,8 +708,74 @@ export class SolicitudRetroactivoComponent implements OnInit {
     this.limpiarSeriesDisponibles();
   }
 
+  get seriesFiltradas(): SerieDisponible[] {
+    const texto = this.seriesModal.query.trim().toLowerCase();
+    return texto
+      ? this.seriesDisponibles.filter((serie) => serie.numero_serie.toLowerCase().includes(texto))
+      : this.seriesDisponibles;
+  }
+
+  abrirSeriesModal(): void {
+    const idCampania = this.ventaForm.get('id_formulario')?.value;
+    if (!idCampania) {
+      this.mensajeError = 'Selecciona primero una campaña.';
+      return;
+    }
+
+    this.seriesModal.query = '';
+    this.seriesModal.mensaje = '';
+
+    if (this.productoSeleccionado) {
+      this.seriesModal.abierto = true;
+      return;
+    }
+
+    if (this.productosDisponibles.length === 0) {
+      this.cerrarSeriesModal();
+      this.mensajeError = 'No hay productos disponibles para la campaña seleccionada.';
+      return;
+    }
+
+    this.cargarSeriesDisponibles();
+    this.seriesModal.abierto = true;
+  }
+
+  cerrarSeriesModal(): void {
+    this.seriesModal.abierto = false;
+    this.seriesModal.query = '';
+    this.seriesModal.mensaje = '';
+  }
+
+  seleccionarSerie(serie: SerieDisponible): void {
+    if (!this.productoSeleccionado) {
+      const skuSerie = String(serie.sku || '').trim().toLowerCase();
+      const producto = this.productosDisponibles.find(
+        (item) => String(item.sku || '').trim().toLowerCase() === skuSerie
+      );
+      if (!producto) {
+        this.seriesModal.mensaje = 'El número de serie existe, pero el producto no participa en la campaña seleccionada.';
+        return;
+      }
+
+      const controlMarca = this.ventaForm.get('id_marca_bicicleta');
+      if (this.listaMarca.length > 0 && producto.marca_id) {
+        controlMarca?.setValue(producto.marca_id);
+      }
+      this.confirmarProducto(producto, serie.numero_serie);
+      return;
+    }
+
+    const controlSerie = this.ventaForm.get('numero_serie');
+    controlSerie?.setValue(serie.numero_serie);
+    controlSerie?.markAsDirty();
+    controlSerie?.markAsTouched();
+    this.camposFaltantes.delete('numero_serie');
+    this.cerrarSeriesModal();
+  }
+
   private limpiarSeriesDisponibles(): void {
     this.solicitudSeriesActual++;
+    this.cerrarSeriesModal();
     this.seriesDisponibles = [];
     this.cargandoSeries = false;
     this.seriesConsultadas = false;
@@ -716,7 +788,7 @@ export class SolicitudRetroactivoComponent implements OnInit {
     this.camposFaltantes.delete('numero_serie');
   }
 
-  private cargarSeriesDisponibles(sku: string): void {
+  private cargarSeriesDisponibles(sku?: string, numeroSerie?: string): void {
     this.limpiarSeriesDisponibles();
     const solicitudActual = ++this.solicitudSeriesActual;
     this.cargandoSeries = true;
@@ -727,6 +799,9 @@ export class SolicitudRetroactivoComponent implements OnInit {
         this.cargandoSeries = false;
         this.seriesConsultadas = true;
         this.seriesDisponibles = Array.isArray(respuesta.series) ? respuesta.series : [];
+        if (numeroSerie && this.seriesDisponibles.some((serie) => serie.numero_serie === numeroSerie)) {
+          this.seleccionarSerie({ numero_serie: numeroSerie } as SerieDisponible);
+        }
       },
       error: (err) => {
         if (solicitudActual !== this.solicitudSeriesActual) return;

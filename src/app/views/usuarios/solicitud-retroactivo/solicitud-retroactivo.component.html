@@ -153,15 +153,19 @@
                     </div>
 
                     <div class="form-group" [class.campo-invalid]="esCampoInvalido('numero_serie')">
-                        <label for="numero_serie">Número de Serie:</label>
-                        <select id="numero_serie" formControlName="numero_serie" [disabled]="cargandoSeries">
-                            <option value="" disabled>
-                                {{ cargandoSeries ? 'Cargando números de serie...' : (productoSeleccionado ? '-- Selecciona un número de serie --' : 'Selecciona primero una bicicleta') }}
-                            </option>
-                            <option *ngFor="let serie of seriesDisponibles" [value]="serie.numero_serie">
-                                {{ serie.numero_serie }}
-                            </option>
-                        </select>
+                        <label>Número de Serie:</label>
+                        <button type="button" class="btn-elegir-modelo" *ngIf="!ventaForm.get('numero_serie')?.value"
+                                (click)="abrirSeriesModal()">
+                            <i class="fas" [class.fa-search]="!cargandoSeries" [class.fa-spinner]="cargandoSeries" [class.fa-spin]="cargandoSeries"></i>
+                            {{ cargandoSeries ? 'Cargando números de serie...' : 'Seleccionar / buscar número de serie' }}
+                        </button>
+                        <div class="modelo-seleccionado" *ngIf="ventaForm.get('numero_serie')?.value">
+                            <div class="modelo-seleccionado-info">
+                                <strong>{{ ventaForm.get('numero_serie')?.value }}</strong>
+                            </div>
+                            <button type="button" class="btn-cambiar-modelo" (click)="abrirSeriesModal()">Cambiar</button>
+                        </div>
+                        <span class="campo-error-text" *ngIf="!productoSeleccionado && !ventaForm.get('id_formulario')?.value">Selecciona primero una campaña.</span>
                         <span class="campo-error-text" *ngIf="productoSeleccionado && cargandoSeries">Cargando números de serie...</span>
                         <span class="campo-error-text" *ngIf="productoSeleccionado && seriesConsultadas && !cargandoSeries && !errorSeries && seriesDisponibles.length === 0">No se encontraron números de serie disponibles para esta bicicleta.</span>
                         <span class="campo-error-text" *ngIf="productoSeleccionado && errorSeries">No fue posible cargar los números de serie. Intenta seleccionar nuevamente la bicicleta.</span>
@@ -338,5 +342,84 @@
       </div>
     </ng-container>
 
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     Modal selector de número de serie. Reutiliza el contenedor y la lista
+     del selector de producto para conservar el mismo comportamiento visual.
+     ════════════════════════════════════════════════════ -->
+<div class="pm-backdrop" *ngIf="seriesModal.abierto" (click)="cerrarSeriesModal()">
+  <div class="pm-card" (click)="$event.stopPropagation()">
+    <div class="pm-hdr">
+      <div class="pm-hdr-left">
+        <div class="pm-hdr-icon"><i class="fas fa-barcode"></i></div>
+        <div class="pm-hdr-titles">
+          <span class="pm-hdr-sup">{{ productoSeleccionado ? 'Bicicleta seleccionada' : 'Campaña seleccionada' }}</span>
+          <span class="pm-hdr-titulo">{{ productoSeleccionado ? 'Números de serie disponibles' : 'Buscar número de serie' }}</span>
+        </div>
+      </div>
+      <div class="pm-hdr-right">
+        <button type="button" class="pm-btn-cerrar" (click)="cerrarSeriesModal()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="cargandoSeries; else seriesListas">
+      <div class="pm-estado">
+        <div class="pm-estado-icono"><i class="fas fa-spinner fa-spin"></i></div>
+        <p class="pm-estado-txt">Cargando números de serie...</p>
+      </div>
+    </ng-container>
+
+    <ng-template #seriesListas>
+      <ng-container *ngIf="errorSeries; else seriesDisponiblesModal">
+        <div class="pm-estado">
+          <div class="pm-estado-icono"><i class="fas fa-triangle-exclamation"></i></div>
+          <p class="pm-estado-txt">No fue posible cargar los números de serie.</p>
+        </div>
+      </ng-container>
+
+      <ng-template #seriesDisponiblesModal>
+        <ng-container *ngIf="seriesDisponibles.length > 0; else sinSeriesDisponibles">
+          <div class="pm-search-bar">
+            <i class="fas fa-search pm-search-ico"></i>
+            <input class="pm-search-input"
+                   [(ngModel)]="seriesModal.query"
+                   placeholder="Buscar número de serie..."
+                   autofocus
+                   autocomplete="off" />
+            <span class="pm-search-count">{{ seriesFiltradas.length }}</span>
+          </div>
+
+          <div class="pm-lista" *ngIf="seriesFiltradas.length > 0; else sinResultadosSeries">
+            <div *ngFor="let serie of seriesFiltradas" class="pm-item" (click)="seleccionarSerie(serie)">
+              <div class="pm-item-body">
+                <div class="pm-item-top"><span class="pm-item-nombre">{{ serie.numero_serie }}</span></div>
+                <div class="pm-item-bot" *ngIf="!productoSeleccionado">
+                  <span class="pm-ctag">SKU {{ serie.sku }}</span>
+                  <span class="pm-ctag" *ngIf="serie.nombre_producto">{{ serie.nombre_producto }}</span>
+                </div>
+              </div>
+              <div class="pm-item-arrow"><i class="fas fa-chevron-right"></i></div>
+            </div>
+          </div>
+
+          <ng-template #sinResultadosSeries>
+            <div class="pm-estado">
+              <div class="pm-estado-icono"><i class="fas fa-search-minus"></i></div>
+              <p class="pm-estado-txt">No se encontró el número de serie.</p>
+            </div>
+          </ng-template>
+        </ng-container>
+
+        <ng-template #sinSeriesDisponibles>
+          <div class="pm-estado">
+            <div class="pm-estado-icono"><i class="fas fa-barcode"></i></div>
+            <p class="pm-estado-txt">{{ productoSeleccionado ? 'No hay números de serie disponibles para esta bicicleta.' : 'No hay números de serie disponibles.' }}</p>
+          </div>
+        </ng-template>
+      </ng-template>
+    </ng-template>
+    <p class="campo-error-text" *ngIf="seriesModal.mensaje">{{ seriesModal.mensaje }}</p>
   </div>
 </div>

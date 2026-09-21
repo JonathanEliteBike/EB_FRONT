@@ -226,8 +226,10 @@ export class SolicitudRetroactivoService {
     return this.http.get<ProductoCampania[]>(`${this.base}/campania/${idCampania}/productos`);
   }
 
-  seriesDisponibles(sku: string): Observable<SeriesDisponiblesResponse> {
-    const params = new HttpParams().set('sku', sku);
+  seriesDisponibles(sku?: string, serie?: string): Observable<SeriesDisponiblesResponse> {
+    let params = new HttpParams();
+    if (sku) params = params.set('sku', sku);
+    if (serie) params = params.set('serie', serie);
     return this.http.get<SeriesDisponiblesResponse>(`${this.base}/series-disponibles`, { params });
   }
 }

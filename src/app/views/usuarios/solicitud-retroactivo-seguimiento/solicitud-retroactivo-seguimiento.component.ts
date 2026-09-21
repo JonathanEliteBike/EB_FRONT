@@ -21,6 +21,8 @@ const COLOR_ESTATUS: Record<string, string> = {
   rechazado: '#e53935',
 };
 
+type FiltroCard = 'todas' | 'pendientes' | 'validadas' | 'nc-capturadas' | 'nc-validadas' | 'aplicadas' | 'monto-estimado' | 'monto-aplicado';
+
 @Component({
   selector: 'app-solicitud-retroactivo-seguimiento',
   standalone: true,
@@ -49,6 +51,7 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
   busqueda = '';
   filtroEstatus = '';
   filtroCampana = '';
+  filtroCardActivo: FiltroCard = 'todas';
   paginaActual = 1;
   readonly tamPagina = 15;
 
@@ -161,9 +164,55 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
     return Array.from(set).sort();
   }
 
+  get etiquetaFiltroCardActivo(): string {
+    const etiquetas: Record<FiltroCard, string> = {
+      todas: 'Todas',
+      pendientes: 'Pendientes',
+      validadas: 'Solicitudes validadas',
+      'nc-capturadas': 'NC capturadas',
+      'nc-validadas': 'NC validadas',
+      aplicadas: 'Bicicletas aplicadas',
+      'monto-estimado': 'Monto estimado',
+      'monto-aplicado': 'Monto aplicado',
+    };
+    return etiquetas[this.filtroCardActivo];
+  }
+
+  seleccionarFiltroCard(filtro: FiltroCard): void {
+    this.filtroCardActivo = filtro === 'todas' || this.filtroCardActivo === filtro ? 'todas' : filtro;
+    this.paginaActual = 1;
+  }
+
+  private tieneNotaCreditoValida(solicitud: SolicitudRetroactivo): boolean {
+    const nota = String(solicitud.nota_credito ?? '').trim().toLowerCase();
+    return Boolean(nota && nota !== '0' && nota !== 'none');
+  }
+
+  private tieneMontoPagar(solicitud: SolicitudRetroactivo): boolean {
+    const monto = Number(String(solicitud.monto_pagar ?? '').replace(/,/g, ''));
+    return Number.isFinite(monto) && monto > 0;
+  }
+
+  private cumpleFiltroCard(solicitud: SolicitudRetroactivo): boolean {
+    const tieneNc = this.tieneNotaCreditoValida(solicitud);
+    const aplicada = tieneNc && solicitud.nota_credito_estatus === 'validada';
+
+    switch (this.filtroCardActivo) {
+      case 'pendientes': return solicitud.estatus === 'pendiente';
+      case 'validadas': return solicitud.estatus === 'validado';
+      case 'nc-capturadas': return tieneNc;
+      case 'nc-validadas':
+      case 'aplicadas': return aplicada;
+      case 'monto-estimado': return this.tieneMontoPagar(solicitud);
+      case 'monto-aplicado': return aplicada && this.tieneMontoPagar(solicitud);
+      default: return true;
+    }
+  }
+
   get solicitudesFiltradas(): SolicitudRetroactivo[] {
     const q = this.busqueda.toLowerCase().trim();
     return this.solicitudes.filter(s => {
+      if (!this.cumpleFiltroCard(s)) return false;
       if (q && !s.modelo_bicicleta?.toLowerCase().includes(q) && !s.numero_serie?.toLowerCase().includes(q)) return false;
       if (this.filtroEstatus && s.estatus !== this.filtroEstatus) return false;
       if (this.filtroCampana && s.nombre_formulario !== this.filtroCampana) return false;
