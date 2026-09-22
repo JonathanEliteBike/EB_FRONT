@@ -1105,6 +1105,36 @@ td { padding: 10px 14px; vertical-align: middle; }
 }
 .ec-chip-contenido i { color: #a78bfa; }
 
+/* Botón "Ver Productos" -- acción real (lleva a /importaciones/:id/asignaciones).
+   Se ve en cada tarjeta del dashboard (se revisa docenas de veces al día), así
+   que la animación se mantiene mínima a propósito: solo feedback de press,
+   nada de rebote ni brillo -- eso se reserva para acciones ocasionales.
+   appearance:none + border explícito pisan el estilo nativo del <button>
+   (fondo blanco de fábrica) que aplanaba cualquier color en el screenshot. */
+.ec-chip-ver-productos {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: pointer;
+  background: rgba(96,165,250,.08);
+  border-color: rgba(96,165,250,.35);
+  color: #93c5fd;
+  font-weight: 600;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 120ms var(--ease-out);
+}
+.ec-chip-ver-productos i { color: #60a5fa; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ec-chip-ver-productos:hover {
+    background: rgba(96,165,250,.16);
+    border-color: rgba(96,165,250,.55);
+  }
+}
+.ec-chip-ver-productos:active {
+  transform: scale(0.97);
+  background: rgba(96,165,250,.2);
+}
+
 /* Bloques de costo/bici/notas */
 .ec-costos, .ec-bici {
   flex: 0 0 auto;

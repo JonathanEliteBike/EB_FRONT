@@ -782,6 +782,14 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   irDetalle(id: number): void { this.router.navigate(['/importaciones', id], { queryParams: { from: 'dashboard', tab: this.activeTab } }); }
 
+  /** Lleva directo a los productos/asignaciones de este embarque, sin pasar
+   *  por el detalle general -- pedido explícito para acceder más rápido
+   *  desde la tarjeta del dashboard. */
+  verProductos(id: number, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/importaciones', id, 'asignaciones']);
+  }
+
   abrirNotasEdit(e: any, event: Event): void {
     event.stopPropagation();
     this.notasEditId = e.id;
