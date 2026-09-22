@@ -25,6 +25,13 @@ html, body {
 body {
   background: #1e1d1b;
   overflow-x: hidden;
+  /* Sin esto, cuando una vista con carga async (listas, dashboards) termina
+     de traer sus datos y el layout crece, el navegador "compensa" moviendo
+     el scroll para mantener el mismo contenido a la vista -- eso es lo que
+     hacía aterrizar a media página al entrar a un módulo por navegación
+     interna (SPA), aunque el router ya había puesto el scroll en top antes
+     de que la data llegara. */
+  overflow-anchor: none;
 }
 
 /* Marco exterior global desactivado.
