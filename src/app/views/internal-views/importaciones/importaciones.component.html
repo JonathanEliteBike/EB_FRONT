@@ -12,10 +12,13 @@
       </div>
     </div>
     <div class="header-actions">
+      <button *ngIf="esAdmin" class="btn-dash" routerLink="/importaciones/tiempos-estimados" title="Configurar reglas de tiempos estimados">
+        <i class="fas fa-stopwatch"></i> Tiempos Estimados
+      </button>
       <button class="btn-dash" routerLink="/importaciones/dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard
       </button>
-      <button class="btn-nuevo" (click)="mostrarNuevo = true">
+      <button class="btn-nuevo" (click)="abrirNuevo()">
         <i class="fas fa-plus"></i> Nuevo Embarque
       </button>
     </div>
@@ -227,21 +230,30 @@
       <div class="via-selector">
         <button type="button" class="via-btn"
           [class.active]="nuevoEmbarque.via_transporte === 'MARITIMO'"
-          (click)="nuevoEmbarque.via_transporte = 'MARITIMO'">
+          (click)="cambiarViaTransporte('MARITIMO')">
           <i class="fas fa-ship"></i> Marítimo
         </button>
         <button type="button" class="via-btn"
           [class.active]="nuevoEmbarque.via_transporte === 'AEREO'"
-          (click)="nuevoEmbarque.via_transporte = 'AEREO'">
+          (click)="cambiarViaTransporte('AEREO')">
           <i class="fas fa-plane"></i> Aéreo
         </button>
       </div>
 
       <label>Origen</label>
-      <input type="text" [(ngModel)]="nuevoEmbarque.log_origen" placeholder="Ej: BELGICA, VIETNAM, TAIWAN..." />
+      <select [ngModel]="nuevoEmbarque.log_origen" (ngModelChange)="cambiarOrigen($event)">
+        <option value="" disabled selected>Selecciona un origen…</option>
+        <option *ngFor="let o of ORIGENES_DISPONIBLES" [value]="o">{{ o }}</option>
+      </select>
 
       <label>Tipo de Productos</label>
-      <input type="text" [(ngModel)]="nuevoEmbarque.log_tipo_productos" placeholder="Ej: BICICLETAS, ROPA Y ACCESORIOS" />
+      <div class="tipo-producto-selector">
+        <button type="button" class="tipo-chip" *ngFor="let t of tiposProductoDisponibles()"
+          [class.active]="nuevoEmbarque.log_tipo_productos === t"
+          (click)="seleccionarTipoProducto(t)">
+          {{ t }}
+        </button>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" (click)="mostrarNuevo = false">Cancelar</button>

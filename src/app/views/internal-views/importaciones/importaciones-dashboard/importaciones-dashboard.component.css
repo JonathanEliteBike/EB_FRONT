@@ -134,7 +134,10 @@
 /* ══ KPIs ══════════════════════════════════════════════════════════════════ */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  /* auto-fit (no auto-fill): con pocas tarjetas, auto-fill crea columnas
+     vacías invisibles que se quedan con el espacio y comprimen las reales
+     -- auto-fit las colapsa a 0 y deja que el 1fr real se expanda. */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px; margin-bottom: 20px;
 }
 .kpi-card {
@@ -179,6 +182,12 @@
 .kpi-num.kpi-sm { font-size: 1.1rem; }
 .kpi-num small { font-size: .65rem; color: #64748b; font-weight: 400; }
 .kpi-lbl { font-size: .68rem; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+.kpi-sub-split {
+  display: flex; align-items: center; gap: 4px;
+  font-size: .66rem; color: #94a3b8; margin-top: 2px; font-family: monospace;
+}
+.kpi-sub-split i:first-child { color: #3b82f6; }
+.kpi-sub-split i:last-of-type { color: #8b5cf6; margin-left: 8px; }
 
 /* ══ Charts ════════════════════════════════════════════════════════════════ */
 .charts-row {
@@ -335,13 +344,14 @@
 .table-order button:active { transform: scale(0.95); }
 .table-order button.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; }
 
-/* ── Selector de temporada (usa app-temporada-selector) ── */
-.temporada-wrap { display: flex; align-items: center; gap: 8px; }
+/* ── Selector de temporada (usa app-temporada-selector) ──
+   Vive ahora en la barra de filtros global (.dash-filtros), ya no dentro de
+   .temporada-wrap -- el override de paleta se aplica directo al tag. */
 .temporada-lbl { font-size: .75rem; color: #64748b; white-space: nowrap; }
 .temporada-lbl i { color: #3b82f6; margin-right: 3px; }
 
 /* Paleta importaciones: acento azul + superficies del módulo + contorno */
-.temporada-wrap app-temporada-selector {
+app-temporada-selector {
   --ts-accent: #3b82f6;
   --ts-accent-rgb: 59, 130, 246;
   --ts-bg-trigger: #1a1f2e;
@@ -646,7 +656,8 @@ td { padding: 10px 14px; vertical-align: middle; }
 .etiq-strip-badge--over  { color: #ef4444; background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.3); }
 .etiq-strip-badge--under { color: #22c55e; background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.3); }
 
-.costo-paq-sub {
+/* Subtítulo aclaratorio bajo un chart-title: qué campos exactos arman el cálculo */
+.chart-sub {
   font-size: .68rem; color: #4b5563; margin-top: -6px;
 }
 
@@ -1148,6 +1159,15 @@ td { padding: 10px 14px; vertical-align: middle; }
 }
 .ec-bici .bici-cur { font-size: .6rem; font-weight: 600; color: #64748b; }
 .ec-bici .bici-sub { font-size: .62rem; color: #64748b; }
+.bici-desglose {
+  display: flex; flex-wrap: wrap; gap: 3px;
+  margin-top: 4px; max-width: 180px;
+}
+.bici-chip {
+  font-size: .6rem; font-family: monospace; color: #a78bfa;
+  background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.24);
+  border-radius: 3px; padding: 1px 5px; white-space: nowrap;
+}
 
 .ec-notas {
   flex: 1 1 200px;

@@ -57,6 +57,7 @@ import { ProyeccionesMY27Component } from './views/internal-views/proyecciones-m
 import { ImportacionesComponent } from './views/internal-views/importaciones/importaciones.component';
 import { ImportacionesDetalleComponent } from './views/internal-views/importaciones/importaciones-detalle/importaciones-detalle.component';
 import { ImportacionesDashboardComponent } from './views/internal-views/importaciones/importaciones-dashboard/importaciones-dashboard.component';
+import { ImportacionesTiemposEstimadosComponent } from './views/internal-views/importaciones/importaciones-tiempos-estimados/importaciones-tiempos-estimados.component';
 
 import { CaratulaRetroactivosUsuarioComponent } from './views/usuarios/caratula-retroactivos-usuarios/caratula-retroactivos-usuarios.component';
 import { GarantiasUsuarioComponent } from './views/usuarios/garantias-usuario/garantias-usuario.component';
@@ -173,6 +174,7 @@ export const routes: Routes = [
   { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
   { path: 'importaciones', component: ImportacionesComponent, canActivate: [importacionesGuard] },
   { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent, canActivate: [importacionesGuard] },
+  { path: 'importaciones/tiempos-estimados', component: ImportacionesTiemposEstimadosComponent, canActivate: [adminGuard] },
   { path: 'importaciones/:id', component: ImportacionesDetalleComponent, canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];
