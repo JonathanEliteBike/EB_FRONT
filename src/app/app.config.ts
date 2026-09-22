@@ -65,7 +65,10 @@ const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: Htt
 
 export const appConfig = {
   providers: [
-    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'disabled' })),
+    // 'top': cada navegación nueva sube al inicio; el botón atrás/adelante del
+    // navegador (popstate) sigue restaurando la posición de scroll de todas
+    // formas -- eso lo hace el router automáticamente sin importar esta opción.
+    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
     provideHttpClient(
       withFetch(),
       withInterceptors([authInterceptor])
