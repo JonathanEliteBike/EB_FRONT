@@ -576,7 +576,9 @@
                   <span class="ec-chip ec-chip-contenido" [title]="e.log_tipo_productos">
                     <i class="fas fa-box-open"></i> {{ abrevContenido(e.log_tipo_productos) }}
                   </span>
-                  <button class="ec-chip ec-chip-ver-productos" (click)="verProductos(e.id, $event)" title="Ver los productos de este embarque">
+                  <button class="ec-chip ec-chip-ver-productos" [class.ec-chip-ver-productos-vacio]="!e.tiene_productos"
+                    (click)="verProductos(e.id, $event)"
+                    [title]="e.tiene_productos ? 'Ver los productos de este embarque' : 'Este embarque todavía no tiene productos capturados'">
                     <i class="fas fa-boxes-stacked"></i> Ver Productos
                   </button>
                 </div>

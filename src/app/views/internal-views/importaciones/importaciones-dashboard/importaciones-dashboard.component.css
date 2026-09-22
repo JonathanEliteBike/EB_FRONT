@@ -1146,6 +1146,27 @@ td { padding: 10px 14px; vertical-align: middle; }
   background: rgba(96,165,250,.2);
 }
 
+/* Embarque sin productos capturados todavía -- mismo botón, en gris para que
+   la tarjeta distinga de un vistazo cuáles ya tienen Asignaciones cargadas.
+   Combinado con .ec-chip-ver-productos (no solo .-vacio) para igualar la
+   especificidad de :hover/:active de arriba y que sí las pise. */
+.ec-chip-ver-productos.ec-chip-ver-productos-vacio {
+  background: rgba(100,116,139,.08);
+  border-color: rgba(100,116,139,.25);
+  color: #94a3b8;
+}
+.ec-chip-ver-productos.ec-chip-ver-productos-vacio i { color: #64748b; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ec-chip-ver-productos.ec-chip-ver-productos-vacio:hover {
+    background: rgba(100,116,139,.16);
+    border-color: rgba(100,116,139,.4);
+  }
+}
+.ec-chip-ver-productos.ec-chip-ver-productos-vacio:active {
+  background: rgba(100,116,139,.2);
+}
+
 /* Bloques de costo/bici/notas */
 .ec-costos, .ec-bici {
   flex: 0 0 auto;

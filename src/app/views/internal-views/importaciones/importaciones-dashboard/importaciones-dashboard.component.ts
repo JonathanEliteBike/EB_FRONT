@@ -843,10 +843,12 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   /** Lleva directo a los productos/asignaciones de este embarque, sin pasar
    *  por el detalle general -- pedido explícito para acceder más rápido
-   *  desde la tarjeta del dashboard. */
+   *  desde la tarjeta del dashboard. Mismos query params que irDetalle() para
+   *  que el botón "volver" de Asignaciones regrese aquí (dashboard/embarques)
+   *  en vez de al detalle del embarque. */
   verProductos(id: number, event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/importaciones', id, 'asignaciones']);
+    this.router.navigate(['/importaciones', id, 'asignaciones'], { queryParams: { from: 'dashboard', tab: this.activeTab } });
   }
 
   abrirNotasEdit(e: any, event: Event): void {
