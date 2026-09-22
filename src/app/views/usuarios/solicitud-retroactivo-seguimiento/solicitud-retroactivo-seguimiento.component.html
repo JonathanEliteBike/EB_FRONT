@@ -15,13 +15,17 @@
       </h1>
     </div>
 
-    <div class="header-count-center" *ngIf="vista === 'lista' && !cargando && solicitudes.length">
+    <div class="header-count-center" *ngIf="(vista === 'lista' || vista === 'productos') && !cargando && solicitudes.length">
       <span class="header-count-num">{{ solicitudes.length }}</span>
       <span class="header-count-label">Solicitud{{ solicitudes.length !== 1 ? 'es' : '' }}</span>
     </div>
 
     <!-- Botones de Acción en el Encabezado -->
     <div class="header-actions" *ngIf="vista === 'lista'">
+      <button type="button" class="btn-exportar" [disabled]="cargando || descargandoExcel" (click)="exportarExcel()">
+        <i class="fas" [ngClass]="descargandoExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+        {{ descargandoExcel ? 'Generando Excel...' : 'Descargar Excel' }}
+      </button>
       <button type="button" class="btn-mis-productos" (click)="verMisProductos()">
         <i class="fas fa-boxes-stacked"></i> Ver Mis Productos
       </button>
@@ -42,10 +46,76 @@
     </div>
 
     <div *ngIf="error" class="alert-error">{{ error }}</div>
+    <div *ngIf="mensajeExportacion" class="alert-info">{{ mensajeExportacion }}</div>
+
+    <ng-container *ngIf="!cargando && dashboard as dashboard">
+      <div class="dashboard-cards">
+        <button type="button" class="dashboard-card dashboard-card-clickable" [class.dashboard-card-activa]="filtroCardActivo === 'todas'" [attr.aria-pressed]="filtroCardActivo === 'todas'" (click)="seleccionarFiltroCard('todas')">
+          <span class="dashboard-card-label">Total bicicletas</span>
+          <strong>{{ dashboard.totales.total_solicitudes }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-clickable" [class.dashboard-card-activa]="filtroCardActivo === 'pendientes'" [attr.aria-pressed]="filtroCardActivo === 'pendientes'" (click)="seleccionarFiltroCard('pendientes')">
+          <span class="dashboard-card-label">Pendientes</span>
+          <strong>{{ dashboard.totales.pendientes }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-clickable" [class.dashboard-card-activa]="filtroCardActivo === 'validadas'" [attr.aria-pressed]="filtroCardActivo === 'validadas'" (click)="seleccionarFiltroCard('validadas')">
+          <span class="dashboard-card-label">Solicitudes validadas</span>
+          <strong>{{ dashboard.totales.validadas }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-clickable" [class.dashboard-card-activa]="filtroCardActivo === 'nc-capturadas'" [attr.aria-pressed]="filtroCardActivo === 'nc-capturadas'" (click)="seleccionarFiltroCard('nc-capturadas')">
+          <span class="dashboard-card-label">NC capturadas</span>
+          <strong>{{ dashboard.totales.notas_credito_capturadas }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-clickable" [class.dashboard-card-activa]="filtroCardActivo === 'nc-validadas'" [attr.aria-pressed]="filtroCardActivo === 'nc-validadas'" (click)="seleccionarFiltroCard('nc-validadas')">
+          <span class="dashboard-card-label">NC validadas</span>
+          <strong>{{ dashboard.totales.notas_credito_validadas }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-clickable" [class.dashboard-card-activa]="filtroCardActivo === 'aplicadas'" [attr.aria-pressed]="filtroCardActivo === 'aplicadas'" (click)="seleccionarFiltroCard('aplicadas')">
+          <span class="dashboard-card-label">Bicicletas aplicadas</span>
+          <strong>{{ dashboard.totales.bicicletas_aplicadas }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-monto dashboard-card-clickable" *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined" [class.dashboard-card-activa]="filtroCardActivo === 'monto-estimado'" [attr.aria-pressed]="filtroCardActivo === 'monto-estimado'" (click)="seleccionarFiltroCard('monto-estimado')">
+          <span class="dashboard-card-label">Monto estimado</span>
+          <strong>{{ dashboard.totales.monto_total_estimado | currency:'USD':'$':'1.2-2' }}</strong>
+        </button>
+        <button type="button" class="dashboard-card dashboard-card-monto dashboard-card-clickable" *ngIf="puedeVerMontos && dashboard.totales.monto_total_aplicado !== undefined" [class.dashboard-card-activa]="filtroCardActivo === 'monto-aplicado'" [attr.aria-pressed]="filtroCardActivo === 'monto-aplicado'" (click)="seleccionarFiltroCard('monto-aplicado')">
+          <span class="dashboard-card-label">Monto aplicado</span>
+          <strong>{{ dashboard.totales.monto_total_aplicado | currency:'USD':'$':'1.2-2' }}</strong>
+        </button>
+      </div>
+
+      <div class="notas-resumen" *ngIf="dashboard.notas_credito.length">
+        <div class="notas-resumen-title"><i class="fas fa-file-invoice-dollar"></i> Notas de crédito</div>
+        <div class="tabla-wrap notas-tabla-wrap">
+          <table class="solicitudes-tabla">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Estado</th>
+                <th>Solicitudes relacionadas</th>
+                <th *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined">Monto estimado registrado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let nota of dashboard.notas_credito" class="tabla-row-static">
+                <td class="col-principal">#{{ nota.numero_nota_credito }}</td>
+                <td class="col-estatus">
+                  <span class="tc-badge" [ngClass]="nota.estado === 'validada' ? 'badge-validado' : 'badge-pendiente'">
+                    {{ nota.estado === 'validada' ? 'Validada' : 'En validación' }}
+                  </span>
+                </td>
+                <td class="col-secundario">{{ nota.cantidad_solicitudes_relacionadas }}</td>
+                <td *ngIf="puedeVerMontos && dashboard.totales.monto_total_estimado !== undefined" class="col-monto">{{ nota.monto_asociado_estimado | currency:'USD':'$':'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
 
     <div class="empty-state" *ngIf="!cargando && !solicitudes.length">
       <i class="fas fa-inbox fa-2x"></i>
-      <p>Aún no has registrado ninguna solicitud.</p>
+      <p>Aún no hay solicitudes registradas para este distribuidor.</p>
       <a routerLink="/usuarios/solicitud-retroactivo" class="btn-nueva btn-nueva-inline">
         <i class="fas fa-plus"></i> Registrar la primera
       </a>
@@ -74,6 +144,7 @@
         <button *ngIf="busqueda || filtroEstatus || filtroCampana" class="btn btn-outline btn-sm" (click)="resetFiltros()">
           <i class="fas fa-filter-circle-xmark"></i> Limpiar
         </button>
+        <span class="filtro-card-activo" *ngIf="filtroCardActivo !== 'todas'">Filtro: {{ etiquetaFiltroCardActivo }}</span>
         <span class="filtro-count">{{ solicitudesFiltradas.length }} solicitud{{ solicitudesFiltradas.length !== 1 ? 'es' : '' }}</span>
       </div>
 
@@ -141,7 +212,7 @@
     </ng-container>
   </ng-container>
 
-  <!-- ══════════════ VISTA PRODUCTOS (TABLA 3 COLUMNAS) ══════════════ -->
+  <!-- ══════════════ VISTA PRODUCTOS ══════════════ -->
   <ng-container *ngIf="vista === 'productos'">
 
     <div *ngIf="cargando" class="cargando-spinner">
@@ -157,12 +228,14 @@
     </div>
 
     <ng-container *ngIf="!cargando && solicitudes.length">
-      <div class="tabla-wrap">
-        <table class="solicitudes-tabla">
+      <div class="tabla-wrap tabla-productos-wrap">
+        <table class="solicitudes-tabla tabla-productos">
           <thead>
             <tr>
               <th>Modelo</th>
               <th>Número de Serie</th>
+              <th *ngIf="puedeVerMontos">Precio</th>
+              <th *ngIf="puedeVerMontos">Monto</th>
               <th>Estatus Nota de Crédito</th>
             </tr>
           </thead>
@@ -170,6 +243,8 @@
             <tr *ngFor="let s of solicitudes" class="tabla-row-static">
               <td class="col-principal">{{ s.modelo_bicicleta }}</td>
               <td class="col-secundario">{{ s.numero_serie }}</td>
+              <td *ngIf="puedeVerMontos" class="col-secundario">{{ s.precio_publico | currency:'USD':'$':'1.0-0' }}</td>
+              <td *ngIf="puedeVerMontos" class="col-monto">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</td>
               <td class="col-estatus">
                 <span class="tc-badge" [ngClass]="estatusNotaCredito(s.nota_credito, s.nota_credito_estatus).clase">
                   {{ estatusNotaCredito(s.nota_credito, s.nota_credito_estatus).texto }}
@@ -202,6 +277,7 @@
         <div *ngIf="puedeVerMontos"><span class="ig-label">Precio Público</span><span class="ig-value">{{ s.precio_publico | currency:'USD':'$':'1.2-2' }}</span></div>
         <div *ngIf="puedeVerMontos"><span class="ig-label">Monto de Retroactivo</span><span class="ig-value ig-value-accent">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</span></div>
         <div><span class="ig-label">Nota de Crédito</span><span class="ig-value">{{ estatusNotaCredito(s.nota_credito, s.nota_credito_estatus).texto }}</span></div>
+        <div *ngIf="s.usuario_registro"><span class="ig-label">Registrada por</span><span class="ig-value">{{ s.usuario_registro }}</span></div>
         <div><span class="ig-label">Registrada</span><span class="ig-value">{{ s.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span></div>
       </div>
     </div>

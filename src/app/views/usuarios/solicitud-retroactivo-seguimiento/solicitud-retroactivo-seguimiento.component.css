@@ -140,6 +140,24 @@
 }
 .btn-mis-productos:active { transform: scale(0.96); }
 
+.btn-exportar {
+  background: rgba(76, 175, 80, .12);
+  color: #69c96d;
+  border: 1px solid rgba(76, 175, 80, .45);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), transform 160ms var(--ease-out);
+}
+.btn-exportar:hover:not(:disabled) { background: rgba(76, 175, 80, .24); border-color: #69c96d; }
+.btn-exportar:active:not(:disabled) { transform: scale(.96); }
+.btn-exportar:disabled { opacity: .55; cursor: not-allowed; }
+
 .btn-nueva {
   background: var(--orange);
   color: #fff;
@@ -174,6 +192,73 @@
   background-color: #5b1553; color: #fff; border: 1px solid #e11d48;
   padding: 12px; border-radius: 8px; font-weight: 700; text-align: center;
 }
+.alert-info {
+  background: rgba(59, 130, 246, .12); color: #bfdbfe; border: 1px solid rgba(59, 130, 246, .45);
+  padding: 12px; border-radius: 8px; font-weight: 700; text-align: center;
+}
+
+/* ── Resumen del distribuidor ── */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 88px;
+  padding: 14px 16px;
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  background: var(--card);
+  justify-content: center;
+}
+.dashboard-card-label {
+  color: var(--t3);
+  font-size: .69rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.dashboard-card strong { color: var(--t1); font-size: 1.45rem; line-height: 1; }
+.dashboard-card-monto { border-color: var(--orange-gl); background: var(--orange-g); }
+.dashboard-card-monto strong { color: var(--orange); }
+.dashboard-card-clickable {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  color: inherit;
+  transition: background-color .18s ease, border-color .18s ease, opacity .15s ease, transform .15s ease, box-shadow .18s ease;
+}
+.dashboard-card-clickable:hover { border-color: var(--orange); background: var(--orange-g); }
+.dashboard-card-clickable:active { opacity: .86; transform: scale(.98); transition-duration: .12s; }
+.dashboard-card-clickable:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.dashboard-card-activa { border-color: var(--orange); background: var(--orange-g); box-shadow: inset 0 0 0 1px rgba(235,94,40,.28); opacity: 1; }
+.dashboard-card-activa .dashboard-card-label,
+.dashboard-card-activa strong { color: var(--orange); }
+.filtro-card-activo { font-size: 0.78rem; color: var(--orange); font-weight: 700; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-card-clickable { transition: none; }
+  .dashboard-card-clickable:active { transform: none; }
+}
+
+.notas-resumen { margin: 0 0 18px; }
+.notas-resumen-title {
+  color: var(--t1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.notas-resumen-title i { color: var(--orange); }
+.notas-tabla-wrap { margin-bottom: 0; }
 
 .empty-state {
   text-align: center;
@@ -444,5 +529,7 @@
   .filtros-bar { flex-direction: column; align-items: stretch; }
   .filtro-search { min-width: unset; }
   .solicitudes-tabla th:nth-child(2), .solicitudes-tabla td:nth-child(2) { display: none; }
+  .tabla-productos-wrap { overflow-x: auto; }
+  .tabla-productos th:nth-child(2), .tabla-productos td:nth-child(2) { display: table-cell; }
   .info-grid { grid-template-columns: 1fr 1fr; }
 }
