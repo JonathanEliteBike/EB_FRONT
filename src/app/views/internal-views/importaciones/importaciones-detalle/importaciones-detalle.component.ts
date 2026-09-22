@@ -7,6 +7,7 @@ import { switchMap } from 'rxjs/operators';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { ImportacionesService, Importacion } from '../../../../services/importaciones.service';
+import { TiemposEstimadosService, TiempoEstimado } from '../../../../services/tiempos-estimados.service';
 
 type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos';
 
@@ -151,7 +152,6 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       { campo: 'des_solicitud_pase_maniobras',   label: 'Solicitud de pase para maniobras' },
       { campo: 'des_carta_maniobras',            label: 'Carta de maniobras (transportista)' },
       { campo: 'des_fecha_carta_porte',          label: 'Datos para carta porte' },
-      { campo: 'des_fecha_entrega_almacen_prog', label: 'Fecha de entrega en almacén programada' },
       { campo: 'des_lugar_destino',              label: 'Lugar de destino (Ciudad)' },
       { campo: 'des_llegada_almacen',            label: 'Llegada de contenedor a almacén' },
       { campo: 'des_solicitud_carta_vacio',      label: 'Solicitud de carta para entrega de vacío' },
@@ -237,10 +237,16 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private svc: ImportacionesService
+    private svc: ImportacionesService,
+    private tiemposSvc: TiemposEstimadosService
   ) {}
 
   private returnUrl = '/importaciones';
+  // Reglas de Tiempos Estimados, cargadas una vez, para mirror local del
+  // cálculo de fechas proyectadas (mismo criterio que _recalcular_campos()
+  // en el backend) -- feedback instantáneo mientras se edita, antes de que
+  // responda el autoguardado.
+  private _reglasTiempos: TiempoEstimado[] = [];
 
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(e: BeforeUnloadEvent): void {
@@ -254,6 +260,11 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       const tab = this.route.snapshot.queryParamMap.get('tab');
       this.returnUrl = '/importaciones/dashboard' + (tab ? `?tab=${tab}` : '');
     }
+    this.tiemposSvc.listar().subscribe({
+      next: (reglas) => { this._reglasTiempos = reglas; },
+      error: () => {},
+    });
+
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this._embarqueId = id;
     this.svc.obtener(id).subscribe({
@@ -465,10 +476,19 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       const payload: any = { ...this.cambiosPendientes };
       for (const campo of this.camposNA) { payload[campo] = '__NA__'; }
       this.svc.actualizar(this.embarque.id, payload).subscribe({
-        next: () => {
+        next: (res) => {
           this.autoguardandoOk = true;
           // Actualizar updated_at local para que el polling no genere falsa alerta
-          if (this.embarque) this.embarque.updated_at = new Date().toISOString();
+          if (this.embarque) {
+            this.embarque.updated_at = new Date().toISOString();
+            // Fechas proyectadas recalculadas de verdad en el backend -- reemplazan
+            // el adelanto local (_recalcularProyLocal) por el valor autoritativo.
+            this.embarque.log_fecha_booking_prog         = res.log_fecha_booking_prog ?? null;
+            this.embarque.imp_llegada_contenedor_prog    = res.imp_llegada_contenedor_prog ?? null;
+            this.embarque.des_fecha_cruce_prog           = res.des_fecha_cruce_prog ?? null;
+            this.embarque.des_fecha_entrega_almacen_prog = res.des_fecha_entrega_almacen_prog ?? null;
+            this.embarque.tiempos_estimados_faltantes    = res.tiempos_estimados_faltantes ?? false;
+          }
           setTimeout(() => { this.autoguardandoOk = false; }, 2000);
         },
         error: () => {}
@@ -512,6 +532,57 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     // Real días etiquetado = terminación - inicio
     const diasEtiq = this._diffDias(e.alm_inicio_etiquetado, e.alm_terminacion_etiquetado);
     if (diasEtiq !== null) e.alm_real_dias_etiquetado = diasEtiq;
+
+    // Fechas proyectadas Booking→Almacén: mismo criterio que _recalcular_campos()
+    // en el backend (Entrega + regla de Tiempos Estimados por origen+producto+vía).
+    // Es solo un adelanto visual mientras se edita -- el backend recalcula y
+    // persiste el valor real de verdad al autoguardar.
+    this._recalcularProyLocal(e);
+  }
+
+  private _recalcularProyLocal(e: any): void {
+    const entrega = e.log_fecha_entrega;
+    const regla = this._reglasTiempos.find(r =>
+      r.origen === e.log_origen &&
+      r.tipo_producto === e.log_tipo_productos &&
+      r.via_transporte === e.via_transporte
+    );
+
+    if (!entrega || !e.log_origen || !e.log_tipo_productos || !e.via_transporte) {
+      // Faltan datos base -- no tocar lo que ya haya (puede venir del backend).
+      return;
+    }
+
+    if (!regla) {
+      e.log_fecha_booking_prog = null;
+      e.imp_llegada_contenedor_prog = null;
+      e.des_fecha_cruce_prog = null;
+      e.des_fecha_entrega_almacen_prog = null;
+      e.tiempos_estimados_faltantes = true;
+      return;
+    }
+
+    try {
+      const sumar = (iso: string, dias: number) => {
+        const d = new Date(iso + 'T00:00:00');
+        d.setDate(d.getDate() + dias);
+        return d.toISOString().slice(0, 10);
+      };
+      const booking = sumar(entrega, regla.dias_hasta_booking);
+      const puerto  = sumar(booking, regla.dias_booking_a_puerto);
+      const destino = sumar(puerto, regla.dias_puerto_a_destino);
+      const almacen = sumar(destino, regla.dias_destino_a_almacen);
+      e.log_fecha_booking_prog = booking;
+      e.imp_llegada_contenedor_prog = puerto;
+      e.des_fecha_cruce_prog = destino;
+      e.des_fecha_entrega_almacen_prog = almacen;
+      e.tiempos_estimados_faltantes = false;
+    } catch {
+      e.log_fecha_booking_prog = null;
+      e.imp_llegada_contenedor_prog = null;
+      e.des_fecha_cruce_prog = null;
+      e.des_fecha_entrega_almacen_prog = null;
+    }
   }
 
   isoADMY(iso: string | null | undefined): string {

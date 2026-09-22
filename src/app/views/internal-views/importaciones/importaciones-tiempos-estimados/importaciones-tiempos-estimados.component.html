@@ -1,0 +1,133 @@
+<app-home-bar></app-home-bar>
+
+<div class="te-page">
+
+  <div class="te-header">
+    <div class="te-header-left">
+      <a routerLink="/importaciones" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div>
+        <h1 class="te-title"><i class="fas fa-stopwatch"></i> Tiempos Estimados</h1>
+        <p class="te-sub">Reglas de días por etapa que calculan solas las fechas proyectadas de cada embarque</p>
+      </div>
+    </div>
+    <button class="btn-nuevo" (click)="abrirNueva()">
+      <i class="fas fa-plus"></i> Nueva regla
+    </button>
+  </div>
+
+  <div class="te-info">
+    <i class="fas fa-circle-info"></i>
+    A partir de la fecha de <strong>Entrega</strong>, cada embarque calcula solo sus fechas proyectadas de
+    <strong>Booking</strong>, <strong>Lleg. Puerto</strong>, <strong>Destino</strong> y <strong>Almacén</strong>,
+    según la combinación de origen, tipo de producto y vía que tenga registrada. Las fechas reales siguen
+    capturándose a mano como siempre.
+  </div>
+
+  <div class="te-loading" *ngIf="cargando"><i class="fas fa-spinner fa-spin"></i> Cargando reglas...</div>
+  <div class="te-error" *ngIf="error && !cargando"><i class="fas fa-triangle-exclamation"></i> {{ error }}</div>
+
+  <div class="te-table-wrap" *ngIf="!cargando && !error">
+    <table class="te-table" *ngIf="reglas.length">
+      <thead>
+        <tr>
+          <th>Origen</th>
+          <th>Tipo de producto</th>
+          <th>Vía</th>
+          <th>Entrega → Booking</th>
+          <th>Booking → Lleg. Puerto</th>
+          <th>Lleg. Puerto → Destino</th>
+          <th>Destino → Almacén</th>
+          <th>Total</th>
+          <th class="col-acciones"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of reglas">
+          <td class="celda-origen">{{ r.origen }}</td>
+          <td>{{ r.tipo_producto }}</td>
+          <td>
+            <span class="via-badge" [class.via-aereo]="r.via_transporte === 'AEREO'">
+              <i class="fas" [class.fa-ship]="r.via_transporte !== 'AEREO'" [class.fa-plane]="r.via_transporte === 'AEREO'"></i>
+              {{ r.via_transporte === 'AEREO' ? 'Aéreo' : 'Marítimo' }}
+            </span>
+          </td>
+          <td class="celda-dias">{{ r.dias_hasta_booking }}d</td>
+          <td class="celda-dias">{{ r.dias_booking_a_puerto }}d</td>
+          <td class="celda-dias">{{ r.dias_puerto_a_destino }}d</td>
+          <td class="celda-dias">{{ r.dias_destino_a_almacen }}d</td>
+          <td class="celda-total">{{ totalDias(r) }}d</td>
+          <td class="col-acciones">
+            <button class="btn-icon" title="Editar" (click)="abrirEdicion(r)"><i class="fas fa-pen"></i></button>
+            <button class="btn-icon btn-icon-del" title="Eliminar" (click)="eliminar(r)"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sin-resultados" *ngIf="!reglas.length">
+      <i class="fas fa-stopwatch"></i> Todavía no hay reglas configuradas. Crea la primera con "Nueva regla".
+    </div>
+  </div>
+
+  <!-- ── Modal crear/editar ── -->
+  <div class="modal-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3><i class="fas fa-stopwatch"></i> {{ editandoId ? 'Editar regla' : 'Nueva regla' }}</h3>
+        <button class="modal-close" (click)="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>Origen <span class="req">*</span></label>
+        <select [ngModel]="form.origen" (ngModelChange)="cambiarOrigenForm($event)">
+          <option value="" disabled>Selecciona un origen</option>
+          <option *ngFor="let o of ORIGENES" [value]="o">{{ o }}</option>
+        </select>
+
+        <label>Vía <span class="req">*</span></label>
+        <div class="via-selector">
+          <button type="button" class="via-btn" [class.active]="form.via_transporte === 'MARITIMO'" (click)="cambiarViaForm('MARITIMO')">
+            <i class="fas fa-ship"></i> Marítimo
+          </button>
+          <button type="button" class="via-btn" [class.active]="form.via_transporte === 'AEREO'" (click)="cambiarViaForm('AEREO')">
+            <i class="fas fa-plane"></i> Aéreo
+          </button>
+        </div>
+
+        <label>Tipo de producto <span class="req">*</span></label>
+        <select [(ngModel)]="form.tipo_producto">
+          <option value="" disabled>Selecciona un tipo de producto</option>
+          <option *ngFor="let t of tiposProductoDisponibles()" [value]="t">{{ t }}</option>
+        </select>
+
+        <div class="dias-grid">
+          <div class="dias-field">
+            <label>Entrega → Booking</label>
+            <input type="number" min="0" [(ngModel)]="form.dias_hasta_booking" />
+          </div>
+          <div class="dias-field">
+            <label>Booking → Lleg. Puerto</label>
+            <input type="number" min="0" [(ngModel)]="form.dias_booking_a_puerto" />
+          </div>
+          <div class="dias-field">
+            <label>Lleg. Puerto → Destino</label>
+            <input type="number" min="0" [(ngModel)]="form.dias_puerto_a_destino" />
+          </div>
+          <div class="dias-field">
+            <label>Destino → Almacén</label>
+            <input type="number" min="0" [(ngModel)]="form.dias_destino_a_almacen" />
+          </div>
+        </div>
+
+        <div class="te-form-error" *ngIf="errorForm"><i class="fas fa-triangle-exclamation"></i> {{ errorForm }}</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn-crear" [disabled]="!formValido() || guardando" (click)="guardar()">
+          <i class="fas" [class.fa-spinner]="guardando" [class.fa-spin]="guardando" [class.fa-check]="!guardando"></i>
+          {{ editandoId ? 'Guardar cambios' : 'Crear regla' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -133,6 +133,20 @@
             placeholder="Ej: 1" />
         </div>
 
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_volumen_m3')">
+          <label>Volumen de la importación (m³)</label>
+          <input type="number" min="0" step="0.001" [value]="embarque.log_volumen_m3 || ''"
+            (change)="marcarCambio('log_volumen_m3', +$any($event.target).value || null)"
+            placeholder="Ej: 68.5" />
+        </div>
+
+        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_cantidad_producto')">
+          <label>Cantidad del producto</label>
+          <input type="number" min="0" [value]="embarque.log_cantidad_producto || ''"
+            (change)="marcarCambio('log_cantidad_producto', +$any($event.target).value || null)"
+            placeholder="Ej: 996" />
+        </div>
+
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_importador')">
           <label>1. Importador</label>
           <select [value]="embarque.odoo_importador || ''" (change)="marcarCambio('odoo_importador', $any($event.target).value || null)">
@@ -227,11 +241,18 @@
         </div>
         <div class="field-row" id="campo-log_fecha_booking_prog">
           <label>13. Booking (Salida de contenedor estimado)</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.log_fecha_booking_prog || ''"
-              (dateChange)="marcarCambio('log_fecha_booking_prog', $event || null)">
-            </app-date-picker>
+          <div class="calc-display">
+            <span *ngIf="embarque.log_fecha_booking_prog">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ isoADMY(embarque.log_fecha_booking_prog) }}
+            </span>
+            <span *ngIf="!embarque.log_fecha_booking_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+              — (se calcula solo con Entrega + origen + producto + vía)
+            </span>
+            <span *ngIf="!embarque.log_fecha_booking_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
+            </span>
+          </div>
         </div>
         <div class="field-row" id="campo-log_fecha_booking" [class.campo-error]="esCampoError('log_fecha_booking')" [class.campo-faltante]="esCampoFaltante('log_fecha_booking')">
           <label>13b. Booking Real (fecha salida contenedor)</label>
@@ -376,11 +397,18 @@
         </div>
         <div class="field-row" id="campo-imp_llegada_contenedor_prog">
           <label>8. Llegada de contenedor a puerto (Proyectado)</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.imp_llegada_contenedor_prog || ''"
-              (dateChange)="marcarCambio('imp_llegada_contenedor_prog', $event || null)">
-            </app-date-picker>
+          <div class="calc-display">
+            <span *ngIf="embarque.imp_llegada_contenedor_prog">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ isoADMY(embarque.imp_llegada_contenedor_prog) }}
+            </span>
+            <span *ngIf="!embarque.imp_llegada_contenedor_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+              — (se calcula solo con Entrega + origen + producto + vía)
+            </span>
+            <span *ngIf="!embarque.imp_llegada_contenedor_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
+            </span>
+          </div>
         </div>
         <div class="field-row" id="campo-imp_llegada_contenedor_puerto" [class.campo-faltante]="esCampoFaltante('imp_llegada_contenedor_puerto')">
           <label>8. Llegada de contenedor a puerto (Real)</label>
@@ -582,11 +610,19 @@
               (dateChange)="marcarCambio('des_cita_cruce', $event || null)">
             </app-date-picker></div>
         <div class="field-row" id="campo-des_fecha_cruce_prog"><label>3. Fecha de cruce (Proyectado)</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.des_fecha_cruce_prog || ''"
-              (dateChange)="marcarCambio('des_fecha_cruce_prog', $event || null)">
-            </app-date-picker></div>
+          <div class="calc-display">
+            <span *ngIf="embarque.des_fecha_cruce_prog">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ isoADMY(embarque.des_fecha_cruce_prog) }}
+            </span>
+            <span *ngIf="!embarque.des_fecha_cruce_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+              — (se calcula solo con Entrega + origen + producto + vía)
+            </span>
+            <span *ngIf="!embarque.des_fecha_cruce_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
+            </span>
+          </div>
+        </div>
         <div class="field-row" id="campo-des_fecha_cruce_real" [class.campo-faltante]="esCampoFaltante('des_fecha_cruce_real')"><label>3. Fecha de cruce (Real)</label>
           <app-date-picker
               mode="single"
@@ -623,12 +659,20 @@
             <button type="button" class="na-toggle" [class.na-activo]="esNA('des_fecha_carta_porte')" (click)="toggleNA('des_fecha_carta_porte')" title="Marcar como No Aplica">N/A</button>
           </div>
         </div>
-        <div class="field-row" id="campo-des_fecha_entrega_almacen_prog" [class.campo-faltante]="esCampoFaltante('des_fecha_entrega_almacen_prog')"><label>7. Fecha de entrega en almacén programada</label>
-          <app-date-picker
-              mode="single"
-              [value]="embarque.des_fecha_entrega_almacen_prog || ''"
-              (dateChange)="marcarCambio('des_fecha_entrega_almacen_prog', $event || null)">
-            </app-date-picker></div>
+        <div class="field-row" id="campo-des_fecha_entrega_almacen_prog"><label>7. Fecha de entrega en almacén programada</label>
+          <div class="calc-display">
+            <span *ngIf="embarque.des_fecha_entrega_almacen_prog">
+              <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
+              {{ isoADMY(embarque.des_fecha_entrega_almacen_prog) }}
+            </span>
+            <span *ngIf="!embarque.des_fecha_entrega_almacen_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+              — (se calcula solo con Entrega + origen + producto + vía)
+            </span>
+            <span *ngIf="!embarque.des_fecha_entrega_almacen_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
+            </span>
+          </div>
+        </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_lugar_destino')"><label>8. Lugar de destino (Ciudad)</label>
           <input type="text" [value]="embarque.des_lugar_destino || ''" (change)="marcarCambio('des_lugar_destino', $any($event.target).value || null)" placeholder="TORREÓN" /></div>
         <div class="field-row" id="campo-des_llegada_almacen" [class.campo-faltante]="esCampoFaltante('des_llegada_almacen')"><label>9. Llegada de contenedor a almacén</label>
