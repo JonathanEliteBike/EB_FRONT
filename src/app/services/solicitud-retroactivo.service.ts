@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -28,6 +28,7 @@ export interface ItemHistorial {
 export interface SolicitudRetroactivo {
   id: number;
   id_usuario?: number;
+  usuario_registro?: string;
   id_formulario: number;
   nombre_formulario: string;
   id_marca_bicicleta: number | null;
@@ -92,6 +93,11 @@ export interface Tienda {
   cliente_id: number;
 }
 
+export interface FormularioRetroactivo {
+  id: number;
+  nombre: string;
+}
+
 export interface MarcaCampania {
   id: number;
   nombre: string;
@@ -109,6 +115,47 @@ export interface ProductoCampania {
   color: string;
   marca: string | null;
   marca_id: number | null;
+}
+
+export interface TotalesDashboardDistribuidor {
+  total_solicitudes: number;
+  pendientes: number;
+  validadas: number;
+  rechazadas: number;
+  notas_credito_capturadas: number;
+  notas_credito_validadas: number;
+  bicicletas_aplicadas: number;
+  monto_total_estimado?: string;
+  monto_total_aplicado?: string;
+}
+
+export interface NotaCreditoDistribuidor {
+  numero_nota_credito: string;
+  estado: 'pendiente' | 'validada';
+  cantidad_solicitudes_relacionadas: number;
+  monto_asociado_estimado?: string;
+}
+
+export interface DashboardDistribuidor {
+  totales: TotalesDashboardDistribuidor;
+  notas_credito: NotaCreditoDistribuidor[];
+  solicitudes: SolicitudRetroactivo[];
+}
+
+export interface SerieDisponible {
+  numero_serie: string;
+  product_id_odoo: number;
+  sku: string;
+  nombre_producto: string;
+  sale_order: string;
+  picking: string;
+  fecha_entrega: string;
+  cantidad_realizada: number;
+}
+
+export interface SeriesDisponiblesResponse {
+  estado: string;
+  series: SerieDisponible[];
 }
 
 // GUÍA: HttpClient ya manda el JWT solo (interceptors/auth.interceptor.ts),
@@ -147,6 +194,10 @@ export class SolicitudRetroactivoService {
     return this.http.get<SolicitudRetroactivo[]>(`${this.base}/mis-solicitudes`);
   }
 
+  dashboardDistribuidor(): Observable<DashboardDistribuidor> {
+    return this.http.get<DashboardDistribuidor>(`${this.base}/dashboard-distribuidor`);
+  }
+
   actualizarVenta(id: number, formData: FormData): Observable<any> {
     return this.http.put(`${this.base}/venta/${id}`, formData);
   }
@@ -159,11 +210,26 @@ export class SolicitudRetroactivoService {
     return this.http.get<Tienda[]>(`${this.base}/tiendas/${clienteId}`);
   }
 
+  buscarFormularios(): Observable<FormularioRetroactivo[]> {
+    return this.http.get<FormularioRetroactivo[]>(`${this.base}/formulario`);
+  }
+
+  buscarMsiPorCampania(idCampania: number): Observable<{ id: number; plazo_meses: number; porcentaje?: number }[]> {
+    return this.http.get<{ id: number; plazo_meses: number; porcentaje?: number }[]>(`${this.base}/campania/${idCampania}/msi`);
+  }
+
   marcasPorCampania(idCampania: number): Observable<MarcaCampania[]> {
     return this.http.get<MarcaCampania[]>(`${this.base}/campania/${idCampania}/marcas`);
   }
 
   productosPorCampania(idCampania: number): Observable<ProductoCampania[]> {
     return this.http.get<ProductoCampania[]>(`${this.base}/campania/${idCampania}/productos`);
+  }
+
+  seriesDisponibles(sku?: string, serie?: string): Observable<SeriesDisponiblesResponse> {
+    let params = new HttpParams();
+    if (sku) params = params.set('sku', sku);
+    if (serie) params = params.set('serie', serie);
+    return this.http.get<SeriesDisponiblesResponse>(`${this.base}/series-disponibles`, { params });
   }
 }
