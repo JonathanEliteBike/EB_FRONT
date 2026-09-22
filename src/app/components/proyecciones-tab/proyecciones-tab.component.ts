@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../services/auth.service';
 
 // ─────────────────────────────────────────
 // Interfaces
@@ -540,7 +541,18 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     return this.rowsFiltrados.filter(r => !r._nuevo && this.calcTotal(r) > 0).length;
   }
 
-  constructor(private http: HttpClient, protected cdr: ChangeDetectorRef) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    protected cdr: ChangeDetectorRef,
+  ) {}
+
+  get puedeVerMontos(): boolean {
+    // Ambas capas deben coincidir: Angular no muestra importes sin capacidad y
+    // Flask no los entrega aunque se altere el almacenamiento local.
+    return !this.authService.debeOcultarMontos('proyeccion_compras')
+      && this.rows.some(row => Object.prototype.hasOwnProperty.call(row, 'precio'));
+  }
 
   ngOnInit(): void {
     this._initPeriodo();
@@ -732,21 +744,29 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
       const data: any[][] = [];
 
       // Header
-      data.push([
+      const encabezado = [
         'SKU', 'Producto', 'Marca', 'Modelo', 'Color', 'Talla',
         ...MESES_LABELS,
-        'Total Uds', 'Precio Dist', 'Precio Público', 'Total $'
-      ]);
+        'Total Uds',
+      ];
+      if (this.puedeVerMontos) encabezado.push('Precio Dist');
+      encabezado.push('Precio Público');
+      if (this.puedeVerMontos) encabezado.push('Total $');
+      data.push(encabezado);
 
       for (const r of rows) {
         const totalUds = this.calcTotal(r);
         const precio   = Number(r.precio) || 0;
         const pp       = Number(r.precio_publico) || 0;
-        data.push([
+        const fila: any[] = [
           r.sku, r.producto, r.marca, r.modelo, r.color, r.talla,
           ...MESES.map(m => Number(r[m]) || 0),
-          totalUds, precio, pp, totalUds * precio
-        ]);
+          totalUds,
+        ];
+        if (this.puedeVerMontos) fila.push(precio);
+        fila.push(pp);
+        if (this.puedeVerMontos) fila.push(totalUds * precio);
+        data.push(fila);
       }
 
       const ws   = XLSX.utils.aoa_to_sheet(data);

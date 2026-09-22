@@ -300,10 +300,12 @@ export class GarantiasService {
   // ── File uploads ─────────────────────────────────────
   subirArchivo(
     file: File,
+    accion: 'crear' | 'editar',
     onProgress?: (pct: number) => void
   ): Observable<{ ok: boolean; nombre: string; original: string }> {
     const fd = new FormData();
     fd.append('archivo', file);
+    fd.append('accion', accion);
 
     if (!onProgress) {
       return this.http.post<{ ok: boolean; nombre: string; original: string }>(

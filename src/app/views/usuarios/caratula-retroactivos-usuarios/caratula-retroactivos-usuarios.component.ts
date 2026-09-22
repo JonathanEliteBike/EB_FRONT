@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { RetroactivosService } from '../../../services/retroactivos.service';
 import { CaratulasService } from '../../../services/caratulas.service';
+import { AuthService } from '../../../services/auth.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { AccesoRestringidoComponent } from '../../../components/acceso-restringido/acceso-restringido.component';
 import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
 import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
 
@@ -47,11 +49,13 @@ interface DatosRetroactivo {
 @Component({
   selector: 'app-caratula-retroactivos-usuario',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
+  imports: [CommonModule, RouterModule, HomeBarComponent, AccesoRestringidoComponent, TemporadaSelectorComponent, AvisoHistoricoComponent],
   templateUrl: './caratula-retroactivos-usuarios.component.html',
   styleUrl: './caratula-retroactivos-usuarios.component.css'
 })
 export class CaratulaRetroactivosUsuarioComponent implements OnInit {
+
+  modulo = "Retroactivos";
 
   isLoading = true;
   error: string | null = null;
@@ -66,13 +70,39 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
 
   constructor(
     private retroactivosService: RetroactivosService,
-    private caratulasService: CaratulasService
+    private caratulasService: CaratulasService,
+    public authService: AuthService,
   ) { }
 
   ngOnInit(): void {
+
+    // Si no tiene permiso para ver el módulo, cancelamos la carga de datos
+    if (!this.tieneAccesoModulo) {
+      this.isLoading = false;
+      return;
+    }
+
     this.cargarDatosUsuarioActual();
     this.cargarTemporadasDisponibles();
     this.cargarTemporadaActual();
+  }
+
+  get tieneAccesoModulo(): boolean {
+    return this.authService.tieneModulo('usuarios_retroactivos');
+  }
+
+  get puedeAccederCalculadora(): boolean {
+    return this.authService.tieneModulo('usuarios_retroactivos') &&
+      this.authService.tieneModulo('usuarios_calculadora_retroactivos');
+  }
+
+  get puedeAccederSolicitudes(): boolean {
+    return this.authService.tieneModulo('usuarios_retroactivos') &&
+      this.authService.tieneModulo('usuarios_solicitudes_retroactivos');
+  }
+
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('retroactivos');
   }
 
   cargarTemporadasDisponibles(): void {
@@ -325,6 +355,9 @@ export class CaratulaRetroactivosUsuarioComponent implements OnInit {
   }
 
   descargarPDF(): void {
+    if (!this.tieneAccesoModulo || !this.puedeVerMontos) {
+      return;
+    }
     window.print();
   }
 

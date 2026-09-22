@@ -81,10 +81,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     },
     {
       icono: 'fa-users',
-      titulo: 'Usuarios',
-      descripcion: 'Control de accesos y configuracion de roles para los usuarios del portal.',
+      titulo: 'Gestión de Usuarios',
+      descripcion: 'Administración de cuentas de usuarios del sistema, clientes y asignación de permisos.',
       boton: 'Ir a Usuarios',
       ruta: '/usuarios',
+      accion: null
+    },
+    {
+      icono: 'fa-layer-group',
+      titulo: 'Catálogo General (Permisos)',
+      descripcion: 'Administración de permisos del sistema.',
+      boton: 'Ir a Catálogo',
+      ruta: '/catalogo-general',
       accion: null
     },
     {

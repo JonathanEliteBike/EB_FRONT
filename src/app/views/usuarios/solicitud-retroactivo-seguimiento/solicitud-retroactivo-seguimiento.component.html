@@ -86,8 +86,8 @@
               <th>Campaña</th>
               <th>Estatus</th>
               <th>Nota de Crédito</th>
-              <th>Precio</th>
-              <th>Monto</th>
+              <th *ngIf="puedeVerMontos">Precio</th>
+              <th *ngIf="puedeVerMontos">Monto</th>
               <th>Fecha</th>
               <th></th>
             </tr>
@@ -112,8 +112,8 @@
                   {{ estatusNotaCredito(s.nota_credito, s.nota_credito_estatus).texto }}
                 </span>
               </td>
-              <td class="col-secundario">{{ s.precio_publico | currency:'USD':'$':'1.0-0' }}</td>
-              <td class="col-monto">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</td>
+              <td *ngIf="puedeVerMontos" class="col-secundario">{{ s.precio_publico | currency:'USD':'$':'1.0-0' }}</td>
+              <td *ngIf="puedeVerMontos" class="col-monto">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</td>
               <td class="col-fecha">{{ s.fecha_venta | date:'dd/MM/yyyy' }}</td>
               <td class="col-accion"><i class="fas fa-chevron-right accion-icon"></i></td>
             </tr>
@@ -199,8 +199,8 @@
         <div><span class="ig-label">Modelo</span><span class="ig-value">{{ s.modelo_bicicleta }}</span></div>
         <div><span class="ig-label">Número de Serie</span><span class="ig-value">{{ s.numero_serie }}</span></div>
         <div><span class="ig-label">Meses Sin Intereses</span><span class="ig-value">{{ s.plazo_meses }} meses</span></div>
-        <div><span class="ig-label">Precio Público</span><span class="ig-value">{{ s.precio_publico | currency:'USD':'$':'1.2-2' }}</span></div>
-        <div><span class="ig-label">Monto de Retroactivo</span><span class="ig-value ig-value-accent">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</span></div>
+        <div *ngIf="puedeVerMontos"><span class="ig-label">Precio Público</span><span class="ig-value">{{ s.precio_publico | currency:'USD':'$':'1.2-2' }}</span></div>
+        <div *ngIf="puedeVerMontos"><span class="ig-label">Monto de Retroactivo</span><span class="ig-value ig-value-accent">{{ s.monto_pagar | currency:'USD':'$':'1.2-2' }}</span></div>
         <div><span class="ig-label">Nota de Crédito</span><span class="ig-value">{{ estatusNotaCredito(s.nota_credito, s.nota_credito_estatus).texto }}</span></div>
         <div><span class="ig-label">Registrada</span><span class="ig-value">{{ s.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span></div>
       </div>

@@ -1,6 +1,6 @@
 <app-home-bar></app-home-bar>
 
-<div class="form-page">
+<div class="form-page" *ngIf="puedeCrearGarantia; else accesoDenegado">
 
   <!-- ── SUCCESS ── -->
   <div class="success-card" *ngIf="exito">
@@ -1209,3 +1209,14 @@
 
   </ng-container>
 </div>
+
+<ng-template #accesoDenegado>
+  <div class="form-page">
+    <div class="success-card">
+      <div class="success-icon"><i class="fas fa-lock"></i></div>
+      <h2>Acceso restringido</h2>
+      <p>No tienes permiso para crear una garantía.</p>
+      <a class="btn btn-outline" routerLink="/usuarios/dashboard">Volver al inicio</a>
+    </div>
+  </div>
+</ng-template>

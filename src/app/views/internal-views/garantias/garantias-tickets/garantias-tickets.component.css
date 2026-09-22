@@ -739,6 +739,7 @@
   transition: background .15s;
 }
 .doc-body:hover { background: rgba(255,255,255,0.02); }
+.doc-body.doc-cargando { cursor: default; opacity: .6; }
 
 /* Body del número de serie (no es link) */
 .doc-body-text {

@@ -16,7 +16,8 @@ Chart.register(...registerables);
 
 interface Kpis {
   total: number; activos: number; cerrados: number; cancelados: number;
-  flete_total_usd: number; flete_promedio_usd: number;
+  flete_total_usd: number; flete_total_maritimo_usd: number; flete_total_aereo_usd: number;
+  flete_promedio_usd: number;
   transito_maritimo_promedio_dias: number | null; transito_maritimo_n: number;
   pct_avance_promedio: number;
   transito_aereo_promedio_dias: number | null; transito_aereo_n: number;
@@ -34,7 +35,7 @@ interface DashData {
   por_via:     { via: string; count: number }[];
   por_origen:  { origen: string; count: number }[];
   por_mes:     { mes: string; label: string; maritimo: number; aereo: number }[];
-  flete_por_via: { maritimo_avg: number; maritimo_count: number; aereo_avg: number; aereo_count: number };
+  flete_por_via: { maritimo_avg: number; maritimo_count: number; maritimo_contenedores: number; aereo_avg: number; aereo_count: number; aereo_contenedores: number };
   por_estado:  { estado: string; count: number }[];
   embarques:   any[];
   latencias: {
@@ -88,7 +89,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   desgloseOrigen = false;
   activeTab: 'resumen' | 'latencias' | 'costos' | 'embarques' | 'asignaciones' = 'resumen';
 
-  filtros = { via: '', estado: '', origen: '', anio: '' };
+  filtros = { via: '', estado: '', origen: '', anio: '', fecha_desde: '', fecha_hasta: '' };
 
   // Filtro de rango de fechas de la tabla de embarques. El campo contra el
   // que compara depende de la etapa activa (misma fecha real que determina
@@ -103,14 +104,16 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   // Etapa (badge) -> key del pipeline cuyo campo "real" define esa etapa.
+  // Mismo nombre y mismo campo que su columna correspondiente de PIPELINE_STAGES.
   private readonly ETAPA_PIPELINE_KEY: Record<string, string> = {
-    'Booking':           'entrega',
-    'Tránsito Mar/Aér':  'booking',
-    'En Aduana':         'transito',
-    'Tránsito Destino':  'trans_dest',
-    'En Almacén':        'en_almacen',
-    'Verificación':      'verif',
-    'Liberado':          'liberado',
+    'Entrega':      'entrega',
+    'Booking':      'booking',
+    'Lleg. Puerto': 'transito',
+    'Destino':      'trans_dest',
+    'Almacén':      'en_almacen',
+    'Verif.':       'verif',
+    'Etiq.':        'etiquetado',
+    'Liberado':     'liberado',
   };
 
   /** Fecha real que se usa para el filtro de rango en el embarque `e`, según la etapa activa. */
@@ -123,13 +126,14 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   private readonly ETAPA_FECHA_LABEL: Record<string, string> = {
-    'Booking':           'Fecha de Entrega',
-    'Tránsito Mar/Aér':  'Salida Tránsito',
-    'En Aduana':         'Llegada a Puerto',
-    'Tránsito Destino':  'Fecha de Cruce',
-    'En Almacén':        'Llegada a Almacén',
-    'Verificación':      'Verificación',
-    'Liberado':          'Liberado',
+    'Entrega':      'Fecha de Entrega',
+    'Booking':      'Fecha de Booking',
+    'Lleg. Puerto': 'Llegada a Puerto',
+    'Destino':      'Fecha de Cruce',
+    'Almacén':      'Llegada a Almacén',
+    'Verif.':       'Verificación',
+    'Etiq.':        'Etiquetado',
+    'Liberado':     'Liberado',
   };
 
   get fechaFiltroLabel(): string {
@@ -141,44 +145,92 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return this.filtroEtapa === 'Pendiente';
   }
 
+  // El title de cada etapa explica el requisito exacto (mismo orden que
+  // _estado_actual() en el backend: se evalúa de la más avanzada a la menos
+  // avanzada, y el embarque cae en la primera que cumple).
   readonly ETAPAS = [
-    { key: 'Booking',           bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
-    { key: 'Tránsito Mar/Aér',  bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
-    { key: 'En Aduana',         bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
-    { key: 'Tránsito Destino',  bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
-    { key: 'En Almacén',        bg: 'rgba(20,184,166,.18)',  color: '#2dd4bf' },
-    { key: 'Verificación',      bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
-    { key: 'Liberado',          bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
-    { key: 'Pendiente',         bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
+    { key: 'Entrega',      bg: 'rgba(236,72,153,.18)',  color: '#f472b6',
+      title: 'Tiene Fecha de Entrega capturada, pero todavía no Fecha de Booking (Logística).' },
+    { key: 'Booking',      bg: 'rgba(59,130,246,.18)',  color: '#60a5fa',
+      title: 'Tiene Fecha de Booking capturada, pero todavía no Llegada de Contenedor a Puerto (Importación).' },
+    { key: 'Lleg. Puerto', bg: 'rgba(6,182,212,.18)',   color: '#22d3ee',
+      title: 'Tiene Llegada de Contenedor a Puerto capturada, pero todavía no Fecha de Cruce (Despacho).' },
+    { key: 'Destino',      bg: 'rgba(245,158,11,.18)',  color: '#fbbf24',
+      title: 'Tiene Fecha de Cruce capturada, pero todavía no Llegada a Almacén (Despacho).' },
+    { key: 'Almacén',      bg: 'rgba(139,92,246,.18)',  color: '#a78bfa',
+      title: 'Tiene Llegada a Almacén capturada, pero todavía no Liberación de Etiquetado por la UVA (Almacén).' },
+    { key: 'Verif.',       bg: 'rgba(99,102,241,.18)',  color: '#818cf8',
+      title: 'Tiene Liberación de Etiquetado por la UVA capturada, pero todavía no Terminación de Etiquetado.' },
+    { key: 'Etiq.',        bg: 'rgba(168,85,247,.18)',  color: '#c084fc',
+      title: 'Tiene Terminación de Etiquetado capturada, pero todavía no Liberación Final (Recepción).' },
+    { key: 'Liberado',     bg: 'rgba(34,197,94,.18)',   color: '#22c55e',
+      title: 'Tiene Liberación Final capturada -- proceso completo.' },
+    { key: 'Pendiente',    bg: 'rgba(71,85,105,.18)',   color: '#94a3b8',
+      title: 'Todavía no tiene ni la Fecha de Entrega (Logística) capturada.' },
   ];
 
-  // ── Temporadas (MY27 desde R26-1414; anteriores = MY26) ──────────────────
-  temporadaSel: 'MY27' | 'MY26' | 'todas' = 'MY27';
-  private static readonly _CORTE_MY27 = 1414;
-  readonly temporadasCerradas = ['MY26'];   // para <app-temporada-selector>
+  // ── Temporadas (reales, desde la tabla `temporadas` -- fecha_inicio/fecha_fin) ──
+  // El filtro ya se aplica en el backend (fecha_desde/fecha_hasta sobre
+  // COALESCE(log_fecha_booking, created_at)), así que afecta TODO el
+  // dashboard (KPIs, latencias, costos, embarques), no solo la tabla.
+  temporadas: { etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[] = [];
+  temporadaSelValor = ''; // '' = actual (abierta), etiqueta = temporada cerrada, TEMPORADA_HISTORICO = todas
 
-  /** Valor que espera el selector compartido: '' actual (MY27), 'MY26', o HISTÓRICO. */
-  get temporadaSelValor(): string {
-    if (this.temporadaSel === 'MY26')  return 'MY26';
-    if (this.temporadaSel === 'todas') return TEMPORADA_HISTORICO;
-    return '';
+  get temporadasCerradas(): string[] {
+    return this.temporadas.filter(t => t.estado === 'cerrada').map(t => t.etiqueta);
   }
+  get temporadaActual(): { etiqueta: string; fecha_inicio: string; fecha_fin: string } | undefined {
+    return this.temporadas.find(t => t.estado === 'abierta');
+  }
+  get labelTemporadaActual(): string {
+    const et = this.temporadaActual?.etiqueta;
+    if (!et) return 'Actual';
+    const my = et.split('-')[1]?.slice(-2);
+    return my ? `MY${my} · actual` : `${et} · actual`;
+  }
+
+  private cargarTemporadas(): void {
+    this.svc.listarTemporadas().subscribe({
+      next: (temporadas) => {
+        this.temporadas = temporadas;
+        const actual = this.temporadaActual;
+        if (actual) {
+          this.filtros.fecha_desde = actual.fecha_inicio;
+          this.filtros.fecha_hasta = actual.fecha_fin;
+        }
+        this.cargar();
+      },
+      error: () => this.cargar(), // sin temporadas disponibles -- cargar sin filtro de fecha
+    });
+  }
+
   onTemporadaCambio(v: string): void {
-    this.temporadaSel = v === TEMPORADA_HISTORICO ? 'todas' : (v === 'MY26' ? 'MY26' : 'MY27');
+    this.temporadaSelValor = v;
+    if (v === TEMPORADA_HISTORICO) {
+      this.filtros.fecha_desde = '';
+      this.filtros.fecha_hasta = '';
+    } else if (v === '') {
+      const actual = this.temporadaActual;
+      this.filtros.fecha_desde = actual?.fecha_inicio ?? '';
+      this.filtros.fecha_hasta = actual?.fecha_fin ?? '';
+    } else {
+      const t = this.temporadas.find(x => x.etiqueta === v);
+      this.filtros.fecha_desde = t?.fecha_inicio ?? '';
+      this.filtros.fecha_hasta = t?.fecha_fin ?? '';
+    }
+    this.aplicarFiltros();
   }
 
-  temporadaDe(e: any): 'MY27' | 'MY26' {
-    const ref = (e?.referencia || '').toUpperCase();
-    const m = /R\d+-(\d+)/.exec(ref) || /(\d{3,})/.exec(ref);
-    const num = m ? parseInt(m[1], 10) : 0;
-    return num >= ImportacionesDashboardComponent._CORTE_MY27 ? 'MY27' : 'MY26';
+  /** Rango de fechas manual del filtro global (independiente de la temporada). */
+  onRangoFechaGlobal(rango: { desde: string; hasta: string }): void {
+    this.filtros.fecha_desde = rango.desde;
+    this.filtros.fecha_hasta = rango.hasta;
+    this.aplicarFiltros();
   }
 
-  /** Embarques del periodo seleccionado (antes de búsqueda / filtro de etapa). */
+  /** Embarques ya filtrados por el backend (temporada / rango / vía / etc.). */
   get embarquesTemporada(): any[] {
-    if (!this.data?.embarques) return [];
-    if (this.temporadaSel === 'todas') return this.data.embarques;
-    return this.data.embarques.filter((e: any) => this.temporadaDe(e) === this.temporadaSel);
+    return this.data?.embarques ?? [];
   }
 
   countEtapa(key: string): number {
@@ -218,10 +270,12 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     { key: 'en_almacen',       label: 'Almacén'   },
     { key: 'recepcion_odoo',   label: 'Rec. Odoo' },
     { key: 'verif',            label: 'Verif.'    },
-    { key: 'liberacion_verif', label: 'Lib. Verif.' },
     { key: 'etiquetado',       label: 'Etiq.'     },
     { key: 'liberado',         label: 'Liberado'  },
   ];
+  // "Rec. Odoo" está arriba en la fila de fechas a propósito, pero NO tiene
+  // entrada en ETAPAS/ETAPA_PIPELINE_KEY/_ESTADO_CFG ni en el backend
+  // (_estado_actual()): es puramente informativo, no cuenta para la etapa.
 
   stage(e: any, key: string): { proy: string | null; real: string | null; delta: number | null } | undefined {
     return e?.pipeline?.[key] ?? undefined;
@@ -237,7 +291,6 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     en_almacen:         'des_llegada_almacen',
     recepcion_odoo:      'rec_recepcion_odoo',
     verif:              'alm_liberacion_uva',
-    liberacion_verif:   'rec_liberacion_verificacion',
     etiquetado:          'alm_terminacion_etiquetado',
     liberado:           'rec_liberacion_final',
   };
@@ -272,7 +325,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab') as typeof this.activeTab | null;
     if (tab && ['resumen','latencias','costos','embarques','asignaciones'].includes(tab)) this.activeTab = tab;
-    this.cargar();
+    this.cargarTemporadas();
   }
   ngAfterViewInit(): void {}
   ngOnDestroy():     void { this.destroyCharts(); }
@@ -297,12 +350,18 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   aplicarFiltros(): void { this.destroyCharts(); this.cargar(); }
 
   limpiarFiltros(): void {
-    this.filtros = { via: '', estado: '', origen: '', anio: '' };
+    const actual = this.temporadaActual;
+    this.filtros = {
+      via: '', estado: '', origen: '', anio: '',
+      fecha_desde: actual?.fecha_inicio ?? '',
+      fecha_hasta: actual?.fecha_fin ?? '',
+    };
+    this.temporadaSelValor = '';
     this.aplicarFiltros();
   }
 
   hayFiltros(): boolean {
-    return !!(this.filtros.via || this.filtros.estado || this.filtros.origen || this.filtros.anio);
+    return !!(this.filtros.via || this.filtros.estado || this.filtros.origen || this.filtros.anio || this.temporadaSelValor);
   }
 
   switchTab(tab: 'resumen' | 'latencias' | 'costos' | 'embarques' | 'asignaciones'): void {
@@ -368,7 +427,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
       this.charts.push(new Chart(this.chartOrigenRef.nativeElement, {
         type: 'bar',
         data: {
-          labels: d.map(o => o.origen),
+          labels: d.map(o => this.origenBonito(o.origen)),
           datasets: [{
             data: d.map(o => o.count),
             backgroundColor: '#3b82f6',
@@ -440,7 +499,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días · ${d[ctx.dataIndex].log_origen}` } },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.raw} días · ${this.origenBonito(d[ctx.dataIndex].log_origen)}` } },
           },
           scales: {
             x: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { display: false } },
@@ -655,7 +714,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
       this.charts.push(new Chart(this.chartLatOrigenRef.nativeElement, {
         type: 'bar',
         data: {
-          labels: d.map(o => `${o.origen} (n=${o.n})`),
+          labels: d.map(o => `${this.origenBonito(o.origen)} (n=${o.n})`),
           datasets: [{
             data: d.map(o => o.dias_promedio),
             backgroundColor: d.map(o => o.dias_promedio > 60 ? '#ef4444' : o.dias_promedio > 40 ? '#f59e0b' : '#3b82f6'),
@@ -955,14 +1014,15 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   absDelta(delta: number): number { return Math.abs(delta); }
 
   private static readonly _ESTADO_CFG: Record<string, { bg: string; color: string }> = {
-    'Liberado':          { bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
-    'Verificación':      { bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
-    'En Almacén':        { bg: 'rgba(20,184,166,.18)',  color: '#2dd4bf' },
-    'Tránsito Destino':  { bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
-    'En Aduana':         { bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
-    'Tránsito Mar/Aér':  { bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
-    'Booking':           { bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
-    'Pendiente':         { bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
+    'Liberado':     { bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
+    'Etiq.':        { bg: 'rgba(168,85,247,.18)',  color: '#c084fc' },
+    'Verif.':       { bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
+    'Almacén':      { bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
+    'Destino':      { bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
+    'Lleg. Puerto': { bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
+    'Booking':      { bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
+    'Entrega':      { bg: 'rgba(236,72,153,.18)',  color: '#f472b6' },
+    'Pendiente':    { bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
   };
 
   estadoStyle(estado: string): { background: string; color: string } {

@@ -6,7 +6,8 @@
   padding: 16px 24px;
   border-radius: 8px;
   font-weight: bold;
-  z-index: 9999;
+  /* Se monta en app-root y queda por encima de modales y confirmaciones. */
+  z-index: var(--eb-z-notificacion);
   opacity: 0.95;
   color: white;
   animation: slideIn 0.3s ease-out, slideOut 0.5s ease-in 2.5s forwards;

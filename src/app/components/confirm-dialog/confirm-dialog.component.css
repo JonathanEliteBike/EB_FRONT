@@ -3,7 +3,8 @@
     top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.7); 
     backdrop-filter: blur(3px); 
-    z-index: 9999; 
+    /* Confirmación global: por encima de los modales de cada vista. */
+    z-index: var(--eb-z-confirmacion);
     display: flex;
     justify-content: center;
     align-items: center;

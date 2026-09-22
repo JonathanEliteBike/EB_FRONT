@@ -1,0 +1,19 @@
+<div class="sin-acceso-wrapper">
+  <div class="sin-acceso-card">
+    <div class="sin-acceso-icon">
+      <i class="fas fa-lock"></i>
+    </div>
+    <h2>Acceso Restringido</h2>
+    <p class="sin-acceso-msj">
+      No tienes asignado el permiso de acceso para el módulo de <strong>{{ modulo }}</strong>.
+    </p>
+    <span class="sin-acceso-submsj">
+      Por favor, ponte en contacto con tu Administrador para solicitar la habilitación de este permiso.
+    </span>
+    <div class="sin-acceso-actions">
+      <button class="btn-volver-primary" [routerLink]="[rutaInicio]">
+        <i class="fas fa-home"></i> Ir al Panel Principal
+      </button>
+    </div>
+  </div>
+</div>

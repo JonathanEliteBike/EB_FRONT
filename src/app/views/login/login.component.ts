@@ -31,20 +31,19 @@ export class LoginComponent {
       contrasena: this.password
     };
 
-    this.authService.login(credentials).subscribe({
+   this.authService.login(credentials).subscribe({
       next: (response) => {
         localStorage.setItem('token', response.token);
-        //console.log('Token guardado en localStorage:', response.token);
 
         const decodedToken: any = jwtDecode(response.token);
-        //console.log('Token decodificado:', decodedToken);
+        const rol = decodedToken.rol || decodedToken.rol_id;
 
-        if (decodedToken.rol === 1) {
+        if (rol === 1) {
           this.router.navigate(['/home']);
-        } else if (decodedToken.rol === 2) {
+        } else if (rol === 2 || rol === 3) {
           this.router.navigate(['/usuarios/dashboard']);
-        } else if (decodedToken.rol === 3) {
-          this.router.navigate(['/importaciones/dashboard']);
+        } else if (rol === 99) {
+          this.router.navigate(['/importaciones']);
         } else {
           this.router.navigate(['/login']);
         }

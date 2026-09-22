@@ -6,7 +6,8 @@
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.7); /* Oscuro transparente */
-  z-index: 10000; /* Encima de todo */
+  /* Confirmación: por encima de los modales de la vista y bajo los avisos. */
+  z-index: var(--eb-z-confirmacion);
   display: flex;
   align-items: center;
   justify-content: center;

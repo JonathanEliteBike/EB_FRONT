@@ -6,7 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 
 // GUÍA: esta vista vive en la misma ruta ('usuarios/solicitud-retroactivo')
-// para admin (rol 1) y cliente (rol 2), con contenido distinto:
+// para admin (rol 1) y usuarios del portal (roles 2 y 3), con contenido distinto:
 // - admin: 3 cards (Gestor / Dashboard / Formulario)
 // - cliente: 2 cards estilo garantias-usuario (Seguimiento / Registrar venta)
 @Component({
@@ -32,7 +32,7 @@ export class SolicitudRetroactivoLandingComponent implements OnInit {
     try {
       const decoded: any = jwtDecode(token);
       this.esAdmin = decoded.rol === 1;
-      this.esCliente = decoded.rol === 2;
+      this.esCliente = decoded.rol === 2 || decoded.rol === 3;
     } catch {
       // Token inválido: el guard de la ruta ya se encarga de sacarlo al login.
     }

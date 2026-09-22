@@ -1,11 +1,9 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 
 <div class="dash-page">
-
-  <!-- ── Greeting ── -->
   <header class="dash-header">
     <div class="header-left">
-      <span class="greeting-label">Tu portal</span>
+      <span class="greeting-label">TU PORTAL</span>
       <h1 class="greeting-title">¿Qué quieres hacer hoy?</h1>
     </div>
     <div class="header-logo">
@@ -13,15 +11,52 @@
     </div>
   </header>
 
-  <!-- ── Bento grid ── -->
-  <main class="bento">
+  <section *ngIf="(authService.accesosCargados$ | async) === false" class="dashboard-status" aria-live="polite">
+    <div class="dashboard-status__icon dashboard-status__icon--loading" aria-hidden="true">
+      <i class="fas fa-circle-notch fa-spin"></i>
+    </div>
+    <p>Cargando tus accesos...</p>
+  </section>
 
-    <!-- Proyección — tall left -->
-    <a routerLink="/usuarios/proyeccion-compras" class="bento-card card-proyeccion">
-      <div class="card-bg-num">01</div>
+  <section *ngIf="(authService.accesosCargados$ | async) && mostrarEstadoSinAccesos"
+    class="dashboard-status dashboard-status--empty" aria-live="polite">
+    <div class="dashboard-status__icon" aria-hidden="true">
+      <i class="fas fa-layer-group"></i>
+    </div>
+    <div>
+      <h2>No tienes accesos disponibles</h2>
+      <p>Tu cuenta no tiene módulos habilitados actualmente. Contacta a tu administrador para solicitar acceso.</p>
+    </div>
+  </section>
+
+  <main *ngIf="(authService.accesosCargados$ | async) && !mostrarEstadoSinAccesos"
+    class="bento" [class.bento--con-equipo]="authService.getRol() === 2">
+
+    <!-- 00. Gestión de Equipo (Exclusivo para Admin Cliente - Rol 2) -->
+    <a *ngIf="authService.getRol() === 2"
+       routerLink="/usuarios/creacion-usuarios"
+       class="bento-card card-equipo">
+      <div class="card-bg-num"></div>
       <div class="card-glow"></div>
       <div class="card-content">
-        <div class="card-tag">Compras</div>
+        <div class="card-tag">ADMINISTRACIÓN</div>
+        <div class="card-icon-wrap"><i class="fas fa-users-cog"></i></div>
+        <div class="card-bottom">
+          <h2>Gestión de Accesos</h2>
+          <p>Crea usuarios para tu cuenta y controla sus permisos.</p>
+          <div class="card-link">Gestionar equipo <i class="fas fa-arrow-right"></i></div>
+        </div>
+      </div>
+    </a>
+
+    <!-- 01. Proyección de Compra -->
+    <a *ngIf="authService.tieneModulo('usuarios_proyeccion_compras')"
+       routerLink="/usuarios/proyeccion-compras"
+       class="bento-card card-proyeccion">
+      <div class="card-bg-num"></div>
+      <div class="card-glow"></div>
+      <div class="card-content">
+        <div class="card-tag">COMPRAS</div>
         <div class="card-icon-wrap"><i class="fas fa-shopping-cart"></i></div>
         <div class="card-bottom">
           <h2>Proyección de Compra</h2>
@@ -31,14 +66,16 @@
       </div>
     </a>
 
-    <!-- Resumen — wide top right -->
-    <a routerLink="/usuarios/caratula" class="bento-card card-resumen">
-      <div class="card-bg-num">02</div>
+    <!-- 02. Resumen de Temporada -->
+    <a *ngIf="authService.tieneModulo('usuarios_caratula')"
+       routerLink="/usuarios/caratula"
+       class="bento-card card-resumen">
+      <div class="card-bg-num"></div>
       <div class="card-glow"></div>
-      <div class="card-content horizontal">
+      <div class="card-content">
         <div class="card-icon-wrap"><i class="fas fa-chart-line"></i></div>
         <div class="card-text">
-          <div class="card-tag">Temporada</div>
+          <div class="card-tag">TEMPORADA</div>
           <h2>Resumen de Temporada</h2>
           <p>Progreso de compra anual, avances y detalle de tus pedidos.</p>
           <div class="card-link">Ver resumen <i class="fas fa-arrow-right"></i></div>
@@ -46,27 +83,31 @@
       </div>
     </a>
 
-    <!-- Retroactivos — bottom center -->
-    <a routerLink="/usuarios/caratula-retroactivos" class="bento-card card-retroactivos">
-      <div class="card-bg-num">03</div>
+    <!-- 03. Retroactivos -->
+    <a *ngIf="tieneRetroactivos"
+       [routerLink]="rutaRetroactivos"
+       class="bento-card card-retroactivos">
+      <div class="card-bg-num"></div>
       <div class="card-glow"></div>
       <div class="card-content">
-        <div class="card-tag">Bonificaciones</div>
+        <div class="card-tag">BONIFICACIONES</div>
         <div class="card-icon-wrap"><i class="fas fa-undo"></i></div>
         <div class="card-bottom">
           <h2>Retroactivos</h2>
-          <p>Consulta tu carátula y su impacto en la compra anual.</p>
-          <div class="card-link">Ver carátula <i class="fas fa-arrow-right"></i></div>
+          <p>Consulta la información de tus retroactivos.</p>
+          <div class="card-link">{{ enlaceRetroactivos }} <i class="fas fa-arrow-right"></i></div>
         </div>
       </div>
     </a>
 
-    <!-- Garantías — bottom right -->
-    <a routerLink="/usuarios/garantias" class="bento-card card-garantias">
-      <div class="card-bg-num">04</div>
+    <!-- 04. Garantías -->
+    <a *ngIf="authService.tieneModulo('usuarios_garantias')"
+       routerLink="/usuarios/garantias"
+       class="bento-card card-garantias">
+      <div class="card-bg-num"></div>
       <div class="card-glow"></div>
       <div class="card-content">
-        <div class="card-tag">Soporte</div>
+        <div class="card-tag">SOPORTE</div>
         <div class="card-icon-wrap"><i class="fas fa-shield-alt"></i></div>
         <div class="card-bottom">
           <h2>Garantías</h2>
@@ -77,5 +118,4 @@
     </a>
 
   </main>
-
 </div>

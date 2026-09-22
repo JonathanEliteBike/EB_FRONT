@@ -1,5 +1,5 @@
-import { importProvidersFrom, LOCALE_ID, inject } from '@angular/core';
-import { provideRouter, RouterModule, withInMemoryScrolling } from '@angular/router';
+import { importProvidersFrom, LOCALE_ID, inject, Injector } from '@angular/core';
+import { provideRouter, RouterModule, withInMemoryScrolling, Router } from '@angular/router';
 import { routes } from './app.routes';
 import {
   provideHttpClient,
@@ -14,14 +14,14 @@ import { registerLocaleData } from '@angular/common';
 import localeEsMx from '@angular/common/locales/es-MX';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from './services/auth.service';
-import { Router } from '@angular/router';
 
 registerLocaleData(localeEsMx, 'es-MX');
 
 let _renovando = false;
 
 const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
-  const authService = inject(AuthService);
+  // Inyectamos Injector en lugar de AuthService para evitar el ciclo inmediato
+  const injector = inject(Injector);
   const router = inject(Router);
 
   const token = localStorage.getItem('token');
@@ -37,6 +37,10 @@ const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: Htt
 
       if (esRuta401 && !esRenovacion && !esLogin && !_renovando) {
         _renovando = true;
+
+        // Se resuelve AuthService bajo demanda únicamente al atrapar el error
+        const authService = injector.get(AuthService);
+
         return authService.renovarToken().pipe(
           switchMap(res => {
             _renovando = false;

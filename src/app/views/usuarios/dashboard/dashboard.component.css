@@ -22,6 +22,9 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 8px;
+  max-width: 1320px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .greeting-label {
@@ -52,42 +55,75 @@
   color: #EB5E28;
 }
 
+.dashboard-status {
+  width: min(100%, 760px);
+  min-height: 220px;
+  margin: 32px auto auto;
+  padding: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  text-align: left;
+  color: rgba(204, 197, 185, 0.72);
+}
+
+.dashboard-status--empty {
+  background: linear-gradient(145deg, rgba(20, 18, 16, 0.96), rgba(12, 12, 12, 0.98));
+  border: 1px solid rgba(235, 94, 40, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.dashboard-status__icon {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #EB5E28;
+  background: rgba(235, 94, 40, 0.1);
+  border: 1px solid rgba(235, 94, 40, 0.2);
+  font-size: 1.3rem;
+}
+
+.dashboard-status__icon--loading {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  background: transparent;
+  border: 0;
+}
+
+.dashboard-status h2 {
+  margin: 0 0 10px;
+  color: #FFFCF2;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  line-height: 1.2;
+}
+
+.dashboard-status p {
+  max-width: 560px;
+  margin: 0;
+  line-height: 1.65;
+}
+
 /* ══════════════════════════════════════════
-   BENTO GRID
-   Col: [tall-left] [wide-right-top]
-        [tall-left] [bottom-mid] [bottom-right]
+   BENTO GRID REJILLA DINÁMICA AUTOMÁTICA
 ══════════════════════════════════════════ */
 .bento {
   display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-auto-rows: minmax(230px, auto);
+  grid-auto-flow: dense;
+  gap: 16px;
   flex: 1;
-  min-height: 0;
-}
-
-/* Proyección ocupa toda la columna izquierda (2 filas) */
-.card-proyeccion {
-  grid-column: 1;
-  grid-row: 1 / 3;
-}
-
-/* Resumen ocupa las dos columnas centrales-derecha en la fila 1 */
-.card-resumen {
-  grid-column: 2 / 4;
-  grid-row: 1;
-}
-
-/* Retroactivos: columna central, fila 2 */
-.card-retroactivos {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-/* Garantías: columna derecha, fila 2 */
-.card-garantias {
-  grid-column: 3;
-  grid-row: 2;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  counter-reset: bento-counter; /* Inicializa el contador del grid */
 }
 
 /* ── Base de cada card ── */
@@ -101,13 +137,15 @@
   border: 1px solid #1c1c1c;
   transition: border-color .3s, transform .25s, box-shadow .3s;
   cursor: pointer;
+  min-height: 230px;
+  counter-increment: bento-counter; /* Incrementa +1 por cada tarjeta presente */
 }
 
 .bento-card:hover {
   transform: translateY(-4px) scale(1.01);
 }
 
-/* ── Número gigante de fondo ── */
+/* ── Número gigante dinámico de fondo ── */
 .card-bg-num {
   position: absolute;
   bottom: -20px;
@@ -122,6 +160,11 @@
   color: #fff;
   letter-spacing: -8px;
   transition: opacity .3s;
+}
+
+/* Renderiza el número consecutivo según las tarjetas visibles en pantalla (01, 02, 03...) */
+.card-bg-num::before {
+  content: counter(bento-counter, decimal-leading-zero);
 }
 
 .bento-card:hover .card-bg-num { opacity: 0.07; }
@@ -144,10 +187,10 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   height: 100%;
   padding: 28px;
   box-sizing: border-box;
-  gap: 0;
 }
 
 .card-content.horizontal {
@@ -237,7 +280,19 @@
    COLORES POR MÓDULO
 ══════════════════════════════════════════ */
 
-/* — Proyección: naranja cálido — */
+/* — 00. Equipo: Cian Administración — */
+.card-equipo {
+  background: linear-gradient(160deg, #0d161a 0%, #0a1014 100%);
+}
+.card-equipo .card-glow {
+  background: radial-gradient(ellipse at 30% 60%, rgba(0,180,216,0.18) 0%, transparent 65%);
+}
+.card-equipo:hover { border-color: rgba(0,180,216,0.4); box-shadow: 0 20px 60px rgba(0,180,216,0.15); }
+.card-equipo .card-tag { background: rgba(0,180,216,0.12); color: #00B4D8; }
+.card-equipo .card-icon-wrap { background: rgba(0,180,216,0.10); border: 1px solid rgba(0,180,216,0.2); color: #00B4D8; }
+.card-equipo .card-link { color: #00B4D8; }
+
+/* — 01. Proyección: Naranja Cálido — */
 .card-proyeccion {
   background: linear-gradient(160deg, #141210 0%, #0f0d0b 100%);
 }
@@ -249,9 +304,18 @@
 .card-proyeccion .card-icon-wrap { background: rgba(235,94,40,0.10); border: 1px solid rgba(235,94,40,0.2); color: #EB5E28; }
 .card-proyeccion .card-link { color: #EB5E28; }
 
-/* — Resumen: azul — */
+/* — 02. Resumen: Azul — */
 .card-resumen {
   background: linear-gradient(160deg, #0d1117 0%, #0a0e14 100%);
+  grid-column: auto;
+}
+
+/* Rol 2 tiene una tarjeta adicional de Gestión de Accesos: el resumen equilibra
+   esa rejilla de cinco elementos. Los usuarios hijo mantienen cards uniformes. */
+@media (min-width: 992px) {
+  .bento.bento--con-equipo .card-resumen {
+    grid-column: span 2;
+  }
 }
 .card-resumen .card-glow {
   background: radial-gradient(ellipse at 70% 50%, rgba(92,155,214,0.15) 0%, transparent 65%);
@@ -261,7 +325,7 @@
 .card-resumen .card-icon-wrap { background: rgba(92,155,214,0.10); border: 1px solid rgba(92,155,214,0.2); color: #5c9bd6; }
 .card-resumen .card-link { color: #5c9bd6; }
 
-/* — Retroactivos: morado — */
+/* — 03. Retroactivos: Morado — */
 .card-retroactivos {
   background: linear-gradient(160deg, #100d12 0%, #0c0a0e 100%);
 }
@@ -273,7 +337,7 @@
 .card-retroactivos .card-icon-wrap { background: rgba(155,89,182,0.10); border: 1px solid rgba(155,89,182,0.2); color: #9b59b6; }
 .card-retroactivos .card-link { color: #9b59b6; }
 
-/* — Garantías: verde — */
+/* — 04. Garantías: Verde — */
 .card-garantias {
   background: linear-gradient(160deg, #0a110c 0%, #080e0a 100%);
 }
@@ -285,54 +349,14 @@
 }
 .card-garantias .card-link { color: #4caf50; }
 
-/* — Estado deshabilitado — */
-.card-disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  filter: grayscale(0.4);
-}
-.card-disabled:hover {
-  transform: none;
-  border-color: #1c1c1c;
-  box-shadow: none;
-}
-
-/* — Badge "Próximamente" — */
-.card-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.card-header-row .card-tag {
-  margin-bottom: 0;
-}
-.badge-pronto {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.35);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .dash-page { padding: 20px 16px 40px; gap: 16px; }
   .bento {
-    display: flex;
-    flex-direction: column;
-    flex: none;
+    grid-template-columns: 1fr;
     gap: 12px;
   }
   .bento-card { min-height: 200px; }
-  .card-proyeccion { order: 1; min-height: 220px; }
-  .card-resumen    { order: 2; }
-  .card-retroactivos { order: 3; }
-  .card-garantias    { order: 4; }
   .card-bg-num { font-size: 6rem; }
   .card-content { padding: 20px; }
   .card-content.horizontal { flex-direction: row; gap: 18px; }
@@ -344,6 +368,12 @@
   .dash-page { padding: 16px 12px 32px; }
   .bento { gap: 10px; }
   .bento-card { min-height: 180px; }
+  .dashboard-status {
+    margin-top: 16px;
+    padding: 30px 22px;
+    flex-direction: column;
+    text-align: center;
+  }
   .card-content.horizontal { flex-direction: column; align-items: flex-start; gap: 14px; }
   .card-content.horizontal .card-icon-wrap { width: 48px; height: 48px; font-size: 1.2rem; }
   .greeting-title { font-size: 1.4rem; }

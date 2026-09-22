@@ -1,12 +1,14 @@
 import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { UsuariosService } from '../../../services/usuarios.service';
 import { AlertaService } from '../../../services/alerta.service';
 import { ClientesService } from '../../../services/clientes.service';
 import { AlertaComponent } from '../../../components/alerta/alerta.component';
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
+import { GestionClientesComponent } from '../gestion-clientes/gestion-clientes.component';
 
 interface Usuario {
   id: number | null;
@@ -37,7 +39,14 @@ interface FiltroOpciones {
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, HomeBarComponent, AlertaComponent, FiltroComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    HomeBarComponent,
+    AlertaComponent,
+    FiltroComponent
+  ],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.css']
 })
@@ -46,6 +55,12 @@ export class UsuariosComponent implements OnInit {
   private alerta = inject(AlertaService);
   private clientesService = inject(ClientesService);
   private cdr = inject(ChangeDetectorRef);
+
+  constructor(private location: Location) {} goBack() { this.location.back(); }
+
+  // Control de pestaña y título unificado
+  pestanaActiva: 'usuarios' | 'clientes' = 'usuarios';
+  tituloPantalla: string = 'Gestión de Usuarios';
 
   readonly ROLES = {
     ADMIN: { backendValue: 'Administrador' as const, display: 'Administrador' as const },
@@ -72,15 +87,6 @@ export class UsuariosComponent implements OnInit {
   mensajeAlerta: string | null = null;
   tipoAlerta: 'exito' | 'error' = 'exito';
 
-  // Eliminamos los filtros antiguos de búsqueda por texto
-  // filtros = {
-  //   clave: '',
-  //   nombre: '',
-  //   correo: '',
-  //   usuario: '',
-  //   rol: ''
-  // };
-
   filtroOpciones: FiltroOpciones = {
     clave: [],
     nombre: [],
@@ -98,12 +104,13 @@ export class UsuariosComponent implements OnInit {
   };
 
   get filtrosActivos(): boolean {
-    // Corregimos el error de tipo añadiendo anotación de tipo
     return (Object.values(this.filtrosAplicados) as any[]).some((filtro: any[]) => filtro.length > 0);
   }
 
+  // Paginación estandarizada
   paginaActual = 1;
   usuariosPorPagina = 25;
+  opcionesPorPagina: number[] = [10, 25, 50, 100];
 
   filtroAbierto: string | null = null;
 
@@ -115,26 +122,27 @@ export class UsuariosComponent implements OnInit {
   clienteSugerencias: ClienteNombre[] = [];
   clienteSeleccionadoId: number | null = null;
 
-  /** Para vincular al usuario a un grupo integral sin cliente específico */
   vincularGrupo = false;
   grupoSeleccionadoId: number | null = null;
   grupos: { id: number; nombre_grupo: string }[] = [];
-  /** Clientes que pertenecen al grupo seleccionado */
   clientesDelGrupo: { id: number; clave: string; nombre_cliente: string }[] = [];
-  /** Cliente específico elegido dentro del grupo (null = sin asignar) */
   clienteGrupoSeleccionadoId: number | null = null;
 
   ngOnInit(): void {
+    if (this.location.path().includes('gestion-clientes')) {
+      this.cambiarPestana('clientes');
+    } else {
+      this.cambiarPestana('usuarios');
+    }
+
     this.cargarUsuarios();
 
-    // Manejo de alertas
     this.alerta.alerta$.subscribe(({ mensaje, tipo }) => {
       this.mensajeAlerta = mensaje;
       this.tipoAlerta = tipo;
       setTimeout(() => this.mensajeAlerta = null, 4000);
     });
 
-    // Carga sugerencias de clientes
     this.clientesService.getNombresClientes().subscribe({
       next: (res: ClienteNombre[]) => {
         this.clienteSugerencias = res;
@@ -142,11 +150,21 @@ export class UsuariosComponent implements OnInit {
       error: () => console.error('Error al obtener clientes')
     });
 
-    // Carga grupos integrales
     this.usuariosService.getGruposIntegrales().subscribe({
       next: (res) => { this.grupos = res; },
       error: () => console.error('Error al obtener grupos integrales')
     });
+  }
+
+  cambiarPestana(pestana: 'usuarios' | 'clientes'): void {
+    this.pestanaActiva = pestana;
+    if (pestana === 'usuarios') {
+      this.tituloPantalla = 'Gestión de Usuarios';
+      this.location.replaceState('/usuarios');
+    } else {
+      this.tituloPantalla = 'Gestión de Administradores Cliente';
+      this.location.replaceState('/gestion-clientes');
+    }
   }
 
   cargarUsuarios(): void {
@@ -169,7 +187,6 @@ export class UsuariosComponent implements OnInit {
   }
 
   prepararOpcionesFiltros(): void {
-    // Preparar opciones para cada filtro
     this.filtroOpciones.clave = Array.from(new Set(this.usuarios.map(u => u.id?.toString() || '')))
       .filter(id => id)
       .map(id => ({ value: id, selected: false }));
@@ -212,14 +229,19 @@ export class UsuariosComponent implements OnInit {
   }
 
   get totalPaginas(): number {
-    return Math.ceil(this.usuariosFiltrados.length / this.usuariosPorPagina);
+    return Math.ceil(this.usuariosFiltrados.length / this.usuariosPorPagina) || 1;
+  }
+
+  cambiarUsuariosPorPagina(cant: number): void {
+    this.usuariosPorPagina = cant;
+    this.paginaActual = 1;
+    this.filtrarUsuarios();
   }
 
   filtrarUsuarios(): void {
     this.paginaActual = 1;
 
     this.usuariosFiltrados = this.usuarios.filter(usuario => {
-      // Aplicar todos los filtros
       return this.cumpleFiltro('clave', usuario.id?.toString()) &&
         this.cumpleFiltro('nombre', usuario.nombre) &&
         this.cumpleFiltro('correo', usuario.correo) &&
@@ -253,13 +275,11 @@ export class UsuariosComponent implements OnInit {
   seleccionarCliente(cliente: ClienteNombre) {
     this.clienteBusqueda = `${cliente.nombre_cliente} (${cliente.clave})`;
 
-    // Si el endpoint ya devuelve el id, úsalo directamente sin segunda llamada HTTP
     if (cliente.id) {
       this.clienteSeleccionadoId = cliente.id;
       return;
     }
 
-    // Fallback: buscar por clave (clientes sin grupo)
     this.clientesService.buscarCliente(cliente.clave).subscribe({
       next: (clienteCompleto) => {
         this.clienteSeleccionadoId = clienteCompleto.id;
@@ -288,8 +308,7 @@ export class UsuariosComponent implements OnInit {
     };
     this.mostrarFormularioRegistroVisible = true;
     this.mostrarFormularioEdicion = false;
-    
-    // Resetear campos de cliente
+
     this.asociarCliente = false;
     this.clienteBusqueda = '';
     this.clienteSeleccionadoId = null;
@@ -307,12 +326,9 @@ export class UsuariosComponent implements OnInit {
       this.asociarCliente = true;
       this.clienteSeleccionadoId = usuario.cliente_id;
 
-      // Opción 1: Si el usuario ya trae el nombre del cliente
       if (usuario.cliente_nombre) {
         this.clienteBusqueda = usuario.cliente_nombre;
-      }
-      // Opción 2: Buscar en clienteSugerencias
-      else {
+      } else {
         const clienteEncontrado = this.buscarClientePorId(usuario.cliente_id);
         if (clienteEncontrado) {
           this.clienteBusqueda = `${clienteEncontrado.nombre_cliente}`;
@@ -327,9 +343,7 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
-  // Método auxiliar para buscar cliente por ID
   buscarClientePorId(clienteId: number): ClienteNombre | undefined {
-    // Intenta encontrar el cliente cuyo ID está en la clave (ej: "CLI-123")
     return this.clienteSugerencias.find(c => {
       try {
         const partes = c.clave.split('-');
@@ -346,7 +360,6 @@ export class UsuariosComponent implements OnInit {
     this.mostrarFormularioEdicion = false;
   }
 
-  /** Carga los clientes del grupo seleccionado al cambiar el dropdown de grupo. */
   onGrupoChange(): void {
     this.clienteGrupoSeleccionadoId = null;
     this.clientesDelGrupo = [];
@@ -361,7 +374,6 @@ export class UsuariosComponent implements OnInit {
     if (this.validarFormulario()) {
       this.cargandoUsuarios = true;
 
-      // Prepara el objeto para enviar
       const usuarioParaCrear: any = {
         usuario: this.nuevoUsuario.usuario.trim(),
         contrasena: this.nuevoUsuario.contrasena,
@@ -371,20 +383,16 @@ export class UsuariosComponent implements OnInit {
         activo: true
       };
 
-      // Añade cliente_id solo si está seleccionado y es válido
       if (this.asociarCliente && this.clienteSeleccionadoId) {
         usuarioParaCrear.cliente_id = this.clienteSeleccionadoId;
       } else {
-        usuarioParaCrear.cliente_id = null; // Envía null explícitamente
+        usuarioParaCrear.cliente_id = null;
       }
 
-      // Vincula a un grupo integral
       if (this.vincularGrupo && this.grupoSeleccionadoId) {
         if (this.clienteGrupoSeleccionadoId) {
-          // El admin eligió un cliente específico del grupo → se usa cliente_id
           usuarioParaCrear.cliente_id = this.clienteGrupoSeleccionadoId;
         } else {
-          // Sin cliente específico → solo el grupo
           usuarioParaCrear.id_grupo = this.grupoSeleccionadoId;
         }
       }
@@ -395,15 +403,13 @@ export class UsuariosComponent implements OnInit {
           this.cargandoUsuarios = false;
           this.volverALista();
 
-          // Actualiza la lista
           this.usuarios.unshift({
             ...usuarioCreado,
             rol: usuarioCreado.rol === 'Administrador' ? this.ROLES.ADMIN.backendValue : this.ROLES.USUARIO.backendValue
           });
-          this.prepararOpcionesFiltros(); // Actualizar opciones de filtro
+          this.prepararOpcionesFiltros();
           this.filtrarUsuarios();
 
-          // Limpiar campos de cliente para el próximo uso
           this.asociarCliente = false;
           this.clienteBusqueda = '';
           this.clienteSeleccionadoId = null;
@@ -448,12 +454,10 @@ export class UsuariosComponent implements OnInit {
         correo: this.nuevoUsuario.correo.trim()
       };
 
-      // Solo enviar contraseña si se proporcionó una nueva y no está vacía
       if (this.nuevoUsuario.contrasena?.trim()) {
         datosActualizacion.contrasena = this.nuevoUsuario.contrasena;
       }
 
-      // Manejo de cliente_id según la selección
       if (this.asociarCliente && this.clienteSeleccionadoId) {
         datosActualizacion.cliente_id = this.clienteSeleccionadoId;
       } else {
@@ -462,17 +466,15 @@ export class UsuariosComponent implements OnInit {
 
       this.usuariosService.actualizarUsuario(this.nuevoUsuario.id, datosActualizacion).subscribe({
         next: (usuarioActualizado) => {
-          // Convertir el rol al formato del frontend
           const usuarioActualizadoFormateado = {
             ...usuarioActualizado,
             rol: usuarioActualizado.rol === 'Administrador' ? this.ROLES.ADMIN.backendValue : this.ROLES.USUARIO.backendValue
           };
 
-          // Actualizar en la lista local
           const index = this.usuarios.findIndex(u => u.id === usuarioActualizadoFormateado.id);
           if (index !== -1) {
             this.usuarios[index] = usuarioActualizadoFormateado;
-            this.prepararOpcionesFiltros(); // Actualizar opciones de filtro
+            this.prepararOpcionesFiltros();
             this.filtrarUsuarios();
           }
 
@@ -480,7 +482,6 @@ export class UsuariosComponent implements OnInit {
           this.volverALista();
           this.cargandoUsuarios = false;
 
-          // Limpiar campos de cliente
           this.asociarCliente = false;
           this.clienteBusqueda = '';
           this.clienteSeleccionadoId = null;
@@ -507,7 +508,6 @@ export class UsuariosComponent implements OnInit {
   }
 
   validarFormulario(): boolean {
-    // Validación de nombre de usuario (3-20 caracteres alfanuméricos)
     if (this.mostrarFormularioRegistroVisible) {
       const usuarioRegex = /^[a-zA-Z0-9_.-]{3,20}$/;
       if (!usuarioRegex.test(this.nuevoUsuario.usuario)) {
@@ -516,13 +516,11 @@ export class UsuariosComponent implements OnInit {
       }
     }
 
-    // Validación de correo
     if (this.nuevoUsuario.correo && !this.validarEmail(this.nuevoUsuario.correo)) {
       this.alerta.mostrarError('El correo electrónico no es válido');
       return false;
     }
 
-    // Validación de contraseña (solo para registro)
     if (this.mostrarFormularioRegistroVisible) {
       if (!this.nuevoUsuario.contrasena) {
         this.alerta.mostrarError('La contraseña es requerida');
@@ -534,7 +532,6 @@ export class UsuariosComponent implements OnInit {
       }
     }
 
-    // Validación de campos obligatorios
     if (!this.nuevoUsuario.nombre?.trim()) {
       this.alerta.mostrarError('El nombre es obligatorio');
       return false;
@@ -551,13 +548,11 @@ export class UsuariosComponent implements OnInit {
       }
     }
 
-    // Validación de cliente si está seleccionado
     if (this.asociarCliente && !this.clienteSeleccionadoId) {
       this.alerta.mostrarError('Debe seleccionar un cliente válido');
       return false;
     }
 
-    // Validación de grupo integral si está activado
     if (this.vincularGrupo && !this.grupoSeleccionadoId) {
       this.alerta.mostrarError('Debe seleccionar un grupo integral válido');
       return false;
@@ -586,9 +581,8 @@ export class UsuariosComponent implements OnInit {
       this.cargandoUsuarios = true;
       this.usuariosService.eliminarUsuario(this.usuarioAEliminar.id).subscribe({
         next: () => {
-          // Actualización MANUAL
           this.usuarios = this.usuarios.filter(u => u.id !== this.usuarioAEliminar?.id);
-          this.prepararOpcionesFiltros(); // Actualizar opciones de filtro
+          this.prepararOpcionesFiltros();
           this.filtrarUsuarios();
           this.alerta.mostrarExito('✅ Usuario eliminado');
           this.mostrarConfirmacion = false;
@@ -596,18 +590,28 @@ export class UsuariosComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al eliminar:', error);
-          this.alerta.mostrarError('Error al eliminar usuario');
+          this.alerta.mostrarError(this.obtenerMensajeErrorEliminacion(error));
           this.cargandoUsuarios = false;
         }
       });
     }
   }
 
+  private obtenerMensajeErrorEliminacion(error: any): string {
+    if (error?.status === 404) return 'El usuario ya no existe.';
+    if (error?.status === 409) {
+      return error.error?.error || 'El usuario tiene información relacionada y no puede eliminarse.';
+    }
+    if (error?.status === 403) return 'No tienes autorización para eliminar este usuario.';
+    if (error?.status >= 500) return 'No fue posible eliminar el usuario.';
+    return error?.error?.error || 'No fue posible eliminar el usuario.';
+  }
+
   obtenerRangoPaginas(): number[] {
     const totalPages = this.totalPaginas;
     const currentPage = this.paginaActual;
     const delta = 2;
-    const range = [];
+    const range: number[] = [];
 
     for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
       if (i > 0 && i <= totalPages) {
@@ -616,10 +620,10 @@ export class UsuariosComponent implements OnInit {
     }
 
     if (currentPage - delta > 2) {
-      range.unshift(-1); // Marcador para elipsis
+      range.unshift(-1);
     }
     if (currentPage + delta < totalPages - 1) {
-      range.push(-1); // Marcador para elipsis
+      range.push(-1);
     }
 
     range.unshift(1);
@@ -627,7 +631,7 @@ export class UsuariosComponent implements OnInit {
       range.push(totalPages);
     }
 
-    return range.filter((page, index, array) => 
+    return range.filter((page, index, array) =>
       page !== -1 || array[index - 1] !== -1
     );
   }

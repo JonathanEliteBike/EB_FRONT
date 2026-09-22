@@ -1,0 +1,294 @@
+<app-home-bar></app-home-bar>
+
+<div class="gestion-clientes-layout">
+  <!-- ALERTA INLINE LOCAL -->
+  <div *ngIf="alertMsj" [ngClass]="alertTipo === 'success' ? 'inline-alert success' : 'inline-alert error'">
+    <span>{{ alertMsj }}</span>
+    <button class="close-btn" (click)="alertMsj = null">&times;</button>
+  </div>
+
+  <div class="header-section">
+    <div class="header-title">
+      <button class="btn-volver" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Volver
+      </button>
+       <h2 class="main-title">Gestión de Permisos</h2>
+    </div>
+
+    <!-- BARRA DE FILTROS Y BOTÓN RECARGAR LISTADO -->
+    <div class="filtros-bar">
+      <div class="search-box">
+        <input type="text" placeholder="Buscar por nombre, usuario o correo..." [(ngModel)]="filtroTexto" (input)="paginaActual = 1">
+      </div>
+      <button class="btn btn-info" (click)="cargarAdministradores()" [disabled]="cargando">
+        <i class="fas fa-sync-alt"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- ESTADO CARGANDO -->
+  <div *ngIf="cargando" class="empty-state">
+    <p>Cargando información de administradores...</p>
+  </div>
+
+  <!-- LISTA EXCLUSIVA DE ADMINISTRADORES CLIENTE -->
+  <div *ngIf="!cargando" class="table-wrap">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Usuario / Correo</th>
+            <th>Cupo de hijos</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let admin of administradoresPaginados()">
+            <td>{{ admin.id }}</td>
+            <td><strong>{{ admin.nombre }}</strong></td>
+            <td>
+              {{ admin.usuario }} <br>
+              <small style="color: var(--t3);">{{ admin.correo }}</small>
+            </td>
+            <td>
+              <div class="cupo-control">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  aria-label="Cupo máximo de usuarios hijos"
+                  [(ngModel)]="admin.max_hijos">
+                <span>{{ admin.hijos_activos || 0 }} activos</span>
+                <button class="btn btn-action" type="button" (click)="actualizarCupo(admin, admin.max_hijos)">
+                  Guardar
+                </button>
+              </div>
+            </td>
+            <td>
+              <span *ngIf="admin.activo === 1" class="badge badge-active">Activo</span>
+              <span *ngIf="admin.activo === 0" class="badge badge-inactive">Inactivo</span>
+            </td>
+            <td>
+              <div class="td-actions">
+                <button class="btn btn-primary" (click)="abrirModalBolsaDelegable(admin)">
+                  Gestionar permisos
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="administradoresFiltrados.length === 0">
+            <td colspan="6" class="empty-state">No se encontraron administradores cliente.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="paginacion-container" *ngIf="administradoresFiltrados.length > 0">
+      <div class="paginador-selector-wrap">
+        <span class="selector-label">Mostrar:</span>
+        <div class="selector-pills">
+          <button
+            *ngFor="let cant of opcionesPorPagina"
+            class="btn-pill"
+            [class.activa]="elementosPorPagina === cant"
+            (click)="cambiarElementosPorPagina(cant)">
+            {{ cant }}
+          </button>
+        </div>
+        <span class="paginador-info">
+          Mostrando {{ administradoresPaginados().length }} de {{ administradoresFiltrados.length }} registros
+        </span>
+      </div>
+
+      <div class="paginador-controles">
+        <button class="btn btn-action" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+          Anterior
+        </button>
+
+        <div class="paginas-numeros">
+          <button
+            *ngFor="let pagina of obtenerRangoPaginas()"
+            class="btn-page"
+            [class.activa]="pagina === paginaActual"
+            [disabled]="pagina === -1"
+            (click)="pagina !== -1 && cambiarPagina(pagina)">
+            {{ pagina === -1 ? '...' : pagina }}
+          </button>
+        </div>
+
+        <button class="btn btn-action" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE PERMISOS -->
+<div *ngIf="modalBolsaVisible" class="modal-backdrop">
+  <div class="modal-card modal-large">
+    <div class="modal-header-custom">
+        <h3>Permisos delegables — {{ clienteSeleccionado?.nombre }}</h3>
+      <button type="button" class="close-btn" (click)="cerrarModalBolsa()">&times;</button>
+    </div>
+
+    <div class="modal-body-custom">
+      <p class="modal-desc">
+        Selecciona los permisos que este administrador podrá asignar posteriormente a sus usuarios.
+      </p>
+
+
+      <div *ngIf="cargandoModal" class="empty-state">Cargando permisos del catálogo general...</div>
+
+      <!-- CONTENEDOR UNIFICADO DEL MODAL -->
+      <div *ngIf="!cargandoModal" class="modal-table-box">
+
+        <!-- BÚSQUEDA POR NOMBRE VISIBLE DE MÓDULO O ACCIÓN -->
+        <div class="table-subfilters-bar">
+          <label class="seleccionar-todos-modulos">
+            <input #seleccionTodos type="checkbox"
+              [checked]="todosModulosVisiblesSeleccionados"
+              [indeterminate]="seleccionModulosVisiblesParcial"
+              [disabled]="guardandoPermisos || modulosSeleccionablesVisibles.length === 0"
+              (change)="seleccionarTodosModulosVisibles(seleccionTodos.checked)">
+            <span>Seleccionar todos
+              <small>Módulos de esta página y sus submódulos, según la búsqueda.</small>
+            </span>
+          </label>
+          <div class="search-box-modal" style="width: 280px; margin-left: auto;">
+            <input
+              type="text"
+              class="input-base"
+              [(ngModel)]="filtroBusquedaModal"
+              (ngModelChange)="onBusquedaModalChange()"
+              placeholder="Buscar módulo o acción..."
+              style="width: 100%; padding: 6px 12px; background: #121212; border: 1px solid var(--border2); color: #fff; border-radius: 6px; font-size: 0.82rem; outline: none;"
+            />
+          </div>
+        </div>
+
+        <!-- ÁRBOL DE MÓDULOS Y ACCIONES DELEGABLES -->
+        <div class="modal-table-wrap">
+          <table class="data-table modal-data-table">
+            <thead>
+              <tr>
+                <th class="col-expand"></th>
+                <th class="col-nombre">Nombre Módulo / Acciones</th>
+                <th class="col-jerarquia">Jerarquía</th>
+                <th class="col-estado">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-template #filaPermiso let-modulo let-nivel="nivel">
+                <tr [class.tr-root]="nivel === 0" [class.tr-submodule]="nivel > 0">
+                  <td class="col-expand">
+                    <button *ngIf="getSubmodulos(modulo.id).length > 0" type="button" class="btn-expand" (click)="toggleExpandir(modulo.id)">
+                      <span class="arrow" [class.rotated]="isExpandido(modulo.id)">&#9654;</span>
+                    </button>
+                  </td>
+                  <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24">
+                    <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
+                    <div class="vertical-actions-tree" *ngIf="esModuloMigrado(modulo.id)">
+                      <label class="action-tree-item checkbox-permiso">
+                        <input type="checkbox" [(ngModel)]="modulosAcceso[modulo.id]">
+                        <span class="chip-accion-vertical">Acceso al módulo</span>
+                      </label>
+                    </div>
+                    <div class="vertical-actions-tree" *ngIf="!esModuloMigrado(modulo.id) && modulo.acciones && modulo.acciones.length > 0">
+                      <label *ngFor="let acc of modulo.acciones" class="action-tree-item checkbox-permiso">
+                        <input type="checkbox"
+                          [checked]="isPermisoAsignado(modulo.id, acc.id)"
+                          (change)="togglePermiso(modulo.id, acc.id)">
+                        <span class="chip-accion-vertical">{{ acc.nombre }}</span>
+                      </label>
+                    </div>
+                    <div *ngIf="!modulo.acciones || modulo.acciones.length === 0" class="text-muted small-text">Sin acciones</div>
+                  </td>
+                  <td class="col-jerarquia">
+                    <span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">
+                      {{ nivel === 0 ? 'Módulo raíz' : 'Submódulo' }}
+                    </span>
+                  </td>
+                  <td class="col-estado">
+                    <span class="badge" [ngClass]="tieneAlgunPermiso(modulo.id) ? 'badge-active' : 'badge-inactive'">
+                      {{ tieneAlgunPermiso(modulo.id) ? 'Asignado' : 'No Asignado' }}
+                    </span>
+                  </td>
+                </tr>
+
+                <ng-container *ngIf="isExpandido(modulo.id)">
+                  <ng-container *ngFor="let hijo of getSubmodulos(modulo.id)">
+                    <ng-container *ngTemplateOutlet="filaPermiso; context: { $implicit: hijo, nivel: nivel + 1 }"></ng-container>
+                  </ng-container>
+                </ng-container>
+              </ng-template>
+
+              <ng-container *ngFor="let modulo of modulosModalPaginados">
+                <ng-container *ngTemplateOutlet="filaPermiso; context: { $implicit: modulo, nivel: 0 }"></ng-container>
+              </ng-container>
+
+              <tr *ngIf="modulosModalFiltrados.length === 0">
+                  <td colspan="4" class="empty-state">No se encontraron permisos registrados con el criterio seleccionado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINACIÓN UNIFICADA AL PIE DEL MODAL -->
+        <div class="paginacion-container" *ngIf="modulosModalFiltrados.length > 0">
+          <div class="paginador-selector-wrap">
+            <span class="selector-label">Mostrar:</span>
+            <div class="selector-pills">
+              <button
+                *ngFor="let cant of opcionesPorPaginaModal"
+                class="btn-pill"
+                [class.activa]="itemsPorPaginaModal === cant"
+                (click)="cambiarItemsPorPaginaModal(cant)">
+                {{ cant }}
+              </button>
+            </div>
+            <span class="paginador-info">
+              Mostrando {{ modulosModalPaginados.length }} de {{ modulosModalFiltrados.length }} registros
+            </span>
+          </div>
+
+          <div class="paginador-controles">
+            <button class="btn btn-action" (click)="cambiarPaginaModal(-1)" [disabled]="paginaModal === 1">
+              Anterior
+            </button>
+
+            <div class="paginas-numeros">
+              <button
+                *ngFor="let p of obtenerRangoPaginasModal()"
+                class="btn-page"
+                [class.activa]="p === paginaModal"
+                [disabled]="p === -1"
+                (click)="cambiarPaginaDirectaModal(p)">
+                {{ p === -1 ? '...' : p }}
+              </button>
+            </div>
+
+            <button class="btn btn-action" (click)="cambiarPaginaModal(1)" [disabled]="paginaModal === totalPaginasModal">
+              Siguiente
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FOOTER CON BOTÓN DE CONFIRMAR -->
+    <div class="modal-footer-custom">
+      <button type="button" class="btn btn-secondary" (click)="cerrarModalBolsa()" [disabled]="guardandoPermisos">
+        Cancelar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="guardarPermisos()" [disabled]="guardandoPermisos">
+        {{ guardandoPermisos ? 'Guardando...' : 'Guardar Permisos' }}
+      </button>
+    </div>
+
+  </div>
+</div>

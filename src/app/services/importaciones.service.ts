@@ -31,6 +31,8 @@ export interface Importacion {
 
   // Logística
   log_numero_contenedores?: number;
+  log_volumen_m3?: number;
+  log_cantidad_producto?: number;
   log_fecha_notificacion?: string;
   log_fecha_entrega_prog?: string | null;
   log_fecha_entrega?: string;
@@ -105,7 +107,7 @@ export interface Importacion {
   des_solicitud_pase_maniobras?: string;
   des_carta_maniobras?: string;
   des_fecha_carta_porte?: string;
-  des_fecha_entrega_almacen_prog?: string;
+  des_fecha_entrega_almacen_prog?: string | null;
   des_lugar_destino?: string;
   des_llegada_almacen?: string;
   des_dias_transito_terrestre?: number;
@@ -224,10 +226,29 @@ export interface Importacion {
   borradores?: Record<string, Record<string, any>>;
   campos_na?: string[];
 
+  // Costo por bicicleta desglosado por tamaño de caja (label -> USD/bici)
+  precio_bici_x_caja?: Record<string, number>;
+
   // Monitor pipeline
   pipeline?: Record<string, { proy: string | null; real: string | null; delta: number | null }>;
   lat_total?: number | null;
   estado_actual?: string;
+
+  // true cuando Entrega+origen+producto+vía ya están capturados pero no existe
+  // ninguna regla en Tiempos Estimados para esa combinación -- las 4 fechas
+  // proyectadas (Booking→Almacén) quedan sin calcular hasta que se configure.
+  tiempos_estimados_faltantes?: boolean;
+}
+
+/** Respuesta de PUT /importaciones/:id -- incluye las 4 fechas proyectadas
+ * recién recalculadas para refrescar el formulario sin un segundo round-trip. */
+export interface ActualizarImportacionResp {
+  ok: boolean;
+  log_fecha_booking_prog?: string | null;
+  imp_llegada_contenedor_prog?: string | null;
+  des_fecha_cruce_prog?: string | null;
+  des_fecha_entrega_almacen_prog?: string | null;
+  tiempos_estimados_faltantes?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -248,21 +269,29 @@ export class ImportacionesService {
     return this.http.post<{ ok: boolean; id: number }>(this.base, data);
   }
 
-  actualizar(id: number, data: Partial<Importacion>): Observable<{ ok: boolean }> {
-    return this.http.put<{ ok: boolean }>(`${this.base}/${id}`, data);
+  actualizar(id: number, data: Partial<Importacion>): Observable<ActualizarImportacionResp> {
+    return this.http.put<ActualizarImportacionResp>(`${this.base}/${id}`, data);
   }
 
   eliminar(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(`${this.base}/${id}`);
   }
 
-  dashboard(filtros: { via: string; estado: string; origen: string; anio: string }): Observable<any> {
+  dashboard(filtros: { via: string; estado: string; origen: string; anio: string; fecha_desde?: string; fecha_hasta?: string }): Observable<any> {
     const params: Record<string, string> = {};
-    if (filtros.via)    params['via']    = filtros.via;
-    if (filtros.estado) params['estado'] = filtros.estado;
-    if (filtros.origen) params['origen'] = filtros.origen;
-    if (filtros.anio)   params['anio']   = filtros.anio;
+    if (filtros.via)         params['via']         = filtros.via;
+    if (filtros.estado)      params['estado']      = filtros.estado;
+    if (filtros.origen)      params['origen']      = filtros.origen;
+    if (filtros.anio)        params['anio']        = filtros.anio;
+    if (filtros.fecha_desde) params['fecha_desde'] = filtros.fecha_desde;
+    if (filtros.fecha_hasta) params['fecha_hasta'] = filtros.fecha_hasta;
     return this.http.get<any>(`${this.base}/dashboard`, { params });
+  }
+
+  listarTemporadas(): Observable<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]> {
+    return this.http.get<{ etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string }[]>(
+      `${environment.apiUrl}/temporadas`
+    );
   }
 
   progresoPct(imp: Importacion): number {

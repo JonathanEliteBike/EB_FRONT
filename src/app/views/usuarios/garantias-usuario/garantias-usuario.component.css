@@ -222,6 +222,7 @@
 }
 .doc-link { display: flex; align-items: center; gap: 12px; flex: 1; text-decoration: none; color: inherit; }
 .doc-link:hover .doc-label { color: var(--orange); }
+.doc-link.doc-cargando { cursor: default; opacity: .6; }
 .doc-icon { font-size: 1.2rem; color: var(--t3); flex-shrink: 0; width: 20px; text-align: center; }
 .doc-texts { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .doc-label { font-size: 0.85rem; font-weight: 600; color: var(--t2); }

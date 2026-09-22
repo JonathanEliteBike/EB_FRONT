@@ -2,303 +2,325 @@
 
 <div class="monitor-container">
 
-    <div class="action-bar">
-        <button class="btn-volver-sm" [routerLink]="['/usuarios/inicio']">
-            <i class="fas fa-arrow-left"></i> Volver al Inicio
-        </button>
+    <!-- ESTRUCTURA PADRE: SOLO RENDERIZA SI TIENE PERMISO DE VISTA 'retroactivos/ver' -->
+    <ng-container *ngIf="tieneAccesoModulo; else sinAcceso">
 
-        <button class="btn-calculadora" [routerLink]="['/usuarios/calculadora-retroactivos']">
-            <i class="fas fa-calculator"></i> Calculadora de Retroactivos
-        </button>
+        <div class="action-bar">
+            <button class="btn-volver-sm" [routerLink]="['/usuarios/inicio']">
+                <i class="fas fa-arrow-left"></i> Volver al Inicio
+            </button>
 
-        <button class="btn-solicitud-retroactivos" [routerLink]="['/usuarios/solicitud-retroactivo']">
-            <i class="fa-solid fa-envelope"></i> Solicitud de retroactivos
-        </button>
+            <!-- Botón Calculadora protegido -->
+            <button *ngIf="puedeAccederCalculadora"
+                    class="btn-calculadora"
+                    [routerLink]="['/usuarios/calculadora-retroactivos']">
+                <i class="fas fa-calculator"></i> Calculadora de Retroactivos
+            </button>
 
-        <app-temporada-selector *ngIf="temporadasDisponibles.length"
-            [temporadas]="temporadasDisponibles"
-            [seleccionada]="temporadaHistoricaSeleccionada"
-            (cambio)="verTemporadaPasada($event)">
-        </app-temporada-selector>
-    </div>
+            <!-- Botón Solicitud protegido -->
+            <button *ngIf="puedeAccederSolicitudes"
+                    class="btn-solicitud-retroactivos"
+                    [routerLink]="['/usuarios/solicitud-retroactivo']">
+                <i class="fa-solid fa-envelope"></i> Solicitud de retroactivos
+            </button>
 
-    <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
-        (volver)="volverATemporadaActual()"></app-aviso-historico>
-
-    <div *ngIf="isLoading" class="loading-message">
-        <i class="fas fa-spinner fa-spin"></i> Cargando tu Estado de Cuenta...
-    </div>
-
-    <div *ngIf="error" class="error-message">
-        <i class="fas fa-exclamation-triangle"></i> {{ error }}
-    </div>
-
-    <div class="barra-acciones-pdf" *ngIf="datosCliente && !isLoading">
-        <button class="btn-descargar-pdf" (click)="descargarPDF()">
-            <i class="fas fa-file-pdf"></i> Descargar PDF
-        </button>
-    </div>
-
-    <div class="caratula-wrapper" *ngIf="datosCliente && !isLoading">
-
-        <!-- BANNER: Cierre split (dos fechas) -->
-        <ng-container *ngIf="temporadaCerrada && fechaCierreApparel">
-            <div class="banner-temporada-cerrada banner-split-scott">
-                <i class="fas fa-lock"></i>
-                SCOTT / BICICLETAS cerradas el {{ fechaCierreFormateada }}
-            </div>
-            <div class="banner-temporada-cerrada banner-split-apparel">
-                <i class="fas fa-lock"></i>
-                APPAREL / SYNCROS / VITTORIA cerradas el {{ fechaCierreApparel }}
-            </div>
-        </ng-container>
-
-        <!-- BANNER: Temporada cerrada estándar -->
-        <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada && !fechaCierreApparel">
-            <i class="fas fa-lock"></i>
-            TEMPORADA CERRADA EL {{ fechaCierreFormateada }}
+            <app-temporada-selector *ngIf="temporadasDisponibles.length"
+                [temporadas]="temporadasDisponibles"
+                [seleccionada]="temporadaHistoricaSeleccionada"
+                (cambio)="verTemporadaPasada($event)">
+            </app-temporada-selector>
         </div>
 
-        <div class="caratula-header">
-            <div class="logo-box">
-                <img src="assets/logo_elite_2.png" alt="Logo Elite" class="logo-img">
-            </div>
-            <div class="header-text">
-                <h1>Retroactivos {{ etiquetaAMY(temporadaHistoricaSeleccionada || temporadaActualEtiqueta) }}</h1>
-                <p class="subtitle text-orange">ESTADO DE CUENTA DEL DISTRIBUIDOR</p>
-            </div>
+        <app-aviso-historico [temporada]="temporadaHistoricaSeleccionada"
+            (volver)="volverATemporadaActual()"></app-aviso-historico>
+
+        <div *ngIf="isLoading" class="loading-message">
+            <i class="fas fa-spinner fa-spin"></i> Cargando tu Estado de Cuenta...
         </div>
 
-        <div class="section-title">INFORMACIÓN GENERAL</div>
-        <table class="table-moderna">
-            <tbody>
-                <tr>
-                    <th class="th-lateral">Clave</th>
-                    <td class="fw-bold fs-large text-dark">{{ datosCliente.CLAVE }}</td>
-                </tr>
-                <tr>
-                    <th class="th-lateral">Razón Social</th>
-                    <td class="fw-bold fs-large text-dark">{{ datosCliente.CLIENTE }}</td>
-                </tr>
-                <tr>
-                    <th colspan="2" class="th-dark text-center">CATEGORÍA DE CIERRE DE TEMPORADA</th>
-                </tr>
-                <tr>
-                    <td colspan="2" class="text-center fw-bold fs-xl text-dark">
-                        {{ datosCliente.CATEGORIA }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div *ngIf="error" class="error-message">
+            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+        </div>
 
-        <div class="section-title">METAS Y CUMPLIMIENTO</div>
-        <table class="table-moderna">
-            <thead>
-                <tr>
-                    <th class="th-dark text-center">ITEM</th>
-                    <th class="th-dark text-center">COMPROMISO</th>
-                    <th class="th-dark text-center">CUMPLIMIENTO</th>
-                    <th class="th-dark text-center">PORCENTAJE (%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="fw-bold text-dark text-left ps-4">
-                        GENERAL - CATEGORÍA
-                        <span class="formula-text-dark">* Meta anual pactada según contrato {{ etiquetaAMY(temporadaHistoricaSeleccionada || temporadaActualEtiqueta) }}.</span>
-                    </td>
-                    <td class="text-center">
-                        {{ datosCliente.COMPRA_MINIMA_ANUAL | currency:'USD':'$':'1.2-2' }}
-                    </td>
-                    <td class="text-center">
+        <!-- Botón Descargar PDF protegido -->
+        <div class="barra-acciones-pdf" *ngIf="datosCliente && !isLoading && puedeVerMontos">
+            <button *ngIf="tieneAccesoModulo"
+                    class="btn-descargar-pdf"
+                    (click)="descargarPDF()">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </button>
+        </div>
+
+        <div class="caratula-wrapper" *ngIf="datosCliente && !isLoading">
+
+            <!-- BANNER: Cierre split (dos fechas) -->
+            <ng-container *ngIf="temporadaCerrada && fechaCierreApparel">
+                <div class="banner-temporada-cerrada banner-split-scott">
+                    <i class="fas fa-lock"></i>
+                    SCOTT / BICICLETAS cerradas el {{ fechaCierreFormateada }}
+                </div>
+                <div class="banner-temporada-cerrada banner-split-apparel">
+                    <i class="fas fa-lock"></i>
+                    APPAREL / SYNCROS / VITTORIA cerradas el {{ fechaCierreApparel }}
+                </div>
+            </ng-container>
+
+            <!-- BANNER: Temporada cerrada estándar -->
+            <div class="banner-temporada-cerrada" *ngIf="temporadaCerrada && !fechaCierreApparel">
+                <i class="fas fa-lock"></i>
+                TEMPORADA CERRADA EL {{ fechaCierreFormateada }}
+            </div>
+
+            <div class="caratula-header">
+                <div class="logo-box">
+                    <img src="assets/logo_elite_2.png" alt="Logo Elite" class="logo-img">
+                </div>
+                <div class="header-text">
+                    <h1>Retroactivos {{ etiquetaAMY(temporadaHistoricaSeleccionada || temporadaActualEtiqueta) }}</h1>
+                    <p class="subtitle text-orange">ESTADO DE CUENTA DEL DISTRIBUIDOR</p>
+                </div>
+            </div>
+
+            <div class="section-title">INFORMACIÓN GENERAL</div>
+            <table class="table-moderna">
+                <tbody>
+                    <tr>
+                        <th class="th-lateral">Clave</th>
+                        <td class="fw-bold fs-large text-dark">{{ datosCliente.CLAVE }}</td>
+                    </tr>
+                    <tr>
+                        <th class="th-lateral">Razón Social</th>
+                        <td class="fw-bold fs-large text-dark">{{ datosCliente.CLIENTE }}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="2" class="th-dark text-center">CATEGORÍA DE CIERRE DE TEMPORADA</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-center fw-bold fs-xl text-dark">
+                            {{ datosCliente.CATEGORIA }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <ng-container *ngIf="puedeVerMontos">
+            <div class="section-title">METAS Y CUMPLIMIENTO</div>
+            <table class="table-moderna">
+                <thead>
+                    <tr>
+                        <th class="th-dark text-center">ITEM</th>
+                        <th class="th-dark text-center">COMPROMISO</th>
+                        <th class="th-dark text-center">CUMPLIMIENTO</th>
+                        <th class="th-dark text-center">PORCENTAJE (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold text-dark text-left ps-4">
+                            GENERAL - CATEGORÍA
+                            <span class="formula-text-dark">* Meta anual pactada según contrato {{ etiquetaAMY(temporadaHistoricaSeleccionada || temporadaActualEtiqueta) }}.</span>
+                        </td>
+                        <td class="text-center">
+                            {{ datosCliente.COMPRA_MINIMA_ANUAL | currency:'USD':'$':'1.2-2' }}
+                        </td>
+                        <td class="text-center">
+                            {{ getTotalAcumulado() | currency:'USD':'$':'1.2-2' }}
+                        </td>
+                        <td class="text-center fw-bold fs-large"
+                            [style.color]="getPorcentajeAvanceGeneral() >= 1 ? '#2e7d32' : '#dc3545'">
+                            {{ getPorcentajeAvanceGeneral() | percent:'1.1-1' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="fw-bold text-dark text-left ps-4">
+                            APPAREL / SYNCROS / VITTORIA
+                            <span class="formula-text-dark">* Incluye Accesorios, Componentes y Llantas.</span>
+                        </td>
+                        <td class="text-center">
+                            {{ datosCliente.COMPRA_MINIMA_APPAREL | currency:'USD':'$':'1.2-2' }}
+                        </td>
+                        <td class="text-center">
+                            {{ getCompraGlobalApparel() | currency:'USD':'$':'1.2-2' }}
+                        </td>
+                        <td class="text-center fw-bold fs-large"
+                            [style.color]="getPorcentajeAvanceApparel() >= 1 ? '#2e7d32' : '#dc3545'">
+                            {{ getPorcentajeAvanceApparel() | percent:'1.1-1' }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">DETALLE DE ACUMULADO GLOBAL</div>
+            <div class="escalera-calculo">
+
+                <div class="row-calc row-gold">
+                    <div class="calc-label">
+                        ACUMULADO POR CATEGORÍAS
+                        <span class="formula-text-light">(SCOTT + MEGAMO + BOLD + SYNCROS + VITTORIA)</span>
+                    </div>
+                    <div class="calc-value">
                         {{ getTotalAcumulado() | currency:'USD':'$':'1.2-2' }}
-                    </td>
-                    <td class="text-center fw-bold fs-large"
-                        [style.color]="getPorcentajeAvanceGeneral() >= 1 ? '#2e7d32' : '#dc3545'">
-                        {{ getPorcentajeAvanceGeneral() | percent:'1.1-1' }}
-                    </td>
-                </tr>
-
-                <tr>
-                    <td class="fw-bold text-dark text-left ps-4">
-                        APPAREL / SYNCROS / VITTORIA
-                        <span class="formula-text-dark">* Incluye Accesorios, Componentes y Llantas.</span>
-                    </td>
-                    <td class="text-center">
-                        {{ datosCliente.COMPRA_MINIMA_APPAREL | currency:'USD':'$':'1.2-2' }}
-                    </td>
-                    <td class="text-center">
-                        {{ getCompraGlobalApparel() | currency:'USD':'$':'1.2-2' }}
-                    </td>
-                    <td class="text-center fw-bold fs-large"
-                        [style.color]="getPorcentajeAvanceApparel() >= 1 ? '#2e7d32' : '#dc3545'">
-                        {{ getPorcentajeAvanceApparel() | percent:'1.1-1' }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="section-title">DETALLE DE ACUMULADO GLOBAL</div>
-        <div class="escalera-calculo">
-
-            <div class="row-calc row-gold">
-                <div class="calc-label">
-                    ACUMULADO POR CATEGORÍAS
-                    <span class="formula-text-light">(SCOTT + MEGAMO + BOLD + SYNCROS + VITTORIA)</span>
+                    </div>
                 </div>
-                <div class="calc-value">
-                    {{ getTotalAcumulado() | currency:'USD':'$':'1.2-2' }}
-                </div>
-            </div>
 
-            <div class="division-text text-danger fw-bold">
-                MENOS (-) DEDUCCIONES ODOO
-            </div>
+                <div class="division-text text-danger fw-bold">
+                    MENOS (-) DEDUCCIONES ODOO
+                </div>
 
-            <div class="row-calc row-dark">
-                <div class="calc-label">NOTAS DE CRÉDITO</div>
-                <div class="calc-value">
-                    {{ getNotasCredito() | currency:'USD':'$':'1.2-2' }}
+                <div class="row-calc row-dark">
+                    <div class="calc-label">NOTAS DE CRÉDITO</div>
+                    <div class="calc-value">
+                        {{ getNotasCredito() | currency:'USD':'$':'1.2-2' }}
+                    </div>
                 </div>
-            </div>
 
-            <div class="row-calc row-dark mt-n1">
-                <div class="calc-label">GARANTÍAS</div>
-                <div class="calc-value">
-                    {{ getGarantias() | currency:'USD':'$':'1.2-2' }}
+                <div class="row-calc row-dark mt-n1">
+                    <div class="calc-label">GARANTÍAS</div>
+                    <div class="calc-value">
+                        {{ getGarantias() | currency:'USD':'$':'1.2-2' }}
+                    </div>
                 </div>
-            </div>
 
-            <div class="row-calc row-dark-gold mt-2 shadow-sm">
-                <div class="calc-label fs-large">
-                    ACUMULADO GLOBAL
-                    <span class="formula-text-light">
-                        ACUMULADO POR CATEGORÍAS - NOTAS DE CRÉDITO - GARANTÍAS
-                    </span>
-                </div>
-                <div class="calc-value fw-bold fs-large">
-                    {{ getAcumuladoGlobalCalculado() | currency:'USD':'$':'1.2-2' }}
-                </div>
-            </div>
-
-            <div class="division-text text-danger fw-bold mt-4">
-                MENOS (-) DESCUENTOS ADICIONALES
-            </div>
-
-            <div class="row-calc row-dark">
-                <div class="calc-label">
-                    PRODUCTOS OFERTADOS
-                    <span class="formula-text-light">
-                        (ARTÍCULOS CON PROMOCIONES O ESPECIALES)
-                    </span>
-                </div>
-                <div class="calc-value">
-                    {{ getProductosOfertados() | currency:'USD':'$':'1.2-2' }}
-                </div>
-            </div>
-
-            <div class="row-calc row-dark mt-n1">
-                <div class="calc-label">
-                    BICICLETAS DEMO / BOLD
-                    <span class="formula-text-light">
-                        (UNIDADES CON SOPORTE DE DESCUENTO APLICADO EN FACTURA)
-                    </span>
-                </div>
-                <div class="calc-value">
-                    {{ getTotalBicisDeduccion() | currency:'USD':'$':'1.2-2' }}
-                </div>
-            </div>
-
-            <div class="row-calc row-primary mt-3 shadow-sm">
-                <div class="calc-label fs-large">
-                    IMPORTE FINAL BASE
-                    <span class="formula-text-light">
-                        (ACUMULADO GLOBAL MENOS PRODUCTOS OFERTADOS Y BICICLETAS BOLD)
-                    </span>
-                </div>
-                <div class="calc-value fw-bold fs-large text-primary">
-                    {{ getImporteFinalBase() | currency:'USD':'$':'1.2-2' }}
-                </div>
-            </div>
-
-        </div>
-
-        <div class="section-title">RESULTADOS Y RETROACTIVO</div>
-        <table class="table-moderna">
-            <thead>
-                <tr>
-                    <th colspan="2" class="th-cyan text-center fs-large">PORCENTAJES OBTENIDOS</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="fw-bold text-dark text-right pe-4 col-50">
-                        RETROACTIVO (Por Compra Adicional)
-                        <span class="formula-text-dark text-right">
-                            * Basado en excedente de meta anual.
+                <div class="row-calc row-dark-gold mt-2 shadow-sm">
+                    <div class="calc-label fs-large">
+                        ACUMULADO GLOBAL
+                        <span class="formula-text-light">
+                            ACUMULADO POR CATEGORÍAS - NOTAS DE CRÉDITO - GARANTÍAS
                         </span>
-                    </td>
-                    <td class="text-center fw-bold fs-large bg-grey text-dark">
-                        {{ getPorcentajeRetroactivo() | percent:'1.1-2' }}
-                    </td>
-                </tr>
+                    </div>
+                    <div class="calc-value fw-bold fs-large">
+                        {{ getAcumuladoGlobalCalculado() | currency:'USD':'$':'1.2-2' }}
+                    </div>
+                </div>
 
-                <tr>
-                    <td class="fw-bold text-dark text-right pe-4">
-                        RETROACTIVO APPAREL
-                        <span class="formula-text-dark text-right">
-                            * Bonificación por cumplimiento de meta en accesorios.
+                <div class="division-text text-danger fw-bold mt-4">
+                    MENOS (-) DESCUENTOS ADICIONALES
+                </div>
+
+                <div class="row-calc row-dark">
+                    <div class="calc-label">
+                        PRODUCTOS OFERTADOS
+                        <span class="formula-text-light">
+                            (ARTÍCULOS CON PROMOCIONES O ESPECIALES)
                         </span>
-                    </td>
-                    <td class="text-center fw-bold fs-large bg-grey text-dark">
-                        {{ getPorcentajeRetroactivoApparel() | percent:'1.1-2' }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="escalera-calculo mt-4">
-
-            <div class="row-calc row-dark">
-                <div class="calc-label">
-                    MONTO ADICIONAL A CUMPLIMIENTO
-                    <span class="formula-text-light">
-                        ACUMULADO GLOBAL - META MÍNIMA ANUAL
-                    </span>
+                    </div>
+                    <div class="calc-value">
+                        {{ getProductosOfertados() | currency:'USD':'$':'1.2-2' }}
+                    </div>
                 </div>
-                <div class="calc-value fw-bold fs-large"
-                    [style.color]="getCompraAdicionalCalculada() < 0 ? '#dc3545' : '#2e7d32'">
-                    {{ getCompraAdicionalCalculada() | currency:'USD':'$':'1.2-2' }}
+
+                <div class="row-calc row-dark mt-n1">
+                    <div class="calc-label">
+                        BICICLETAS DEMO / BOLD
+                        <span class="formula-text-light">
+                            (UNIDADES CON SOPORTE DE DESCUENTO APLICADO EN FACTURA)
+                        </span>
+                    </div>
+                    <div class="calc-value">
+                        {{ getTotalBicisDeduccion() | currency:'USD':'$':'1.2-2' }}
+                    </div>
                 </div>
+
+                <div class="row-calc row-primary mt-3 shadow-sm">
+                    <div class="calc-label fs-large">
+                        IMPORTE FINAL BASE
+                        <span class="formula-text-light">
+                            (ACUMULADO GLOBAL MENOS PRODUCTOS OFERTADOS Y BICICLETAS BOLD)
+                        </span>
+                    </div>
+                    <div class="calc-value fw-bold fs-large text-primary">
+                        {{ getImporteFinalBase() | currency:'USD':'$':'1.2-2' }}
+                    </div>
+                </div>
+
             </div>
 
-            <div class="row-calc row-dark-gold mt-2">
-                <div class="calc-label fs-large">RETROACTIVO TOTAL</div>
-                <div class="calc-value fw-bold fs-large text-dark">
-                    {{ getRetroactivoTotal() | percent:'1.1-2' }}
-                </div>
-            </div>
+            <div class="section-title">RESULTADOS Y RETROACTIVO</div>
+            <table class="table-moderna">
+                <thead>
+                    <tr>
+                        <th colspan="2" class="th-cyan text-center fs-large">PORCENTAJES OBTENIDOS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="fw-bold text-dark text-right pe-4 col-50">
+                            RETROACTIVO (Por Compra Adicional)
+                            <span class="formula-text-dark text-right">
+                                * Basado en excedente de meta anual.
+                            </span>
+                        </td>
+                        <td class="text-center fw-bold fs-large bg-grey text-dark">
+                            {{ getPorcentajeRetroactivo() | percent:'1.1-2' }}
+                        </td>
+                    </tr>
 
-            <div class="row-calc row-blue mt-4 shadow-lg">
-                <div class="calc-label fs-xl">
-                    IMPORTE FINAL A PAGAR
-                    <span class="formula-text-light">
-                        IMPORTE FINAL BASE X RETROACTIVO TOTAL
-                    </span>
+                    <tr>
+                        <td class="fw-bold text-dark text-right pe-4">
+                            RETROACTIVO APPAREL
+                            <span class="formula-text-dark text-right">
+                                * Bonificación por cumplimiento de meta en accesorios.
+                            </span>
+                        </td>
+                        <td class="text-center fw-bold fs-large bg-grey text-dark">
+                            {{ getPorcentajeRetroactivoApparel() | percent:'1.1-2' }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="escalera-calculo mt-4">
+
+                <div class="row-calc row-dark">
+                    <div class="calc-label">
+                        MONTO ADICIONAL A CUMPLIMIENTO
+                        <span class="formula-text-light">
+                            ACUMULADO GLOBAL - META MÍNIMA ANUAL
+                        </span>
+                    </div>
+                    <div class="calc-value fw-bold fs-large"
+                        [style.color]="getCompraAdicionalCalculada() < 0 ? '#dc3545' : '#2e7d32'">
+                        {{ getCompraAdicionalCalculada() | currency:'USD':'$':'1.2-2' }}
+                    </div>
                 </div>
-                <div class="calc-value fw-bold fs-xl text-white bg-blue">
-                    {{ getImportePagar() | currency:'USD':'$':'1.2-2' }}
+
+                <div class="row-calc row-dark-gold mt-2">
+                    <div class="calc-label fs-large">RETROACTIVO TOTAL</div>
+                    <div class="calc-value fw-bold fs-large text-dark">
+                        {{ getRetroactivoTotal() | percent:'1.1-2' }}
+                    </div>
                 </div>
+
+                <div class="row-calc row-blue mt-4 shadow-lg">
+                    <div class="calc-label fs-xl">
+                        IMPORTE FINAL A PAGAR
+                        <span class="formula-text-light">
+                            IMPORTE FINAL BASE X RETROACTIVO TOTAL
+                        </span>
+                    </div>
+                    <div class="calc-value fw-bold fs-xl text-white bg-blue">
+                        {{ getImportePagar() | currency:'USD':'$':'1.2-2' }}
+                    </div>
+                </div>
+
+            </div>
+            </ng-container>
+
+            <div class="nota-footer">
+                <strong>Nota de transparencia:</strong> Los datos presentados son sincronizados directamente desde Odoo ERP.
+                Las deducciones corresponden a documentos registrados en el periodo fiscal {{ etiquetaAMY(temporadaHistoricaSeleccionada || temporadaActualEtiqueta) }}.
+                El <strong>Importe Final Base</strong> es el monto neto tras descontar artículos que ya cuentan con
+                promociones de liquidación o apoyos especiales.
             </div>
 
         </div>
 
-        <div class="nota-footer">
-            <strong>Nota de transparencia:</strong> Los datos presentados son sincronizados directamente desde Odoo ERP.
-            Las deducciones corresponden a documentos registrados en el periodo fiscal {{ etiquetaAMY(temporadaHistoricaSeleccionada || temporadaActualEtiqueta) }}.
-            El <strong>Importe Final Base</strong> es el monto neto tras descontar artículos que ya cuentan con
-            promociones de liquidación o apoyos especiales.
-        </div>
+    </ng-container>
 
-    </div>
+    <!-- BLOQUE ALTERNATIVO: SE RENDERIZA SI NO TIENE EL PERMISO 'retroactivos/ver' -->
+    <ng-template #sinAcceso>
+        <app-acceso-restringido [modulo]="modulo"></app-acceso-restringido>
+    </ng-template>
+
 </div>

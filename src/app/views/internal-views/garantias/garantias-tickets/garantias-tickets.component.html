@@ -476,9 +476,11 @@
                   <div *ngFor="let doc of documentos" class="doc-unit"
                        [class.doc-valido]="validacionDocs[doc.key] === 'valido'"
                        [class.doc-rechazado]="validacionDocs[doc.key] === 'rechazado'">
-                    <a [href]="archivoVerUrl(doc.nombre)" target="_blank" class="doc-body">
+                    <a [attr.href]="archivoListo(doc.nombre) ? archivoSrc(doc.nombre) : null"
+                       [class.doc-cargando]="!archivoListo(doc.nombre)"
+                       target="_blank" class="doc-body">
                       <div class="doc-body-icon">
-                        <i class="fas" [ngClass]="iconoArchivo(doc.nombre)"></i>
+                        <i class="fas" [ngClass]="archivoListo(doc.nombre) ? iconoArchivo(doc.nombre) : 'fa-spinner fa-spin'"></i>
                       </div>
                       <div class="doc-body-info">
                         <span class="doc-field-label">{{ doc.label }}</span>
@@ -489,7 +491,7 @@
                         </span>
                       </div>
                       <div class="doc-right">
-                        <img *ngIf="esImagen(doc.nombre)" [src]="archivoVerUrl(doc.nombre)" class="doc-thumb" alt="">
+                        <img *ngIf="esImagen(doc.nombre) && archivoListo(doc.nombre)" [src]="archivoSrc(doc.nombre)" class="doc-thumb" alt="">
                         <div class="doc-val-status">
                           <span *ngIf="validacionDocs[doc.key] === 'valido'"    class="val-status-chip valid"><i class="fas fa-check"></i></span>
                           <span *ngIf="validacionDocs[doc.key] === 'rechazado'" class="val-status-chip rejected"><i class="fas fa-times"></i></span>

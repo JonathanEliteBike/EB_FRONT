@@ -1,344 +1,306 @@
 <app-home-bar></app-home-bar>
 
-<div class="usuarios-fullscreen">
-    <!-- Encabezado de Gestión -->
-    <div class="encabezado-gestion">
-        <h2>Gestión de Usuarios</h2>
+<div class="retroactivos-layout">
+  <!-- ALERTA INLINE -->
+  <app-alerta *ngIf="mensajeAlerta" [mensaje]="mensajeAlerta" [tipo]="tipoAlerta"></app-alerta>
 
-        <button class="btn agregar-btn" *ngIf="!mostrarFormularioRegistroVisible && !mostrarFormularioEdicion"
-            (click)="mostrarFormularioRegistro()">
-            <i class="fas fa-user-plus"></i> Agregar Usuario
+  <!-- ENCABEZADO Y TOOLBAR UNIFICADA -->
+  <div class="header-section">
+    <div class="header-title">
+        <button class="btn-volver" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Volver
+        </button>
+        <h2 class="main-title">{{ tituloPantalla }}</h2>
+     </div>
+
+    <!-- BARRA EN UNA SOLA LÍNEA (BOTONES DE ACCIÓN) -->
+    <div class="header-toolbar">
+      <div class="header-actions-left">
+        <!-- Puedes dejar esto vacío o agregar breadcrumbs / buscador global aquí en el futuro -->
+      </div>
+
+      <!-- ACCIONES (DERECHA) -->
+      <div class="header-actions">
+        <!-- NUEVO BOTÓN PARA IR A LA VISTA DE ADMINISTRADORES CLIENTE -->
+        <button class="btn btn-secondary" routerLink="/gestion-clientes">
+          <i class="fas fa-user-shield"></i> Administrar Distribuidores
         </button>
 
-        <app-alerta *ngIf="mensajeAlerta" [mensaje]="mensajeAlerta" [tipo]="tipoAlerta"></app-alerta>
-
-        <div *ngIf="cargandoUsuarios" class="cargando-spinner">
-            <div class="spinner"></div>
-            <p>Cargando...</p>
-        </div>
-
-        <div *ngIf="!cargandoUsuarios && usuariosPaginados().length === 0" class="sin-datos">
-            <p>No se pudieron cargar los datos o no hay usuarios disponibles.</p>
-        </div>
-
-        <!-- Formulario de Registro -->
-        <div *ngIf="mostrarFormularioRegistroVisible" class="formulario-section">
-            <h2>Nuevo Usuario</h2>
-            <form (submit)="agregarUsuario()" class="formulario-usuario" #formRegistro="ngForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Nombre completo *</label>
-                        <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" required
-                            placeholder="Ingrese el nombre completo" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Correo electrónico *</label>
-                        <input type="email" [(ngModel)]="nuevoUsuario.correo" name="correo" required
-                            placeholder="ejemplo@correo.com" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Nombre de usuario *</label>
-                        <input type="text" [(ngModel)]="nuevoUsuario.usuario" name="usuario" required
-                            placeholder="3-20 caracteres alfanuméricos" pattern="[a-zA-Z0-9_.-]{3,20}" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Contraseña *</label>
-                        <input type="password" [(ngModel)]="nuevoUsuario.contrasena" name="contrasena" required
-                            placeholder="Mínimo 6 caracteres" minlength="6" />
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Rol *</label>
-                            <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
-                                <option [value]="ROLES.ADMIN.backendValue">{{ROLES.ADMIN.display}}</option>
-                                <option [value]="ROLES.USUARIO.backendValue">{{ROLES.USUARIO.display}}</option>
-                            </select>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" [(ngModel)]="asociarCliente" name="asociarCliente"
-                                    (change)="vincularGrupo = false; grupoSeleccionadoId = null" />
-                                <span class="checkmark"></span>
-                                Asociar cliente
-                            </label>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" [(ngModel)]="vincularGrupo" name="vincularGrupo"
-                                    (change)="asociarCliente = false; clienteSeleccionadoId = null; clienteBusqueda = ''" />
-                                <span class="checkmark"></span>
-                                Vincular a grupo integral (sin cliente específico)
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Campos de cliente si está activado -->
-                <div class="cliente-container" *ngIf="asociarCliente">
-                    <div class="form-group cliente-busqueda">
-                        <label>Buscar cliente</label>
-                        <div class="search-wrapper">
-                            <input class="search-input" type="text" [(ngModel)]="clienteBusqueda"
-                                (input)="clienteSeleccionadoId = null" name="clienteBusqueda"
-                                placeholder="Nombre o clave del cliente" autocomplete="off" />
-                            <ul class="sugerencias"
-                                *ngIf="clienteBusqueda && !clienteSeleccionadoId && filtrarClientes().length > 0">
-                                <li *ngFor="let cliente of filtrarClientes()" (click)="seleccionarCliente(cliente)">
-                                    <strong>{{ cliente.nombre_cliente }}</strong> ({{ cliente.clave }})
-                                </li>
-                            </ul>
-                        </div>
-                        <small *ngIf="clienteSeleccionadoId" class="selected-client">
-                            Cliente seleccionado: {{ clienteBusqueda }}
-                        </small>
-                    </div>
-                </div>
-
-                <!-- Selector de grupo integral + variantes del grupo -->
-                <div class="cliente-container" *ngIf="vincularGrupo">
-                    <div class="form-group">
-                        <label>Grupo integral</label>
-                        <select [(ngModel)]="grupoSeleccionadoId" name="grupoSeleccionado" class="form-select"
-                            (ngModelChange)="onGrupoChange()">
-                            <option [ngValue]="null" disabled>-- Seleccionar grupo --</option>
-                            <option *ngFor="let g of grupos" [ngValue]="g.id">{{ g.nombre_grupo }}</option>
-                        </select>
-                    </div>
-                    <!-- Variantes del grupo -->
-                    <div class="form-group" *ngIf="clientesDelGrupo.length > 0">
-                        <label>Cliente dentro del grupo <small class="label-hint">(opcional)</small></label>
-                        <div class="grupo-clientes-lista">
-                            <label class="radio-option" [class.radio-selected]="clienteGrupoSeleccionadoId === null">
-                                <input type="radio" name="clienteGrupo" [value]="null"
-                                    [(ngModel)]="clienteGrupoSeleccionadoId" />
-                                <span class="radio-text">
-                                    <strong>Sin cliente específico</strong>
-                                    <small>Usuario nuevo sin pedidos propios</small>
-                                </span>
-                            </label>
-                            <label class="radio-option" *ngFor="let c of clientesDelGrupo"
-                                [class.radio-selected]="clienteGrupoSeleccionadoId === c.id">
-                                <input type="radio" name="clienteGrupo" [value]="c.id"
-                                    [(ngModel)]="clienteGrupoSeleccionadoId" />
-                                <span class="radio-text">
-                                    <strong>{{ c.nombre_cliente }}</strong>
-                                    <small>{{ c.clave }}</small>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-buttons">
-                    <button class="btn small-btn" type="submit" [disabled]="formRegistro.invalid">Registrar</button>
-                    <button class="btn small-btn secondary" type="button" (click)="volverALista()">Cancelar</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Formulario de Edición -->
-        <div *ngIf="mostrarFormularioEdicion" class="formulario-section">
-            <h2>Editar Usuario</h2>
-            <form (submit)="actualizarUsuario()" class="formulario-usuario" #formEdicion="ngForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Nombre completo *</label>
-                        <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Correo electrónico *</label>
-                        <input type="email" [(ngModel)]="nuevoUsuario.correo" name="correo" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Nombre de usuario *</label>
-                        <input type="text" [(ngModel)]="nuevoUsuario.usuario" name="usuario" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="password" [(ngModel)]="nuevoUsuario.contrasena" name="contrasena"
-                            placeholder="Dejar vacío para no cambiar" />
-                        <small class="input-hint">Complete solo si desea cambiar la contraseña</small>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Rol *</label>
-                            <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
-                                <option [value]="ROLES.ADMIN.backendValue">{{ROLES.ADMIN.display}}</option>
-                                <option [value]="ROLES.USUARIO.backendValue">{{ROLES.USUARIO.display}}</option>
-                            </select>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" [(ngModel)]="asociarCliente" name="asociarClienteEditar" />
-                                <span class="checkmark"></span>
-                                Asociar cliente
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Campos de cliente si está activado -->
-                <div class="cliente-container" *ngIf="asociarCliente">
-                    <div class="form-group cliente-busqueda">
-                        <label>Buscar cliente</label>
-                        <div class="search-wrapper">
-                            <input type="text" [(ngModel)]="clienteBusqueda" (input)="clienteSeleccionadoId = null"
-                                name="clienteBusqueda" placeholder="Nombre o clave del cliente" autocomplete="off" />
-                            <ul class="sugerencias"
-                                *ngIf="clienteBusqueda && !clienteSeleccionadoId && filtrarClientes().length > 0">
-                                <li *ngFor="let cliente of filtrarClientes()" (click)="seleccionarCliente(cliente)">
-                                    <strong>{{ cliente.nombre_cliente }}</strong> ({{ cliente.clave }})
-                                </li>
-                            </ul>
-                        </div>
-                        <small *ngIf="clienteSeleccionadoId" class="selected-client">
-                            Cliente seleccionado: {{ clienteBusqueda }}
-                        </small>
-                    </div>
-                </div>
-
-                <div class="form-buttons">
-                    <button class="btn small-btn actualizar" type="submit"
-                        [disabled]="formEdicion.invalid">Actualizar</button>
-                    <button class="btn small-btn secondary" type="button" (click)="volverALista()">Cancelar</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Lista de Usuarios -->
-        <div class="tabla-contenedor" *ngIf="!mostrarFormularioRegistroVisible && !mostrarFormularioEdicion">
-            <div class="tabla-header">
-                <button *ngIf="filtrosActivos" class="btn small-btn secondary limpiar-filtros-btn"
-                    (click)="limpiarTodosFiltros()">
-                    <i class="fas fa-times"></i> Limpiar todos los filtros
-                </button>
-            </div>
-
-            <div class="tabla-scroll-container">
-                <table class="tabla-usuarios" *ngIf="!cargandoUsuarios && usuarios.length > 0">
-                    <thead>
-                        <tr>
-                            <th class="columna-con-filtro">
-                                <span class="header-label">Nombre</span>
-                                <app-filtro *ngIf="filtroOpciones.nombre.length > 0" filtroId="nombre"
-                                    [options]="filtroOpciones.nombre" [title]="'Filtrar nombre'"
-                                    [searchPlaceholder]="'Buscar nombre...'" (apply)="aplicarFiltro('nombre', $event)"
-                                    (clear)="limpiarFiltro('nombre')">
-                                </app-filtro>
-                            </th>
-                            <th class="columna-con-filtro">
-                                <span class="header-label">Correo</span>
-                                <app-filtro *ngIf="filtroOpciones.correo.length > 0" filtroId="correo"
-                                    [options]="filtroOpciones.correo" [title]="'Filtrar correo'"
-                                    [searchPlaceholder]="'Buscar correo...'" (apply)="aplicarFiltro('correo', $event)"
-                                    (clear)="limpiarFiltro('correo')">
-                                </app-filtro>
-                            </th>
-                            <th class="columna-con-filtro">
-                                <span class="header-label">Usuario</span>
-                                <app-filtro *ngIf="filtroOpciones.usuario.length > 0" filtroId="usuario"
-                                    [options]="filtroOpciones.usuario" [title]="'Filtrar usuario'"
-                                    [searchPlaceholder]="'Buscar usuario...'" (apply)="aplicarFiltro('usuario', $event)"
-                                    (clear)="limpiarFiltro('usuario')">
-                                </app-filtro>
-                            </th>
-                            <th class="columna-con-filtro">
-                                <span class="header-label">Rol</span>
-                                <app-filtro *ngIf="filtroOpciones.rol.length > 0" filtroId="rol"
-                                    [options]="filtroOpciones.rol" [title]="'Filtrar rol'"
-                                    [searchPlaceholder]="'Buscar rol...'" (apply)="aplicarFiltro('rol', $event)"
-                                    (clear)="limpiarFiltro('rol')">
-                                </app-filtro>
-                            </th>
-                            <th class="columna-distribuidor">
-                                <span>Distribuidor</span>
-                            </th>
-                            <th class="columna-acciones">
-                                <span>Acciones</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let u of usuariosPaginados()">
-                            <td>{{ u.nombre }}</td>
-                            <td>{{ u.correo }}</td>
-                            <td>{{ u.usuario }}</td>
-                            <td>{{ u.rol === ROLES.ADMIN.backendValue ? ROLES.ADMIN.display : ROLES.USUARIO.display }}
-                            </td>
-                            <td>{{ u.cliente_nombre || 'N/A' }}</td>
-                            <td>
-                                <div class="acciones-celda">
-                                    <button class="btn btn-accion azul" (click)="editarUsuario(u)" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-accion rojo" (click)="confirmarEliminacion(u)"
-                                        title="Eliminar">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Mensaje cuando no hay datos después de filtrar -->
-                <div *ngIf="!cargandoUsuarios && usuariosFiltrados.length === 0 && usuarios.length > 0"
-                    class="sin-resultados">
-                    <p>No se encontraron usuarios que coincidan con los filtros aplicados.</p>
-                </div>
-
-                <!-- Mensaje cuando no hay usuarios -->
-                <div *ngIf="!cargandoUsuarios && usuarios.length === 0" class="sin-datos">
-                    <p>No hay usuarios registrados.</p>
-                </div>
-            </div>
-
-            <!-- Paginación -->
-            <div class="paginacion-container" *ngIf="usuariosFiltrados.length > 0">
-                <div class="paginador-info">
-                    <span>Mostrando {{ usuariosPaginados().length }} de {{ usuariosFiltrados.length }} registros</span>
-                    <span>Página {{ paginaActual }} de {{ totalPaginas }}</span>
-                </div>
-
-                <div class="paginador-controles">
-                    <button class="btn small-btn" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
-                        <i class="fas fa-chevron-left"></i> Anterior
-                    </button>
-
-                    <div class="paginas-numeros">
-                        <button *ngFor="let pagina of obtenerRangoPaginas()" class="btn small-btn pagina-numero"
-                            [class.activa]="pagina === paginaActual" (click)="cambiarPagina(pagina)">
-                            {{ pagina }}
-                        </button>
-                    </div>
-
-                    <button class="btn small-btn" (click)="paginaSiguiente()"
-                        [disabled]="paginaActual === totalPaginas">
-                        Siguiente <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Confirmación de Eliminación -->
-        <div *ngIf="mostrarConfirmacion" class="confirmacion-dialogo">
-            <div class="confirmacion-contenido">
-                <h3>Confirmar Eliminación</h3>
-                <p>¿Estás seguro de que deseas eliminar al usuario <strong>{{ usuarioAEliminar?.nombre }}</strong>?</p>
-                <p class="advertencia">Esta acción no se puede deshacer.</p>
-                <div class="confirmacion-botones">
-                    <button class="btn small-btn confirmacion" (click)="eliminarUsuario()">Sí, eliminar</button>
-                    <button class="btn small-btn secondary" (click)="cancelarEliminacion()">Cancelar</button>
-                </div>
-            </div>
-        </div>
+        <button
+          *ngIf="!mostrarFormularioRegistroVisible && !mostrarFormularioEdicion"
+          class="btn btn-primary"
+          (click)="mostrarFormularioRegistro()">
+          <i class="fas fa-user-plus"></i> Agregar Usuario
+        </button>
+      </div>
     </div>
+  </div>
+
+  <!-- ESTADO CARGANDO O SIN DATOS -->
+  <div *ngIf="cargandoUsuarios" class="empty-state">
+    <p>Cargando información de usuarios...</p>
+  </div>
+
+  <div *ngIf="!cargandoUsuarios && usuariosPaginados().length === 0 && !mostrarFormularioRegistroVisible && !mostrarFormularioEdicion" class="empty-state">
+    <p>No se pudieron cargar los datos o no hay usuarios registrados.</p>
+  </div>
+
+  <!-- FORMULARIO DE REGISTRO -->
+  <div *ngIf="mostrarFormularioRegistroVisible" class="form-card">
+    <div class="form-card-header">
+      <h3>Nuevo Usuario</h3>
+    </div>
+    <form (submit)="agregarUsuario()" class="form-body" #formRegistro="ngForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre completo *</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" required placeholder="Ingrese el nombre completo" />
+        </div>
+
+        <div class="form-group">
+          <label>Correo electrónico *</label>
+          <input type="email" [(ngModel)]="nuevoUsuario.correo" name="correo" required placeholder="ejemplo@correo.com" />
+        </div>
+
+        <div class="form-group">
+          <label>Nombre de usuario *</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.usuario" name="usuario" required placeholder="3-20 caracteres alfanuméricos" pattern="[a-zA-Z0-9_.-]{3,20}" />
+        </div>
+
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="password" [(ngModel)]="nuevoUsuario.contrasena" name="contrasena" required placeholder="Mínimo 6 caracteres" minlength="6" />
+        </div>
+
+        <div class="form-group">
+          <label>Rol *</label>
+          <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
+            <option [value]="ROLES.ADMIN.backendValue">{{ROLES.ADMIN.display}}</option>
+            <option [value]="ROLES.USUARIO.backendValue">{{ROLES.USUARIO.display}}</option>
+          </select>
+        </div>
+
+        <div class="checkbox-options-grid">
+          <label class="checkbox-item">
+            <input type="checkbox" [(ngModel)]="asociarCliente" name="asociarCliente" (change)="vincularGrupo = false; grupoSeleccionadoId = null" />
+            <span>Asociar cliente</span>
+          </label>
+
+          <label class="checkbox-item">
+            <input type="checkbox" [(ngModel)]="vincularGrupo" name="vincularGrupo" (change)="asociarCliente = false; clienteSeleccionadoId = null; clienteBusqueda = ''" />
+            <span>Vincular a grupo integral</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- BÚSQUEDA CLIENTE -->
+      <div class="cliente-container" *ngIf="asociarCliente">
+        <div class="form-group">
+          <label>Buscar cliente</label>
+          <div class="search-wrapper">
+            <input class="input-base" type="text" [(ngModel)]="clienteBusqueda" (input)="clienteSeleccionadoId = null" name="clienteBusqueda" placeholder="Nombre o clave del cliente" autocomplete="off" />
+            <ul class="sugerencias" *ngIf="clienteBusqueda && !clienteSeleccionadoId && filtrarClientes().length > 0">
+              <li *ngFor="let cliente of filtrarClientes()" (click)="seleccionarCliente(cliente)">
+                <strong>{{ cliente.nombre_cliente }}</strong> ({{ cliente.clave }})
+              </li>
+            </ul>
+          </div>
+          <small *ngIf="clienteSeleccionadoId" class="selected-client">
+            Cliente seleccionado: {{ clienteBusqueda }}
+          </small>
+        </div>
+      </div>
+
+      <!-- GRUPO INTEGRAL -->
+      <div class="cliente-container" *ngIf="vincularGrupo">
+        <div class="form-group">
+          <label>Grupo integral</label>
+          <select [(ngModel)]="grupoSeleccionadoId" name="grupoSeleccionado" (ngModelChange)="onGrupoChange()">
+            <option [ngValue]="null" disabled>-- Seleccionar grupo --</option>
+            <option *ngFor="let g of grupos" [ngValue]="g.id">{{ g.nombre_grupo }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-card-footer">
+        <button class="btn btn-secondary" type="button" (click)="volverALista()">Cancelar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="formRegistro.invalid">Registrar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- FORMULARIO DE EDICIÓN -->
+  <div *ngIf="mostrarFormularioEdicion" class="form-card">
+    <div class="form-card-header">
+      <h3>Editar Usuario</h3>
+    </div>
+    <form (submit)="actualizarUsuario()" class="form-body" #formEdicion="ngForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre completo *</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre" required />
+        </div>
+
+        <div class="form-group">
+          <label>Correo electrónico *</label>
+          <input type="email" [(ngModel)]="nuevoUsuario.correo" name="correo" required />
+        </div>
+
+        <div class="form-group">
+          <label>Nombre de usuario *</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.usuario" name="usuario" required />
+        </div>
+
+        <div class="form-group">
+          <label>Contraseña (Opcional)</label>
+          <input type="password" [(ngModel)]="nuevoUsuario.contrasena" name="contrasena" placeholder="Dejar vacío para mantener actual" />
+        </div>
+
+        <div class="form-group">
+          <label>Rol *</label>
+          <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
+            <option [value]="ROLES.ADMIN.backendValue">{{ROLES.ADMIN.display}}</option>
+            <option [value]="ROLES.USUARIO.backendValue">{{ROLES.USUARIO.display}}</option>
+          </select>
+        </div>
+
+        <div class="checkbox-options-grid">
+          <label class="checkbox-item">
+            <input type="checkbox" [(ngModel)]="asociarCliente" name="asociarClienteEditar" />
+            <span>Asociar cliente</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-card-footer">
+        <button class="btn btn-secondary" type="button" (click)="volverALista()">Cancelar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="formEdicion.invalid">Actualizar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABLA DE USUARIOS CON SCROLL Y PAGINACIÓN FIJA -->
+  <div class="table-wrap" *ngIf="!mostrarFormularioRegistroVisible && !mostrarFormularioEdicion && !cargandoUsuarios && usuarios.length > 0">
+    <div class="table-bar-actions" *ngIf="filtrosActivos">
+      <button class="btn btn-action" (click)="limpiarTodosFiltros()">
+        <i class="fas fa-times"></i> Limpiar filtros
+      </button>
+    </div>
+
+    <!-- CONTENEDOR CON SCROLL FIJO -->
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-nombre">
+              <div class="th-content">
+                <span>Nombre</span>
+                <app-filtro *ngIf="filtroOpciones.nombre.length > 0" filtroId="nombre" [options]="filtroOpciones.nombre" [title]="'Nombre'" (apply)="aplicarFiltro('nombre', $event)" (clear)="limpiarFiltro('nombre')"></app-filtro>
+              </div>
+            </th>
+            <th class="col-correo">
+              <div class="th-content">
+                <span>Correo</span>
+                <app-filtro *ngIf="filtroOpciones.correo.length > 0" filtroId="correo" [options]="filtroOpciones.correo" [title]="'Correo'" (apply)="aplicarFiltro('correo', $event)" (clear)="limpiarFiltro('correo')"></app-filtro>
+              </div>
+            </th>
+            <th class="col-usuario">
+              <div class="th-content">
+                <span>Usuario</span>
+                <app-filtro *ngIf="filtroOpciones.usuario.length > 0" filtroId="usuario" [options]="filtroOpciones.usuario" [title]="'Usuario'" (apply)="aplicarFiltro('usuario', $event)" (clear)="limpiarFiltro('usuario')"></app-filtro>
+              </div>
+            </th>
+            <th class="col-rol">
+              <div class="th-content">
+                <span>Rol</span>
+                <app-filtro *ngIf="filtroOpciones.rol.length > 0" filtroId="rol" [options]="filtroOpciones.rol" [title]="'Rol'" (apply)="aplicarFiltro('rol', $event)" (clear)="limpiarFiltro('rol')"></app-filtro>
+              </div>
+            </th>
+            <th class="col-distribuidor">Distribuidor</th>
+            <th class="col-acciones-btns" style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of usuariosPaginados()">
+            <td class="col-nombre"><strong>{{ u.nombre }}</strong></td>
+            <td class="col-correo">{{ u.correo }}</td>
+            <td class="col-usuario"><code>{{ u.usuario }}</code></td>
+            <td class="col-rol">
+              <span class="badge" [ngClass]="u.rol === ROLES.ADMIN.backendValue ? 'badge-root' : 'badge-sub'">
+                {{ u.rol === ROLES.ADMIN.backendValue ? ROLES.ADMIN.display : ROLES.USUARIO.display }}
+              </span>
+            </td>
+            <td class="col-distribuidor">{{ u.cliente_nombre || 'N/A' }}</td>
+            <td class="col-acciones-btns td-actions">
+              <button class="btn-action" (click)="editarUsuario(u)" title="Editar">
+                Editar
+              </button>
+              <button class="btn-action delete" (click)="confirmarEliminacion(u)" title="Eliminar">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINACIÓN CON FILTRO DE CANTIDAD POR PÁGINA -->
+    <div class="paginacion-container" *ngIf="usuariosFiltrados.length > 0">
+      <div class="paginador-selector-wrap">
+        <span class="selector-label">Mostrar:</span>
+        <div class="selector-pills">
+          <button
+            *ngFor="let cant of opcionesPorPagina"
+            class="btn-pill"
+            [class.activa]="usuariosPorPagina === cant"
+            (click)="cambiarUsuariosPorPagina(cant)">
+            {{ cant }}
+          </button>
+        </div>
+        <span class="paginador-info">
+          Mostrando {{ usuariosPaginados().length }} de {{ usuariosFiltrados.length }} registros
+        </span>
+      </div>
+
+      <div class="paginador-controles">
+        <button class="btn btn-action" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+          Anterior
+        </button>
+
+        <div class="paginas-numeros">
+          <button
+            *ngFor="let pagina of obtenerRangoPaginas()"
+            class="btn-page"
+            [class.activa]="pagina === paginaActual"
+            [disabled]="pagina === -1"
+            (click)="pagina !== -1 && cambiarPagina(pagina)">
+            {{ pagina === -1 ? '...' : pagina }}
+          </button>
+        </div>
+
+        <button class="btn btn-action" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN -->
+  <div *ngIf="mostrarConfirmacion" class="modal-backdrop">
+    <div class="modal-card mini">
+      <div class="modal-header-custom">
+        <h3>Confirmar Eliminación</h3>
+        <button type="button" class="close-btn" (click)="cancelarEliminacion()">&times;</button>
+      </div>
+      <div class="modal-body-custom">
+        <p>¿Estás seguro de que deseas eliminar al usuario <strong>{{ usuarioAEliminar?.nombre }}</strong>?</p>
+        <small class="text-danger">Esta acción no se puede deshacer.</small>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" (click)="cancelarEliminacion()">Cancelar</button>
+        <button class="btn btn-action delete" (click)="eliminarUsuario()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
 </div>

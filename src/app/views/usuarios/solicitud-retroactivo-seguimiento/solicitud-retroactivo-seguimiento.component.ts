@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
+import { AuthService } from '../../../services/auth.service';
 import {
   SolicitudRetroactivoService,
   SolicitudRetroactivo,
@@ -52,7 +53,11 @@ export class SolicitudRetroactivoSeguimientoComponent implements OnInit {
     { key: 'factura_xml', label: 'Factura (XML)', accept: '.xml' }
   ];
 
-  constructor(private service: SolicitudRetroactivoService) {}
+  constructor(private service: SolicitudRetroactivoService, private authService: AuthService) {}
+
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('retroactivos');
+  }
 
   ngOnInit(): void {
     this.cargar();

@@ -1,0 +1,302 @@
+<app-top-bar-usuarios></app-top-bar-usuarios>
+
+<ng-container *ngIf="tieneAcceso; else sinAcceso">
+  <div class="creacion-usuarios-layout">
+    <!-- HEADER PRINCIPAL -->
+    <div class="page-header">
+      <div>
+        <h2>Administración de Usuarios</h2>
+        <div class="cupo-summary" *ngIf="cupo">
+          Cupos utilizados: <strong>{{ cupo.hijos_activos }}</strong> de <strong>{{ cupo.max_hijos }}</strong> |
+          Disponibles:
+          <span [ngClass]="cupo.disponibles > 0 ? 'badge-cupo-ok' : 'badge-cupo-full'">
+            {{ cupo.disponibles }}
+          </span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="regresar()">
+          <i class="fas fa-arrow-left"></i> Regresar
+        </button>
+        <button class="btn btn-info" (click)="cargarDatos()" [disabled]="cargando">
+          <i class="fas fa-sync-alt"></i> Actualizar
+        </button>
+        <button class="btn btn-primary" (click)="abrirModalCrear()" [disabled]="!puedeCrear || cargando">
+          <i class="fas fa-user-plus"></i> Crear Usuario Hijo
+        </button>
+      </div>
+    </div>
+
+    <!-- ESTADO CARGANDO -->
+    <div *ngIf="cargando" class="empty-state">
+      <p>Cargando información de usuarios...</p>
+    </div>
+
+    <!-- TABLA DE USUARIOS HIJOS -->
+    <div *ngIf="!cargando" class="table-wrap">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-id">ID</th>
+              <th class="col-nombre">Nombre</th>
+              <th class="col-usuario">Usuario</th>
+              <th class="col-correo">Correo</th>
+              <th class="col-estado">Estado</th>
+              <th class="col-acciones-btns" style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of usuariosHijos">
+              <td class="col-id">{{ h.id }}</td>
+              <td class="col-nombre"><strong>{{ h.nombre }}</strong></td>
+              <td class="col-usuario"><code>{{ h.usuario }}</code></td>
+              <td class="col-correo">{{ h.correo }}</td>
+              <td class="col-estado">
+                <span *ngIf="h.activo === 1" class="badge badge-active">Activo</span>
+                <span *ngIf="h.activo === 0" class="badge badge-inactive">Inactivo</span>
+              </td>
+              <td class="col-acciones-btns">
+                <div class="td-actions">
+                  <button class="btn btn-action" (click)="abrirModalContrasena(h.id)" title="Cambiar Contraseña">
+                    <i class="fas fa-key"></i> Cambiar Clave
+                  </button>
+                  <button class="btn btn-action" (click)="abrirModalPermisos(h)" title="Asignar Permisos">
+                    <i class="fas fa-user-shield"></i> Permisos
+                  </button>
+                  <button *ngIf="h.activo === 1" class="btn btn-action warning" (click)="cambiarEstado(h, 0)" title="Desactivar usuario">
+                    <i class="fas fa-user-slash"></i> Desactivar
+                  </button>
+                  <button *ngIf="h.activo === 0" class="btn btn-action success" (click)="cambiarEstado(h, 1)" [disabled]="!puedeCrear" title="Activar usuario">
+                    <i class="fas fa-user-check"></i> Activar
+                  </button>
+                  <button class="btn btn-action delete" (click)="confirmarEliminacion(h)" title="Eliminar usuario permanentemente">
+                    <i class="fas fa-trash"></i> Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="usuariosHijos.length === 0">
+              <td colspan="6" class="empty-state">No has registrado usuarios hijos aún.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODAL CREAR USUARIO -->
+    <div *ngIf="modalCrearVisible" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header-custom">
+          <h3>Registrar Nuevo Usuario Hijo</h3>
+          <button type="button" class="close-btn" (click)="cerrarModal()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body-custom">
+          <div class="form-group">
+            <label>Nombre Completo</label>
+            <input type="text" [(ngModel)]="formNombre" placeholder="Ej. Juan Pérez">
+          </div>
+          <div class="form-group">
+            <label>Correo electrónico del usuario hijo</label>
+            <input type="email" [(ngModel)]="formCorreo" required placeholder="usuario@correo.com">
+          </div>
+          <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" [(ngModel)]="formUsuario" readonly
+                   [placeholder]="cargandoSiguienteUsuario ? 'Generando usuario...' : 'Usuario automático'">
+            <small *ngIf="cargandoSiguienteUsuario">Calculando el siguiente usuario disponible...</small>
+            <small *ngIf="errorSiguienteUsuario" class="form-error">{{ errorSiguienteUsuario }}</small>
+          </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" [(ngModel)]="formContrasena">
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="guardarNuevoUsuario()" [disabled]="!puedeGuardarNuevoUsuario">
+            <i class="fas fa-save"></i> Guardar Usuario
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CAMBIAR CONTRASEÑA -->
+    <div *ngIf="modalPassVisible" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header-custom">
+          <h3>Cambiar Contraseña</h3>
+          <button type="button" class="close-btn" (click)="cerrarModalContrasena()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body-custom">
+          <div class="form-group">
+            <label>Nueva Contraseña</label>
+            <input type="password" [(ngModel)]="formNuevaContrasena">
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalContrasena()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="guardarNuevaContrasena()">
+            <i class="fas fa-key"></i> Actualizar Contraseña
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CONFIRMACIÓN DE ELIMINACIÓN -->
+    <div *ngIf="mostrarConfirmacion" class="modal-backdrop">
+      <div class="modal-card mini">
+        <div class="modal-header-custom">
+          <h3>Confirmar Eliminación</h3>
+          <button type="button" class="close-btn" (click)="cancelarEliminacion()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body-custom">
+          <p>¿Estás seguro de que deseas eliminar al usuario <strong>{{ usuarioAEliminar?.nombre }}</strong>?</p>
+          <small class="text-danger">Esta acción eliminará la cuenta de forma permanente y no se podrá deshacer.</small>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn btn-secondary" (click)="cancelarEliminacion()">Cancelar</button>
+          <button type="button" class="btn btn-action delete" (click)="eliminarUsuarioHijo()">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL ASIGNACIÓN DE PERMISOS -->
+    <div *ngIf="modalPermisosVisible" class="modal-backdrop">
+      <div class="modal-card modal-large">
+        <div class="modal-header-custom">
+          <h3>Permisos - {{ hijoSeleccionado?.nombre }}</h3>
+          <button type="button" class="close-btn" (click)="cerrarModalPermisos()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body-custom">
+          <p class="modal-desc">Asigna los accesos disponibles dentro de tu bolsa delegable y define la visibilidad de montos.</p>
+
+          <div *ngIf="cargandoPermisos" class="empty-state">
+            <p>Cargando matriz de permisos...</p>
+          </div>
+
+          <section *ngIf="!cargandoPermisos" class="permisos-capacidad">
+            <label class="custom-checkbox-wrapper">
+              <input #ocultamientoGlobalCheckbox type="checkbox"
+                [checked]="ocultarMontosGlobal"
+                (change)="cambiarOcultamientoGlobal(ocultamientoGlobalCheckbox.checked)">
+              <div class="checkmark">
+                <svg *ngIf="ocultarMontosGlobal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <span class="accion-label">Información sensible: Ocultar montos en todo el sistema</span>
+            </label>
+            <div class="acciones-list" *ngIf="ambitosMontos.length">
+              <strong>Configuración por módulo / vista</strong>
+              <label *ngFor="let ambito of ambitosMontos" class="custom-checkbox-wrapper">
+                <input #ambitoMontosCheckbox type="checkbox"
+                  [checked]="ocultarMontosGlobal || ambito.ocultar_montos"
+                  [disabled]="ocultarMontosGlobal"
+                  (change)="ambito.ocultar_montos = ambitoMontosCheckbox.checked">
+                <div class="checkmark">
+                  <svg *ngIf="ocultarMontosGlobal || ambito.ocultar_montos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <span class="accion-label">{{ ambito.nombre }}: Ocultar montos</span>
+              </label>
+            </div>
+          </section>
+
+          <div *ngIf="!cargandoPermisos" class="table-wrap modal-table-wrap">
+            <div class="table-responsive">
+              <table class="data-table modal-data-table">
+                <thead>
+                  <tr>
+                    <th class="col-expand"></th>
+                    <th class="col-id">ID</th>
+                    <th class="col-nombre">Nombre Módulo / Acciones</th>
+                    <th class="col-jerarquia">Jerarquía</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ng-container *ngFor="let m of modulosRaiz">
+                    <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: m, nivel: 0 }"></ng-container>
+                  </ng-container>
+
+                  <ng-template #filaModulo let-modulo let-nivel="nivel">
+                    <tr [class.tr-root]="nivel === 0" [class.tr-submodule]="nivel > 0">
+                      <td class="col-expand">
+                        <button *ngIf="getSubmodulos(modulo.modulo_id).length > 0" type="button" class="btn-expand" (click)="toggleExpandir(modulo.modulo_id)">
+                          <span class="arrow" [class.rotated]="isExpandido(modulo.modulo_id)">&#9654;</span>
+                        </button>
+                      </td>
+                      <td class="col-id">{{ modulo.modulo_id }}</td>
+                      <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.padding-left.px]="nivel * 24">
+                        <div class="modulo-info">
+                          <span class="modulo-nombre"><strong>{{ modulo.nombre }}</strong></span>
+                          <div *ngIf="modulo.esAccesoModulo" class="acciones-list">
+                            <label class="custom-checkbox-wrapper">
+                              <input type="checkbox" [ngModel]="modulo.asignado"
+                                (ngModelChange)="cambiarAsignacionModulo(modulo, $event)"
+                                [disabled]="!puedeModificarModulo(modulo)">
+                              <div class="checkmark">
+                                <svg *ngIf="modulo.asignado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                              <span class="accion-label">Acceso al módulo</span>
+                            </label>
+                          </div>
+                          <div *ngIf="modulo.acciones.length > 0" class="acciones-list">
+                            <label *ngFor="let a of modulo.acciones" class="custom-checkbox-wrapper">
+                              <input type="checkbox" [(ngModel)]="a.asignado">
+                              <div class="checkmark">
+                                <svg *ngIf="a.asignado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                              <span class="accion-label">{{ a.nombre }}</span>
+                            </label>
+                          </div>
+                          <span *ngIf="modulo.acciones.length === 0 && !modulo.esAccesoModulo" class="sin-acciones">Sin acciones</span>
+                        </div>
+                      </td>
+                      <td class="col-jerarquia"><span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">{{ nivel === 0 ? 'Módulo Raíz' : 'Submódulo' }}</span></td>
+                    </tr>
+
+                    <ng-container *ngIf="isExpandido(modulo.modulo_id)">
+                      <ng-container *ngFor="let hijo of getSubmodulos(modulo.modulo_id)">
+                        <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: hijo, nivel: nivel + 1 }"></ng-container>
+                      </ng-container>
+                    </ng-container>
+                  </ng-template>
+
+                  <tr *ngIf="treePermisos.length === 0">
+                    <td colspan="4" class="empty-state">
+                      No tienes permisos asignados en tu bolsa delegable para otorgar a este usuario.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalPermisos()" [disabled]="guardandoPermisos">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="guardarPermisos()" [disabled]="guardandoPermisos">
+            <i class="fas fa-save"></i> {{ guardandoPermisos ? 'Guardando...' : 'Guardar Permisos' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #sinAcceso>
+  <app-acceso-restringido [modulo]="modulo"></app-acceso-restringido>
+</ng-template>
