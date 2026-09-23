@@ -554,10 +554,12 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     }
 
     if (!regla) {
-      e.log_fecha_booking_prog = null;
-      e.imp_llegada_contenedor_prog = null;
-      e.des_fecha_cruce_prog = null;
-      e.des_fecha_entrega_almacen_prog = null;
+      // Sin regla: NO se toca nada de lo que ya haya en pantalla (ni lo que
+      // vino del servidor, ni lo que el usuario acaba de escribir a mano) --
+      // mismo criterio que _recalcular_campos() en el backend. Antes esto
+      // forzaba las 4 fechas a null, lo que borraba en pantalla cualquier
+      // valor capturado a mano en cuanto corría este mismo cálculo local
+      // (al escribir, al recargar, o cada 10s por el polling).
       e.tiempos_estimados_faltantes = true;
       return;
     }
@@ -578,10 +580,8 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       e.des_fecha_entrega_almacen_prog = almacen;
       e.tiempos_estimados_faltantes = false;
     } catch {
-      e.log_fecha_booking_prog = null;
-      e.imp_llegada_contenedor_prog = null;
-      e.des_fecha_cruce_prog = null;
-      e.des_fecha_entrega_almacen_prog = null;
+      // Fallo real de cálculo: no se puede confiar en el resultado, pero
+      // tampoco se borra lo que ya hubiera en pantalla.
     }
   }
 
