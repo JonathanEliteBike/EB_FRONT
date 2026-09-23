@@ -244,18 +244,25 @@
         </div>
         <div class="field-row" id="campo-log_fecha_booking_prog">
           <label>13. Booking (Salida de contenedor estimado)</label>
-          <div class="calc-display">
+          <div class="calc-display" *ngIf="!embarque.tiempos_estimados_faltantes">
             <span *ngIf="embarque.log_fecha_booking_prog">
               <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
               {{ isoADMY(embarque.log_fecha_booking_prog) }}
             </span>
-            <span *ngIf="!embarque.log_fecha_booking_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+            <span *ngIf="!embarque.log_fecha_booking_prog" style="color:#475569;font-size:.8rem">
               — (se calcula solo con Entrega + origen + producto + vía)
             </span>
-            <span *ngIf="!embarque.log_fecha_booking_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
-              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
-            </span>
           </div>
+          <ng-container *ngIf="embarque.tiempos_estimados_faltantes">
+            <app-date-picker
+                mode="single"
+                [value]="embarque.log_fecha_booking_prog || ''"
+                (dateChange)="marcarCambio('log_fecha_booking_prog', $event || null)">
+              </app-date-picker>
+            <span class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación — captúrala a mano mientras tanto.
+            </span>
+          </ng-container>
         </div>
         <div class="field-row" id="campo-log_fecha_booking" [class.campo-error]="esCampoError('log_fecha_booking')" [class.campo-faltante]="esCampoFaltante('log_fecha_booking')">
           <label>13b. Booking Real (fecha salida contenedor)</label>
@@ -400,18 +407,25 @@
         </div>
         <div class="field-row" id="campo-imp_llegada_contenedor_prog">
           <label>8. Llegada de contenedor a puerto (Proyectado)</label>
-          <div class="calc-display">
+          <div class="calc-display" *ngIf="!embarque.tiempos_estimados_faltantes">
             <span *ngIf="embarque.imp_llegada_contenedor_prog">
               <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
               {{ isoADMY(embarque.imp_llegada_contenedor_prog) }}
             </span>
-            <span *ngIf="!embarque.imp_llegada_contenedor_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+            <span *ngIf="!embarque.imp_llegada_contenedor_prog" style="color:#475569;font-size:.8rem">
               — (se calcula solo con Entrega + origen + producto + vía)
             </span>
-            <span *ngIf="!embarque.imp_llegada_contenedor_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
-              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
-            </span>
           </div>
+          <ng-container *ngIf="embarque.tiempos_estimados_faltantes">
+            <app-date-picker
+                mode="single"
+                [value]="embarque.imp_llegada_contenedor_prog || ''"
+                (dateChange)="marcarCambio('imp_llegada_contenedor_prog', $event || null)">
+              </app-date-picker>
+            <span class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación — captúrala a mano mientras tanto.
+            </span>
+          </ng-container>
         </div>
         <div class="field-row" id="campo-imp_llegada_contenedor_puerto" [class.campo-faltante]="esCampoFaltante('imp_llegada_contenedor_puerto')">
           <label>8. Llegada de contenedor a puerto (Real)</label>
@@ -613,18 +627,25 @@
               (dateChange)="marcarCambio('des_cita_cruce', $event || null)">
             </app-date-picker></div>
         <div class="field-row" id="campo-des_fecha_cruce_prog"><label>3. Fecha de cruce (Proyectado)</label>
-          <div class="calc-display">
+          <div class="calc-display" *ngIf="!embarque.tiempos_estimados_faltantes">
             <span *ngIf="embarque.des_fecha_cruce_prog">
               <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
               {{ isoADMY(embarque.des_fecha_cruce_prog) }}
             </span>
-            <span *ngIf="!embarque.des_fecha_cruce_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+            <span *ngIf="!embarque.des_fecha_cruce_prog" style="color:#475569;font-size:.8rem">
               — (se calcula solo con Entrega + origen + producto + vía)
             </span>
-            <span *ngIf="!embarque.des_fecha_cruce_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
-              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
-            </span>
           </div>
+          <ng-container *ngIf="embarque.tiempos_estimados_faltantes">
+            <app-date-picker
+                mode="single"
+                [value]="embarque.des_fecha_cruce_prog || ''"
+                (dateChange)="marcarCambio('des_fecha_cruce_prog', $event || null)">
+              </app-date-picker>
+            <span class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación — captúrala a mano mientras tanto.
+            </span>
+          </ng-container>
         </div>
         <div class="field-row" id="campo-des_fecha_cruce_real" [class.campo-faltante]="esCampoFaltante('des_fecha_cruce_real')"><label>3. Fecha de cruce (Real)</label>
           <app-date-picker
@@ -663,18 +684,25 @@
           </div>
         </div>
         <div class="field-row" id="campo-des_fecha_entrega_almacen_prog"><label>7. Fecha de entrega en almacén programada</label>
-          <div class="calc-display">
+          <div class="calc-display" *ngIf="!embarque.tiempos_estimados_faltantes">
             <span *ngIf="embarque.des_fecha_entrega_almacen_prog">
               <i class="fas fa-calculator" style="color:#64748b;font-size:.7rem;margin-right:4px"></i>
               {{ isoADMY(embarque.des_fecha_entrega_almacen_prog) }}
             </span>
-            <span *ngIf="!embarque.des_fecha_entrega_almacen_prog && !embarque.tiempos_estimados_faltantes" style="color:#475569;font-size:.8rem">
+            <span *ngIf="!embarque.des_fecha_entrega_almacen_prog" style="color:#475569;font-size:.8rem">
               — (se calcula solo con Entrega + origen + producto + vía)
             </span>
-            <span *ngIf="!embarque.des_fecha_entrega_almacen_prog && embarque.tiempos_estimados_faltantes" class="calc-alerta">
-              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación
-            </span>
           </div>
+          <ng-container *ngIf="embarque.tiempos_estimados_faltantes">
+            <app-date-picker
+                mode="single"
+                [value]="embarque.des_fecha_entrega_almacen_prog || ''"
+                (dateChange)="marcarCambio('des_fecha_entrega_almacen_prog', $event || null)">
+              </app-date-picker>
+            <span class="calc-alerta">
+              <i class="fas fa-triangle-exclamation"></i> Falta configurar Tiempos Estimados para esta combinación — captúrala a mano mientras tanto.
+            </span>
+          </ng-container>
         </div>
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_lugar_destino')"><label>8. Lugar de destino (Ciudad)</label>
           <input type="text" [value]="embarque.des_lugar_destino || ''" (change)="marcarCambio('des_lugar_destino', $any($event.target).value || null)" placeholder="TORREÓN" /></div>
