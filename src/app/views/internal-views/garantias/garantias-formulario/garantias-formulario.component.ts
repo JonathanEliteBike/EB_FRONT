@@ -565,6 +565,9 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef, private auth: AuthService) {}
 
   get puedeCrearGarantia(): boolean {
+    if (this.auth.getRol() === 4) {
+      return this.auth.tienePermisoInterno('garantias', 'crear');
+    }
     return this.auth.tieneModulo('usuarios_garantias');
   }
 

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MetasService } from '../../../services/metas.service';
 import { AlertaService } from '../../../services/alerta.service';
+import { AuthService } from '../../../services/auth.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { MonedaFormatoInputDirective } from '../../../directives/moneda-formato-input.directive';
 
@@ -39,7 +40,27 @@ export class MetasComponent {
   mensajeAlerta = '';
   tipoAlerta: 'exito' | 'error' = 'exito';
 
-  constructor(private metasService: MetasService, private alertaService: AlertaService) { }
+  constructor(
+    private metasService: MetasService,
+    private alertaService: AlertaService,
+    private authService: AuthService
+  ) { }
+
+  get puedeCrear(): boolean {
+    return this.puedeGestionar('crear');
+  }
+
+  get puedeEditar(): boolean {
+    return this.puedeGestionar('editar');
+  }
+
+  get puedeEliminar(): boolean {
+    return this.puedeGestionar('eliminar');
+  }
+
+  get puedeGestionarMetas(): boolean {
+    return this.puedeCrear || this.puedeEditar || this.puedeEliminar;
+  }
 
   ngOnInit() {
     this.cargarMetas();
@@ -59,12 +80,14 @@ export class MetasComponent {
   }
 
   abrirAgregar() {
+    if (!this.puedeCrear) return;
     this.resetAgregarForm();
     this.mostrarAgregar = true;
     this.mostrarEditar = false;
   }
 
   abrirEditar(meta: any) {
+    if (!this.puedeEditar) return;
     this.editarForm = {
       id: meta.id,
       nivel: meta.nivel,
@@ -88,6 +111,7 @@ export class MetasComponent {
   }
 
   guardarAgregar() {
+    if (!this.puedeCrear) return;
     const formateado = {
       ...this.agregarForm,
       compromiso_scott: this.toDecimal(this.agregarForm.compromiso_scott),
@@ -111,6 +135,7 @@ export class MetasComponent {
   }
 
   guardarEditar() {
+    if (!this.puedeEditar) return;
     if (this.editarForm.id == null) return;
 
     const formateado = {
@@ -135,11 +160,13 @@ export class MetasComponent {
   }
 
   confirmarEliminar(meta: any) {
+    if (!this.puedeEliminar) return;
     this.editarForm.id = meta.id;
     this.confirmacionVisible = true;
   }
 
   eliminarMeta() {
+    if (!this.puedeEliminar) return;
     if (this.editarForm.id == null) return;
     this.metasService.eliminarMeta(this.editarForm.id).subscribe({
       next: () => {
@@ -165,6 +192,10 @@ export class MetasComponent {
       compromiso_apparel: 0,
       compromiso_vittoria: 0,
     };
+  }
+
+  private puedeGestionar(accion: 'crear' | 'editar' | 'eliminar'): boolean {
+    return this.authService.getRol() !== 4 || this.authService.tienePermisoInterno('metas', accion);
   }
 
   formatearMoneda(valor: any): string {

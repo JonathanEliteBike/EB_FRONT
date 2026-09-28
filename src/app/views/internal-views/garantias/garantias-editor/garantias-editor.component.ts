@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { GarantiasService, GarantiaFormulario } from '../../../../services/garantias.service';
+import { AuthService } from '../../../../services/auth.service';
 import {
   SECCIONES, DISTRIBUIDORES, PUESTOS, TALLAS_PROTECCION, TIPOS_COMPONENTE,
   PROT_LOCALIZACIONES, PROT_TIPOS_DANO, ZAPATO_TIPOS_DANO, CASCO_TIPOS_DANO,
@@ -302,7 +303,15 @@ export class GarantiasEditorComponent implements OnInit {
     scale:    'Escala / Rango',
   };
 
-  constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private svc: GarantiasService,
+    private cdr: ChangeDetectorRef,
+    private auth: AuthService,
+  ) {}
+
+  get puedeEditar(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('garantias', 'editar');
+  }
 
   ngOnInit(): void {
     this.svc.obtenerEstructura().subscribe({
@@ -336,14 +345,17 @@ export class GarantiasEditorComponent implements OnInit {
   }
 
   iniciarEditarCampo(campo: EditorCampo): void {
+    if (!this.puedeEditar) return;
     campo.editando = true;
   }
 
   guardarCampo(campo: EditorCampo): void {
+    if (!this.puedeEditar) return;
     campo.editando = false;
   }
 
   agregarCampo(sec: EditorSeccion): void {
+    if (!this.puedeEditar) return;
     if (!this.nuevoLabel.trim()) return;
     const opciones = (this.nuevoTipo === 'radio' || this.nuevoTipo === 'select')
       ? this.nuevasOpciones.split('\n').map(s => s.trim()).filter(s => !!s)
@@ -369,10 +381,12 @@ export class GarantiasEditorComponent implements OnInit {
   }
 
   eliminarCampo(sec: EditorSeccion, idx: number): void {
+    if (!this.puedeEditar) return;
     sec.campos.splice(idx, 1);
   }
 
   moverCampoArriba(sec: EditorSeccion, idx: number): void {
+    if (!this.puedeEditar) return;
     if (idx === 0) return;
     const tmp = sec.campos[idx - 1];
     sec.campos[idx - 1] = sec.campos[idx];
@@ -380,6 +394,7 @@ export class GarantiasEditorComponent implements OnInit {
   }
 
   moverCampoAbajo(sec: EditorSeccion, idx: number): void {
+    if (!this.puedeEditar) return;
     if (idx === sec.campos.length - 1) return;
     const tmp = sec.campos[idx + 1];
     sec.campos[idx + 1] = sec.campos[idx];
@@ -387,6 +402,7 @@ export class GarantiasEditorComponent implements OnInit {
   }
 
   guardarEstructura(): void {
+    if (!this.puedeEditar) return;
     this.guardando = true;
     this.guardadoOk = false;
     this.errorMsg = '';
@@ -417,6 +433,7 @@ export class GarantiasEditorComponent implements OnInit {
   cerrarDetalle(): void { this.detalle = null; }
 
   actualizarEstatus(id: number, estatus: string): void {
+    if (!this.puedeEditar) return;
     this.svc.actualizarEstatus(id, estatus).subscribe({
       next: () => {
         const f = this.formularios.find(x => x.id === id);

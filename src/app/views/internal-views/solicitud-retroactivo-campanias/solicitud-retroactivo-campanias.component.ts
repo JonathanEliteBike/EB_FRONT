@@ -8,6 +8,7 @@ import { ProductoDetalle } from '../../../components/producto-catalogo-modal/mod
 import { ProductoCatalogoModalComponent } from '../../../components/producto-catalogo-modal/producto-catalogo-modal/producto-catalogo-modal.component';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-solicitud-retroactivo-campanias',
@@ -18,6 +19,22 @@ import { DatePickerComponent } from '../../../components/date-picker/date-picker
 })
 export class SolicitudRetroactivoCampaniasComponent implements OnInit {
   private readonly campaniasService = inject(SolicitudRetroactivoCampaniasService);
+  private readonly authService = inject(AuthService);
+
+  get puedeCrear(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('solicitud_retroactivo_campanias', 'crear');
+  }
+
+  get puedeEditar(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('solicitud_retroactivo_campanias', 'editar');
+  }
+
+  get puedeEliminar(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('solicitud_retroactivo_campanias', 'eliminar');
+  }
 
   // Estados de vista
   modoFormulario: boolean = false;
@@ -101,6 +118,7 @@ export class SolicitudRetroactivoCampaniasComponent implements OnInit {
 
   // --- NAVEGACIÓN Y ACCIONES DEL FORMULARIO ---
   nuevaCampania(): void {
+    if (!this.puedeCrear) return;
     this.limpiarFormulario();
     this.modoFormulario = true;
   }
@@ -127,6 +145,7 @@ export class SolicitudRetroactivoCampaniasComponent implements OnInit {
   }
 
   editarCampania(c: CampaniaItem): void {
+    if (!this.puedeEditar) return;
     this.editandoId = c.id;
     this.formNombre = c.nombre;
     this.formFechaInicio = this.normalizarFecha(c.fecha_inicio);
@@ -156,6 +175,10 @@ export class SolicitudRetroactivoCampaniasComponent implements OnInit {
   }
 
   guardarCampania(): void {
+    if ((this.editandoId && !this.puedeEditar) || (!this.editandoId && !this.puedeCrear)) {
+      this.mostrarAlerta('No cuenta con permiso para guardar esta campaña.', 'error');
+      return;
+    }
     if (!this.formNombre.trim()) {
       this.mostrarAlerta('El nombre de la campaña es obligatorio.', 'error');
       return;
@@ -279,6 +302,7 @@ export class SolicitudRetroactivoCampaniasComponent implements OnInit {
   }
 
   eliminarCampania(id: number): void {
+    if (!this.puedeEliminar) return;
     if (!confirm('¿Estás seguro de que deseas eliminar esta campaña?')) return;
 
     this.campaniasService.deleteCampania(id).subscribe({

@@ -128,6 +128,42 @@ app-root {
   z-index: 1;
 }
 
+/* Carátulas conserva el diseño de sus tablas cuando el permiso no permite
+   ver montos. La respuesta del backend ya llega redactada; esta capa evita
+   que totales calculados en la vista se presenten como cifras visibles. */
+.montos-ocultos .caratula-evac-container .col-numero,
+.montos-ocultos .caratula-evac-container .col-numero-linea,
+.montos-ocultos .caratula-evac-container .col-compromiso,
+.montos-ocultos .caratula-evac-container .col-acumulado,
+.montos-ocultos .caratula-evac-container .col-proyectado,
+.montos-ocultos .caratula-evac-container .col-diferencia,
+.montos-ocultos .caratula-evac-container .detalle-valor,
+.montos-ocultos .caratula-evac-container .detalle-sub,
+.montos-ocultos .caratula-evac-container .total-general-destacado strong,
+.montos-ocultos .caratula-evac-container .tarjeta-total strong,
+.montos-ocultos .caratula-evac-container .columna-total,
+.montos-ocultos .caratula-evac-container .total-clientes,
+.montos-ocultos .caratula-evac-container .monto-no-clasificado,
+.montos-ocultos .monitor-container .client-info .info-item:last-child .info-value,
+.montos-ocultos .monitor-container .table-periodo tbody tr:nth-child(1) td:not(:first-child),
+.montos-ocultos .monitor-container .table-periodo tbody tr:nth-child(2) td:not(:first-child),
+.montos-ocultos .monitor-container .table-periodo tbody tr:nth-child(4) td:not(:first-child),
+.montos-ocultos .monitor-container .table-container tbody tr:nth-child(1) td:not(:first-child),
+.montos-ocultos .monitor-container .table-container tbody tr:nth-child(2) td:not(:first-child),
+.montos-ocultos .monitor-container .table-container tbody tr:nth-child(4) td:not(:first-child),
+.montos-ocultos .monitor-container .compra-value {
+  visibility: hidden;
+}
+
+/* Monitor de facturas: se conservan los datos descriptivos y se retiran
+   exclusivamente Precio Unit. y Total cuando no existe ver_montos. */
+.montos-ocultos .tabla-facturas th:nth-child(7),
+.montos-ocultos .tabla-facturas td:nth-child(7),
+.montos-ocultos .tabla-facturas th:nth-child(9),
+.montos-ocultos .tabla-facturas td:nth-child(9) {
+  display: none;
+}
+
 /*========================================================= ESTILOS PARA EL (LOGIN) ==============================================================*/
 /*================================================================================================================================================*/
 

@@ -6,6 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { MonitorOdooService } from '../../services/monitor-odoo.service';
 import { HomeBarComponent } from '../../components/home-bar/home-bar.component';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../services/auth.service';
+import { forkJoin } from 'rxjs';
 
 interface CargaResult {
   cargados: number;
@@ -41,6 +43,7 @@ interface Modulo {
   boton: string;
   ruta: string | null;
   accion: string | null;
+  permisoInterno?: string;
   pinned?: boolean;
 }
 
@@ -57,10 +60,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   facturas: any[] = [];
 
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private apiUrl = environment.apiUrl;
   private timerInterval: any;
 
   busquedaModulos = '';
+  permisosInternosCargados = false;
 
   modulos: Modulo[] = [
     {
@@ -125,7 +130,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       descripcion: 'Consulta el historial de facturacion por periodo, compara meses entre años y analiza los productos mas vendidos.',
       boton: 'Ir a Ventas',
       ruta: '/ventas-monitor',
-      accion: null
+      accion: null,
+      permisoInterno: 'ventas_monitor'
     },
     {
       icono: 'fa-file-excel',
@@ -133,7 +139,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       descripcion: 'Carga el catalogo de productos disponibles para proyecciones de compra. Solo los productos aqui cargados podran seleccionarse.',
       boton: 'Cargar Catalogo',
       ruta: null,
-      accion: 'catalogo'
+      accion: 'catalogo',
+      permisoInterno: 'usuarios_proyeccion_compras'
     },
     {
       icono: 'fa-key',
@@ -149,7 +156,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       descripcion: 'Dashboard de garantias con graficas de estatus, latencia de atencion, garantias por cliente y analisis de danos.',
       boton: 'Ir a Garantias',
       ruta: '/garantias',
-      accion: null
+      accion: null,
+      permisoInterno: 'garantias'
     },
     {
       icono: 'fa-chart-line',
@@ -178,11 +186,19 @@ export class HomeComponent implements OnInit, OnDestroy {
           m.titulo.toLowerCase().includes(q) || m.descripcion.toLowerCase().includes(q)
         )
       : this.modulos;
-    return [...lista.filter(m => m.pinned), ...lista.filter(m => !m.pinned)];
+    if (this.authService.getRol() === 4 && !this.permisosInternosCargados) return [];
+
+    const visibles = lista.filter(modulo =>
+      this.authService.getRol() !== 4 ||
+      this.authService.tieneAccesoInternoRuta(modulo.ruta || '') ||
+      (!this.authService.resolverModuloInternoPorRuta(modulo.ruta || '') &&
+        !!modulo.permisoInterno && this.authService.tienePermisoInterno(modulo.permisoInterno, 'ver'))
+    );
+    return [...visibles.filter(m => m.pinned), ...visibles.filter(m => !m.pinned)];
   }
 
   ejecutarAccion(accion: string | null): void {
-    if (accion === 'catalogo') this.abrirModalCatalogo();
+    if (accion === 'catalogo' && this.puedeVerCatalogoProyecciones) this.abrirModalCatalogo();
     if (accion === 'tokens') this.abrirModalTokens();
   }
 
@@ -244,6 +260,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPins();
+    if (this.authService.getRol() === 4) {
+      forkJoin({
+        permisos: this.authService.obtenerPermisosInternosEnVivo(),
+        modulos: this.authService.cargarModulosRutasInternas()
+      }).subscribe({
+        next: () => this.permisosInternosCargados = true,
+        error: () => this.permisosInternosCargados = true
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -260,9 +285,25 @@ export class HomeComponent implements OnInit, OnDestroy {
   // ── Modal catálogo ────────────────────────────────────────────────────────
 
   abrirModalCatalogo(): void {
+    if (!this.puedeVerCatalogoProyecciones) return;
     this.modalCatalogoAbierto = true;
     this.resetearEstadoCatalogo();
     this.cargarConteo();
+  }
+
+  get puedeVerCatalogoProyecciones(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('usuarios_proyeccion_compras', 'ver');
+  }
+
+  get puedeCargarCatalogoProyecciones(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('usuarios_proyeccion_compras', 'crear');
+  }
+
+  get puedeEliminarCatalogoProyecciones(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('usuarios_proyeccion_compras', 'eliminar');
   }
 
   cerrarModalCatalogo(): void {
@@ -329,7 +370,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   subirCatalogo(): void {
-    if (!this.archivoSeleccionado) return;
+    if (!this.archivoSeleccionado || !this.puedeCargarCatalogoProyecciones) return;
     this.subiendoCatalogo = true;
     this.resultadoCarga = null;
     this.errorCarga = null;
@@ -352,7 +393,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   subirCsvApparel(): void {
-    if (!this.archivoSeleccionado) return;
+    if (!this.archivoSeleccionado || !this.puedeCargarCatalogoProyecciones) return;
     this.subiendoCsv = true;
     this.resultadoCarga = null;
     this.errorCarga = null;
@@ -376,6 +417,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   cancelarLimpiar(): void { this.mostrarConfirmLimpiar = false; }
 
   ejecutarLimpiar(): void {
+    if (!this.puedeEliminarCatalogoProyecciones) return;
     this.limpiandoCatalogo = true;
     this.http.delete<{ eliminados: number }>(`${this.apiUrl}/forecast/catalogo-excel`).subscribe({
       next: () => {

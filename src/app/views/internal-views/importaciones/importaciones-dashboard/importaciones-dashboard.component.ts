@@ -9,6 +9,7 @@ import { HomeBarComponent } from '../../../../components/home-bar/home-bar.compo
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../../components/temporada-selector/temporada-selector.component';
 import { ImportacionesService } from '../../../../services/importaciones.service';
+import { AuthService } from '../../../../services/auth.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -266,11 +267,21 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
+    private auth: AuthService,
   ) {}
+
+  get puedeEditarImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'editar');
+  }
+
+  get puedeVerMontosDashboard(): boolean {
+    return !this.auth.debeOcultarMontos('importaciones_dashboard');
+  }
 
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab') as typeof this.activeTab | null;
-    if (tab && ['resumen','latencias','costos','embarques'].includes(tab)) this.activeTab = tab;
+    if (tab && ['resumen','latencias','costos','embarques'].includes(tab)
+      && (tab !== 'costos' || this.puedeVerMontosDashboard)) this.activeTab = tab;
     this.cargar();
   }
   ngAfterViewInit(): void {}
@@ -305,6 +316,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   switchTab(tab: 'resumen' | 'latencias' | 'costos' | 'embarques'): void {
+    if (tab === 'costos' && !this.puedeVerMontosDashboard) return;
     if (tab === this.activeTab) return;
     this.activeTab = tab;
     this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
@@ -782,6 +794,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   irDetalle(id: number): void { this.router.navigate(['/importaciones', id], { queryParams: { from: 'dashboard', tab: this.activeTab } }); }
 
   abrirNotasEdit(e: any, event: Event): void {
+    if (!this.puedeEditarImportacion) return;
     event.stopPropagation();
     this.notasEditId = e.id;
     this.notasEditVal = e.notas ?? '';
@@ -792,6 +805,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   }
 
   confirmarNotas(e: any): void {
+    if (!this.puedeEditarImportacion) return;
     const val = this.notasEditVal.replace(/\n+$/, '').replace(/^\n+/, '');
     this.notasEditId = null;
     if (val === (e.notas ?? '')) return;

@@ -346,7 +346,7 @@ export class GestionClientesComponent implements OnInit {
     }
 
     forkJoin({
-      modulosRes: this.adminService.getModulos(),
+      modulosRes: this.adminService.getModulosHistoricosRol2(),
       delegablesRes: this.adminService.getPermisosDelegablesAdministrador(adminId),
       modulosDelegablesRes: this.adminService.getModulosDelegablesAdministrador(adminId)
     }).subscribe({
@@ -355,9 +355,12 @@ export class GestionClientesComponent implements OnInit {
           this.cargandoModal = false;
         }
 
-        // Módulos reales y registrados en BD
+        // Módulos reales y registrados en BD, acotados al flujo distribuidor → usuario hijo
         const listaModulos: ModuloItem[] = (modulosRes.modulos || []).filter(
-          (m: any) => m && m.id && Number(m.activo) === 1
+          (m: any) => m && m.id &&
+            Number(m.activo) === 1 &&
+            Number(m.delegable_a_hijos) === 1 &&
+            !['creacion_usuarios_dis', 'usuarios_hijos'].includes(m.identificador)
         );
         this.modulos = listaModulos;
         this.modulosExpandidos = new Set(

@@ -6,6 +6,7 @@ import { AlertaService } from '../../../services/alerta.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-distribuidores-multimarcas',
@@ -42,8 +43,19 @@ export class DistribuidoresMultimarcasComponent implements OnInit {
   constructor(
     private multimarcasService: MultimarcasService,
     private alertaService: AlertaService,
+    private authService: AuthService,
     private router: Router
   ) { }
+
+  get puedeEditar(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('distribuidores_multimarcas', 'editar');
+  }
+
+  get puedeEliminar(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('distribuidores_multimarcas', 'eliminar');
+  }
 
   ngOnInit() {
     this.obtenerTodosLosClientes();
@@ -138,6 +150,10 @@ export class DistribuidoresMultimarcasComponent implements OnInit {
   }
 
   editarCliente() {
+    if (!this.puedeEditar) {
+      this.alertaService.mostrarError('No cuenta con permiso para editar distribuidores multimarcas.');
+      return;
+    }
     if (!this.cliente?.id) return;
     this.multimarcasService.editarCliente(this.cliente.id, this.cliente).subscribe({
       next: () => {
@@ -151,6 +167,10 @@ export class DistribuidoresMultimarcasComponent implements OnInit {
   }
 
   eliminarCliente() {
+    if (!this.puedeEliminar) {
+      this.alertaService.mostrarError('No cuenta con permiso para eliminar distribuidores multimarcas.');
+      return;
+    }
     if (!this.cliente?.id) return;
     this.multimarcasService.eliminarCliente(this.cliente.id).subscribe({
       next: () => {
@@ -164,6 +184,7 @@ export class DistribuidoresMultimarcasComponent implements OnInit {
   }
 
   confirmarEdicion() {
+    if (!this.puedeEditar) return;
     this.confirmacionVisible = true;
   }
 
@@ -172,6 +193,7 @@ export class DistribuidoresMultimarcasComponent implements OnInit {
   }
 
   confirmarEliminacion() {
+    if (!this.puedeEliminar) return;
     this.confirmacionEliminarVisible = true;
   }
 

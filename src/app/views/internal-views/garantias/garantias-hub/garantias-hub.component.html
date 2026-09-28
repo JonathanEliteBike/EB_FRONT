@@ -59,7 +59,7 @@
     <div class="modules-grid">
 
       <!-- ═══ CARD PRINCIPAL — Tickets ═══ -->
-      <a routerLink="/garantias/tickets" class="card card-main">
+      <a *ngIf="puede()" routerLink="/garantias/tickets" class="card card-main">
         <span class="card-num right">01</span>
         <div class="card-inner">
           <div class="card-top-row">
@@ -80,7 +80,7 @@
       <!-- ═══ COLUMNA DERECHA — 3 cards compactas ═══ -->
       <div class="cards-col">
 
-        <a routerLink="/garantias/dashboard" class="card card-sm">
+        <a *ngIf="puede()" routerLink="/garantias/dashboard" class="card card-sm">
           <span class="card-num right">02</span>
           <div class="card-inner row">
             <div class="card-icon blue sm"><i class="fas fa-chart-pie"></i></div>
@@ -92,7 +92,7 @@
           </div>
         </a>
 
-        <a routerLink="/garantias/editor" class="card card-sm">
+        <a *ngIf="puede()" routerLink="/garantias/editor" class="card card-sm">
           <span class="card-num right">03</span>
           <div class="card-inner row">
             <div class="card-icon purple sm"><i class="fas fa-sliders-h"></i></div>
@@ -104,7 +104,7 @@
           </div>
         </a>
 
-        <a routerLink="/garantias/formulario" class="card card-sm">
+        <a *ngIf="puede('crear')" routerLink="/garantias/formulario" class="card card-sm">
           <span class="card-num right">04</span>
           <div class="card-inner row">
             <div class="card-icon green sm"><i class="fas fa-plus-circle"></i></div>

@@ -431,7 +431,8 @@ export class VentasMonitorComponent implements OnInit, OnDestroy {
     return MESES.find(m => m.num === num)?.nombre ?? '';
   }
 
-  formatCurrency(val: number): string {
+  formatCurrency(val: number | null | undefined): string {
+    if (val === null || val === undefined) return '';
     return val.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
   }
 

@@ -248,6 +248,15 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   }
 
   get esAdmin(): boolean { return this.auth.isAdmin(); }
+  get puedeCrear(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear'));
+  }
+  get puedeEditar(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'editar'));
+  }
+  get puedeEliminar(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'eliminar'));
+  }
 
   volver(): void {
     if (this.vieneDeDeepLink) {
