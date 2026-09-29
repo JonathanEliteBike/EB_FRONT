@@ -93,7 +93,15 @@ h2 {
 /* El permiso se evalúa mediante AuthService.debeOcultarMontos('previo').
    Sólo se ocultan importes; encabezados, filtros y porcentajes permanecen. */
 .monitor-container.montos-ocultos .tabla-previo td.td-number {
-  visibility: hidden;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  user-select: none;
+}
+
+.monitor-container.montos-ocultos .tabla-previo td.td-number::after {
+  content: '-';
+  color: #FFFCF2;
+  -webkit-text-fill-color: #FFFCF2;
 }
 
 .tabla-previo {

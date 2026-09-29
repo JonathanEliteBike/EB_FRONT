@@ -17,6 +17,7 @@ import {
   PorEstado,
   DesglosePorEstado,
 } from '../../../services/ventas.service';
+import { AuthService } from '../../../services/auth.service';
 
 type Modo = 'anual' | 'comparar' | 'comparar-anual' | 'comparar-integrales' | 'cliente';
 
@@ -47,6 +48,7 @@ const MESES = [
 })
 export class VentasMonitorComponent implements OnInit, OnDestroy {
   private ventasService = inject(VentasService);
+  private authService = inject(AuthService);
   private busquedaSubject = new Subject<string>();
 
   // ── Estado general ──────────────────────────────────────────────────────────
@@ -432,6 +434,7 @@ export class VentasMonitorComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(val: number | null | undefined): string {
+    if (this.authService.debeOcultarMontos('ventas_monitor')) return '-';
     if (val === null || val === undefined) return '';
     return val.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
   }

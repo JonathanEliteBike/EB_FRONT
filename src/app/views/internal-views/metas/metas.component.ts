@@ -62,6 +62,10 @@ export class MetasComponent {
     return this.puedeCrear || this.puedeEditar || this.puedeEliminar;
   }
 
+  get debeOcultarMontos(): boolean {
+    return this.authService.debeOcultarMontos('metas');
+  }
+
   ngOnInit() {
     this.cargarMetas();
   }

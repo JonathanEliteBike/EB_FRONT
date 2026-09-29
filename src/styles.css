@@ -152,16 +152,49 @@ app-root {
 .montos-ocultos .monitor-container .table-container tbody tr:nth-child(2) td:not(:first-child),
 .montos-ocultos .monitor-container .table-container tbody tr:nth-child(4) td:not(:first-child),
 .montos-ocultos .monitor-container .compra-value {
-  visibility: hidden;
+  color: transparent !important;
+}
+
+.montos-ocultos .caratula-evac-container .col-numero::after,
+.montos-ocultos .caratula-evac-container .col-numero-linea::after,
+.montos-ocultos .caratula-evac-container .col-compromiso::after,
+.montos-ocultos .caratula-evac-container .col-acumulado::after,
+.montos-ocultos .caratula-evac-container .col-proyectado::after,
+.montos-ocultos .caratula-evac-container .col-diferencia::after,
+.montos-ocultos .caratula-evac-container .detalle-valor::after,
+.montos-ocultos .caratula-evac-container .detalle-sub::after,
+.montos-ocultos .caratula-evac-container .total-general-destacado strong::after,
+.montos-ocultos .caratula-evac-container .tarjeta-total strong::after,
+.montos-ocultos .caratula-evac-container .columna-total::after,
+.montos-ocultos .caratula-evac-container .total-clientes::after,
+.montos-ocultos .caratula-evac-container .monto-no-clasificado::after,
+.montos-ocultos .monitor-container .client-info .info-item:last-child .info-value::after,
+.montos-ocultos .monitor-container .table-periodo tbody tr:nth-child(1) td:not(:first-child)::after,
+.montos-ocultos .monitor-container .table-periodo tbody tr:nth-child(2) td:not(:first-child)::after,
+.montos-ocultos .monitor-container .table-periodo tbody tr:nth-child(4) td:not(:first-child)::after,
+.montos-ocultos .monitor-container .table-container tbody tr:nth-child(1) td:not(:first-child)::after,
+.montos-ocultos .monitor-container .table-container tbody tr:nth-child(2) td:not(:first-child)::after,
+.montos-ocultos .monitor-container .table-container tbody tr:nth-child(4) td:not(:first-child)::after,
+.montos-ocultos .monitor-container .compra-value::after {
+  content: '-';
+  color: #FFFCF2 !important;
+}
+
+.montos-ocultos .monitor-container .client-info .info-item:last-child .info-value::after {
+  color: #FFFCF2 !important;
 }
 
 /* Monitor de facturas: se conservan los datos descriptivos y se retiran
    exclusivamente Precio Unit. y Total cuando no existe ver_montos. */
-.montos-ocultos .tabla-facturas th:nth-child(7),
 .montos-ocultos .tabla-facturas td:nth-child(7),
-.montos-ocultos .tabla-facturas th:nth-child(9),
 .montos-ocultos .tabla-facturas td:nth-child(9) {
-  display: none;
+  color: transparent;
+}
+
+.montos-ocultos .tabla-facturas td:nth-child(7)::after,
+.montos-ocultos .tabla-facturas td:nth-child(9)::after {
+  content: '-';
+  color: #FFFCF2;
 }
 
 /*========================================================= ESTILOS PARA EL (LOGIN) ==============================================================*/
