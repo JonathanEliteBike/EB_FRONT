@@ -6,10 +6,10 @@ import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
-import { ImportacionesService, Importacion } from '../../../../services/importaciones.service';
+import { ImportacionesService, Importacion, HitoAuditoriaResultado } from '../../../../services/importaciones.service';
 import { TiemposEstimadosService, TiempoEstimado } from '../../../../services/tiempos-estimados.service';
 
-type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos';
+type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos' | 'auditoria';
 
 interface CampoValidar { campo: keyof Importacion; label: string; opcional?: boolean; }
 
@@ -59,6 +59,29 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   seccionActiva: Seccion = 'logistica';
   cambiosPendientes: Partial<Importacion> = {};
 
+  auditoria: HitoAuditoriaResultado[] = [];
+  cargandoAuditoria = false;
+  errorAuditoria = '';
+
+  cargarAuditoria(): void {
+    if (!this.embarque?.id) return;
+    this.cargandoAuditoria = true;
+    this.errorAuditoria = '';
+    this.svc.obtenerAuditoria(this.embarque.id).subscribe({
+      next: (res) => { this.auditoria = res; this.cargandoAuditoria = false; },
+      error: () => { this.errorAuditoria = 'No se pudo cargar la auditoría.'; this.cargandoAuditoria = false; },
+    });
+  }
+
+  auditoriaPorSeccion(): { seccion: string; hitos: HitoAuditoriaResultado[] }[] {
+    const mapa = new Map<string, HitoAuditoriaResultado[]>();
+    for (const h of this.auditoria) {
+      if (!mapa.has(h.seccion)) mapa.set(h.seccion, []);
+      mapa.get(h.seccion)!.push(h);
+    }
+    return [...mapa.entries()].map(([seccion, hitos]) => ({ seccion, hitos }));
+  }
+
   validacionError: string[] = [];
   camposConError = new Set<string>();
   camposNA = new Set<string>();
@@ -82,6 +105,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     { key: 'recepcion',   label: 'Recepción',    icon: 'fa-box-open' },
     { key: 'costos',      label: 'Costos',       icon: 'fa-dollar-sign' },
     { key: 'cierre',      label: 'Cierre',       icon: 'fa-check-circle' },
+    { key: 'auditoria',   label: 'Auditoría',   icon: 'fa-magnifying-glass-chart' },
   ];
 
   private readonly CAMPOS_VALIDAR: Partial<Record<Seccion, CampoValidar[]>> = {
@@ -617,6 +641,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   cambiarSeccion(s: Seccion): void {
+    if (s === 'auditoria' && !this.auditoria.length) this.cargarAuditoria();
     this.validacionError = [];
     this.camposConError.clear();
     this.seccionActiva = s;

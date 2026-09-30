@@ -1373,6 +1373,49 @@
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════
+         SECCIÓN: AUDITORÍA DE LLENADO
+    ═══════════════════════════════════════════════════ -->
+    <ng-container *ngIf="seccionActiva === 'auditoria'">
+      <div class="auditoria-header">
+        <h3>Auditoría de llenado</h3>
+        <p class="auditoria-nota">
+          Compara la fecha en que cada hito se llenó realmente contra la fecha esperada.
+          Verde = se adelantó, rojo = se atrasó. Los campos llenados antes de activar esta
+          auditoría no tienen dato histórico y se muestran como "Sin dato histórico".
+        </p>
+      </div>
+
+      <div *ngIf="cargandoAuditoria" class="auditoria-cargando">Calculando auditoría…</div>
+      <div *ngIf="errorAuditoria" class="auditoria-error">{{ errorAuditoria }}</div>
+
+      <div *ngIf="!cargandoAuditoria && !errorAuditoria">
+        <div class="auditoria-grupo" *ngFor="let grupo of auditoriaPorSeccion()">
+          <h4 class="auditoria-grupo-titulo">{{ grupo.seccion | titlecase }}</h4>
+          <table class="auditoria-tabla">
+            <thead>
+              <tr><th>Hito</th><th>Fecha esperada</th><th>Fecha real</th><th>Diferencia</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let h of grupo.hitos">
+                <td>{{ h.etiqueta }}</td>
+                <td>{{ h.fecha_esperada || 'Pendiente' }}</td>
+                <td>{{ h.fecha_real || 'Sin dato histórico' }}</td>
+                <td>
+                  <span *ngIf="h.estado === 'adelantado'" class="auditoria-badge auditoria-verde">+{{ h.dias_diferencia }} días</span>
+                  <span *ngIf="h.estado === 'atrasado'" class="auditoria-badge auditoria-rojo">{{ h.dias_diferencia }} días</span>
+                  <span *ngIf="h.estado === 'a_tiempo'" class="auditoria-badge auditoria-gris">A tiempo</span>
+                  <span *ngIf="h.estado === 'pendiente'" class="auditoria-badge auditoria-gris">Pendiente</span>
+                  <span *ngIf="h.estado === 'en_espera'" class="auditoria-badge auditoria-gris">En espera</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p *ngIf="!auditoria.length" class="asig-vacio">No hay hitos de auditoría configurados.</p>
+      </div>
+    </ng-container>
+
     <!-- ── Botón guardar flotante ── -->
     <div class="fab-guardar" *ngIf="hayCambios()">
       <button class="btn-guardar-fab" (click)="guardar()" [disabled]="guardando">

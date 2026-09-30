@@ -445,3 +445,18 @@
 .precio-bici-total span:last-child {
   font-family: monospace; color: #34d399; font-size: .9rem;
 }
+
+/* ── Auditoría de llenado ── */
+.auditoria-header { margin-bottom: 16px; }
+.auditoria-nota { color: #94a3b8; font-size: 12.5px; max-width: 640px; }
+.auditoria-grupo { margin-bottom: 24px; }
+.auditoria-grupo-titulo { color: #e2e8f0; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.auditoria-tabla { width: 100%; border-collapse: collapse; }
+.auditoria-tabla th { text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; padding: 8px; border-bottom: 1px solid #2d3748; }
+.auditoria-tabla td { padding: 10px 8px; border-bottom: 1px solid #1e2535; font-size: 13px; color: #e2e8f0; }
+.auditoria-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.auditoria-verde { background: #12251a; color: #4ade80; }
+.auditoria-rojo { background: #2a1416; color: #f87171; }
+.auditoria-gris { background: #1e293b; color: #94a3b8; }
+.auditoria-cargando, .auditoria-error { color: #94a3b8; padding: 24px; text-align: center; }
+.asig-vacio { color: #94a3b8; text-align: center; padding: 32px; font-size: 13px; }
