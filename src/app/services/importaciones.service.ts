@@ -251,6 +251,18 @@ export interface ActualizarImportacionResp {
   tiempos_estimados_faltantes?: boolean;
 }
 
+export interface HitoAuditoriaResultado {
+  id: number;
+  seccion: string;
+  orden_hito: number;
+  etiqueta: string;
+  campo_dato: string;
+  fecha_esperada: string | null;
+  fecha_real: string | null;
+  estado: 'a_tiempo' | 'adelantado' | 'atrasado' | 'pendiente' | 'en_espera';
+  dias_diferencia: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ImportacionesService {
   private base = `${environment.apiUrl}/importaciones`;
@@ -271,6 +283,10 @@ export class ImportacionesService {
 
   actualizar(id: number, data: Partial<Importacion>): Observable<ActualizarImportacionResp> {
     return this.http.put<ActualizarImportacionResp>(`${this.base}/${id}`, data);
+  }
+
+  obtenerAuditoria(id: number): Observable<HitoAuditoriaResultado[]> {
+    return this.http.get<HitoAuditoriaResultado[]>(`${this.base}/${id}/auditoria`);
   }
 
   eliminar(id: number): Observable<{ ok: boolean }> {
