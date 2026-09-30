@@ -17,8 +17,10 @@ export const requierePermisoInternoGuard = (
   if (authService.isAdmin() || authService.getRol() !== 4) return true;
 
   return authService.validarAccesoRutaInterna(state.url).pipe(
-    map(resultado => {
-      if (resultado.catalogada) return resultado.permitido ? true : router.parseUrl('/acceso-restringido');
+    map(() => {
+      // Cuando una ruta declara su módulo de forma explícita, no debe obtener
+      // acceso por la herencia de su módulo padre. La consulta previa conserva
+      // la sincronización en vivo de permisos y catálogo.
       return authService.tienePermisoInterno(moduloIdentificador, accionIdentificador)
         ? true
         : router.parseUrl('/acceso-restringido');
