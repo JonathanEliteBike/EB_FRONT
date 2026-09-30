@@ -272,6 +272,7 @@ export interface AuditoriaResumenEmbarque {
   a_tiempo: number;
   pendientes: number;
   en_espera: number;
+  hitos: HitoAuditoriaResultado[];
 }
 
 @Injectable({ providedIn: 'root' })

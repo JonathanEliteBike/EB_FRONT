@@ -5,7 +5,8 @@
     <div>
       <h2>Auditoría de llenado — todos los embarques</h2>
       <p class="resumen-nota">
-        Hitos atrasados/adelantados por embarque. Clic en un embarque para ver el detalle completo.
+        Proyectado (P) vs Real (R) por hito, agrupado por sección. Verde = se llenó antes de lo esperado,
+        rojo = se llenó después. Clic en un embarque para ver el detalle completo.
       </p>
     </div>
     <a routerLink="/importaciones" class="btn-secundario">
@@ -17,37 +18,56 @@
   <div *ngIf="cargando">Cargando…</div>
 
   <div *ngIf="!cargando && !error">
-    <table class="tabla-mini" *ngIf="embarques.length; else sinEmbarques">
-      <thead>
-        <tr>
-          <th>Embarque</th>
-          <th class="num orden-col" (click)="ordenarPor('atrasados')" [class.orden-activo]="orden === 'atrasados'">Atrasados <i class="fas fa-sort"></i></th>
-          <th class="num orden-col" (click)="ordenarPor('adelantados')" [class.orden-activo]="orden === 'adelantados'">Adelantados <i class="fas fa-sort"></i></th>
-          <th class="num">A tiempo</th>
-          <th class="num">Pendientes</th>
-          <th class="num">En espera</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let e of embarquesOrdenados()" [routerLink]="['/importaciones', e.id]" class="fila-embarque">
-          <td>
-            <span class="cli-clave">{{ e.referencia }}</span>
-            <span class="td-nombre" [title]="e.nombre">{{ e.nombre }}</span>
-          </td>
-          <td class="num">
-            <span *ngIf="e.atrasados > 0" class="auditoria-badge auditoria-rojo">{{ e.atrasados }}</span>
-            <span *ngIf="e.atrasados === 0" class="auditoria-cero">—</span>
-          </td>
-          <td class="num">
-            <span *ngIf="e.adelantados > 0" class="auditoria-badge auditoria-verde">{{ e.adelantados }}</span>
-            <span *ngIf="e.adelantados === 0" class="auditoria-cero">—</span>
-          </td>
-          <td class="num">{{ e.a_tiempo }}</td>
-          <td class="num">{{ e.pendientes }}</td>
-          <td class="num">{{ e.en_espera }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="leyenda-row" *ngIf="embarques.length">
+      <span class="leg-item"><span class="rk rk-p">P</span>Proyectado</span>
+      <span class="leg-item"><span class="rk rk-r">R</span>Real</span>
+      <span class="leg-item leg-realcell"><span class="leg-cell-sw"></span>Fecha real registrada</span>
+      <span class="leg-divider"></span>
+      <span class="leg-sep">Ordenar por:</span>
+      <button class="orden-pill" [class.active]="orden === 'atrasados'" (click)="ordenarPor('atrasados')">Atrasados</button>
+      <button class="orden-pill" [class.active]="orden === 'adelantados'" (click)="ordenarPor('adelantados')">Adelantados</button>
+      <button class="orden-pill" [class.active]="orden === 'referencia'" (click)="ordenarPor('referencia')">Referencia</button>
+    </div>
+
+    <div class="cards-wrap" *ngIf="embarques.length; else sinEmbarques">
+      <div *ngFor="let e of embarquesOrdenados()" class="emb-card" (click)="irDetalle(e.id)">
+
+        <div class="ec-top">
+          <div class="ec-ident">
+            <div class="ec-ref-row">
+              <span class="ref-badge">{{ e.referencia }}</span>
+              <span class="auditoria-badge auditoria-rojo" *ngIf="e.atrasados > 0">{{ e.atrasados }} atrasado{{ e.atrasados === 1 ? '' : 's' }}</span>
+              <span class="auditoria-badge auditoria-verde" *ngIf="e.adelantados > 0">{{ e.adelantados }} adelantado{{ e.adelantados === 1 ? '' : 's' }}</span>
+              <span class="auditoria-badge auditoria-neutra" *ngIf="e.atrasados === 0 && e.adelantados === 0">al corriente</span>
+            </div>
+            <span class="ec-nombre" [title]="e.nombre">{{ e.nombre }}</span>
+          </div>
+        </div>
+
+        <div class="ec-vacio" *ngIf="!e.hitos.length">Sin hitos configurados o activos.</div>
+
+        <div class="ec-seccion" *ngFor="let grupo of seccionesDe(e)">
+          <span class="ec-seccion-lbl">{{ grupo.seccion }}</span>
+          <div class="ec-pipeline">
+            <div *ngFor="let h of grupo.hitos" class="ec-stage" [ngClass]="stageCls(h)" [title]="h.etiqueta">
+              <span class="ec-stage-lbl">{{ h.etiqueta }}</span>
+              <span class="ec-stage-p">
+                <span class="rk rk-p" title="Proyectado">P</span>{{ fmtD(h.fecha_esperada) }}
+              </span>
+              <span class="ec-stage-r">
+                <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
+              </span>
+              <span class="ec-stage-d" *ngIf="h.dias_diferencia != null" [ngClass]="deltaClass(h.dias_diferencia)">
+                {{ absDif(h.dias_diferencia) }}d
+              </span>
+              <span class="ec-stage-espera" *ngIf="h.estado === 'en_espera'">en espera</span>
+              <span class="ec-stage-espera" *ngIf="h.estado === 'pendiente'">pendiente</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
     <ng-template #sinEmbarques><p class="asig-vacio">No hay embarques para auditar.</p></ng-template>
   </div>
 </div>
