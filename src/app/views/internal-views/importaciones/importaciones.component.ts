@@ -7,6 +7,7 @@ import { HomeBarComponent } from '../../../components/home-bar/home-bar.componen
 import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../components/temporada-selector/temporada-selector.component';
 import { ImportacionesService, Importacion } from '../../../services/importaciones.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-importaciones',
@@ -138,7 +139,15 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private rowObserver?: IntersectionObserver;
 
-  constructor(private svc: ImportacionesService, private router: Router, private el: ElementRef) {}
+  constructor(private svc: ImportacionesService, private router: Router, private el: ElementRef, private auth: AuthService) {}
+
+  puedeCrearImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'crear');
+  }
+
+  puedeEliminarImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'eliminar');
+  }
 
   ngOnInit(): void {
     this.cargar();
@@ -320,6 +329,7 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
   eliminando: number | null = null;
 
   eliminar(e: Importacion, event: MouseEvent): void {
+    if (!this.puedeEliminarImportacion()) return;
     event.stopPropagation();
     if (!confirm(`¿Eliminar el embarque "${e.referencia} - ${e.nombre || ''}"?\nEsta acción no se puede deshacer.`)) return;
     this.eliminando = e.id;
@@ -359,6 +369,7 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   crearNuevo(): void {
+    if (!this.puedeCrearImportacion()) return;
     if (!this.nuevoEmbarque.referencia?.trim()) return;
     this.guardandoNuevo = true;
     this.svc.crear(this.nuevoEmbarque).subscribe({

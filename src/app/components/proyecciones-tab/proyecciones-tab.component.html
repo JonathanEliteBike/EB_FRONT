@@ -20,7 +20,7 @@
               title="Exportar proyecciones actuales a Excel">
         <i class="fas fa-download"></i> Exportar datos
       </button>
-      <ng-container *ngIf="!ocultarBotonesImport">
+      <ng-container *ngIf="!ocultarBotonesImport && puedeCrearForecast">
         <button *ngIf="puedeVerMontos" class="proy-btn proy-btn-outline"
                 [disabled]="!periodoSeleccionado"
                 (click)="exportarPlantilla()"
@@ -43,7 +43,7 @@
         </button>
       </ng-container>
       <button class="proy-btn proy-btn-primary"
-              *ngIf="rows.length > 0"
+              *ngIf="rows.length > 0 && (puedeEditarForecast || puedeEliminarForecast)"
               (click)="activarEdicion()">
         <i class="fas fa-edit"></i> Editar
       </button>
@@ -242,7 +242,7 @@
 
   <!-- ── Botón Agregar producto (siempre visible cuando hay periodo) ── -->
   <div *ngIf="!cargando && periodoSeleccionado" class="proy-tabla-acciones proy-acciones-standalone">
-    <button class="proy-btn proy-btn-outline-sm proy-btn-add"
+    <button *ngIf="puedeCrearForecast" class="proy-btn proy-btn-outline-sm proy-btn-add"
             (click)="agregarProducto()">
       <i class="fas fa-plus"></i> Agregar Producto
     </button>
@@ -271,10 +271,10 @@
             <th>Modelo</th>
             <th class="th-center">Color</th>
             <th class="th-center">Talla</th>
-            <th *ngIf="puedeVerMontos" class="th-precio">Precio</th>
+            <th *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="th-precio">Precio</th>
             <th class="th-precio th-precio-pub">P. Público c/IVA</th>
             <th class="th-total">Total uds.</th>
-            <th *ngIf="puedeVerMontos" class="th-total-precio">Total $</th>
+            <th *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="th-total-precio">Total $</th>
             <th *ngIf="modoEdicion" class="th-acciones">Acciones</th>
           </tr>
           <!-- Encabezado modo expandido -->
@@ -283,11 +283,11 @@
             <th class="th-producto">Producto</th>
             <th class="th-center">Color</th>
             <th class="th-center">Talla</th>
-            <th *ngIf="puedeVerMontos" class="th-precio">Precio</th>
+            <th *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="th-precio">Precio</th>
             <th class="th-precio th-precio-pub">P. Público c/IVA</th>
             <th *ngFor="let label of mesesLabels" class="th-mes">{{ label }}</th>
             <th class="th-total">Total uds.</th>
-            <th *ngIf="puedeVerMontos" class="th-total-precio">Total $</th>
+            <th *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="th-total-precio">Total $</th>
             <th *ngIf="modoEdicion" class="th-acciones">Acciones</th>
           </tr>
         </thead>
@@ -360,15 +360,20 @@
             </td>
 
             <!-- Precio distribuidor (siempre visible) -->
-            <td *ngIf="puedeVerMontos" class="td-precio">
+            <td *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="td-precio">
+              <span *ngIf="debeMostrarGuionMontos" class="td-precio-nd">-</span>
+              <ng-container *ngIf="!debeMostrarGuionMontos">
               <span *ngIf="row.precio">{{ row.precio | currency:'MXN':'symbol':'1.2-2' }}</span>
               <span *ngIf="!row.precio" class="td-precio-nd">—</span>
+              </ng-container>
             </td>
 
-            <!-- Precio público sin IVA (solo bicis de whitelist) -->
+            <!-- Precio público con IVA (solo bicis de whitelist) -->
             <td class="td-precio td-precio-pub">
-              <span *ngIf="row.precio_publico">{{ row.precio_publico | currency:'MXN':'symbol':'1.2-2' }}</span>
-              <span *ngIf="!row.precio_publico" class="td-precio-nd">—</span>
+              <span *ngIf="row.precio_publico !== null && row.precio_publico !== undefined">
+                {{ row.precio_publico | currency:'MXN':'symbol':'1.2-2' }}
+              </span>
+              <span *ngIf="row.precio_publico === null || row.precio_publico === undefined" class="td-precio-nd">—</span>
             </td>
 
             <!-- Meses (visibles en modo expandido, siempre en DOM para evitar spike de creación) -->
@@ -397,8 +402,9 @@
             <td class="td-total">{{ getRestante(row) | number:'1.0-0' }}</td>
 
             <!-- Total $ -->
-            <td *ngIf="puedeVerMontos" class="td-total-precio">
-              {{ (getRestante(row) * (row.precio || 0)) | currency:'MXN':'symbol':'1.0-0' }}
+            <td *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="td-total-precio">
+              <span *ngIf="debeMostrarGuionMontos">-</span>
+              <ng-container *ngIf="!debeMostrarGuionMontos">{{ (getRestante(row) * (row.precio || 0)) | currency:'MXN':'symbol':'1.0-0' }}</ng-container>
             </td>
 
             <!-- Acciones (modo edición) -->
@@ -430,7 +436,7 @@
           <!-- Fila 1: Totales de unidades por mes -->
           <tr class="proy-fila-totales">
             <td [attr.colspan]="modoExpandido ? 4 : 6"><strong>TOTALES</strong></td>
-            <td *ngIf="puedeVerMontos" class="td-precio-foot"></td>
+            <td *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="td-precio-foot"></td>
             <td class="td-precio-foot"></td>
             <ng-container *ngIf="modoExpandido">
               <td *ngFor="let mes of mesesKeys" class="td-total-foot">
@@ -442,7 +448,7 @@
                    cuando la política del hijo redacta precios e importes. -->
               <strong>{{ totalRestante | number:'1.0-0' }}</strong>
             </td>
-            <td *ngIf="puedeVerMontos" class="td-total-precio"><strong>{{ totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
+            <td *ngIf="puedeVerMontos || debeMostrarGuionMontos" class="td-total-precio"><strong>{{ debeMostrarGuionMontos ? '-' : (totalPrecioGeneral | currency:'MXN':'symbol':'1.0-0') }}</strong></td>
             <td *ngIf="modoEdicion"></td>
           </tr>
 

@@ -7,6 +7,7 @@ import { FiltroService } from '../../../services/filtro.service';
 import { FiltroPrevioComponent } from '../../../components/filtro-previo/filtro-previo.component';
 import { AlertaService } from '../../../services/alerta.service';
 import { TooltipComponent } from '../../../components/tooltip/tooltip.component';
+import { AuthService } from '../../../services/auth.service';
 import * as XLSX from 'xlsx';
 
 import { FechaActualizacionComponent } from '../../../components/fecha-actualizacion/fecha-actualizacion.component';
@@ -306,8 +307,13 @@ export class PrevioComponent implements OnInit, OnDestroy, AfterViewInit {
     private previoService: PrevioService,
     private alertaService: AlertaService,
     private filtroService: FiltroService,
+    private authService: AuthService,
     private cd: ChangeDetectorRef
   ) { }
+
+  get debeOcultarMontosPrevio(): boolean {
+    return this.authService.debeOcultarMontos('previo');
+  }
 
   ngOnInit(): void {
     this.cargando = true;

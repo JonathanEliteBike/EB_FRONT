@@ -4,6 +4,7 @@ import { Observable, Subject, BehaviorSubject, of, forkJoin } from 'rxjs';
 import { tap, catchError, map, finalize } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { jwtDecode } from 'jwt-decode';
+import { Router } from '@angular/router';
 
 export interface PermisoItem {
   modulo: string;
@@ -12,12 +13,21 @@ export interface PermisoItem {
   padre_identificador?: string;
 }
 
+interface ModuloRutaInterna {
+  id: number;
+  identificador: string;
+  padre_identificador?: string | null;
+  ruta?: string | null;
+  activo: number | boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private logoutSubject = new Subject<void>();
   public onLogout$ = this.logoutSubject.asObservable();
 
@@ -31,6 +41,8 @@ export class AuthService {
   // Infraestructura nueva: no sustituye aún la matriz temporal por acción.
   private modulosPermitidos = new Set<string>();
   private capacidadesPermitidas = new Set<string>();
+  private permisosInternosPermitidos = new Set<string>();
+  private modulosRutasInternas: ModuloRutaInterna[] = [];
   private accesosCargadosSubject = new BehaviorSubject<boolean>(false);
   public readonly accesosCargados$ = this.accesosCargadosSubject.asObservable();
   private ocultarMontosGlobal = true;
@@ -39,6 +51,7 @@ export class AuthService {
   constructor() {
     this.restaurarPermisosLocales();
     this.restaurarAccesosLocales();
+    this.restaurarPermisosInternosLocales();
 
     if (this.isLoggedIn()) {
       this.obtenerPermisosEnVivo().subscribe();
@@ -95,7 +108,39 @@ export class AuthService {
       );
     }
 
+    if (rol === 4) {
+      return this.obtenerPermisosInternosEnVivo();
+    }
+
     return of(this.rutasPermitidas);
+  }
+
+  /** Carga la matriz módulo + acción exclusiva del usuario interno autenticado. */
+  obtenerPermisosInternosEnVivo(): Observable<Set<string>> {
+    const rol = this.getRol();
+    if (rol === 1) {
+      this.permisosInternosPermitidos = new Set(['*']);
+      this.guardarPermisosInternosLocales();
+      return of(this.permisosInternosPermitidos);
+    }
+    if (rol !== 4) return of(this.permisosInternosPermitidos);
+
+    return this.http.get<{ permisos: any[] }>(`${this.apiUrl}/api/permisos-internos/mis-permisos`).pipe(
+      map(respuesta => new Set<string>((respuesta.permisos || [])
+        .map(permiso => `${permiso.modulo_identificador || ''}:${permiso.accion_identificador || ''}`.toLowerCase().trim())
+        .filter(permiso => permiso !== ':')
+      )),
+      tap(permisos => {
+        this.permisosInternosPermitidos = permisos;
+        this.guardarPermisosInternosLocales();
+      }),
+      catchError(error => {
+        console.warn('Error al obtener permisos internos en vivo:', error);
+        this.permisosInternosPermitidos.clear();
+        this.guardarPermisosInternosLocales();
+        return of(this.permisosInternosPermitidos);
+      })
+    );
   }
 
   /** Carga la base nueva módulo/capacidad sin alterar permisos por acción. */
@@ -277,6 +322,14 @@ export class AuthService {
   tienePermiso(pathOAccion: string): boolean {
     if (this.isAdmin()) return true;
     if (!pathOAccion) return false;
+    if (this.getRol() === 4) {
+      const partes = pathOAccion.replace(/^\//, '').split(/[/:]/);
+      const accion = partes.pop() || 'ver';
+      if (['ver', 'crear', 'editar', 'eliminar', 'ver_montos'].includes(accion)) {
+        return this.tienePermisoInternoActual(partes.join('_'), accion);
+      }
+      return this.tienePermisoInternoActual(pathOAccion, 'ver');
+    }
 
     if (this.rutasPermitidas.has('*')) return true;
 
@@ -327,11 +380,101 @@ export class AuthService {
     return false;
   }
 
+  /** Comprueba una combinación exacta módulo + acción de la capa interna. */
+  tienePermisoInterno(moduloIdentificador: string, accionIdentificador: string): boolean {
+    if (this.isAdmin()) return true;
+    if (this.getRol() !== 4) return false;
+    const modulo = (moduloIdentificador || '').toLowerCase().trim();
+    const accion = (accionIdentificador || '').toLowerCase().trim();
+    return !!modulo && !!accion && this.permisosInternosPermitidos.has(`${modulo}:ver`)
+      && this.permisosInternosPermitidos.has(`${modulo}:${accion}`);
+  }
+
+  /** Acciones de la pantalla actual; el modal de Home usa su módulo explícito. */
+  tienePermisoInternoActual(modulo: string, accion: string): boolean {
+    if (this.getRol() !== 4) return this.tienePermisoInterno(modulo, accion);
+    const actual = this.resolverModuloInternoPorRuta(this.router.url);
+    return actual
+      ? this.tienePermisoInternoModulo(actual, accion)
+      : this.tienePermisoInterno(modulo, accion);
+  }
+
+  cargarModulosRutasInternas(): Observable<ModuloRutaInterna[]> {
+    return this.http.get<{ modulos: ModuloRutaInterna[] }>(`${this.apiUrl}/api/modulos`).pipe(
+      map(respuesta => (respuesta.modulos || []).filter(modulo => this.estaActivo(modulo.activo))),
+      tap(modulos => this.modulosRutasInternas = modulos),
+      catchError(() => {
+        this.modulosRutasInternas = [];
+        return of([]);
+      })
+    );
+  }
+
+  resolverModuloInternoPorRuta(rutaActual: string): ModuloRutaInterna | null {
+    return this.modulosInternosPorRuta(rutaActual)[0] || null;
+  }
+
+  tieneAccesoInternoRuta(rutaActual: string): boolean {
+    if (this.isAdmin()) return true;
+    if (this.getRol() !== 4) return false;
+    return this.modulosInternosPorRuta(rutaActual)
+      .some(modulo => this.tienePermisoInternoModulo(modulo, 'ver'));
+  }
+
+  validarAccesoRutaInterna(rutaActual: string): Observable<{ catalogada: boolean; permitido: boolean }> {
+    if (this.isAdmin() || this.getRol() !== 4) return of({ catalogada: false, permitido: true });
+    return forkJoin({
+      permisos: this.obtenerPermisosInternosEnVivo(),
+      modulos: this.cargarModulosRutasInternas()
+    }).pipe(map(() => {
+      const modulos = this.modulosInternosPorRuta(rutaActual);
+      return {
+        catalogada: modulos.length > 0,
+        permitido: modulos.some(modulo => this.tienePermisoInternoModulo(modulo, 'ver'))
+      };
+    }));
+  }
+
+  /** Un submódulo interno hereda únicamente el permiso del módulo padre. */
+  private tienePermisoInternoModulo(modulo: ModuloRutaInterna, accion: string): boolean {
+    return this.tienePermisoInterno(modulo.identificador, accion)
+      || !!modulo.padre_identificador
+        && this.tienePermisoInterno(modulo.padre_identificador, accion);
+  }
+
+  /** Resuelve sólo módulos activos con una ruta persistida y compatible. */
+  private modulosInternosPorRuta(rutaActual: string): ModuloRutaInterna[] {
+    const ruta = this.normalizarRutaInterna(rutaActual);
+    return this.modulosRutasInternas
+      .filter(modulo => !!modulo.ruta && this.coincideRutaAngular(modulo.ruta, ruta))
+      .sort((a, b) => this.normalizarRutaInterna(b.ruta || '').length - this.normalizarRutaInterna(a.ruta || '').length);
+  }
+
+  private coincideRutaAngular(patron: string, ruta: string): boolean {
+    const segmentos = this.normalizarRutaInterna(patron).split('/');
+    const expresion = segmentos.map(segmento => segmento.startsWith(':')
+      ? '[^/]+'
+      : segmento.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    ).join('/');
+    return new RegExp(`^${expresion}/?$`).test(ruta);
+  }
+
+  private normalizarRutaInterna(ruta: string): string {
+    const sinQuery = (ruta || '').trim().split(/[?#]/, 1)[0] || '/';
+    const conDiagonalInicial = sinQuery.startsWith('/') ? sinQuery : `/${sinQuery}`;
+    return conDiagonalInicial.length > 1 ? conDiagonalInicial.replace(/\/+$/, '') : conDiagonalInicial;
+  }
+
+  private estaActivo(valor: number | boolean): boolean {
+    return valor === 1 || valor === true;
+  }
+
   /** Comprueba identificadores de módulo mediante coincidencia exacta. */
   tieneModulo(identificador: string): boolean {
     // Rol 2 usa el portal con acceso propio. La bolsa sólo controla qué
     // módulos puede delegar a sus hijos, no su acceso personal.
     if (this.isAdmin() || this.getRol() === 2) return true;
+    if (this.getRol() === 4) return this.tienePermisoInternoActual(identificador, 'ver');
     const normalizado = (identificador || '').toLowerCase().trim();
     return !!normalizado && this.modulosPermitidos.has(normalizado);
   }
@@ -354,6 +497,7 @@ export class AuthService {
   debeOcultarMontos(ambito: string): boolean {
     const rol = this.getRol();
     if (rol === 1 || rol === 2) return false;
+    if (rol === 4) return !this.tienePermisoInternoActual(ambito, 'ver_montos');
     if (rol !== 3) return true;
     if (this.ocultarMontosGlobal) return true;
     const normalizado = (ambito || '').toLowerCase().trim();
@@ -374,6 +518,19 @@ export class AuthService {
 
   private guardarPermisosLocales(set: Set<string>): void {
     localStorage.setItem('rutas_permitidas', JSON.stringify(Array.from(set)));
+  }
+
+  private restaurarPermisosInternosLocales(): void {
+    try {
+      const permisos = JSON.parse(localStorage.getItem('permisos_internos_permitidos') || '[]');
+      if (Array.isArray(permisos)) this.permisosInternosPermitidos = new Set(permisos);
+    } catch {
+      this.permisosInternosPermitidos.clear();
+    }
+  }
+
+  private guardarPermisosInternosLocales(): void {
+    localStorage.setItem('permisos_internos_permitidos', JSON.stringify(Array.from(this.permisosInternosPermitidos)));
   }
 
   private restaurarAccesosLocales(): void {
@@ -525,11 +682,13 @@ export class AuthService {
     localStorage.removeItem('rutas_permitidas');
     localStorage.removeItem('modulos_permitidos');
     localStorage.removeItem('capacidades_permitidas');
+    localStorage.removeItem('permisos_internos_permitidos');
     localStorage.removeItem('ocultar_montos_global');
     localStorage.removeItem('ambitos_montos_ocultos');
     this.rutasPermitidas.clear();
     this.modulosPermitidos.clear();
     this.capacidadesPermitidas.clear();
+    this.permisosInternosPermitidos.clear();
     this.ocultarMontosGlobal = true;
     this.ambitosMontosOcultos.clear();
     localStorage.setItem('token', token);
@@ -548,11 +707,13 @@ export class AuthService {
     localStorage.removeItem('rutas_permitidas');
     localStorage.removeItem('modulos_permitidos');
     localStorage.removeItem('capacidades_permitidas');
+    localStorage.removeItem('permisos_internos_permitidos');
     localStorage.removeItem('ocultar_montos_global');
     localStorage.removeItem('ambitos_montos_ocultos');
     this.rutasPermitidas.clear();
     this.modulosPermitidos.clear();
     this.capacidadesPermitidas.clear();
+    this.permisosInternosPermitidos.clear();
     this.ocultarMontosGlobal = true;
     this.ambitosMontosOcultos.clear();
   }

@@ -8,6 +8,7 @@ import { HomeBarComponent } from '../../../../components/home-bar/home-bar.compo
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { ImportacionesService, Importacion } from '../../../../services/importaciones.service';
 import { TiemposEstimadosService, TiempoEstimado } from '../../../../services/tiempos-estimados.service';
+import { AuthService } from '../../../../services/auth.service';
 
 type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos';
 
@@ -238,8 +239,21 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private svc: ImportacionesService,
-    private tiemposSvc: TiemposEstimadosService
+    private tiemposSvc: TiemposEstimadosService,
+    private auth: AuthService
   ) {}
+
+  get puedeEditarImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'editar');
+  }
+
+  get puedeVerMontosImportacion(): boolean {
+    return !this.auth.debeOcultarMontos('importaciones');
+  }
+
+  get tabsVisibles(): { key: Seccion; label: string; icon: string }[] {
+    return this.tabs.filter(tab => tab.key !== 'costos' || this.puedeVerMontosImportacion);
+  }
 
   private returnUrl = '/importaciones';
   // Reglas de Tiempos Estimados, cargadas una vez, para mirror local del
@@ -422,6 +436,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   toggleNA(campo: string): void {
+    if (!this.puedeEditarImportacion) return;
     if (this.camposNA.has(campo)) {
       this.camposNA.delete(campo);
       // When removing N/A, register a pending change so Save button enables
@@ -452,6 +467,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   marcarCambio(campo: keyof Importacion, valor: any): void {
+    if (!this.puedeEditarImportacion) return;
     if (!this.embarque) return;
     // Uppercase texto libre; excluye fechas ISO (YYYY-MM-DD) y valores nulos/numéricos
     if (typeof valor === 'string' && valor && !/^\d{4}-\d{2}-\d{2}/.test(valor)) {
@@ -623,6 +639,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   guardar(): void {
+    if (!this.puedeEditarImportacion) return;
     if (!this.embarque) return;
 
     const faltantes = this.validarSeccionActual();
@@ -681,6 +698,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   guardarBorrador(): void {
+    if (!this.puedeEditarImportacion) return;
     if (!this.embarque || !this.hayCambios()) return;
     const naPayload: any = {};
     for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
@@ -700,6 +718,10 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   volver(): void {
+    if (!this.puedeEditarImportacion) {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
     if (this.hayCambios() || this.camposNA.size > 0) {
       const naPayload: any = {};
       for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }

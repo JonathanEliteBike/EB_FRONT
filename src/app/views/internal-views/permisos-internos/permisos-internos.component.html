@@ -1,0 +1,163 @@
+<app-home-bar></app-home-bar>
+
+<main class="permisos-layout">
+  <header class="header-section">
+    <div class="header-title">
+      <button type="button" class="btn-volver" (click)="regresar()">
+        <i class="fas fa-arrow-left"></i> Volver
+      </button>
+      <h2 class="main-title">Permisos Internos</h2>
+    </div>
+  </header>
+
+  <div *ngIf="cargando || cargandoPermisos" class="empty-state">
+    <p>Cargando información de permisos...</p>
+  </div>
+
+  <section *ngIf="!usuarioSeleccionado && !cargando" class="table-wrap">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Usuario / Correo</th>
+            <th>Área</th>
+            <th>Estado</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let usuario of usuariosPaginados()">
+            <td>{{ usuario.id }}</td>
+            <td><strong>{{ usuario.nombre }}</strong></td>
+            <td>
+              <span class="usuario-nombre">{{ usuario.usuario }}</span><br>
+              <small class="texto-secundario">{{ usuario.correo }}</small>
+            </td>
+            <td>{{ usuario.area_nombre || 'Sin área' }}</td>
+            <td>
+              <span *ngIf="usuario.activo === 1 || usuario.activo === true" class="badge badge-active">Activo</span>
+              <span *ngIf="usuario.activo !== 1 && usuario.activo !== true" class="badge badge-inactive">Inactivo</span>
+            </td>
+            <td class="text-right">
+              <button type="button" class="btn btn-primary" (click)="gestionarPermisos(usuario)">
+                Gestionar permisos
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="usuarios.length === 0">
+            <td colspan="6" class="empty-state">No hay usuarios internos registrados.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="usuarios.length > 0" class="paginacion-container">
+      <div class="paginador-selector-wrap">
+        <span class="selector-label">Mostrar:</span>
+        <div class="selector-pills">
+          <button *ngFor="let cantidad of opcionesPorPagina"
+                  type="button"
+                  class="btn-pill"
+                  [class.activa]="elementosPorPagina === cantidad"
+                  (click)="cambiarElementosPorPagina(cantidad)">
+            {{ cantidad }}
+          </button>
+        </div>
+        <span class="paginador-info">Mostrando {{ usuariosPaginados().length }} de {{ usuarios.length }} registros</span>
+      </div>
+      <div class="paginador-controles">
+        <button type="button" class="btn btn-action" (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
+        <div class="paginas-numeros">
+          <button *ngFor="let pagina of obtenerRangoPaginas()"
+                  type="button"
+                  class="btn-page"
+                  [class.activa]="pagina === paginaActual"
+                  [disabled]="pagina === -1"
+                  (click)="pagina !== -1 && cambiarPagina(pagina)">
+            {{ pagina === -1 ? '...' : pagina }}
+          </button>
+        </div>
+        <button type="button" class="btn btn-action" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
+      </div>
+    </div>
+  </section>
+
+  <section *ngIf="usuarioSeleccionado && !cargandoPermisos" class="usuario-card">
+    <div><span>Nombre</span><strong>{{ usuarioSeleccionado.nombre }}</strong></div>
+    <div><span>Usuario</span><strong>{{ usuarioSeleccionado.usuario }}</strong></div>
+    <div><span>Correo</span><strong>{{ usuarioSeleccionado.correo }}</strong></div>
+    <div><span>Área principal</span><strong>{{ areaPrincipal?.nombre || 'Sin área' }}</strong></div>
+  </section>
+
+  <section *ngIf="usuarioSeleccionado && !cargandoPermisos" class="permisos-card">
+    <ng-template #moduloPermisos let-item let-grupo="grupo" let-nivel="nivel">
+      <article class="modulo-card" [class.modulo-submodulo]="nivel > 0">
+        <div class="modulo-heading">
+          <strong>{{ item.modulo.nombre }}</strong>
+          <code>{{ item.modulo.identificador }}</code>
+        </div>
+        <label *ngIf="grupo.areaId !== null" class="checkbox-item seleccionar-todas">
+          <input type="checkbox"
+                 [checked]="todasAccionesModuloSeleccionadas(item, grupo.areaId)"
+                 (change)="cambiarTodasAccionesModulo(item, grupo.areaId, $any($event.target).checked)">
+          <span>Seleccionar todas las acciones</span>
+        </label>
+        <label *ngFor="let accion of item.acciones" class="checkbox-item">
+          <input type="checkbox"
+                 [checked]="permisoSeleccionado(item.modulo.id, grupo.areaId, accion.id)"
+                 (change)="cambiarPermiso(item.modulo.id, grupo.areaId, accion.id, $any($event.target).checked)">
+          <span>{{ accion.nombre }}</span>
+        </label>
+        <ng-container *ngFor="let hijo of item.hijos">
+          <ng-container *ngTemplateOutlet="moduloPermisos; context: { $implicit: hijo, grupo: grupo, nivel: nivel + 1 }"></ng-container>
+        </ng-container>
+      </article>
+    </ng-template>
+
+    <div *ngFor="let grupo of gruposArea" class="area-group">
+      <button type="button" class="area-toggle" (click)="alternarArea(grupo)" [attr.aria-expanded]="areaAbierta(grupo)">
+        <span class="area-chevron" [class.abierta]="areaAbierta(grupo)">{{ areaAbierta(grupo) ? '▼' : '▶' }}</span>
+        <span>{{ grupo.nombre }}</span>
+        <small>({{ cantidadModulos(grupo) }} módulo{{ cantidadModulos(grupo) === 1 ? '' : 's' }})</small>
+      </button>
+      <div *ngIf="areaAbierta(grupo)" class="area-contenido">
+        <label *ngIf="grupo.areaId !== null" class="checkbox-item seleccionar-todas seleccionar-area">
+          <input type="checkbox"
+                 [checked]="todosPermisosAreaSeleccionados(grupo)"
+                 (change)="cambiarTodosPermisosArea(grupo, $any($event.target).checked)">
+          <span>Seleccionar todos los permisos del área</span>
+        </label>
+        <ng-container *ngFor="let item of grupo.modulos">
+          <ng-container *ngTemplateOutlet="moduloPermisos; context: { $implicit: item, grupo: grupo, nivel: 0 }"></ng-container>
+        </ng-container>
+      </div>
+    </div>
+
+    <div *ngIf="gruposArea.length === 0" class="empty-state">
+      <p>No hay módulos activos con acciones disponibles.</p>
+    </div>
+
+    <footer class="card-footer">
+      <button type="button" class="btn btn-primary" (click)="guardarPermisos()" [disabled]="guardando || gruposArea.length === 0">
+        {{ guardando ? 'Guardando...' : 'Guardar permisos' }}
+      </button>
+    </footer>
+  </section>
+</main>
+
+<div *ngIf="mostrarAdvertenciaArea" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="advertencia-area-titulo">
+  <section class="warning-modal">
+    <h2 id="advertencia-area-titulo">Confirmar asignación</h2>
+    <p>
+      Este usuario pertenece a <strong>{{ areaPrincipal?.nombre || 'Sin área' }}</strong>,
+      pero se están asignando permisos de otras áreas:
+      <strong>{{ areasFueraDePrincipal.join(', ') }}</strong>. ¿Deseas continuar?
+    </p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancelarAdvertencia()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="asignarDeTodosModos()">Asignar de todos modos</button>
+    </div>
+  </section>
+</div>

@@ -17,7 +17,7 @@
         </button>
         <h2>Campañas de Retroactivos</h2>
       </div>
-      <button type="button" class="btn btn-primary" (click)="nuevaCampania()">
+      <button *ngIf="puedeCrear" type="button" class="btn btn-primary" (click)="nuevaCampania()">
         + Nueva Campaña
       </button>
     </div>
@@ -68,8 +68,8 @@
               <span class="badge" [ngClass]="estado.clase">{{ estado.texto }}</span>
             </td>
             <td class="td-actions">
-              <button type="button" class="btn-action" (click)="editarCampania(c)" title="Editar">✏️</button>
-              <button type="button" class="btn-action delete" (click)="eliminarCampania(c.id)" title="Eliminar">🗑️</button>
+              <button *ngIf="puedeEditar" type="button" class="btn-action" (click)="editarCampania(c)" title="Editar">✏️</button>
+              <button *ngIf="puedeEliminar" type="button" class="btn-action delete" (click)="eliminarCampania(c.id)" title="Eliminar">🗑️</button>
             </td>
           </tr>
         </tbody>

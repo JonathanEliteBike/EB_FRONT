@@ -7,7 +7,7 @@
         <button class="btn-volver" (click)="goBack()">
           <i class="fas fa-arrow-left"></i> Volver
         </button>
-        <h2 class="main-title">Catálogo de permisos</h2>
+        <h2 class="main-title">{{ esCatalogoDistribuidores ? 'Catálogo de permisos para distribuidores' : 'Catálogo de permisos' }}</h2>
      </div>
 
     <!-- BARRA EN UNA SOLA LÍNEA (PESTAÑAS IZQUIERDA / ACCIONES DERECHA) -->
@@ -24,9 +24,18 @@
         <button class="btn btn-info" (click)="cargarCatalogo()" [disabled]="cargando">
           <i class="fas fa-sync-alt"></i> Actualizar
         </button>
-        <a class="btn btn-primary" routerLink="/gestion-clientes">
-          <i class="fas fa-user-shield"></i> Gestión de Permisos
+        <a *ngIf="esCatalogoDistribuidores" class="btn btn-primary" routerLink="/gestion-clientes">
+          <i class="fas fa-user-shield"></i> Administrar distribuidores
         </a>
+        <a *ngIf="!esCatalogoDistribuidores" class="btn btn-primary" routerLink="/catalogo-permisos-distribuidores">
+          <i class="fas fa-user-shield"></i> Permisos para Distribuidores
+        </a>
+        <a *ngIf="!esCatalogoDistribuidores" class="btn btn-primary" routerLink="/permisos-internos">
+          <i class="fas fa-user-lock"></i> Permisos Internos
+        </a>
+        <button *ngIf="!esCatalogoDistribuidores" class="btn btn-primary" (click)="abrirAdministracionAreas()">
+          <i class="fas fa-layer-group"></i> Áreas
+        </button>
         <button *ngIf="pestanaActiva === 'modulos'" class="btn btn-primary" (click)="abrirModalNuevoModulo()">
           <i class="fas fa-plus"></i> Nuevo Módulo
         </button>
@@ -39,63 +48,79 @@
     <p>Cargando información del catálogo...</p>
   </div>
 
-  <!-- TABLA MÓDULOS Y SUBMÓDULOS -->
-  <div *ngIf="!cargando && pestanaActiva === 'modulos'" class="table-wrap tab-fade-in">
-    <div class="table-responsive">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="col-expand"></th>
-            <th class="col-nombre">Nombre del módulo</th>
-            <th class="col-jerarquia">Jerarquía</th>
-            <th class="col-estado">Estado</th>
-            <th class="col-acciones-btns" style="text-align: right;">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <ng-template #filaModulo let-modulo let-nivel="nivel">
-            <tr [class.tr-root]="nivel === 0" [class.tr-submodule]="nivel > 0">
-              <td class="col-expand">
-                <button *ngIf="getSubmodulos(modulo.id).length > 0" type="button" class="btn-expand" (click)="toggleExpandir(modulo.id)">
-                  <span class="arrow" [class.rotated]="isExpandido(modulo.id)">&#9654;</span>
-                </button>
-              </td>
-              <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24">
-                <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
-              </td>
-              <td class="col-jerarquia">
-                <span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">
-                  {{ nivel === 0 ? 'Módulo raíz' : 'Submódulo' }}
-                </span>
-              </td>
-              <td class="col-estado">
-                <span [class]="modulo.activo ? 'badge badge-active' : 'badge badge-inactive'">
-                  {{ modulo.activo ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="col-acciones-btns">
-                <div class="container-actions">
-                  <button class="btn-action" (click)="abrirModalModulo(modulo)">Editar</button>
-                  <button class="btn-action" (click)="toggleEstadoModulo(modulo)">
-                    {{ modulo.activo ? 'Desactivar' : 'Activar' }}
-                  </button>
-                  <button class="btn-action delete" (click)="eliminarModulo(modulo)">Eliminar</button>
-                </div>
-              </td>
-            </tr>
+  <!-- LISTADO DE MÓDULOS AGRUPADO VISUALMENTE POR ÁREA -->
+  <div *ngIf="!cargando && !esCatalogoDistribuidores && pestanaActiva === 'modulos'" class="catalogo-areas tab-fade-in">
+    <ng-template #filaModulo let-modulo let-nivel="nivel" let-areaId="areaId">
+      <tr [class.tr-root]="nivel === 0" [class.tr-submodule]="nivel > 0">
+        <td class="col-expand">
+          <button *ngIf="getSubmodulos(modulo.id, areaId).length > 0" type="button" class="btn-expand" (click)="toggleExpandir(modulo.id)">
+            <span class="arrow" [class.rotated]="isExpandido(modulo.id)">&#9654;</span>
+          </button>
+        </td>
+        <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24">
+          <div class="module-title"><strong>{{ modulo.nombre }}</strong></div>
+        </td>
+        <td class="col-jerarquia">
+          <span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">
+            {{ nivel === 0 ? 'Módulo raíz' : 'Submódulo' }}
+          </span>
+        </td>
+        <td class="col-estado">
+          <span [class]="modulo.activo ? 'badge badge-active' : 'badge badge-inactive'">
+            {{ modulo.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </td>
+        <td class="col-acciones-btns">
+          <div class="container-actions">
+            <button class="btn-action" (click)="abrirModalModulo(modulo, areaId)">Editar</button>
+            <button class="btn-action" (click)="toggleEstadoModulo(modulo)">
+              {{ modulo.activo ? 'Desactivar' : 'Activar' }}
+            </button>
+            <button *ngIf="areaId !== null && moduloYaAgregadoEnArea(modulo, areaId)"
+                    class="btn-action delete"
+                    (click)="eliminarModulo(modulo, areaId)">Eliminar</button>
+          </div>
+        </td>
+      </tr>
 
-            <ng-container *ngIf="isExpandido(modulo.id)">
-              <ng-container *ngFor="let hijo of getSubmodulos(modulo.id)">
-                <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: hijo, nivel: nivel + 1 }"></ng-container>
+      <ng-container *ngIf="isExpandido(modulo.id)">
+          <ng-container *ngFor="let hijo of getSubmodulos(modulo.id, areaId)">
+          <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: hijo, nivel: nivel + 1, areaId: areaId }"></ng-container>
+        </ng-container>
+      </ng-container>
+    </ng-template>
+
+    <section *ngFor="let grupo of gruposModulosPaginados" class="area-catalogo">
+      <button type="button" class="area-toggle" (click)="alternarAreaModulo(grupo)" [attr.aria-expanded]="areaModuloAbierta(grupo)">
+        <span class="area-chevron">{{ areaModuloAbierta(grupo) ? '▼' : '▶' }}</span>
+        <span>{{ grupo.nombre }}</span>
+        <small>({{ grupo.modulos.length }} módulo{{ grupo.modulos.length === 1 ? '' : 's' }})</small>
+      </button>
+
+      <div *ngIf="areaModuloAbierta(grupo)" class="table-wrap area-table-wrap">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="col-expand"></th>
+                <th class="col-nombre">Nombre del módulo</th>
+                <th class="col-jerarquia">Jerarquía</th>
+                <th class="col-estado">Estado</th>
+                <th class="col-acciones-btns" style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let modulo of grupo.modulos">
+                <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: modulo, nivel: 0, areaId: grupo.areaId }"></ng-container>
               </ng-container>
-            </ng-container>
-          </ng-template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-          <ng-container *ngFor="let modulo of modulosRaizPaginados">
-            <ng-container *ngTemplateOutlet="filaModulo; context: { $implicit: modulo, nivel: 0 }"></ng-container>
-          </ng-container>
-        </tbody>
-      </table>
+    <div *ngIf="modulosRaizTotales.length === 0" class="empty-state">
+      No hay módulos registrados.
     </div>
 
     <!-- PAGINACIÓN MÓDULOS -->
@@ -135,6 +160,72 @@
         <button class="btn btn-action" (click)="cambiarPagina('modulos', 1)" [disabled]="pageModulos === totalPagesModulos">
           Siguiente
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATÁLOGO HISTÓRICO: DISTRIBUIDOR → USUARIO HIJO -->
+  <div *ngIf="!cargando && esCatalogoDistribuidores && pestanaActiva === 'modulos'" class="table-wrap tab-fade-in">
+    <ng-template #filaModuloHistorico let-modulo let-nivel="nivel">
+      <tr [class.tr-root]="nivel === 0" [class.tr-submodule]="nivel > 0">
+        <td class="col-expand"><button *ngIf="getSubmodulos(modulo.id).length > 0" type="button" class="btn-expand" (click)="toggleExpandir(modulo.id)"><span class="arrow" [class.rotated]="isExpandido(modulo.id)">&#9654;</span></button></td>
+        <td class="col-nombre" [class.td-sub-indent]="nivel > 0" [style.paddingLeft.px]="nivel * 24"><strong>{{ modulo.nombre }}</strong></td>
+        <td class="col-jerarquia"><span class="badge" [ngClass]="nivel === 0 ? 'badge-root' : 'badge-sub'">{{ nivel === 0 ? 'Módulo raíz' : 'Submódulo' }}</span></td>
+        <td class="col-estado"><span [class]="modulo.activo ? 'badge badge-active' : 'badge badge-inactive'">{{ modulo.activo ? 'Activo' : 'Inactivo' }}</span></td>
+        <td class="col-acciones-btns"><div class="container-actions"><button class="btn-action" (click)="abrirModalModulo(modulo)">Editar</button><button class="btn-action" (click)="toggleEstadoModulo(modulo)">{{ modulo.activo ? 'Desactivar' : 'Activar' }}</button><button class="btn-action delete" (click)="eliminarModulo(modulo, null)">Eliminar</button></div></td>
+      </tr>
+      <ng-container *ngIf="isExpandido(modulo.id)"><ng-container *ngFor="let hijo of getSubmodulos(modulo.id)"><ng-container *ngTemplateOutlet="filaModuloHistorico; context: { $implicit: hijo, nivel: nivel + 1 }"></ng-container></ng-container></ng-container>
+    </ng-template>
+    <div class="table-responsive"><table class="data-table"><thead><tr><th class="col-expand"></th><th class="col-nombre">Nombre del módulo</th><th class="col-jerarquia">Jerarquía</th><th class="col-estado">Estado</th><th class="col-acciones-btns" style="text-align: right;">Acciones</th></tr></thead><tbody><ng-container *ngFor="let modulo of modulosRaizPaginados"><ng-container *ngTemplateOutlet="filaModuloHistorico; context: { $implicit: modulo, nivel: 0 }"></ng-container></ng-container></tbody></table></div>
+    <div *ngIf="modulosRaizTotales.length === 0" class="empty-state">No hay módulos históricos registrados.</div>
+    <div class="paginacion-container" *ngIf="modulosRaizTotales.length > 0"><div class="paginador-selector-wrap"><span class="selector-label">Mostrar:</span><div class="selector-pills"><button *ngFor="let cant of opcionesPorPagina" class="btn-pill" [class.activa]="itemsPerPage === cant" (click)="cambiarItemsPorPagina(cant)">{{ cant }}</button></div><span class="paginador-info">Mostrando {{ modulosRaizPaginados.length }} de {{ modulosRaizTotales.length }} registros</span></div><div class="paginador-controles"><button class="btn btn-action" (click)="cambiarPagina('modulos', -1)" [disabled]="pageModulos === 1">Anterior</button><div class="paginas-numeros"><button *ngFor="let pagina of obtenerRangoPaginas(pageModulos, totalPagesModulos)" class="btn-page" [class.activa]="pagina === pageModulos" [disabled]="pagina === -1" (click)="cambiarPaginaDirecta('modulos', pagina)">{{ pagina === -1 ? '...' : pagina }}</button></div><button class="btn btn-action" (click)="cambiarPagina('modulos', 1)" [disabled]="pageModulos === totalPagesModulos">Siguiente</button></div></div>
+  </div>
+  <!-- ADMINISTRACIÓN DE ÁREAS -->
+  <div *ngIf="!cargando && pestanaActiva === 'areas'" class="areas-admin tab-fade-in">
+    <div class="areas-admin-header">
+      <div>
+        <h3>Administración de Áreas</h3>
+        <p>Gestiona las áreas disponibles para organizar módulos y usuarios internos.</p>
+      </div>
+      <button class="btn btn-primary" (click)="abrirModalNuevaArea()">
+        <i class="fas fa-plus"></i> Nueva área
+      </button>
+    </div>
+
+    <div class="table-wrap areas-table-wrap">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-id">ID</th>
+              <th>Nombre del área</th>
+              <th class="col-estado">Estado</th>
+              <th class="col-acciones-btns">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let area of areas">
+              <td class="col-id">{{ area.id }}</td>
+              <td><strong>{{ area.nombre }}</strong></td>
+              <td class="col-estado">
+                <span [class]="(area.activo === 1 || area.activo === true) ? 'badge badge-active' : 'badge badge-inactive'">
+                  {{ (area.activo === 1 || area.activo === true) ? 'Activa' : 'Inactiva' }}
+                </span>
+              </td>
+              <td class="col-acciones-btns">
+                <div class="container-actions">
+                  <button class="btn-action" (click)="abrirModalEditarArea(area)">Editar</button>
+                  <button class="btn-action" (click)="cambiarEstadoArea(area)">
+                    {{ (area.activo === 1 || area.activo === true) ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="areas.length === 0">
+              <td colspan="4" class="areas-empty">No hay áreas registradas.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -255,7 +346,63 @@
         <button type="button" class="close-btn" (click)="cerrarModalModulo()">&times;</button>
       </div>
       <div class="modal-body-custom">
-        <div class="form-group">
+        <div *ngIf="!esCatalogoDistribuidores" class="form-group">
+          <label>Área</label>
+          <select [(ngModel)]="formAreaId" (ngModelChange)="cambiarAreaSeleccionada()" [disabled]="editandoModuloId !== null">
+            <option [ngValue]="null">-- Seleccionar área --</option>
+            <option *ngFor="let area of areasActivas" [ngValue]="area.id">{{ area.nombre }}</option>
+          </select>
+        </div>
+
+        <ng-container *ngIf="esCatalogoDistribuidores || formAreaId">
+          <div *ngIf="!esCatalogoDistribuidores && editandoModuloId === null" class="form-group">
+            <label>Módulo existente del área</label>
+            <input type="search" [(ngModel)]="filtroModulosArea" placeholder="Buscar módulo..." aria-label="Buscar módulo del área seleccionada">
+            <select [(ngModel)]="formModuloExistenteId" (ngModelChange)="seleccionarModuloExistente()">
+              <option [ngValue]="null">-- Crear o configurar mediante ruta --</option>
+              <option *ngFor="let modulo of modulosDelAreaSeleccionada" [ngValue]="modulo.id">{{ modulo.nombre }}</option>
+            </select>
+            <small *ngIf="!crearModuloNuevo && moduloSeleccionado" class="form-help">El módulo ya existe; sus datos globales quedan en solo lectura desde esta operación.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Nombre del Módulo</label>
+            <input type="text" [(ngModel)]="formNombreModulo" [disabled]="formNombreBloqueado || moduloGlobalBloqueado" placeholder="Ej. Gestor de Solicitudes">
+            <small *ngIf="editandoModuloId !== null" class="form-help">El nombre es global y se mostrará igual en todas las áreas que utilizan este módulo.</small>
+          </div>
+
+          <div *ngIf="esCatalogoDistribuidores" class="form-group">
+            <label>Identificador Único</label>
+            <input type="text" [(ngModel)]="formIdentificadorModulo" placeholder="Ej. usuarios_garantias">
+          </div>
+
+          <div class="form-group">
+            <label>Jerarquía</label>
+            <div class="hierarchy-options" role="radiogroup" aria-label="Jerarquía del módulo">
+              <label class="hierarchy-option" [class.selected]="tipoJerarquiaModulo === 'raiz'">
+                <input type="radio" name="jerarquiaModulo" value="raiz" [(ngModel)]="tipoJerarquiaModulo" (change)="cambiarTipoJerarquia()">
+                <span class="hierarchy-indicator" aria-hidden="true"></span>
+                <span>Módulo raíz</span>
+              </label>
+              <label class="hierarchy-option" [class.selected]="tipoJerarquiaModulo === 'submodulo'">
+                <input type="radio" name="jerarquiaModulo" value="submodulo" [(ngModel)]="tipoJerarquiaModulo" (change)="cambiarTipoJerarquia()">
+                <span class="hierarchy-indicator" aria-hidden="true"></span>
+                <span>Submódulo</span>
+              </label>
+            </div>
+            <small *ngIf="moduloTecnicoReutilizado || editandoModuloId !== null" class="form-help">La jerarquía pertenece al módulo global. Cambiarla se reflejará en todas las áreas donde se utilice este módulo.</small>
+          </div>
+
+          <div *ngIf="tipoJerarquiaModulo === 'submodulo'" class="form-group">
+            <label>Módulo padre</label>
+            <input type="search" [(ngModel)]="filtroPadresModulo" placeholder="Buscar módulo padre...">
+            <select [(ngModel)]="formPadreIdModulo">
+              <option [ngValue]="null">-- Seleccionar módulo padre --</option>
+              <option *ngFor="let modulo of modulosPadreDisponibles" [ngValue]="modulo.id">{{ modulo.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
           <label>Ruta Asociada</label>
           <div class="ruta-picker">
             <div class="ruta-search-wrap">
@@ -283,43 +430,70 @@
                       type="button"
                       class="ruta-result"
                       [class.ruta-result-selected]="rutaAsociadaModulo === ruta.path"
-                      [class.ruta-result-registered]="!esRutaDisponibleParaModulo(ruta)"
-                      [disabled]="!esRutaDisponibleParaModulo(ruta)"
+                      [class.ruta-result-registered]="rutaYaAgregadaEnArea(ruta)"
+                      [disabled]="rutaYaAgregadaEnArea(ruta)"
                       (click)="seleccionarRutaAsociada(ruta)">
                 <span>/{{ ruta.path }}</span>
-                <small>{{ ruta.registrado && !esRutaDisponibleParaModulo(ruta) ? '✓ Registrada' : 'Disponible' }}</small>
+                <small>{{ rutaYaAgregadaEnArea(ruta) ? '✓ Ya agregado a esta área' : ruta.registrado ? '✓ Reutilizar módulo existente' : 'Disponible' }}</small>
               </button>
               <p *ngIf="rutasFiltradasParaSelector.length === 0" class="ruta-results-empty">No hay rutas que coincidan con la búsqueda.</p>
             </div>
           </div>
-          <small class="form-help">La ruta sólo genera el identificador; no crea ni modifica rutas Angular.</small>
-        </div>
-        <div class="form-group" [class.form-group-disabled]="formNombreBloqueado">
-          <label>Nombre del Módulo</label>
-          <input type="text" [(ngModel)]="formNombreModulo" [disabled]="formNombreBloqueado" placeholder="Ej. Solicitudes">
-        </div>
-        <div class="form-group" [class.form-group-readonly]="identificadorAutomatico">
-          <label>Identificador Único</label>
-          <input type="text" [(ngModel)]="formIdentificadorModulo" [readonly]="identificadorAutomatico" placeholder="Ej. garantias_solicitudes">
-          <small *ngIf="identificadorAutomatico" class="form-help">Generado automáticamente desde la ruta seleccionada.</small>
-        </div>
-        <div class="form-group">
-          <label>Módulo Padre (Opcional)</label>
-          <select [(ngModel)]="formPadreIdModulo">
-            <option [ngValue]="null">-- Es Módulo Raíz --</option>
-            <option *ngFor="let m of modulos" [ngValue]="m.id">{{ m.nombre }} (ID: {{ m.id }})</option>
-          </select>
-        </div>
+          <small class="form-help">La ruta se guarda para autorizar una pantalla Angular existente; no crea rutas ni componentes.</small>
+          </div>
 
-        <div class="form-group module-access-option">
-          <label class="checkbox-item">
-            <input type="checkbox" [(ngModel)]="formDelegableAHijos">
-            <span>Permitir delegar acceso al módulo a usuarios hijo</span>
-          </label>
-          <small class="form-help">
-            Cada módulo nuevo usa un único acceso. Las acciones antiguas no se agregan automáticamente.
-          </small>
-        </div>
+          <div *ngIf="esCatalogoDistribuidores" class="form-group module-access-option">
+            <label class="checkbox-item">
+              <input type="checkbox" [(ngModel)]="formDelegableAHijos">
+              <span>Permitir delegar acceso al módulo a usuarios hijo</span>
+            </label>
+          </div>
+
+          <div *ngIf="!esCatalogoDistribuidores" class="form-group module-access-option">
+            <label>Acciones para esta área</label>
+            <label *ngFor="let accion of accionesActivas" class="checkbox-item">
+              <input type="checkbox"
+                     [checked]="accionSeleccionada(accion.id)"
+                     (change)="cambiarAccionSeleccionada(accion.id, $any($event.target).checked)">
+              <span>{{ accion.nombre }}</span>
+            </label>
+            <small class="form-help">{{ esCatalogoDistribuidores ? 'Selecciona las acciones históricas aplicables a este módulo.' : 'Selecciona únicamente las acciones aplicables a este módulo en el área seleccionada.' }}</small>
+          </div>
+
+        <details *ngIf="!esCatalogoDistribuidores" class="form-group module-access-option">
+          <summary>Configuración avanzada</summary>
+          <div class="form-group">
+            <label>Identificador Único</label>
+            <input type="text" [(ngModel)]="formIdentificadorModulo" [readonly]="moduloGlobalBloqueado" placeholder="Ej. garantias_solicitudes">
+          </div>
+          <section *ngIf="editandoModuloId && !esCatalogoDistribuidores">
+          <label>Reglas de Backend</label>
+          <small class="form-help">Cada regla exige una acción ya asociada a este módulo. Los endpoints sin regla se rechazan para rol 4 cuando usan la autorización dinámica.</small>
+          <div class="form-grid">
+            <input type="text" [(ngModel)]="formReglaRuta" placeholder="/flujo/movimientos o /api/importaciones/<int:id>">
+            <select [(ngModel)]="formReglaMetodo">
+              <option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="PATCH">PATCH</option><option value="DELETE">DELETE</option>
+            </select>
+            <select [(ngModel)]="formReglaAccionId">
+              <option [ngValue]="null">-- Acción requerida --</option>
+              <option *ngFor="let accion of accionesDisponiblesParaRegla" [ngValue]="accion.id">{{ accion.nombre }}</option>
+            </select>
+            <label class="checkbox-item"><input type="checkbox" [(ngModel)]="formReglaActiva"><span>Activa</span></label>
+          </div>
+          <div class="container-actions">
+            <button type="button" class="btn-action" (click)="guardarReglaEndpoint()">{{ reglaEditandoId ? 'Actualizar regla' : 'Agregar regla' }}</button>
+            <button *ngIf="reglaEditandoId" type="button" class="btn-action" (click)="limpiarFormularioRegla()">Cancelar edición</button>
+          </div>
+          <div *ngFor="let regla of reglasEndpoint" class="code-copy-wrap">
+            <code>{{ regla.metodo_http }} {{ regla.ruta_patron }}</code>
+            <span>{{ regla.accion_nombre }}</span>
+            <span class="badge" [ngClass]="regla.activo ? 'badge-active' : 'badge-inactive'">{{ regla.activo ? 'Activa' : 'Inactiva' }}</span>
+            <button type="button" class="btn-action" (click)="editarReglaEndpoint(regla)">Editar</button>
+            <button type="button" class="btn-action delete" (click)="eliminarReglaEndpoint(regla)">Eliminar</button>
+          </div>
+          </section>
+        </details>
+        </ng-container>
 
       </div>
       <div class="modal-footer-custom">
@@ -330,6 +504,27 @@
   </div>
 
   <!-- MODAL DE ACCIÓN -->
+  <!-- MODAL ÁREA -->
+  <div *ngIf="modalAreaVisible" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header-custom">
+        <h3>{{ areaEditando ? 'Editar área' : 'Nueva área' }}</h3>
+        <button type="button" class="close-btn" (click)="cerrarModalArea()" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body-custom">
+        <div class="form-group">
+          <label for="nombre-area">Nombre del área *</label>
+          <input id="nombre-area" type="text" [(ngModel)]="formNombreArea" maxlength="100"
+                 (keyup.enter)="guardarArea()" placeholder="Ej. Contabilidad" autocomplete="off">
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button type="button" class="btn btn-action" (click)="cerrarModalArea()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarArea()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <div *ngIf="modalAccionVisible" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header-custom">
@@ -349,6 +544,28 @@
       <div class="modal-footer-custom">
         <button type="button" class="btn btn-secondary" (click)="cerrarModalAccion()">Cancelar</button>
         <button type="button" class="btn btn-primary" (click)="guardarAccion()">Guardar Acción</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="eliminacionForzadaPendiente" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header-custom">
+        <h3>Confirmar limpieza de configuración</h3>
+      </div>
+      <div class="modal-body-custom">
+        <p>
+          Esto eliminará los permisos asignados a usuarios para <strong>{{ eliminacionForzadaPendiente.modulo.nombre }}</strong>
+          únicamente dentro de <strong>{{ eliminacionForzadaPendiente.areaNombre }}</strong>.
+          No afectará otras áreas ni eliminará el módulo global.
+        </p>
+        <p *ngIf="eliminacionForzadaPendiente.permisos > 0" class="form-help">
+          Se eliminarán {{ eliminacionForzadaPendiente.permisos }} permiso(s) interno(s) asociado(s) a esta configuración.
+        </p>
+      </div>
+      <div class="modal-footer-custom">
+        <button type="button" class="btn btn-secondary" (click)="cancelarEliminacionForzada()">Cancelar</button>
+        <button type="button" class="btn btn-primary delete" (click)="confirmarEliminacionForzada()">Eliminar configuración del área y sus permisos</button>
       </div>
     </div>
   </div>
