@@ -5,8 +5,8 @@
     <div>
       <h2>Auditoría de llenado — todos los embarques</h2>
       <p class="resumen-nota">
-        Proyectado (P) vs Real (R) por hito, agrupado por sección. Verde = se llenó antes de lo esperado,
-        rojo = se llenó después. Clic en un embarque para ver el detalle completo.
+        Proyectado (P) vs Real (R) por hito, en el mismo orden en que se llenan. Verde = se llenó antes
+        de lo esperado, rojo = después. Clic en un embarque para ver el detalle completo.
       </p>
     </div>
     <a routerLink="/importaciones" class="btn-secundario">
@@ -22,6 +22,7 @@
       <span class="leg-item"><span class="rk rk-p">P</span>Proyectado</span>
       <span class="leg-item"><span class="rk rk-r">R</span>Real</span>
       <span class="leg-item leg-realcell"><span class="leg-cell-sw"></span>Fecha real registrada</span>
+      <span class="leg-item leg-realcell leg-sw-sin-historial"><span class="leg-cell-sw"></span>Sin dato histórico</span>
       <span class="leg-divider"></span>
       <span class="leg-sep">Ordenar por:</span>
       <button class="orden-pill" [class.active]="orden === 'atrasados'" (click)="ordenarPor('atrasados')">Atrasados</button>
@@ -30,7 +31,8 @@
     </div>
 
     <div class="cards-wrap" *ngIf="embarques.length; else sinEmbarques">
-      <div *ngFor="let e of embarquesOrdenados()" class="emb-card" (click)="irDetalle(e.id)">
+      <div *ngFor="let e of embarquesOrdenados(); let i = index" class="emb-card" [style.--stagger]="i"
+           (click)="irDetalle(e.id)">
 
         <div class="ec-top">
           <div class="ec-ident">
@@ -38,6 +40,7 @@
               <span class="ref-badge">{{ e.referencia }}</span>
               <span class="auditoria-badge auditoria-rojo" *ngIf="e.atrasados > 0">{{ e.atrasados }} atrasado{{ e.atrasados === 1 ? '' : 's' }}</span>
               <span class="auditoria-badge auditoria-verde" *ngIf="e.adelantados > 0">{{ e.adelantados }} adelantado{{ e.adelantados === 1 ? '' : 's' }}</span>
+              <span class="auditoria-badge auditoria-gris" *ngIf="e.sin_historial > 0">{{ e.sin_historial }} sin dato histórico</span>
               <span class="auditoria-badge auditoria-neutra" *ngIf="e.atrasados === 0 && e.adelantados === 0">al corriente</span>
             </div>
             <span class="ec-nombre" [title]="e.nombre">{{ e.nombre }}</span>
@@ -46,23 +49,22 @@
 
         <div class="ec-vacio" *ngIf="!e.hitos.length">Sin hitos configurados o activos.</div>
 
-        <div class="ec-seccion" *ngFor="let grupo of seccionesDe(e)">
-          <span class="ec-seccion-lbl">{{ grupo.seccion }}</span>
-          <div class="ec-pipeline">
-            <div *ngFor="let h of grupo.hitos" class="ec-stage" [ngClass]="stageCls(h)" [title]="h.etiqueta">
-              <span class="ec-stage-lbl">{{ h.etiqueta }}</span>
-              <span class="ec-stage-p">
-                <span class="rk rk-p" title="Proyectado">P</span>{{ fmtD(h.fecha_esperada) }}
-              </span>
-              <span class="ec-stage-r">
-                <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
-              </span>
-              <span class="ec-stage-d" *ngIf="h.dias_diferencia != null" [ngClass]="deltaClass(h.dias_diferencia)">
-                {{ absDif(h.dias_diferencia) }}d
-              </span>
-              <span class="ec-stage-espera" *ngIf="h.estado === 'en_espera'">en espera</span>
-              <span class="ec-stage-espera" *ngIf="h.estado === 'pendiente'">pendiente</span>
-            </div>
+        <div class="ec-pipeline" *ngIf="e.hitos.length">
+          <div *ngFor="let h of e.hitos" class="ec-stage" [ngClass]="stageCls(h)" [title]="h.etiqueta">
+            <span class="ec-stage-seccion" [style.color]="seccionColor(h.seccion)">{{ seccionLabel(h.seccion) }}</span>
+            <span class="ec-stage-lbl">{{ h.etiqueta }}</span>
+            <span class="ec-stage-p">
+              <span class="rk rk-p" title="Proyectado">P</span>{{ fmtD(h.fecha_esperada) }}
+            </span>
+            <span class="ec-stage-r">
+              <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
+            </span>
+            <span class="ec-stage-d" *ngIf="h.dias_diferencia != null" [ngClass]="deltaClass(h.dias_diferencia)">
+              {{ absDif(h.dias_diferencia) }}d
+            </span>
+            <span class="ec-stage-espera" *ngIf="h.estado === 'en_espera'">en espera</span>
+            <span class="ec-stage-espera" *ngIf="h.estado === 'pendiente'">pendiente</span>
+            <span class="ec-stage-espera ec-stage-sh-lbl" *ngIf="h.estado === 'sin_historial'">sin dato histórico</span>
           </div>
         </div>
 

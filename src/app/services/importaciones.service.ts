@@ -259,7 +259,7 @@ export interface HitoAuditoriaResultado {
   campo_dato: string;
   fecha_esperada: string | null;
   fecha_real: string | null;
-  estado: 'a_tiempo' | 'adelantado' | 'atrasado' | 'pendiente' | 'en_espera';
+  estado: 'a_tiempo' | 'adelantado' | 'atrasado' | 'pendiente' | 'en_espera' | 'sin_historial';
   dias_diferencia: number | null;
 }
 
@@ -272,6 +272,7 @@ export interface AuditoriaResumenEmbarque {
   a_tiempo: number;
   pendientes: number;
   en_espera: number;
+  sin_historial: number;
   hitos: HitoAuditoriaResultado[];
 }
 

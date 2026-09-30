@@ -6,11 +6,6 @@ import { ImportacionesService, AuditoriaResumenEmbarque, HitoAuditoriaResultado 
 
 type OrdenCampo = 'atrasados' | 'adelantados' | 'referencia';
 
-interface SeccionGrupo {
-  seccion: string;
-  hitos: HitoAuditoriaResultado[];
-}
-
 @Component({
   selector: 'app-importaciones-auditoria-resumen',
   standalone: true,
@@ -23,6 +18,21 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   cargando = true;
   error = '';
   orden: OrdenCampo = 'atrasados';
+
+  // Color por sección, solo para el pequeño tag encima de cada hito -- el
+  // pipeline NO se agrupa/reordena por sección: los hitos se llenan en el
+  // orden en que se le dieron al usuario (mezclando secciones), así que la
+  // tira respeta ese orden tal cual llega del backend (ORDER BY id).
+  private static readonly SECCION_CFG: Record<string, { label: string; color: string }> = {
+    logistica:   { label: 'Logística',   color: '#60a5fa' },
+    costos:      { label: 'Costos',      color: '#fbbf24' },
+    importacion: { label: 'Importación', color: '#c084fc' },
+    odoo:        { label: 'Odoo/SAE',    color: '#22d3ee' },
+    despacho:    { label: 'Despacho',    color: '#f472b6' },
+    almacen:     { label: 'Almacén',     color: '#a78bfa' },
+    recepcion:   { label: 'Recepción',   color: '#38bdf8' },
+    cierre:      { label: 'Cierre',      color: '#94a3b8' },
+  };
 
   constructor(private svc: ImportacionesService, private router: Router) {}
 
@@ -51,28 +61,16 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     return [...this.embarques].sort((a, b) => b[campo] - a[campo]);
   }
 
-  totalHitos(e: AuditoriaResumenEmbarque): number {
-    return e.atrasados + e.adelantados + e.a_tiempo + e.pendientes + e.en_espera;
-  }
-
-  // Agrupa el arreglo plano de hitos (ya viene ordenado seccion, orden_hito
-  // desde el backend) en tiras consecutivas por sección, para pintar una
-  // franja de pipeline por sección dentro de la tarjeta del embarque.
-  seccionesDe(e: AuditoriaResumenEmbarque): SeccionGrupo[] {
-    const grupos: SeccionGrupo[] = [];
-    let actual: SeccionGrupo | null = null;
-    for (const h of e.hitos || []) {
-      if (!actual || actual.seccion !== h.seccion) {
-        actual = { seccion: h.seccion, hitos: [] };
-        grupos.push(actual);
-      }
-      actual.hitos.push(h);
-    }
-    return grupos;
-  }
-
   irDetalle(id: number): void {
     this.router.navigate(['/importaciones', id]);
+  }
+
+  seccionLabel(seccion: string): string {
+    return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.label ?? seccion;
+  }
+
+  seccionColor(seccion: string): string {
+    return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.color ?? '#64748b';
   }
 
   fmtD(s: string | null | undefined): string {
@@ -99,6 +97,8 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   }
 
   stageCls(h: HitoAuditoriaResultado): string {
-    return h.fecha_real ? 'stage-real' : '';
+    if (h.fecha_real) return 'stage-real';
+    if (h.estado === 'sin_historial') return 'stage-sin-historial';
+    return '';
   }
 }
