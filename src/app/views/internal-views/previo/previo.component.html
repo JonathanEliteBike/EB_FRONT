@@ -1,6 +1,6 @@
 <app-home-bar></app-home-bar>
 
-<div class="monitor-container">
+<div class="monitor-container" [class.montos-ocultos]="debeOcultarMontosPrevio">
   <h2>Monitor Previo de Facturas</h2>
 
   <div class="acciones-monitor">
@@ -199,7 +199,7 @@
               {{ cliente.nombre_cliente }}
             </td>
 
-            <td>{{ cliente.acumulado_anticipado | currency:'USD':'$':'1.2-2' }}</td>
+            <td class="td-number">{{ cliente.acumulado_anticipado | currency:'USD':'$':'1.2-2' }}</td>
             <td>{{ cliente.nivel }}</td>
             <td>{{ verificarCumplimientoCompraInicial(cliente) }}</td>
             <td class="td-number">{{ cliente.compra_minima_anual | currency:'USD':'$':'1.2-2' }}</td>

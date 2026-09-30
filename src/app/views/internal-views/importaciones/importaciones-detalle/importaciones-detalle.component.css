@@ -232,6 +232,10 @@
   animation: sectionIn 220ms var(--ease-out, cubic-bezier(0.23,1,0.32,1)) both;
 }
 
+.det-section-readonly {
+  pointer-events: none;
+}
+
 /* ── Fields grid ── */
 .fields-grid {
   display: grid;

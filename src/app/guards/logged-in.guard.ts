@@ -1,9 +1,13 @@
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, Router, RouterStateSnapshot } from '@angular/router';
 import { inject } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
+import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
-export const loggedInGuard: CanActivateFn = () => {
+export const loggedInGuard: CanActivateFn = (_route, state: RouterStateSnapshot) => {
   const router = inject(Router);
+  const authService = inject(AuthService);
   const token = localStorage.getItem('token');
 
   if (!token) {
@@ -18,6 +22,15 @@ export const loggedInGuard: CanActivateFn = () => {
       localStorage.removeItem('token');
       router.navigate(['/login']);
       return false;
+    }
+    if (decoded.rol === 4) {
+      return authService.validarAccesoRutaInterna(state.url).pipe(
+        map(resultado => resultado.catalogada && resultado.permitido
+          ? true
+          : router.parseUrl('/acceso-restringido')
+        ),
+        catchError(() => of(router.parseUrl('/acceso-restringido')))
+      );
     }
     return true;
   } catch {

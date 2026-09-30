@@ -31,7 +31,7 @@ export class SolicitudRetroactivoLandingComponent implements OnInit {
 
     try {
       const decoded: any = jwtDecode(token);
-      this.esAdmin = decoded.rol === 1;
+      this.esAdmin = decoded.rol === 1 || decoded.rol === 4;
       this.esCliente = decoded.rol === 2 || decoded.rol === 3;
     } catch {
       // Token inválido: el guard de la ruta ya se encarga de sacarlo al login.

@@ -19,7 +19,7 @@
             <i class="fas fa-arrow-left"></i> Volver
         </button>
 
-        <button *ngIf="!mostrarFormulario" class="btn btn-primary agregar" (click)="mostrarFormulario = true">
+        <button *ngIf="!mostrarFormulario && puedeCrear" class="btn btn-primary agregar" (click)="mostrarFormulario = true">
             <i class="fas fa-plus"></i>
             Agregar Nueva
         </button>
@@ -194,13 +194,13 @@
         <div class="detail-header">
             <h3><i class="fas fa-info-circle"></i> Detalles de Proyección</h3>
             <div class="detail-actions">
-                <button class="btn btn-primary" [disabled]="!hayCambios() || cargando"
+                <button *ngIf="puedeEditar" class="btn btn-primary" [disabled]="!hayCambios() || cargando"
                     (click)="confirmacionVisible = true">
                     <i class="fas fa-save"></i>
                     <span *ngIf="!cargando">Guardar Cambios</span>
                     <i *ngIf="cargando" class="fas fa-spinner fa-spin"></i>
                 </button>
-                <button class="btn btn-danger" (click)="confirmacionEliminarVisible = true">
+                <button *ngIf="puedeEliminar" class="btn btn-danger" (click)="confirmacionEliminarVisible = true">
                     <i class="fas fa-trash-alt"></i> Eliminar
                 </button>
             </div>

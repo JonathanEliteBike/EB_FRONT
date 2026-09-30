@@ -6,6 +6,7 @@ import { HomeBarComponent } from '../../../components/home-bar/home-bar.componen
 import { UsuariosService } from '../../../services/usuarios.service';
 import { AlertaService } from '../../../services/alerta.service';
 import { ClientesService } from '../../../services/clientes.service';
+import { AdminSistemaService, AreaItem } from '../../../services/admin-sistema.service';
 import { AlertaComponent } from '../../../components/alerta/alerta.component';
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
 import { GestionClientesComponent } from '../gestion-clientes/gestion-clientes.component';
@@ -19,6 +20,8 @@ interface Usuario {
   rol: string;
   cliente_nombre?: string | null;
   cliente_id?: number | null;
+  area_id?: number | null;
+  area_nombre?: string | null;
   activo: boolean;
 }
 
@@ -54,6 +57,7 @@ export class UsuariosComponent implements OnInit {
   private usuariosService = inject(UsuariosService);
   private alerta = inject(AlertaService);
   private clientesService = inject(ClientesService);
+  private adminSistemaService = inject(AdminSistemaService);
   private cdr = inject(ChangeDetectorRef);
 
   constructor(private location: Location) {} goBack() { this.location.back(); }
@@ -64,11 +68,13 @@ export class UsuariosComponent implements OnInit {
 
   readonly ROLES = {
     ADMIN: { backendValue: 'Administrador' as const, display: 'Administrador' as const },
-    USUARIO: { backendValue: 'Usuario' as const, display: 'Usuario' as const }
+    USUARIO: { backendValue: 'Usuario' as const, display: 'Usuario' as const },
+    USUARIO_INTERNO: { backendValue: 'Usuario Interno' as const, display: 'Usuario Interno' as const }
   };
 
   usuarios: Usuario[] = [];
   usuariosFiltrados: Usuario[] = [];
+  areasActivas: AreaItem[] = [];
 
   nuevoUsuario: Usuario = {
     id: null,
@@ -116,6 +122,9 @@ export class UsuariosComponent implements OnInit {
 
   usuarioAEliminar: Usuario | null = null;
   mostrarConfirmacion = false;
+  mostrarConfirmacionCambioArea = false;
+  private areaOriginalEdicion: number | null = null;
+  private rolOriginalEdicion: string | null = null;
 
   asociarCliente = false;
   clienteBusqueda = '';
@@ -136,6 +145,7 @@ export class UsuariosComponent implements OnInit {
     }
 
     this.cargarUsuarios();
+    this.cargarAreasActivas();
 
     this.alerta.alerta$.subscribe(({ mensaje, tipo }) => {
       this.mensajeAlerta = mensaje;
@@ -171,10 +181,7 @@ export class UsuariosComponent implements OnInit {
     this.cargandoUsuarios = true;
     this.usuariosService.obtenerUsuarios().subscribe({
       next: (data) => {
-        this.usuarios = data.map((u: any) => ({
-          ...u,
-          rol: u.rol === 'Administrador' ? this.ROLES.ADMIN.backendValue : this.ROLES.USUARIO.backendValue
-        }));
+        this.usuarios = data.map((u: any) => this.normalizarUsuario(u));
         this.cargandoUsuarios = false;
         this.prepararOpcionesFiltros();
         this.filtrarUsuarios();
@@ -184,6 +191,38 @@ export class UsuariosComponent implements OnInit {
         this.cargandoUsuarios = false;
       }
     });
+  }
+
+  cargarAreasActivas(): void {
+    this.adminSistemaService.getAreasPermisosInternos().subscribe({
+      next: ({ areas }) => {
+        this.areasActivas = areas.filter(area => Boolean(Number(area.activo)));
+      },
+      error: () => {
+        console.error('Error al obtener las áreas activas');
+        this.areasActivas = [];
+      }
+    });
+  }
+
+  get esUsuarioInterno(): boolean {
+    return this.nuevoUsuario.rol === this.ROLES.USUARIO_INTERNO.backendValue;
+  }
+
+  onRolChange(): void {
+    if (!this.esUsuarioInterno) {
+      this.nuevoUsuario.area_id = null;
+    }
+  }
+
+  private normalizarUsuario(usuario: any): Usuario {
+    const rol = usuario.rol === this.ROLES.ADMIN.backendValue
+      ? this.ROLES.ADMIN.backendValue
+      : usuario.rol === this.ROLES.USUARIO_INTERNO.backendValue
+        ? this.ROLES.USUARIO_INTERNO.backendValue
+        : this.ROLES.USUARIO.backendValue;
+
+    return { ...usuario, rol };
   }
 
   prepararOpcionesFiltros(): void {
@@ -206,7 +245,7 @@ export class UsuariosComponent implements OnInit {
     this.filtroOpciones.rol = Array.from(new Set(this.usuarios.map(u => u.rol)))
       .filter(rol => rol)
       .map(rol => ({
-        value: rol === this.ROLES.ADMIN.backendValue ? this.ROLES.ADMIN.display : this.ROLES.USUARIO.display,
+        value: rol,
         selected: false
       }));
   }
@@ -258,10 +297,7 @@ export class UsuariosComponent implements OnInit {
   private cumpleFiltroRol(rol: string): boolean {
     if (this.filtrosAplicados.rol.length === 0) return true;
 
-    const rolDisplay = rol === this.ROLES.ADMIN.backendValue ?
-      this.ROLES.ADMIN.display : this.ROLES.USUARIO.display;
-
-    return this.filtrosAplicados.rol.includes(rolDisplay);
+    return this.filtrosAplicados.rol.includes(rol);
   }
 
   filtrarClientes(): ClienteNombre[] {
@@ -320,6 +356,8 @@ export class UsuariosComponent implements OnInit {
 
   editarUsuario(usuario: Usuario): void {
     this.nuevoUsuario = { ...usuario };
+    this.areaOriginalEdicion = usuario.area_id ?? null;
+    this.rolOriginalEdicion = usuario.rol;
     this.mostrarFormularioEdicion = true;
 
     if (usuario.cliente_id) {
@@ -358,6 +396,9 @@ export class UsuariosComponent implements OnInit {
   volverALista(): void {
     this.mostrarFormularioRegistroVisible = false;
     this.mostrarFormularioEdicion = false;
+    this.mostrarConfirmacionCambioArea = false;
+    this.areaOriginalEdicion = null;
+    this.rolOriginalEdicion = null;
   }
 
   onGrupoChange(): void {
@@ -380,6 +421,8 @@ export class UsuariosComponent implements OnInit {
         nombre: this.nuevoUsuario.nombre.trim(),
         correo: this.nuevoUsuario.correo.trim(),
         rol: this.nuevoUsuario.rol,
+        rol_id: this.esUsuarioInterno ? 4 : undefined,
+        area_id: this.esUsuarioInterno ? this.nuevoUsuario.area_id : null,
         activo: true
       };
 
@@ -399,14 +442,16 @@ export class UsuariosComponent implements OnInit {
 
       this.usuariosService.crearUsuario(usuarioParaCrear).subscribe({
         next: (usuarioCreado) => {
-          this.alerta.mostrarExito('✅ Usuario creado con éxito');
+          this.alerta.mostrarExito(`✅ ${usuarioCreado.mensaje || 'Usuario creado con éxito'}`);
           this.cargandoUsuarios = false;
           this.volverALista();
 
-          this.usuarios.unshift({
-            ...usuarioCreado,
-            rol: usuarioCreado.rol === 'Administrador' ? this.ROLES.ADMIN.backendValue : this.ROLES.USUARIO.backendValue
-          });
+          const usuarioRegistrado = usuarioCreado.usuario;
+          if (usuarioRegistrado) {
+            this.usuarios.unshift(this.normalizarUsuario(usuarioRegistrado));
+          } else {
+            this.cargarUsuarios();
+          }
           this.prepararOpcionesFiltros();
           this.filtrarUsuarios();
 
@@ -438,73 +483,90 @@ export class UsuariosComponent implements OnInit {
   }
 
   actualizarUsuario(): void {
-    if (this.validarFormulario()) {
-      if (this.nuevoUsuario.id == null) {
-        this.alerta.mostrarError('ID de usuario no válido para la actualización');
-        return;
-      }
-
-      this.cargandoUsuarios = true;
-
-      const datosActualizacion: any = {
-        nombre: this.nuevoUsuario.nombre.trim(),
-        rol: this.nuevoUsuario.rol,
-        activo: this.nuevoUsuario.activo,
-        usuario: this.nuevoUsuario.usuario.trim(),
-        correo: this.nuevoUsuario.correo.trim()
-      };
-
-      if (this.nuevoUsuario.contrasena?.trim()) {
-        datosActualizacion.contrasena = this.nuevoUsuario.contrasena;
-      }
-
-      if (this.asociarCliente && this.clienteSeleccionadoId) {
-        datosActualizacion.cliente_id = this.clienteSeleccionadoId;
-      } else {
-        datosActualizacion.cliente_id = null;
-      }
-
-      this.usuariosService.actualizarUsuario(this.nuevoUsuario.id, datosActualizacion).subscribe({
-        next: (usuarioActualizado) => {
-          const usuarioActualizadoFormateado = {
-            ...usuarioActualizado,
-            rol: usuarioActualizado.rol === 'Administrador' ? this.ROLES.ADMIN.backendValue : this.ROLES.USUARIO.backendValue
-          };
-
-          const index = this.usuarios.findIndex(u => u.id === usuarioActualizadoFormateado.id);
-          if (index !== -1) {
-            this.usuarios[index] = usuarioActualizadoFormateado;
-            this.prepararOpcionesFiltros();
-            this.filtrarUsuarios();
-          }
-
-          this.alerta.mostrarExito('✅ Usuario actualizado con éxito');
-          this.volverALista();
-          this.cargandoUsuarios = false;
-
-          this.asociarCliente = false;
-          this.clienteBusqueda = '';
-          this.clienteSeleccionadoId = null;
-        },
-        error: (error) => {
-          console.error('Error al actualizar usuario:', error);
-          let mensaje = 'Error al actualizar usuario';
-
-          if (error.error?.error) {
-            mensaje = error.error.error;
-          } else if (error.status === 400) {
-            mensaje = 'Datos inválidos. Verifique la información';
-          } else if (error.status === 409) {
-            mensaje = 'El usuario, correo o nombre ya existen';
-          } else if (error.status === 404) {
-            mensaje = 'Usuario no encontrado';
-          }
-
-          this.alerta.mostrarError(mensaje);
-          this.cargandoUsuarios = false;
-        }
-      });
+    if (!this.validarFormulario()) return;
+    if (this.requiereConfirmacionCambioArea()) {
+      this.mostrarConfirmacionCambioArea = true;
+      return;
     }
+    this.enviarActualizacionUsuario(false);
+  }
+
+  cancelarCambioArea(): void {
+    this.mostrarConfirmacionCambioArea = false;
+  }
+
+  confirmarCambioArea(): void {
+    this.mostrarConfirmacionCambioArea = false;
+    this.enviarActualizacionUsuario(true);
+  }
+
+  private requiereConfirmacionCambioArea(): boolean {
+    return this.rolOriginalEdicion === this.ROLES.USUARIO_INTERNO.backendValue
+      && this.esUsuarioInterno
+      && Number(this.areaOriginalEdicion) !== Number(this.nuevoUsuario.area_id);
+  }
+
+  private enviarActualizacionUsuario(confirmarCambioArea: boolean): void {
+    if (this.nuevoUsuario.id == null) {
+      this.alerta.mostrarError('ID de usuario no válido para la actualización');
+      return;
+    }
+
+    this.cargandoUsuarios = true;
+
+    const datosActualizacion: any = {
+      nombre: this.nuevoUsuario.nombre.trim(),
+      rol: this.nuevoUsuario.rol,
+      rol_id: this.esUsuarioInterno ? 4 : undefined,
+      area_id: this.esUsuarioInterno ? this.nuevoUsuario.area_id : null,
+      confirmar_cambio_area: confirmarCambioArea,
+      activo: this.nuevoUsuario.activo,
+      usuario: this.nuevoUsuario.usuario.trim(),
+      correo: this.nuevoUsuario.correo.trim()
+    };
+
+    if (this.nuevoUsuario.contrasena?.trim()) {
+      datosActualizacion.contrasena = this.nuevoUsuario.contrasena;
+    }
+
+    if (this.asociarCliente && this.clienteSeleccionadoId) {
+      datosActualizacion.cliente_id = this.clienteSeleccionadoId;
+    } else {
+      datosActualizacion.cliente_id = null;
+    }
+
+    this.usuariosService.actualizarUsuario(this.nuevoUsuario.id, datosActualizacion).subscribe({
+      next: (usuarioActualizado) => {
+        this.cargarUsuarios();
+
+        this.alerta.mostrarExito(`✅ ${usuarioActualizado.mensaje || 'Usuario actualizado con éxito'}`);
+        this.volverALista();
+        this.cargandoUsuarios = false;
+
+        this.asociarCliente = false;
+        this.clienteBusqueda = '';
+        this.clienteSeleccionadoId = null;
+      },
+      error: (error) => {
+        console.error('Error al actualizar usuario:', error);
+        let mensaje = 'Error al actualizar usuario';
+
+        if (error.error?.error) {
+          mensaje = error.error.error;
+        } else if (error.error?.errores?.length) {
+          mensaje = error.error.errores.join(' ');
+        } else if (error.status === 400) {
+          mensaje = 'Datos inválidos. Verifique la información';
+        } else if (error.status === 409) {
+          mensaje = 'El usuario, correo o nombre ya existen';
+        } else if (error.status === 404) {
+          mensaje = 'Usuario no encontrado';
+        }
+
+        this.alerta.mostrarError(mensaje);
+        this.cargandoUsuarios = false;
+      }
+    });
   }
 
   validarFormulario(): boolean {
@@ -534,6 +596,11 @@ export class UsuariosComponent implements OnInit {
 
     if (!this.nuevoUsuario.nombre?.trim()) {
       this.alerta.mostrarError('El nombre es obligatorio');
+      return false;
+    }
+
+    if (this.esUsuarioInterno && !this.nuevoUsuario.area_id) {
+      this.alerta.mostrarError('El área principal es obligatoria para un Usuario Interno');
       return false;
     }
 

@@ -13,12 +13,12 @@
     <span>Previo</span>
   </button>
 
-  <button class="metas-btn" (click)="abrirAgregar()" *ngIf="!mostrarAgregar && !mostrarEditar">
+  <button class="metas-btn" (click)="abrirAgregar()" *ngIf="puedeCrear && !mostrarAgregar && !mostrarEditar">
     + Agregar Nueva Meta
   </button>
 
   <!-- FORMULARIO AGREGAR -->
-  <div *ngIf="mostrarAgregar" class="formulario-meta">
+  <div *ngIf="mostrarAgregar && puedeCrear" class="formulario-meta">
     <h3 class="titulo-agg">Agregar Nueva Meta</h3>
 
     <label class="metas-label">Nivel:</label>
@@ -42,7 +42,7 @@
     </div>
   </div>
 
-  <div *ngIf="mostrarEditar" class="formulario-meta">
+  <div *ngIf="mostrarEditar && puedeEditar" class="formulario-meta">
     <h3 class="titulo-agg">Editar Meta</h3>
 
     <label class="metas-label">Nivel:</label>
@@ -123,21 +123,21 @@
         <th>SYNCROS</th>
         <th>APPAREL</th>
         <th>VITTORIA</th>
-        <th>Acciones</th>
+        <th *ngIf="puedeGestionarMetas">Acciones</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let meta of metas">
         <td>{{ meta.nivel }}</td>
-        <td>{{ meta.compromiso_scott | currency:'USD':'$':'1.2-2' }}</td>
-        <td>{{ meta.compromiso_syncros | currency:'USD':'$':'1.2-2' }}</td>
-        <td>{{ meta.compromiso_apparel | currency:'USD':'$':'1.2-2' }}</td>
-        <td>{{ meta.compromiso_vittoria | currency:'USD':'$':'1.2-2' }}</td>
-        <td>
-          <button class="metas-btn btn-editar" (click)="abrirEditar(meta)">
+        <td>{{ debeOcultarMontos ? '-' : (meta.compromiso_scott | currency:'USD':'$':'1.2-2') }}</td>
+        <td>{{ debeOcultarMontos ? '-' : (meta.compromiso_syncros | currency:'USD':'$':'1.2-2') }}</td>
+        <td>{{ debeOcultarMontos ? '-' : (meta.compromiso_apparel | currency:'USD':'$':'1.2-2') }}</td>
+        <td>{{ debeOcultarMontos ? '-' : (meta.compromiso_vittoria | currency:'USD':'$':'1.2-2') }}</td>
+        <td *ngIf="puedeGestionarMetas">
+          <button *ngIf="puedeEditar" class="metas-btn btn-editar" (click)="abrirEditar(meta)">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="metas-btn btn-eliminar" (click)="confirmarEliminar(meta)">
+          <button *ngIf="puedeEliminar" class="metas-btn btn-eliminar" (click)="confirmarEliminar(meta)">
             <i class="fas fa-trash"></i>
           </button>
         </td>
@@ -147,7 +147,7 @@
 </div>
 
 <!-- Confirmación eliminar -->
-<div *ngIf="confirmacionVisible" class="confirmacion-dialogo">
+<div *ngIf="confirmacionVisible && puedeEliminar" class="confirmacion-dialogo">
   <div class="confirmacion-contenido">
     <p>
       ¿Estás seguro que deseas eliminar la meta del nivel

@@ -547,6 +547,26 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
     protected cdr: ChangeDetectorRef,
   ) {}
 
+  get debeMostrarGuionMontos(): boolean {
+    return this.authService.getRol() === 4
+      && this.authService.debeOcultarMontos('proyeccion_compras');
+  }
+
+  get puedeCrearForecast(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('monitor_pedidos', 'crear');
+  }
+
+  get puedeEditarForecast(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('monitor_pedidos', 'editar');
+  }
+
+  get puedeEliminarForecast(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('monitor_pedidos', 'eliminar');
+  }
+
   get puedeVerMontos(): boolean {
     // Ambas capas deben coincidir: Angular no muestra importes sin capacidad y
     // Flask no los entrega aunque se altere el almacenamiento local.
@@ -992,7 +1012,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   activarEdicion(): void {
-    if (this.modoIntegral) return;
+    if (this.modoIntegral || (!this.puedeEditarForecast && !this.puedeEliminarForecast)) return;
     this.otpDialog = { abierto: true, codigo: '', error: '', verificando: false };
     this.cdr.markForCheck();
   }
@@ -1068,6 +1088,7 @@ export class ProyeccionesTabComponent implements OnChanges, OnInit, AfterViewIni
   }
 
   agregarProducto(): void {
+    if (!this.puedeCrearForecast) return;
     // Toggle: si ya existe una fila nueva sin producto asignado, quitarla
     const existente = this.rows.find(r => r._nuevo && !r._searchSeleccionado);
     if (existente) {

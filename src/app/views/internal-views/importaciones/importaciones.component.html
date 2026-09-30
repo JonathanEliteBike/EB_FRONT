@@ -15,7 +15,7 @@
       <button class="btn-dash" routerLink="/importaciones/dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard
       </button>
-      <button class="btn-nuevo" (click)="mostrarNuevo = true">
+      <button *ngIf="puedeCrearImportacion()" class="btn-nuevo" (click)="mostrarNuevo = true">
         <i class="fas fa-plus"></i> Nuevo Embarque
       </button>
     </div>
@@ -190,7 +190,7 @@
 
             <!-- Eliminar -->
             <td class="col-del">
-              <button class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
+              <button *ngIf="puedeEliminarImportacion()" class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
                 <i class="fas" [ngClass]="eliminando === e.id ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
               </button>
             </td>

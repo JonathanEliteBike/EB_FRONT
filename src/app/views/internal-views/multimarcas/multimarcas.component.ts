@@ -11,6 +11,7 @@ import { FiltroPrevioComponent } from '../../../components/filtro-previo/filtro-
 import * as XLSX from 'xlsx';
 import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
 import { AvisoHistoricoComponent } from '../../../components/aviso-historico/aviso-historico.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-multimarcas',
@@ -96,7 +97,8 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
   constructor(
     private multimarcasService: MultimarcasService,
     private monitorOdooService: MonitorOdooService,
-    private filtroService: FiltroService
+    private filtroService: FiltroService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -372,6 +374,13 @@ export class MultimarcasComponent implements OnInit, OnDestroy {
     // vivo con lo que haya en clientesPaginados en este momento (podrian ser
     // los datos historicos que se acaban de cargar).
     if (this.modoHistorico) {
+      return;
+    }
+
+    // Para rol interno con acceso de sólo lectura, la carga debe conservar los
+    // datos calculados en pantalla sin intentar persistirlos.
+    if (this.authService.getRol() === 4
+      && !this.authService.tienePermisoInterno('multimarcas', 'editar')) {
       return;
     }
 

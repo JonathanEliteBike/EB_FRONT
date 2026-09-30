@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { GarantiasService, GarantiasStats } from '../../../../services/garantias.service';
+import { AuthService } from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-garantias-hub',
@@ -54,7 +55,11 @@ export class GarantiasHubComponent implements OnInit {
     },
   ];
 
-  constructor(private svc: GarantiasService) {}
+  constructor(private svc: GarantiasService, private auth: AuthService) {}
+
+  puede(accion: string = 'ver'): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('garantias', accion);
+  }
 
   ngOnInit(): void {
     this.svc.getStats().subscribe({
