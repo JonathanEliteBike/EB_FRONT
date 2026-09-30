@@ -60,6 +60,7 @@ import { ImportacionesDashboardComponent } from './views/internal-views/importac
 import { AsignacionesImportacionComponent } from './views/internal-views/importaciones/asignaciones-importacion/asignaciones-importacion.component';
 import { ImportacionesTiemposEstimadosComponent } from './views/internal-views/importaciones/importaciones-tiempos-estimados/importaciones-tiempos-estimados.component';
 import { ImportacionesHitosAuditoriaComponent } from './views/internal-views/importaciones/importaciones-hitos-auditoria/importaciones-hitos-auditoria.component';
+import { ImportacionesAuditoriaResumenComponent } from './views/internal-views/importaciones/importaciones-auditoria-resumen/importaciones-auditoria-resumen.component';
 
 import { CaratulaRetroactivosUsuarioComponent } from './views/usuarios/caratula-retroactivos-usuarios/caratula-retroactivos-usuarios.component';
 import { GarantiasUsuarioComponent } from './views/usuarios/garantias-usuario/garantias-usuario.component';
@@ -178,6 +179,7 @@ export const routes: Routes = [
   { path: 'importaciones/dashboard',         component: ImportacionesDashboardComponent,      canActivate: [importacionesGuard] },
   { path: 'importaciones/tiempos-estimados', component: ImportacionesTiemposEstimadosComponent, canActivate: [adminGuard] },
   { path: 'importaciones/hitos-auditoria',   component: ImportacionesHitosAuditoriaComponent,  canActivate: [adminGuard] },
+  { path: 'importaciones/auditoria',         component: ImportacionesAuditoriaResumenComponent, canActivate: [importacionesGuard] },
   { path: 'importaciones/:id/asignaciones',  component: AsignacionesImportacionComponent,     canActivate: [importacionesGuard] },
   { path: 'importaciones/:id',               component: ImportacionesDetalleComponent,        canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }

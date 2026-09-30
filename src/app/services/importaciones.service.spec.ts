@@ -25,4 +25,11 @@ describe('ImportacionesService.obtenerAuditoria', () => {
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
+
+  it('obtenerAuditoriaResumen() hace GET a /importaciones/auditoria-resumen', () => {
+    service.obtenerAuditoriaResumen().subscribe();
+    const req = httpMock.expectOne(`${base}/auditoria-resumen`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
 });

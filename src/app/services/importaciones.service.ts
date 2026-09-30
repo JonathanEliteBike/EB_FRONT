@@ -263,6 +263,17 @@ export interface HitoAuditoriaResultado {
   dias_diferencia: number | null;
 }
 
+export interface AuditoriaResumenEmbarque {
+  id: number;
+  referencia: string;
+  nombre: string;
+  atrasados: number;
+  adelantados: number;
+  a_tiempo: number;
+  pendientes: number;
+  en_espera: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ImportacionesService {
   private base = `${environment.apiUrl}/importaciones`;
@@ -287,6 +298,10 @@ export class ImportacionesService {
 
   obtenerAuditoria(id: number): Observable<HitoAuditoriaResultado[]> {
     return this.http.get<HitoAuditoriaResultado[]>(`${this.base}/${id}/auditoria`);
+  }
+
+  obtenerAuditoriaResumen(): Observable<AuditoriaResumenEmbarque[]> {
+    return this.http.get<AuditoriaResumenEmbarque[]>(`${this.base}/auditoria-resumen`);
   }
 
   eliminar(id: number): Observable<{ ok: boolean }> {

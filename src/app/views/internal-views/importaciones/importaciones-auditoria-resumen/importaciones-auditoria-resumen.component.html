@@ -1,0 +1,53 @@
+<app-home-bar></app-home-bar>
+
+<div class="panel-page">
+  <div class="panel-page-header">
+    <div>
+      <h2>Auditoría de llenado — todos los embarques</h2>
+      <p class="resumen-nota">
+        Hitos atrasados/adelantados por embarque. Clic en un embarque para ver el detalle completo.
+      </p>
+    </div>
+    <a routerLink="/importaciones" class="btn-secundario">
+      <i class="fas fa-arrow-left"></i> Volver a Importaciones
+    </a>
+  </div>
+
+  <div class="wiz-error" *ngIf="error">{{ error }}</div>
+  <div *ngIf="cargando">Cargando…</div>
+
+  <div *ngIf="!cargando && !error">
+    <table class="tabla-mini" *ngIf="embarques.length; else sinEmbarques">
+      <thead>
+        <tr>
+          <th>Embarque</th>
+          <th class="num orden-col" (click)="ordenarPor('atrasados')" [class.orden-activo]="orden === 'atrasados'">Atrasados <i class="fas fa-sort"></i></th>
+          <th class="num orden-col" (click)="ordenarPor('adelantados')" [class.orden-activo]="orden === 'adelantados'">Adelantados <i class="fas fa-sort"></i></th>
+          <th class="num">A tiempo</th>
+          <th class="num">Pendientes</th>
+          <th class="num">En espera</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of embarquesOrdenados()" [routerLink]="['/importaciones', e.id]" class="fila-embarque">
+          <td>
+            <span class="cli-clave">{{ e.referencia }}</span>
+            <span class="td-nombre" [title]="e.nombre">{{ e.nombre }}</span>
+          </td>
+          <td class="num">
+            <span *ngIf="e.atrasados > 0" class="auditoria-badge auditoria-rojo">{{ e.atrasados }}</span>
+            <span *ngIf="e.atrasados === 0" class="auditoria-cero">—</span>
+          </td>
+          <td class="num">
+            <span *ngIf="e.adelantados > 0" class="auditoria-badge auditoria-verde">{{ e.adelantados }}</span>
+            <span *ngIf="e.adelantados === 0" class="auditoria-cero">—</span>
+          </td>
+          <td class="num">{{ e.a_tiempo }}</td>
+          <td class="num">{{ e.pendientes }}</td>
+          <td class="num">{{ e.en_espera }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #sinEmbarques><p class="asig-vacio">No hay embarques para auditar.</p></ng-template>
+  </div>
+</div>
