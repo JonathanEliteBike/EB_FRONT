@@ -493,11 +493,26 @@ export class AuthService {
     return !!normalizada && this.capacidadesPermitidas.has(normalizada);
   }
 
+  // Rol 99 "Importaciones": gente que SOLO trabaja llenando datos de
+  // embarques -- no pasa por la capa de permisos internos (esa es
+  // exclusiva del rol 4) ni tiene fila alguna en las tablas de permisos,
+  // así que antes de este cambio caía en el "else" genérico de abajo y
+  // nunca veía montos, en NINGÚN ámbito de todo el sistema. A diferencia
+  // del rol 1/2 (nunca se ocultan en ningún ámbito), este rol solo debe
+  // ver montos DENTRO de Importaciones -- no tiene nada que ver con
+  // proyecciones, retroactivos, carátulas u otros módulos comerciales.
+  private static readonly AMBITOS_ROL_IMPORTACIONES = new Set([
+    'importaciones', 'importaciones_dashboard',
+  ]);
+
   /** Semantica negativa explicita para evitar invertir la regla de negocio. */
   debeOcultarMontos(ambito: string): boolean {
     const rol = this.getRol();
     if (rol === 1 || rol === 2) return false;
     if (rol === 4) return !this.tienePermisoInternoActual(ambito, 'ver_montos');
+    if (rol === 99) {
+      return !AuthService.AMBITOS_ROL_IMPORTACIONES.has((ambito || '').toLowerCase().trim());
+    }
     if (rol !== 3) return true;
     if (this.ocultarMontosGlobal) return true;
     const normalizado = (ambito || '').toLowerCase().trim();

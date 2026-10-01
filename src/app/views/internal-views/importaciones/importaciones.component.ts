@@ -27,6 +27,17 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     } catch { return false; }
   })();
 
+  // Rol 99 "Importaciones": solo llenado de datos, sin acceso a la
+  // auditoría de llenado -- esa ruta queda restringida por
+  // importacionesAuditoriaGuard en app.routes.ts; este flag solo evita
+  // mostrar un botón que llevaría a ese rol a un redirect.
+  readonly puedeVerAuditoria: boolean = (() => {
+    try {
+      const token = localStorage.getItem('token');
+      return !token || (jwtDecode(token) as any).rol !== 99;
+    } catch { return true; }
+  })();
+
   embarques: Importacion[] = [];
   embarquesFiltrados: Importacion[] = [];
   cargando = true;

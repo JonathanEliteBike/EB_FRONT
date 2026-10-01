@@ -21,7 +21,7 @@
       <button class="btn-dash" routerLink="/importaciones/dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard
       </button>
-      <button class="btn-dash" routerLink="/importaciones/auditoria" title="Ver el estado de auditoría de llenado de todos los embarques">
+      <button *ngIf="puedeVerAuditoria" class="btn-dash" routerLink="/importaciones/auditoria" title="Ver el estado de auditoría de llenado de todos los embarques">
         <i class="fas fa-magnifying-glass-chart"></i> Auditoría
       </button>
       <button *ngIf="puedeCrearImportacion()" class="btn-nuevo" (click)="abrirNuevo()">

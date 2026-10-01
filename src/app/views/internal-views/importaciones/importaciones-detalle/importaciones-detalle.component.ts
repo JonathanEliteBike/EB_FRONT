@@ -296,8 +296,19 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     return !this.auth.debeOcultarMontos('importaciones');
   }
 
+  // Rol 99 "Importaciones": solo llenado de datos, sin acceso a Auditoría
+  // (ni a Hitos ni Tiempos Estimados, ya restringidos por adminGuard en
+  // app.routes.ts -- este es el único de los tres que vive como pestaña
+  // dentro del detalle en vez de ruta propia).
+  get puedeVerAuditoria(): boolean {
+    return this.auth.getRol() !== 99;
+  }
+
   get tabsVisibles(): { key: Seccion; label: string; icon: string }[] {
-    return this.tabs.filter(tab => tab.key !== 'costos' || this.puedeVerMontosImportacion);
+    return this.tabs.filter(tab =>
+      (tab.key !== 'costos' || this.puedeVerMontosImportacion) &&
+      (tab.key !== 'auditoria' || this.puedeVerAuditoria)
+    );
   }
 
   private returnUrl = '/importaciones';

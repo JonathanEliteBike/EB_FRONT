@@ -42,3 +42,23 @@ export const importacionesGuard: CanActivateFn = (_route, state: RouterStateSnap
     return false;
   }
 };
+
+// Mismo acceso que importacionesGuard, salvo para el rol 99 ("Importaciones"):
+// ese rol solo llena datos de embarques, sin acceso a la auditoría de
+// llenado -- se le regresa a la lista en vez de dejarlo entrar.
+export const importacionesAuditoriaGuard: CanActivateFn = (route, state) => {
+  const router = inject(Router);
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const decoded: any = jwtDecode(token);
+      if (decoded.rol === 99) {
+        router.navigate(['/importaciones']);
+        return false;
+      }
+    } catch {
+      // Token inválido: deja que importacionesGuard lo maneje normalmente.
+    }
+  }
+  return importacionesGuard(route, state);
+};
