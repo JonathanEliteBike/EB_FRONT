@@ -22,8 +22,12 @@
       <!-- ACCIONES (DERECHA) -->
       <div class="header-actions">
         <!-- NUEVO BOTÓN PARA IR A LA VISTA DE ADMINISTRADORES CLIENTE -->
-        <button class="btn btn-secondary" routerLink="/gestion-clientes">
+        <button class="btn btn-primary" routerLink="/gestion-clientes">
           <i class="fas fa-user-shield"></i> Administrar Distribuidores
+        </button>
+
+        <button class="btn btn-primary" routerLink="/permisos-internos">
+          <i class="fas fa-user-lock"></i> Permisos Internos
         </button>
 
         <button
@@ -74,9 +78,18 @@
 
         <div class="form-group">
           <label>Rol *</label>
-          <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
+          <select [(ngModel)]="nuevoUsuario.rol" (ngModelChange)="onRolChange()" name="rol" required>
             <option [value]="ROLES.ADMIN.backendValue">{{ROLES.ADMIN.display}}</option>
             <option [value]="ROLES.USUARIO.backendValue">{{ROLES.USUARIO.display}}</option>
+            <option [value]="ROLES.USUARIO_INTERNO.backendValue">{{ROLES.USUARIO_INTERNO.display}}</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="esUsuarioInterno">
+          <label>Área principal *</label>
+          <select [(ngModel)]="nuevoUsuario.area_id" name="areaPrincipal" required>
+            <option [ngValue]="null" disabled>-- Seleccionar área --</option>
+            <option *ngFor="let area of areasActivas" [ngValue]="area.id">{{ area.nombre }}</option>
           </select>
         </div>
 
@@ -158,9 +171,18 @@
 
         <div class="form-group">
           <label>Rol *</label>
-          <select [(ngModel)]="nuevoUsuario.rol" name="rol" required>
+          <select [(ngModel)]="nuevoUsuario.rol" (ngModelChange)="onRolChange()" name="rol" required>
             <option [value]="ROLES.ADMIN.backendValue">{{ROLES.ADMIN.display}}</option>
             <option [value]="ROLES.USUARIO.backendValue">{{ROLES.USUARIO.display}}</option>
+            <option [value]="ROLES.USUARIO_INTERNO.backendValue">{{ROLES.USUARIO_INTERNO.display}}</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="esUsuarioInterno">
+          <label>Área principal *</label>
+          <select [(ngModel)]="nuevoUsuario.area_id" name="areaPrincipalEditar" required>
+            <option [ngValue]="null" disabled>-- Seleccionar área --</option>
+            <option *ngFor="let area of areasActivas" [ngValue]="area.id">{{ area.nombre }}</option>
           </select>
         </div>
 
@@ -227,7 +249,7 @@
             <td class="col-usuario"><code>{{ u.usuario }}</code></td>
             <td class="col-rol">
               <span class="badge" [ngClass]="u.rol === ROLES.ADMIN.backendValue ? 'badge-root' : 'badge-sub'">
-                {{ u.rol === ROLES.ADMIN.backendValue ? ROLES.ADMIN.display : ROLES.USUARIO.display }}
+                {{ u.rol }}
               </span>
             </td>
             <td class="col-distribuidor">{{ u.cliente_nombre || 'N/A' }}</td>
@@ -281,6 +303,24 @@
         <button class="btn btn-action" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
           Siguiente
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN -->
+  <div *ngIf="mostrarConfirmacionCambioArea" class="modal-backdrop">
+    <div class="modal-card mini">
+      <div class="modal-header-custom">
+        <h3>Confirmar cambio de área</h3>
+        <button type="button" class="close-btn" (click)="cancelarCambioArea()">&times;</button>
+      </div>
+      <div class="modal-body-custom">
+        <p>Al cambiar el área, los permisos actuales del usuario serán reemplazados por los permisos configurados para la nueva área.</p>
+        <small>Después podrás modificarlos desde Permisos Internos.</small>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn btn-secondary" (click)="cancelarCambioArea()">Cancelar</button>
+        <button class="btn btn-primary" (click)="confirmarCambioArea()">Confirmar cambio</button>
       </div>
     </div>
   </div>

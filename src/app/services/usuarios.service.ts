@@ -32,7 +32,10 @@ export class UsuariosService {
     contrasena?: string;
     nombre: string;
     correo?: string;
-    rol: 'Administrador' | 'Usuario';
+    rol: 'Administrador' | 'Usuario' | 'Usuario Interno';
+    rol_id?: number;
+    area_id?: number | null;
+    confirmar_cambio_area?: boolean;
   }): Observable<any> {
     console.log('Datos para actualizar:', usuarioData);
     return this.http.put(`${this.apiUrl}/usuarios/${id}`, usuarioData, {

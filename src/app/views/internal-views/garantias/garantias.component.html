@@ -18,7 +18,7 @@
       </p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-outline" (click)="refrescarManual()">
+      <button *ngIf="puedeEditarGarantias" class="btn btn-outline" (click)="refrescarManual()">
         <i class="fas fa-sync-alt"></i> Refrescar
       </button>
       <button class="btn btn-primary" (click)="exportar()">

@@ -32,22 +32,83 @@ export interface AccionBase {
   activo: number;
 }
 
+export interface AreaItem {
+  id: number;
+  nombre: string;
+  activo: number | boolean;
+}
+
 export interface ModuloItem {
   id: number;
   nombre: string;
   identificador: string;
+  ruta?: string | null;
   padre_id?: number | null;
   activo: number;
   delegable_a_hijos?: boolean | number;
+  area_id?: number | null;
+  area_nombre?: string | null;
+  areas?: (Pick<AreaItem, 'id' | 'nombre'> & { acciones?: AccionBase[] })[];
   acciones?: AccionBase[];
 }
 
 export interface ModuloPayload {
+  configurar_area?: boolean;
+  crear_asociacion?: boolean;
+  actualizar_modulo_global?: boolean;
   nombre: string;
   identificador: string;
+  ruta?: string | null;
   padre_id?: number | null;
   delegable_a_hijos?: boolean;
+  catalogo_historico_distribuidores?: boolean;
+  area_id?: number | null;
+  areas_ids?: number[];
+  areas_acciones?: Record<string, number[]>;
   acciones_ids?: number[];
+}
+
+export interface PermisoInternoEndpointItem {
+  id: number;
+  ruta_patron: string;
+  metodo_http: string;
+  modulo_id: number;
+  accion_id: number;
+  activo: number | boolean;
+  modulo_nombre?: string;
+  modulo_identificador?: string;
+  accion_nombre?: string;
+  accion_identificador?: string;
+}
+
+export interface PermisoInternoEndpointPayload {
+  ruta_patron: string;
+  metodo_http: string;
+  modulo_id: number;
+  accion_id: number;
+  activo: boolean;
+}
+
+export interface UsuarioInternoItem {
+  id: number;
+  nombre: string;
+  correo: string;
+  usuario: string;
+  activo: number | boolean;
+  area_id?: number | null;
+  area_nombre?: string | null;
+}
+
+export interface PermisoInternoItem {
+  usuario_id: number;
+  modulo_id: number;
+  accion_id: number;
+  area_id?: number | null;
+}
+
+export interface PermisosInternosUsuarioResponse {
+  permisos: PermisoInternoItem[];
+  area: AreaItem | null;
 }
 
 export interface UsuarioHijoItem {
@@ -171,6 +232,18 @@ export class AdminSistemaService {
   getModulosDelegablesAdministrador(adminId: number): Observable<{ modulos: ModuloAccesoItem[] }> {
     return this.http.get<{ modulos: ModuloAccesoItem[] }>(`${this.apiUrl}/admin-sistema/administradores/${adminId}/modulos-delegables`);
   }
+  getModulosHistoricosRol2(): Observable<{ modulos: ModuloItem[] }> {
+    return this.http.get<{ modulos: ModuloItem[] }>(`${this.apiUrl}/admin-sistema/modulos-historicos-rol2`);
+  }
+  getCatalogoModulosDelegables(): Observable<{ modulos: ModuloItem[] }> {
+    return this.http.get<{ modulos: ModuloItem[] }>(`${this.apiUrl}/admin-sistema/modulos-delegables/catalogo`);
+  }
+
+  actualizarModuloDelegable(moduloId: number, delegableAHijos: boolean): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.apiUrl}/admin-sistema/modulos/${moduloId}/delegable-a-hijos`, {
+      delegable_a_hijos: delegableAHijos
+    });
+  }
 
   asignarModuloDelegable(administradorId: number, moduloId: number): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.apiUrl}/admin-sistema/modulos-delegables/asignar`, {
@@ -210,6 +283,69 @@ export class AdminSistemaService {
     return this.http.get<{ modulos: ModuloItem[] }>(`${this.apiUrl}/modulos`);
   }
 
+  /** Obtiene las áreas disponibles para clasificar módulos internos. */
+  getAreasPermisosInternos(): Observable<{ areas: AreaItem[] }> {
+    return this.http.get<{ areas: AreaItem[] }>(`${this.apiUrl}/permisos-internos/areas`);
+  }
+
+  crearAreaPermisosInternos(nombre: string): Observable<ApiResponse<{ id: number }>> {
+    return this.http.post<ApiResponse<{ id: number }>>(`${this.apiUrl}/permisos-internos/areas`, { nombre });
+  }
+
+  actualizarAreaPermisosInternos(areaId: number, nombre: string): Observable<ApiResponse> {
+    return this.http.put<ApiResponse>(`${this.apiUrl}/permisos-internos/areas/${areaId}`, { nombre });
+  }
+
+  cambiarEstadoAreaPermisosInternos(areaId: number, activo: number): Observable<ApiResponse> {
+    return this.http.put<ApiResponse>(`${this.apiUrl}/permisos-internos/areas/${areaId}/estado`, { activo });
+  }
+
+  getUsuariosInternos(): Observable<{ usuarios: UsuarioInternoItem[] }> {
+    return this.http.get<{ usuarios: UsuarioInternoItem[] }>(`${this.apiUrl}/permisos-internos/usuarios`);
+  }
+
+  getPermisosInternosUsuario(usuarioId: number): Observable<PermisosInternosUsuarioResponse> {
+    return this.http.get<PermisosInternosUsuarioResponse>(`${this.apiUrl}/permisos-internos/usuario/${usuarioId}`);
+  }
+
+  asignarPermisoInterno(usuarioId: number, moduloId: number, areaId: number, accionId: number): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.apiUrl}/permisos-internos/asignar`, {
+      usuario_id: usuarioId,
+      modulo_id: moduloId,
+      area_id: areaId,
+      accion_id: accionId
+    });
+  }
+
+  revocarPermisoInterno(usuarioId: number, moduloId: number, areaId: number, accionId: number): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/permisos-internos/revocar`, {
+      body: {
+        usuario_id: usuarioId,
+        modulo_id: moduloId,
+        area_id: areaId,
+        accion_id: accionId
+      }
+    });
+  }
+
+  getReglasEndpointsInternos(moduloId: number): Observable<{ endpoints: PermisoInternoEndpointItem[] }> {
+    return this.http.get<{ endpoints: PermisoInternoEndpointItem[] }>(
+      `${this.apiUrl}/permisos-internos/endpoints?modulo_id=${moduloId}`
+    );
+  }
+
+  crearReglaEndpointInterno(payload: PermisoInternoEndpointPayload): Observable<ApiResponse<{ id: number }>> {
+    return this.http.post<ApiResponse<{ id: number }>>(`${this.apiUrl}/permisos-internos/endpoints`, payload);
+  }
+
+  actualizarReglaEndpointInterno(reglaId: number, payload: PermisoInternoEndpointPayload): Observable<ApiResponse> {
+    return this.http.put<ApiResponse>(`${this.apiUrl}/permisos-internos/endpoints/${reglaId}`, payload);
+  }
+
+  eliminarReglaEndpointInterno(reglaId: number): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/permisos-internos/endpoints/${reglaId}`);
+  }
+
   /**
    * Crea un módulo o submódulo y le asigna sus acciones permitidas.
    * POST /api/modulos
@@ -240,6 +376,14 @@ export class AdminSistemaService {
    */
   eliminarModulo(moduloId: number): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.apiUrl}/modulos/${moduloId}`);
+  }
+
+  /** Quita un módulo de una sola área sin eliminar su fila técnica global. */
+  eliminarModuloDeArea(moduloId: number, areaId: number, eliminarPermisosAsignados = false): Observable<ApiResponse> {
+    const opciones = eliminarPermisosAsignados
+      ? { body: { eliminar_permisos_asignados: true } }
+      : undefined;
+    return this.http.delete<ApiResponse>(`${this.apiUrl}/modulos/${moduloId}/areas/${areaId}`, opciones);
   }
 
   /**

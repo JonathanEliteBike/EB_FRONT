@@ -71,6 +71,7 @@ import { usuarioGuard } from './guards/usuario.guard';
 import { flujoGuard } from './guards/flujo.guard';
 import { loggedInGuard } from './guards/logged-in.guard';
 import { importacionesGuard } from './guards/importaciones.guard';
+import { requierePermisoInternoGuard } from './guards/requiere-permiso-interno.guard';
 
 import { CalculadoraRetroactivosComponent } from './views/internal-views/calculadora-retroactivos/calculadora-retroactivos.component';
 import { SolicitudRetroactivoComponent } from './views/usuarios/solicitud-retroactivo/solicitud-retroactivo.component';
@@ -83,8 +84,10 @@ import { SolicitudRetroactivoCampaniasComponent } from './views/internal-views/s
 // --- NUEVOS COMPONENTES DE GESTIÓN Y PERMISOS ---
 import { GestionClientesComponent } from './views/internal-views/gestion-clientes/gestion-clientes.component';
 import { CatalogoGeneralComponent } from './views/internal-views/catalogo-general/catalogo-general.component';
+import { PermisosInternosComponent } from './views/internal-views/permisos-internos/permisos-internos.component';
 import { CreacionUsuariosComponent } from './views/usuarios/creacion-usuarios/creacion-usuarios.component';
 import { CatalogoPermisosComponent } from './views/usuarios/catalogo-permisos/catalogo-permisos.component';
+import { AccesoRestringidoComponent } from './views/acceso-restringido/acceso-restringido.component';
 
 /** Sincroniza permisos y el modelo nuevo de módulos/capacidades desde BD. */
 export const refrescarPermisosGuard: CanActivateFn = () => {
@@ -99,6 +102,12 @@ export const refrescarPermisosGuard: CanActivateFn = () => {
 /** Un submódulo sólo es utilizable cuando también está habilitada su área. */
 export const requiereModulosGuard = (...identificadores: string[]): CanActivateFn => () => {
   const authService = inject(AuthService);
+  // Para rol 4, usuarioGuard ya validó esta misma ruta contra el catálogo y
+  // sus permisos internos. No se debe volver a aplicar la matriz heredada de
+  // distribuidor → usuario hijo, porque son modelos independientes.
+  if (authService.getRol() === 4) {
+    return true;
+  }
   if (identificadores.every(identificador => authService.tieneModulo(identificador))) {
     return true;
   }
@@ -109,6 +118,7 @@ export const routes: Routes = [
   { path: '', component: InicioComponent, canActivate: [authGuard] },
   { path: 'login', component: LoginComponent, canActivate: [authGuard] },
   { path: 'home', component: HomeComponent, canActivate: [authGuard] },
+  { path: 'acceso-restringido', component: AccesoRestringidoComponent, canActivate: [authGuard] },
   { path: 'monitor', component: MonitorComponent, canActivate: [authGuard] },
   { path: 'previo', component: PrevioComponent, canActivate: [authGuard] },
   { path: 'multimarcas', component: MultimarcasComponent, canActivate: [authGuard] },
@@ -134,6 +144,8 @@ export const routes: Routes = [
   // --- GESTIÓN Y PERMISOS ---
   { path: 'gestion-clientes', component: GestionClientesComponent, canActivate: [authGuard, refrescarPermisosGuard] },
   { path: 'catalogo-general', component: CatalogoGeneralComponent, canActivate: [authGuard, refrescarPermisosGuard] },
+  { path: 'catalogo-permisos-distribuidores', component: CatalogoGeneralComponent, canActivate: [authGuard, refrescarPermisosGuard], data: { catalogoHistoricoDistribuidores: true } },
+  { path: 'permisos-internos', component: PermisosInternosComponent, canActivate: [authGuard] },
   { path: 'usuarios/creacion-usuarios', component: CreacionUsuariosComponent, canActivate: [usuarioGuard, refrescarPermisosGuard] },
   { path: 'usuarios/catalogo-permisos', component: CatalogoPermisosComponent, canActivate: [usuarioGuard, refrescarPermisosGuard] },
 
@@ -145,15 +157,15 @@ export const routes: Routes = [
   { path: 'usuarios/caratula-retroactivos', component: CaratulaRetroactivosUsuarioComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos')] },
   { path: 'usuarios/caratula', component: CaratulaUsuariosComponent, canActivate: [usuarioGuard, refrescarPermisosGuard] },
   { path: 'usuarios/garantias', component: GarantiasUsuarioComponent, canActivate: [usuarioGuard, refrescarPermisosGuard] },
-  { path: 'usuarios/solicitud-retroactivo', component: SolicitudRetroactivoLandingComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_solicitudes_retroactivos')] },
-  { path: 'usuarios/solicitud-retroactivo/formulario', component: SolicitudRetroactivoComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_solicitudes_retroactivos')] },
-  { path: 'usuarios/solicitud-retroactivo/seguimiento', component: SolicitudRetroactivoSeguimientoComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_solicitudes_retroactivos')] },
+  { path: 'usuarios/solicitud-retroactivo', component: SolicitudRetroactivoLandingComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_solicitudes_retroactivos'), requierePermisoInternoGuard('usuarios_solicitud_retroactivo', 'ver')] },
+  { path: 'usuarios/solicitud-retroactivo/formulario', component: SolicitudRetroactivoComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_solicitudes_retroactivos'), requierePermisoInternoGuard('usuarios_solicitud_retroactivo_formulario', 'ver')] },
+  { path: 'usuarios/solicitud-retroactivo/seguimiento', component: SolicitudRetroactivoSeguimientoComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_solicitudes_retroactivos'), requierePermisoInternoGuard('usuarios_solicitud_retroactivo_seguimiento', 'ver')] },
   { path: 'usuarios/calculadora-retroactivos', component: CalculadoraRetroactivosComponent, canActivate: [usuarioGuard, refrescarPermisosGuard, requiereModulosGuard('usuarios_retroactivos', 'usuarios_calculadora_retroactivos')] },
 
   // --- RUTAS INTERNAS ADMINISTRATIVAS ---
-  { path: 'usuarios/solicitud-retroactivo/gestor', component: SolicitudRetroactivoGestorComponent, canActivate: [adminGuard] },
-  { path: 'usuarios/solicitud-retroactivo/dashboard', component: SolicitudRetroactivoDashboardComponent, canActivate: [adminGuard] },
-  { path: 'solicitud-retroactivo-campanias', component: SolicitudRetroactivoCampaniasComponent, canActivate: [adminGuard] },
+  { path: 'usuarios/solicitud-retroactivo/gestor', component: SolicitudRetroactivoGestorComponent, canActivate: [adminGuard, requierePermisoInternoGuard('usuarios_solicitud_retroactivo_gestor', 'ver')] },
+  { path: 'usuarios/solicitud-retroactivo/dashboard', component: SolicitudRetroactivoDashboardComponent, canActivate: [adminGuard, requierePermisoInternoGuard('usuarios_solicitud_retroactivo_dashboard', 'ver')] },
+  { path: 'solicitud-retroactivo-campanias', component: SolicitudRetroactivoCampaniasComponent, canActivate: [adminGuard, requierePermisoInternoGuard('solicitud_retroactivo_campanias', 'ver')] },
   { path: 'flujo-dashboard', component: FlujoDashboardComponent, canActivate: [adminGuard] },
   { path: 'ordenes-compra', component: OrdenesCompraComponent, canActivate: [adminGuard] },
   { path: 'logistica', component: LogisticaComponent, canActivate: [adminGuard] },
@@ -166,21 +178,21 @@ export const routes: Routes = [
   { path: 'monitor-pedidos', component: MonitorPedidosComponent, canActivate: [adminGuard] },
   { path: 'dashboard-retroactivos', component: DashboardRetroactivosComponent, canActivate: [adminGuard] },
   { path: 'caratula-retroactivos', component: CaratulaRetroactivosComponent, canActivate: [adminGuard] },
-  { path: 'calculadora-retroactivos', component: CalculadoraRetroactivosComponent, canActivate: [adminGuard] },
-  { path: 'ventas-monitor', component: VentasMonitorComponent, canActivate: [adminGuard] },
+  { path: 'calculadora-retroactivos', component: CalculadoraRetroactivosComponent, canActivate: [adminGuard, requierePermisoInternoGuard('calculadora_retroactivos', 'ver')] },
+  { path: 'ventas-monitor', component: VentasMonitorComponent, canActivate: [authGuard, requierePermisoInternoGuard('ventas_monitor', 'ver')] },
   { path: 'catalogo-forecast', component: CatalogoForecastComponent, canActivate: [adminGuard] },
-  { path: 'garantias', component: GarantiasHubComponent, canActivate: [adminGuard] },
-  { path: 'garantias/dashboard', component: GarantiasComponent, canActivate: [adminGuard] },
-  { path: 'garantias/tickets', component: GarantiasTicketsComponent, canActivate: [adminGuard] },
-  { path: 'garantias/formulario', component: GarantiasFormularioComponent, canActivate: [loggedInGuard] },
-  { path: 'garantias/editor', component: GarantiasEditorComponent, canActivate: [adminGuard] },
-  { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
-  { path: 'importaciones',                   component: ImportacionesComponent,               canActivate: [importacionesGuard] },
-  { path: 'importaciones/dashboard',         component: ImportacionesDashboardComponent,      canActivate: [importacionesGuard] },
+  { path: 'garantias', component: GarantiasHubComponent, canActivate: [authGuard, requierePermisoInternoGuard('garantias', 'ver')] },
+  { path: 'garantias/dashboard', component: GarantiasComponent, canActivate: [authGuard, requierePermisoInternoGuard('garantias', 'ver')] },
+  { path: 'garantias/tickets', component: GarantiasTicketsComponent, canActivate: [authGuard, requierePermisoInternoGuard('garantias', 'ver')] },
+  { path: 'garantias/formulario', component: GarantiasFormularioComponent, canActivate: [loggedInGuard, requierePermisoInternoGuard('garantias', 'ver')] },
+  { path: 'garantias/editor', component: GarantiasEditorComponent, canActivate: [authGuard, requierePermisoInternoGuard('garantias', 'editar')] },
+  { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [authGuard, requierePermisoInternoGuard('proyecciones_my27', 'ver')] },
+  { path: 'importaciones', component: ImportacionesComponent, canActivate: [importacionesGuard] },
+  { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent, canActivate: [importacionesGuard] },
   { path: 'importaciones/tiempos-estimados', component: ImportacionesTiemposEstimadosComponent, canActivate: [adminGuard] },
   { path: 'importaciones/hitos-auditoria',   component: ImportacionesHitosAuditoriaComponent,  canActivate: [adminGuard] },
   { path: 'importaciones/auditoria',         component: ImportacionesAuditoriaResumenComponent, canActivate: [importacionesGuard] },
   { path: 'importaciones/:id/asignaciones',  component: AsignacionesImportacionComponent,     canActivate: [importacionesGuard] },
-  { path: 'importaciones/:id',               component: ImportacionesDetalleComponent,        canActivate: [importacionesGuard] },
+  { path: 'importaciones/:id', component: ImportacionesDetalleComponent, canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];

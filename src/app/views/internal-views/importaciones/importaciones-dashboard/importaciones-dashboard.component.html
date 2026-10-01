@@ -78,7 +78,7 @@
       <button class="tab-btn" [class.active]="activeTab === 'latencias'" (click)="switchTab('latencias')">
         <i class="fas fa-stopwatch"></i> Latencias
       </button>
-      <button class="tab-btn" [class.active]="activeTab === 'costos'" (click)="switchTab('costos')">
+      <button *ngIf="puedeVerMontosDashboard" class="tab-btn" [class.active]="activeTab === 'costos'" (click)="switchTab('costos')">
         <i class="fas fa-dollar-sign"></i> Costos
       </button>
       <button class="tab-btn" [class.active]="activeTab === 'embarques'" (click)="switchTab('embarques')">
@@ -617,8 +617,8 @@
               </div>
 
               <!-- Notas -->
-              <div class="ec-notas" (click)="abrirNotasEdit(e, $event)">
-                <span class="ec-block-lbl">Notas <i class="fas fa-pen notas-edit-icon"></i></span>
+              <div class="ec-notas" [class.ec-notas-readonly]="!puedeEditarImportacion" (click)="abrirNotasEdit(e, $event)">
+                <span class="ec-block-lbl">Notas <i *ngIf="puedeEditarImportacion" class="fas fa-pen notas-edit-icon"></i></span>
                 <div class="notas-editor" *ngIf="notasEditId === e.id" (click)="$event.stopPropagation()">
                   <textarea class="notas-input"
                     [(ngModel)]="notasEditVal"
@@ -639,7 +639,7 @@
                     <div class="ec-nota-linea" *ngFor="let linea of notasLineas(e.notas)">{{ linea }}</div>
                   </div>
                   <ng-template #sinNotas>
-                    <span class="ec-notas-text notas-empty">Sin notas — clic para agregar</span>
+                    <span class="ec-notas-text notas-empty">{{ puedeEditarImportacion ? 'Sin notas — clic para agregar' : 'Sin notas' }}</span>
                   </ng-template>
                 </ng-container>
               </div>

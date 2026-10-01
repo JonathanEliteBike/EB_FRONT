@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { FlujoService } from '../../../services/flujo.service';
 import { RouterLink } from '@angular/router';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-ingresos',
@@ -16,8 +17,14 @@ export class IngresosComponent {
   private fb = inject(FormBuilder);
   private flujoService = inject(FlujoService);
   private cd = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
 
   mostrarFormulario = false;
+
+  get puedeCrearIngreso(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInterno('ingresos', 'crear');
+  }
 
   // Formulario para capturar la proyección de cobranza
   form = this.fb.group({
@@ -30,11 +37,13 @@ export class IngresosComponent {
   });
 
   toggleFormulario() {
+    if (!this.puedeCrearIngreso) return;
     this.mostrarFormulario = !this.mostrarFormulario;
     this.cd.detectChanges();
   }
 
   guardar() {
+    if (!this.puedeCrearIngreso) return;
     if (this.form.invalid) {
       alert('Por favor completa todos los campos obligatorios');
       return;

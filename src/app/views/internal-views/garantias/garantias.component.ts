@@ -19,6 +19,7 @@ import { HomeBarComponent } from '../../../components/home-bar/home-bar.componen
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../components/temporada-selector/temporada-selector.component';
 import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
 import { GarantiasService, GarantiasDashboard, GarantiaFormulario, LatenciaTicket, CuadroDetalle } from '../../../services/garantias.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface Temporada { etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string; }
 
@@ -173,7 +174,12 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private router: Router,
     private route: ActivatedRoute,
+    private auth: AuthService,
   ) {}
+
+  get puedeEditarGarantias(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('garantias', 'editar');
+  }
 
   ngOnInit(): void {
     this.restaurarEstadoDesdeUrl();

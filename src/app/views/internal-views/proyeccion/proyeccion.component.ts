@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import * as XLSX from 'xlsx';
 import * as FileSaver from 'file-saver';
+import { AuthService } from '../../../services/auth.service';
 
 interface ProductoDetallado {
   folio: string;
@@ -88,7 +89,22 @@ export class ProyeccionComponent implements OnInit {
   mostrarDialogoImportar: boolean = false;
   archivoSeleccionado: File | null = null;
 
-  constructor(private proyeccionService: ProyeccionService, private router: Router) { }
+  constructor(
+    private proyeccionService: ProyeccionService,
+    private router: Router,
+    private authService: AuthService,
+  ) { }
+
+  get debeOcultarMontos(): boolean {
+    return this.authService.debeOcultarMontos('proyeccion_compra');
+  }
+
+  get puedeAdministrar(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('proyeccion_compra', 'crear')
+      || this.authService.tienePermisoInternoActual('proyeccion_compra', 'editar')
+      || this.authService.tienePermisoInternoActual('proyeccion_compra', 'eliminar');
+  }
 
   ngOnInit(): void {
     this.cargarDatos();

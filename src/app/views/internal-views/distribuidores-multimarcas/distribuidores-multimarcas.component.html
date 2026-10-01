@@ -67,21 +67,21 @@
         <h3>Información del Cliente</h3>
 
         <label class="distribuidores-label">Clave:</label>
-        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.clave" required />
+        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.clave" [disabled]="!puedeEditar" required />
 
         <label class="distribuidores-label">EVAC:</label>
-        <select class="distribuidores-input" [(ngModel)]="cliente.evac">
+        <select class="distribuidores-input" [(ngModel)]="cliente.evac" [disabled]="!puedeEditar">
             <option *ngFor="let opcion of opcionesEvac" [value]="opcion">{{ opcion }}</option>
         </select>
 
         <label class="distribuidores-label">Razón Social:</label>
-        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.cliente_razon_social" required />
+        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.cliente_razon_social" [disabled]="!puedeEditar" required />
 
         <div class="distribuidores-botones">
-            <button class="distribuidores-btn" [disabled]="!hayCambios()" (click)="confirmarEdicion()">
+            <button *ngIf="puedeEditar" class="distribuidores-btn" [disabled]="!hayCambios()" (click)="confirmarEdicion()">
                 Guardar Cambios
             </button>
-            <button class="distribuidores-btn distribuidor-btn-secundario eliminar" (click)="confirmarEliminacion()">
+            <button *ngIf="puedeEliminar" class="distribuidores-btn distribuidor-btn-secundario eliminar" (click)="confirmarEliminacion()">
                 Eliminar Cliente
             </button>
         </div>

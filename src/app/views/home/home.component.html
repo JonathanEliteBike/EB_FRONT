@@ -209,7 +209,7 @@
         {{ totalProductosCatalogo === 1 ? 'producto cargado' : 'productos cargados' }}
       </span>
       <button
-        *ngIf="totalProductosCatalogo > 0"
+        *ngIf="totalProductosCatalogo > 0 && puedeEliminarCatalogoProyecciones"
         class="hp-btn-danger-outline"
         (click)="confirmarLimpiarCatalogo()"
         [disabled]="limpiandoCatalogo">
@@ -218,6 +218,7 @@
     </div>
 
     <div
+      *ngIf="puedeCargarCatalogoProyecciones"
       class="hp-dropzone"
       [class.hp-dropzone-drag]="arrastrando"
       [class.hp-dropzone-ready]="archivoSeleccionado"
@@ -242,7 +243,7 @@
       </ng-container>
     </div>
 
-    <div class="hp-upload-actions" *ngIf="archivoSeleccionado || resultadoCarga">
+    <div class="hp-upload-actions" *ngIf="puedeCargarCatalogoProyecciones && (archivoSeleccionado || resultadoCarga)">
       <button *ngIf="archivoSeleccionado" class="hp-btn-primary" (click)="tabCatalogo === 'excel' ? subirCatalogo() : subirCsvApparel()" [disabled]="subiendoCatalogo || subiendoCsv">
         <i class="fas"
           [class.fa-upload]="!subiendoCatalogo"

@@ -16,6 +16,7 @@ import {
   DesgloseDist,
   DistribucionSku,
 } from '../../../services/proyecciones-my27.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-proyecciones-my27',
@@ -132,7 +133,18 @@ export class ProyeccionesMY27Component implements OnInit {
   constructor(
     private svc: ProyeccionesMY27Service,
     private cdr: ChangeDetectorRef,
+    private auth: AuthService,
   ) {}
+
+  get puedeEditar(): boolean {
+    return this.auth.getRol() !== 4
+      || this.auth.tienePermisoInterno('proyecciones_my27', 'editar');
+  }
+
+  get puedeCrear(): boolean {
+    return this.auth.getRol() !== 4
+      || this.auth.tienePermisoInterno('proyecciones_my27', 'crear');
+  }
 
   ngOnInit(): void {
     this.cargar();
@@ -158,15 +170,35 @@ export class ProyeccionesMY27Component implements OnInit {
   }
 
   exportar(): void {
-    window.open(this.svc.getExportUrl(), '_blank');
+    this.descargarExportacion();
   }
 
   exportarMegamo(): void {
-    window.open(this.svc.getExportUrl(this.datos?.periodo ?? '2026-2027', 'MEGAMO'), '_blank');
+    this.descargarExportacion('MEGAMO');
   }
 
   exportarCobertura(): void {
-    window.open(this.svc.getExportCoberturaUrl(this.periodo), '_blank');
+    this.svc.exportarCobertura(this.periodo).subscribe({
+      next: archivo => this.descargarArchivo(archivo, `InventarioEntrante_${this.periodo}.xlsx`),
+      error: err => console.error('Error al exportar inventario:', err),
+    });
+  }
+
+  private descargarExportacion(marca = ''): void {
+    const periodo = this.datos?.periodo ?? this.periodo;
+    this.svc.exportar(periodo, marca).subscribe({
+      next: archivo => this.descargarArchivo(archivo, `ProyeccionesMY27${marca ? `_${marca}` : ''}_${periodo}.xlsx`),
+      error: err => console.error('Error al exportar proyecciones MY27:', err),
+    });
+  }
+
+  private descargarArchivo(archivo: Blob, nombre: string): void {
+    const enlace = document.createElement('a');
+    const url = URL.createObjectURL(archivo);
+    enlace.href = url;
+    enlace.download = nombre;
+    enlace.click();
+    URL.revokeObjectURL(url);
   }
 
   get articulosFiltrados(): ArticuloMY27[] {
@@ -233,16 +265,16 @@ export class ProyeccionesMY27Component implements OnInit {
     return this.datos?.totales_mes[mes] ?? 0;
   }
 
-  getTotalCostoMes(mes: string): number {
-    return this.datos?.total_costo_mes?.[mes] ?? 0;
+  getTotalCostoMes(mes: string): number | null {
+    return this.datos?.total_costo_mes?.[mes] ?? null;
   }
 
   formatPrecio(v: number): string {
     return v > 0 ? '$' + v.toLocaleString('es-MX', { minimumFractionDigits: 0 }) : '—';
   }
 
-  formatCosto(v: number): string {
-    if (!v || v === 0) return '—';
+  formatCosto(v: number | null | undefined): string {
+    if (v === null || v === undefined) return '-';
     return '$' + v.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 

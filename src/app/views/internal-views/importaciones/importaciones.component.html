@@ -24,7 +24,7 @@
       <button class="btn-dash" routerLink="/importaciones/auditoria" title="Ver el estado de auditoría de llenado de todos los embarques">
         <i class="fas fa-magnifying-glass-chart"></i> Auditoría
       </button>
-      <button class="btn-nuevo" (click)="abrirNuevo()">
+      <button *ngIf="puedeCrearImportacion()" class="btn-nuevo" (click)="abrirNuevo()">
         <i class="fas fa-plus"></i> Nuevo Embarque
       </button>
     </div>
@@ -199,7 +199,7 @@
 
             <!-- Eliminar -->
             <td class="col-del">
-              <button class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
+              <button *ngIf="puedeEliminarImportacion()" class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
                 <i class="fas" [ngClass]="eliminando === e.id ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
               </button>
             </td>

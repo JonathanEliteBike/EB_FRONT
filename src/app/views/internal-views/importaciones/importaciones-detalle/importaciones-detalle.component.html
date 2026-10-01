@@ -55,14 +55,14 @@
         </span>
         <!-- Borrador -->
         <button class="btn-borrador" (click)="guardarBorrador()"
-          [disabled]="!hayCambios() || guardando"
+          [disabled]="!puedeEditarImportacion || !hayCambios() || guardando"
           title="Guardar sin registrar avance">
           <i class="fas fa-cloud-upload-alt"></i>
           Borrador
         </button>
         <!-- Guardar oficial -->
         <button class="btn-guardar" (click)="guardar()"
-          [disabled]="guardando"
+          [disabled]="!puedeEditarImportacion || guardando"
           [class.btn-ok]="guardadoOk">
           <i class="fas" [ngClass]="guardando ? 'fa-spinner fa-spin' : guardadoOk ? 'fa-check' : 'fa-save'"></i>
           {{ guardando ? 'Guardando...' : guardadoOk ? 'Guardado' : 'Guardar Cambios' }}
@@ -72,7 +72,7 @@
 
     <!-- ── Tabs ── -->
     <div class="det-tabs">
-      <button *ngFor="let tab of tabs" class="tab-btn"
+      <button *ngFor="let tab of tabsVisibles" class="tab-btn"
         [class.active]="seccionActiva === tab.key"
         [class.tab-complete]="pct(tab.key) === 100"
         (click)="cambiarSeccion(tab.key)">
@@ -110,7 +110,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: LOGÍSTICA
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'logistica'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'logistica'">
       <div class="fields-grid">
 
         <div class="field-row full">
@@ -350,7 +350,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: IMPORTACIÓN
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'importacion'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'importacion'">
       <div class="fields-grid">
 
         <div class="field-row" id="campo-imp_fecha_traduccion" [class.campo-faltante]="esCampoFaltante('imp_fecha_traduccion')">
@@ -612,7 +612,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: DESPACHO
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'despacho'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'despacho'">
       <div class="fields-grid">
         <div class="field-row" id="campo-des_solicitud_cita_cruce" [class.campo-faltante]="esCampoFaltante('des_solicitud_cita_cruce')"><label>1. Solicitud de cita para cruce</label>
           <app-date-picker
@@ -779,7 +779,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: ODOO / SAE
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'odoo'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'odoo'">
       <div class="fields-grid">
         <div class="field-row" id="campo-log_recepcion_documentos" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
           <label>1. Recepción de documentos</label>
@@ -815,7 +815,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: ALMACÉN
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'almacen'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'almacen'">
       <div class="fields-grid">
 
         <div class="field-row" id="campo-alm_base_datos_etiquetas" [class.campo-faltante]="esCampoFaltante('alm_base_datos_etiquetas')"><label>1. Base de datos para etiquetas</label>
@@ -925,7 +925,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: RECEPCIÓN
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'recepcion'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'recepcion'">
       <div class="fields-grid">
         <div class="field-row" id="campo-rec_cedula_costeo" [class.campo-faltante]="esCampoFaltante('rec_cedula_costeo')"><label>1. Cédula de costeo de IGI</label>
           <select [value]="embarque.rec_cedula_costeo || ''" (change)="marcarCambio('rec_cedula_costeo', $any($event.target).value || null)">
@@ -979,7 +979,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: CIERRE DE CUENTAS
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'cierre'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'cierre'">
       <div class="fields-grid">
         <div class="field-row full" id="campo-cie_recepcion_cuenta_gastos" [class.campo-faltante]="esCampoFaltante('cie_recepcion_cuenta_gastos')"><label>1. Recepción de cuenta de gastos</label>
           <input type="text" [value]="embarque.cie_recepcion_cuenta_gastos || ''" (change)="marcarCambio('cie_recepcion_cuenta_gastos', $any($event.target).value || null)" placeholder="SI / NO / % recuperadas" /></div>
@@ -1021,7 +1021,7 @@
     <!-- ══════════════════════════════════════════════════
          SECCIÓN: COSTOS
     ═══════════════════════════════════════════════════ -->
-    <div class="det-section" *ngIf="seccionActiva === 'costos'">
+    <div class="det-section" [class.det-section-readonly]="!puedeEditarImportacion" *ngIf="seccionActiva === 'costos'">
       <div class="fields-grid">
 
         <!-- ── Proyección de Costos ── -->
@@ -1423,7 +1423,7 @@
     </ng-container>
 
     <!-- ── Botón guardar flotante ── -->
-    <div class="fab-guardar" *ngIf="hayCambios()">
+    <div class="fab-guardar" *ngIf="puedeEditarImportacion && hayCambios()">
       <button class="btn-guardar-fab" (click)="guardar()" [disabled]="guardando">
         <i class="fas" [ngClass]="guardando ? 'fa-spinner fa-spin' : 'fa-save'"></i>
         {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}

@@ -1,9 +1,13 @@
-import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
+import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { inject } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
+import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
-export const usuarioGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+export const usuarioGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const router = inject(Router);
+  const authService = inject(AuthService);
   const token = localStorage.getItem('token');
   const ruta = route.routeConfig?.path || '';
 
@@ -53,16 +57,28 @@ export const usuarioGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
       return true;
     }
 
+    // El rol interno conserva una capa de permisos distinta al portal de
+    // distribuidores e hijos. La ruta debe estar catalogada y contar con
+    // permiso "ver"; una denegación muestra acceso restringido, nunca invalida
+    // una sesión cuyo JWT sigue siendo válido.
+    if (decodedToken.rol === 4) {
+      return authService.validarAccesoRutaInterna(state.url).pipe(
+        map(resultado => resultado.catalogada && resultado.permitido
+          ? true
+          : router.parseUrl('/acceso-restringido')
+        ),
+        catchError(() => of(router.parseUrl('/acceso-restringido')))
+      );
+    }
+
     // Si es Admin (rol 1) e intenta acceder a otra ruta de Usuario
     if (decodedToken.rol === 1) {
       router.navigate(['/home']);
       return false;
     }
 
-    // Rol verdaderamente no reconocido
-    localStorage.removeItem('token');
-    router.navigate(['/login']);
-    return false;
+    // Un rol sin acceso al portal de usuarios conserva su sesión válida.
+    return router.parseUrl('/home');
 
   } catch (error) {
     localStorage.removeItem('token');
