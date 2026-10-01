@@ -1382,7 +1382,9 @@
         <p class="auditoria-nota">
           Compara la fecha en que cada hito se llenó realmente contra la fecha esperada.
           Verde = se adelantó, rojo = se atrasó. Los campos llenados antes de activar esta
-          auditoría no tienen dato histórico y se muestran como "Sin dato histórico".
+          auditoría no tienen dato histórico y se muestran como "Sin dato histórico". Los
+          embarques creados antes de activar esta auditoría no reciben veredicto de
+          atraso/adelanto -- se muestran como "No aplica".
         </p>
       </div>
 
@@ -1399,12 +1401,13 @@
             <tbody>
               <tr *ngFor="let h of grupo.hitos">
                 <td>{{ h.etiqueta }}</td>
-                <td>{{ h.fecha_esperada || 'Pendiente' }}</td>
+                <td>{{ h.estado === 'no_aplica' ? 'No aplica' : (h.fecha_esperada || 'Pendiente') }}</td>
                 <td>
                   <span *ngIf="h.fecha_real">{{ h.fecha_real }}</span>
                   <span *ngIf="!h.fecha_real && h.estado === 'sin_historial'" class="auditoria-vacio-cell" title="El campo ya tenía valor antes de existir esta auditoría -- no se sabe cuándo se llenó">Sin dato histórico</span>
                   <span *ngIf="!h.fecha_real && h.estado === 'en_espera'" class="auditoria-vacio-cell">Aún sin capturar</span>
                   <span *ngIf="!h.fecha_real && h.estado === 'pendiente'" class="auditoria-vacio-cell">—</span>
+                  <span *ngIf="!h.fecha_real && h.estado === 'no_aplica'" class="auditoria-vacio-cell" title="Embarque creado antes de implementarse esta auditoría">No aplica</span>
                 </td>
                 <td>
                   <span *ngIf="h.estado === 'adelantado'" class="auditoria-badge auditoria-verde">+{{ h.dias_diferencia }} días</span>
@@ -1413,6 +1416,7 @@
                   <span *ngIf="h.estado === 'pendiente'" class="auditoria-badge auditoria-gris">Pendiente</span>
                   <span *ngIf="h.estado === 'en_espera'" class="auditoria-badge auditoria-gris">En espera</span>
                   <span *ngIf="h.estado === 'sin_historial'" class="auditoria-badge auditoria-gris">Sin dato histórico</span>
+                  <span *ngIf="h.estado === 'no_aplica'" class="auditoria-badge auditoria-gris">No aplica</span>
                 </td>
               </tr>
             </tbody>

@@ -90,6 +90,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     { key: 'en_espera',     clase: 'seg-en-espera',     label: 'En espera' },
     { key: 'sin_historial', clase: 'seg-sin-historial', label: 'Sin dato histórico' },
     { key: 'pendientes',    clase: 'seg-pendiente',     label: 'Pendientes' },
+    { key: 'no_aplica',     clase: 'seg-no-aplica',     label: 'No aplica' },
   ];
 
   constructor(private svc: ImportacionesService, private router: Router) {}
@@ -145,7 +146,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
           case 'atrasados':     return this.atrasadosConVencidos(e) > 0;
           case 'adelantados':   return e.adelantados > 0;
           case 'sin_historial': return e.sin_historial > 0;
-          case 'al_corriente':  return this.atrasadosConVencidos(e) === 0 && e.adelantados === 0;
+          case 'al_corriente':  return e.no_aplica === 0 && this.atrasadosConVencidos(e) === 0 && e.adelantados === 0;
         }
       });
       if (!coincideAlguno) return false;
@@ -354,6 +355,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
       case 'pendiente':     return 'stage-pendiente';
       case 'en_espera':     return 'stage-en-espera';
       case 'sin_historial': return 'stage-sin-historial';
+      case 'no_aplica':     return 'stage-no-aplica';
       case 'atrasado':      return 'stage-atrasado';
       case 'adelantado':
       case 'a_tiempo':

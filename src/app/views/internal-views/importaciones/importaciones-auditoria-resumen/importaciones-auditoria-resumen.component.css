@@ -296,6 +296,7 @@
 .ec-progress-seg.seg-en-espera     { background: #f59e0b; }
 .ec-progress-seg.seg-sin-historial { background: #64748b; }
 .ec-progress-seg.seg-pendiente     { background: #273045; }
+.ec-progress-seg.seg-no-aplica     { background: #334155; }
 
 .ec-vacio { color: #64748b; font-size: 12.5px; padding: 4px 16px 14px; }
 
@@ -335,6 +336,7 @@
 .ec-stage.stage-atrasado      { background: rgba(239,68,68,.09); }
 .ec-stage.stage-en-espera     { background: rgba(251,191,36,.05); }
 .ec-stage.stage-sin-historial { background: rgba(148,163,184,.06); }
+.ec-stage.stage-no-aplica     { justify-content: center; opacity: .5; }
 .ec-stage.stage-pendiente     { justify-content: center; opacity: .5; }
 
 .ec-stage-seccion {
@@ -379,6 +381,7 @@
 .ec-stage-tag i { font-size: .5rem; }
 .ec-tag-espera        { color: #fbbf24; }
 .ec-tag-sin-historial { color: #94a3b8; }
+.ec-tag-no-aplica     { color: #64748b; }
 .ec-tag-pendiente     { color: #475569; font-weight: 500; }
 
 @media (max-width: 700px) {
