@@ -16,6 +16,19 @@ interface Segmento {
   label: string;
 }
 
+interface PromedioHito {
+  id: number;
+  seccion: string;
+  etiqueta: string;
+  promedio: number;
+  n: number;
+}
+
+interface GrupoPromedios {
+  seccion: string;
+  hitos: PromedioHito[];
+}
+
 @Component({
   selector: 'app-importaciones-auditoria-resumen',
   standalone: true,
@@ -173,6 +186,65 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
 
   seccionColor(seccion: string): string {
     return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.color ?? '#64748b';
+  }
+
+  seccionLabel(seccion: string): string {
+    return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.label ?? seccion;
+  }
+
+  // ── Panorama general: agregado entre TODOS los embarques dados de alta
+  // desde hoy en adelante -- los anteriores no entran porque su historial
+  // de captura está incompleto (ver estado "sin_historial") y distorsionaría
+  // el promedio. Se recalcula sobre la hora local de quien mira la pantalla.
+  get fechaHoyISO(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  embarquesDesdeHoy(): AuditoriaResumenEmbarque[] {
+    const hoy = this.fechaHoyISO;
+    return this.embarques.filter(e => e.creado_en >= hoy);
+  }
+
+  // Latencia TOTAL del panorama: suma (no promedio) del balance neto de
+  // cada embarque considerado -- "cuántos días, en conjunto, lleva de
+  // adelanto o atraso la operación completa".
+  latenciaTotalGeneral(): number | null {
+    const valores = this.embarquesDesdeHoy()
+      .flatMap(e => (e.hitos || []).map(h => h.dias_diferencia))
+      .filter((d): d is number => d != null);
+    if (!valores.length) return null;
+    return valores.reduce((a, b) => a + b, 0);
+  }
+
+  // Latencia PROMEDIO por hito: para cada hito (identificado por su id,
+  // que es único e invariante entre embarques -- todos comparten la misma
+  // configuración de importaciones_hitos_auditoria), se promedia
+  // dias_diferencia entre los embarques que ya lo tienen calculado.
+  // Responde "¿qué tan tarde/temprano anda este hito en general?", sin que
+  // un atraso enorme de un solo embarque domine como lo haría una suma.
+  promediosPorSeccion(): GrupoPromedios[] {
+    const acumulador = new Map<number, { seccion: string; etiqueta: string; suma: number; n: number }>();
+    for (const e of this.embarquesDesdeHoy()) {
+      for (const h of e.hitos || []) {
+        if (h.dias_diferencia == null) continue;
+        const actual = acumulador.get(h.id) ?? { seccion: h.seccion, etiqueta: h.etiqueta, suma: 0, n: 0 };
+        actual.suma += h.dias_diferencia;
+        actual.n += 1;
+        acumulador.set(h.id, actual);
+      }
+    }
+    const porSeccion = new Map<string, PromedioHito[]>();
+    for (const [id, v] of acumulador) {
+      const lista = porSeccion.get(v.seccion) ?? [];
+      lista.push({ id, seccion: v.seccion, etiqueta: v.etiqueta, promedio: v.suma / v.n, n: v.n });
+      porSeccion.set(v.seccion, lista);
+    }
+    for (const lista of porSeccion.values()) lista.sort((a, b) => a.id - b.id);
+
+    const ordenSecciones = Object.keys(ImportacionesAuditoriaResumenComponent.SECCION_CFG);
+    return Array.from(porSeccion.entries())
+      .map(([seccion, hitos]) => ({ seccion, hitos }))
+      .sort((a, b) => ordenSecciones.indexOf(a.seccion) - ordenSecciones.indexOf(b.seccion));
   }
 
   // Franja de progreso del embarque: "qué tan auditado" se ve de un vistazo
