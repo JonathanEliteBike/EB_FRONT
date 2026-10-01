@@ -28,17 +28,20 @@
   <div *ngIf="!cargando && !error">
     <div class="panorama" *ngIf="embarques.length">
       <div class="panorama-header">
-        <div>
+        <div class="panorama-titulo-wrap">
           <h3>Panorama general</h3>
           <p class="panorama-nota">
             Solo embarques dados de alta desde hoy ({{ fmtD(fechaHoyISO) }}) en adelante -- los anteriores
             no tienen historial completo de captura y distorsionarían el promedio.
           </p>
         </div>
-        <span class="badge-lat badge-lat-grande" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
-          <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
-          Latencia total: {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
-        </span>
+        <div class="kpi-lat" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
+          <span class="kpi-lat-lbl">Latencia total</span>
+          <span class="kpi-lat-val">
+            <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+            {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
+          </span>
+        </div>
       </div>
 
       <p class="panorama-vacio" *ngIf="!embarquesDesdeHoy().length">
@@ -53,11 +56,11 @@
             <span class="pn-titulo">{{ seccionLabel(grupo.seccion) }}</span>
           </div>
           <div class="pn-hitos">
-            <div class="pn-hito" *ngFor="let h of grupo.hitos" [title]="h.etiqueta">
-              <span class="pn-hito-lbl">{{ h.etiqueta }}</span>
-              <span class="pn-hito-prom" [ngClass]="deltaClass(h.promedio)">
+            <div class="pn-hito" *ngFor="let h of grupo.hitos" [ngClass]="deltaClass(h.promedio)" [title]="h.etiqueta">
+              <span class="pn-hito-prom">
                 {{ h.promedio >= 0 ? '+' : '−' }}{{ absDif(h.promedio) | number:'1.0-1' }}d
               </span>
+              <span class="pn-hito-lbl">{{ h.etiqueta }}</span>
               <span class="pn-hito-n">{{ h.n }} embarque{{ h.n === 1 ? '' : 's' }}</span>
             </div>
           </div>
