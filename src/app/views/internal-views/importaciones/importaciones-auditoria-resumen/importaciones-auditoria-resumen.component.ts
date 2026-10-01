@@ -52,6 +52,11 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   error = '';
   orden: OrdenCampo = 'atrasados';
 
+  // Colapsado por defecto: el desglose por sección/hito hacía la página
+  // demasiado larga para desplazarse de un vistazo -- el total siempre
+  // visible, el detalle solo cuando se pide.
+  mostrarDesglose = false;
+
   // Filtros de la barra de búsqueda
   busqueda = '';
   estadosFiltro = new Set<EstadoFiltro>();

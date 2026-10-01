@@ -35,12 +35,18 @@
             no tienen historial completo de captura y distorsionarían el promedio.
           </p>
         </div>
-        <div class="kpi-lat" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
-          <span class="kpi-lat-lbl">Latencia total</span>
-          <span class="kpi-lat-val">
-            <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
-            {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
-          </span>
+        <div class="panorama-header-der">
+          <div class="kpi-lat" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
+            <span class="kpi-lat-lbl">Latencia total</span>
+            <span class="kpi-lat-val">
+              <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+              {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
+            </span>
+          </div>
+          <button class="btn-toggle-desglose" *ngIf="embarquesDesdeHoy().length" (click)="mostrarDesglose = !mostrarDesglose">
+            {{ mostrarDesglose ? 'Ocultar desglose' : 'Ver desglose por sección' }}
+            <i class="fas" [ngClass]="mostrarDesglose ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
         </div>
       </div>
 
@@ -49,7 +55,7 @@
         registren embarques nuevos.
       </p>
 
-      <div class="panorama-grupos" *ngIf="embarquesDesdeHoy().length">
+      <div class="panorama-grupos" *ngIf="embarquesDesdeHoy().length && mostrarDesglose">
         <div class="pn-grupo" *ngFor="let grupo of promediosPorSeccion()">
           <div class="pn-grupo-header">
             <span class="pn-dot" [style.background]="seccionColor(grupo.seccion)"></span>
