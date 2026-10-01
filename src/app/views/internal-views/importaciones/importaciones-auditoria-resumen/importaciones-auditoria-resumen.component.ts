@@ -185,6 +185,18 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
       .filter(s => s.pct > 0);
   }
 
+  // Balance neto de días del embarque: suma TODOS los dias_diferencia
+  // (atrasos negativos + adelantos positivos) de los hitos que ya tienen
+  // un valor calculado. Un adelanto en un hito puede compensar el atraso
+  // de otro -- es un balance, no un acumulado de solo atrasos.
+  latenciaTotal(e: AuditoriaResumenEmbarque): number | null {
+    const valores = (e.hitos || [])
+      .map(h => h.dias_diferencia)
+      .filter((d): d is number => d != null);
+    if (!valores.length) return null;
+    return valores.reduce((a, b) => a + b, 0);
+  }
+
   fmtD(s: string | null | undefined): string {
     if (!s) return '—';
     try {

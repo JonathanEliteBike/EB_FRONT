@@ -88,6 +88,11 @@
           <div class="ec-ident">
             <div class="ec-ref-row">
               <span class="ref-badge">{{ e.referencia }}</span>
+              <span class="badge-lat" *ngIf="latenciaTotal(e) !== null" [ngClass]="deltaClass(latenciaTotal(e))"
+                    title="Balance neto de días: suma de adelantos y atrasos de todos los hitos ya calculados">
+                <i class="fas" [ngClass]="latenciaTotal(e)! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                Latencia total: {{ latenciaTotal(e)! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotal(e)!) }}d
+              </span>
               <span class="auditoria-badge auditoria-rojo" *ngIf="e.atrasados > 0">{{ e.atrasados }} atrasado{{ e.atrasados === 1 ? '' : 's' }}</span>
               <span class="auditoria-badge auditoria-verde" *ngIf="e.adelantados > 0">{{ e.adelantados }} adelantado{{ e.adelantados === 1 ? '' : 's' }}</span>
               <span class="auditoria-badge auditoria-gris" *ngIf="e.sin_historial > 0">{{ e.sin_historial }} sin dato histórico</span>
