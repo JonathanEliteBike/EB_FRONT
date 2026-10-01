@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { HitosAuditoriaService, HitoAuditoria, HitoAuditoriaPayload } from '../../../../services/hitos-auditoria.service';
@@ -46,9 +46,17 @@ export class ImportacionesHitosAuditoriaComponent implements OnInit {
   errorForm = '';
   form: HitoAuditoriaPayload = { ...FORM_VACIO };
 
-  constructor(private svc: HitosAuditoriaService) {}
+  // Si se llegó desde el link "Configurar hitos" de la Auditoría
+  // (?from=auditoria), "volver" regresa ahí en vez de a la lista general
+  // de Importaciones.
+  returnUrl = '/importaciones';
+
+  constructor(private svc: HitosAuditoriaService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('from') === 'auditoria') {
+      this.returnUrl = '/importaciones/auditoria';
+    }
     this.cargar();
   }
 

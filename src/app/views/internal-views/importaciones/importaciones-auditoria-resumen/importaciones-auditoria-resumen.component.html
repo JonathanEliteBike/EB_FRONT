@@ -3,19 +3,21 @@
 <div class="panel-page">
  <div class="panel-inner">
   <div class="panel-page-header">
-    <div>
-      <h2>Auditoría de llenado — todos los embarques</h2>
-      <p class="resumen-nota">
-        Proyectado (P) vs Real (R) por hito, en el mismo orden en que se llenan. Verde = se llenó antes
-        de lo esperado, rojo = después. Clic en un embarque para ver el detalle completo.
-      </p>
+    <div class="header-izq">
+      <a routerLink="/importaciones" class="back-btn" title="Volver a Importaciones">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div>
+        <h2>Auditoría de llenado — todos los embarques</h2>
+        <p class="resumen-nota">
+          Proyectado (P) vs Real (R) por hito, en el mismo orden en que se llenan. Verde = se llenó antes
+          de lo esperado, rojo = después. Clic en un embarque para ver el detalle completo.
+        </p>
+      </div>
     </div>
     <div class="header-acciones">
-      <a *ngIf="esAdmin" routerLink="/importaciones/hitos-auditoria" class="btn-secundario" title="Configurar los hitos que mide esta auditoría">
+      <a *ngIf="esAdmin" routerLink="/importaciones/hitos-auditoria" [queryParams]="{ from: 'auditoria' }" class="btn-secundario" title="Configurar los hitos que mide esta auditoría">
         <i class="fas fa-sliders"></i> Configurar hitos
-      </a>
-      <a routerLink="/importaciones" class="btn-secundario">
-        <i class="fas fa-arrow-left"></i> Volver a Importaciones
       </a>
     </div>
   </div>

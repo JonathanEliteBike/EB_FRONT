@@ -3,17 +3,19 @@
 <div class="panel-page">
  <div class="panel-inner">
   <div class="panel-page-header">
-    <div>
-      <h2>Hitos de auditoría de llenado</h2>
-      <p class="resumen-nota">
-        Reglas que usa la auditoría para calcular la fecha esperada de cada campo y medir si se
-        llenó antes o después de lo esperado.
-      </p>
+    <div class="header-izq">
+      <a [routerLink]="returnUrl" class="back-btn" title="Volver">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div>
+        <h2>Hitos de auditoría de llenado</h2>
+        <p class="resumen-nota">
+          Reglas que usa la auditoría para calcular la fecha esperada de cada campo y medir si se
+          llenó antes o después de lo esperado.
+        </p>
+      </div>
     </div>
     <div class="header-acciones">
-      <a routerLink="/importaciones" class="btn-secundario">
-        <i class="fas fa-arrow-left"></i> Volver a Importaciones
-      </a>
       <button class="btn-primary" (click)="abrirNuevo()"><i class="fas fa-plus"></i> Nuevo hito</button>
     </div>
   </div>
