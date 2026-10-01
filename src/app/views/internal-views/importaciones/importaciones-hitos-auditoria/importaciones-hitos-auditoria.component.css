@@ -3,35 +3,89 @@
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, .22);
 }
 
-/* ── Página ── */
-.panel-page { padding: 24px; max-width: 1100px; margin: 0 auto; }
-.panel-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+/* ── Página ──
+   Mismo patrón de fondo que importaciones-dashboard / auditoria-resumen:
+   .panel-page lleva el fondo a TODO el ancho del viewport (sin max-width,
+   para que no se corte en los bordes de la columna y deje ver el gris
+   genérico de <body>); .panel-inner centra el contenido en 1100px. */
+.panel-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #0b0e14;
+  box-sizing: border-box;
+}
+.panel-inner { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+.panel-page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
 .panel-page-header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #e2e8f0; }
+.resumen-nota { color: #94a3b8; font-size: 12.5px; margin: 6px 0 0; max-width: 560px; }
+.header-acciones { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-.hito-grupo { margin-bottom: 28px; }
-.hito-grupo-titulo { color: #e2e8f0; font-size: 14px; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.btn-secundario {
+  background: #1a1f2e; color: #94a3b8; border: 1px solid #2d3748; border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.btn-secundario:hover { background: #243044; border-color: #3d4a5f; color: #e2e8f0; }
+.btn-secundario:active { transform: scale(0.97); }
 
-.asig-vacio { color: #94a3b8; text-align: center; padding: 20px; font-size: 13px; }
+/* ── Tarjetas por sección (mismo lenguaje visual que .emb-card) ── */
+.grupos-wrap { display: flex; flex-direction: column; gap: 14px; }
+
+.hito-grupo {
+  background: #0f1623;
+  border: 1px solid #1e2535;
+  border-radius: 12px;
+  overflow: hidden;
+  opacity: 0;
+  animation: grupo-in 260ms var(--ease-out) forwards;
+  animation-delay: calc(var(--stagger, 0) * 40ms);
+}
+@keyframes grupo-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hito-grupo { animation: none; opacity: 1; } }
+
+.hito-grupo-header {
+  display: flex; align-items: center; gap: 9px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #1a2233;
+  background: #0b111c;
+}
+.hito-grupo-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.hito-grupo-titulo {
+  color: #e2e8f0; font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; margin: 0;
+}
+.hito-grupo-count {
+  margin-left: auto; font-size: 11px; font-weight: 700; color: #64748b;
+  background: #171c26; border-radius: 999px; padding: 2px 9px;
+}
+
+.asig-vacio { color: #64748b; text-align: center; padding: 20px; font-size: 13px; }
 
 /* ── Tabla ── */
 .tabla-mini { width: 100%; border-collapse: collapse; }
-.tabla-mini thead { position: sticky; top: 0; z-index: 5; }
 .tabla-mini th {
   text-align: left; font-size: 11px; color: #94a3b8;
   text-transform: uppercase; letter-spacing: .4px;
-  padding: 8px; border-bottom: 1px solid #2d3748;
-  background: #12161f;
+  padding: 8px 16px; border-bottom: 1px solid #1a2233;
 }
-.tabla-mini td { padding: 10px 8px; border-bottom: 1px solid #1e2535; font-size: 13px; color: #e2e8f0; }
+.tabla-mini td { padding: 10px 16px; border-bottom: 1px solid #1a2233; font-size: 13px; color: #e2e8f0; }
+.tabla-mini tbody tr:last-child td { border-bottom: none; }
+.tabla-mini tbody tr { transition: background-color 120ms var(--ease-out); }
+.tabla-mini tbody tr:hover { background: rgba(255,255,255,.025); }
 .tabla-mini .num { text-align: center; font-variant-numeric: tabular-nums; }
+.col-acciones { text-align: right; white-space: nowrap; }
 .cli-clave { font-family: ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; color: #60a5fa; }
 .link-accion {
-  background: none; border: none; padding: 0; margin-right: 14px; cursor: pointer;
+  background: none; border: none; padding: 0; margin-left: 14px; cursor: pointer;
   font-size: 11px; font-weight: 700; color: #60a5fa; letter-spacing: .2px;
   transition: color 120ms ease-out;
 }
 .link-accion:hover:not(:disabled) { color: #93c5fd; text-decoration: underline; }
 .link-accion:disabled { color: #475569; cursor: not-allowed; }
+.link-accion-peligro { color: #f87171; }
+.link-accion-peligro:hover:not(:disabled) { color: #fca5a5; }
 
 /* ── Botones ── */
 .btn-primary {

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { jwtDecode } from 'jwt-decode';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { ImportacionesService, AuditoriaResumenEmbarque, HitoAuditoriaResultado } from '../../../../services/importaciones.service';
@@ -23,6 +24,16 @@ interface Segmento {
   styleUrl: './importaciones-auditoria-resumen.component.css',
 })
 export class ImportacionesAuditoriaResumenComponent implements OnInit {
+  // Solo Administrador (rol 1) ve el acceso a Hitos de Auditoría -- esa
+  // pantalla queda restringida por adminGuard en app.routes.ts; este flag
+  // solo evita mostrar un link que llevaría a un usuario normal a un redirect.
+  readonly esAdmin: boolean = (() => {
+    try {
+      const token = localStorage.getItem('token');
+      return !!token && (jwtDecode(token) as any).rol === 1;
+    } catch { return false; }
+  })();
+
   embarques: AuditoriaResumenEmbarque[] = [];
   cargando = true;
   error = '';

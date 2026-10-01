@@ -1,31 +1,47 @@
 <app-home-bar></app-home-bar>
 
 <div class="panel-page">
+ <div class="panel-inner">
   <div class="panel-page-header">
-    <h2>Hitos de auditoría de llenado</h2>
-    <button class="btn-primary" (click)="abrirNuevo()">+ Nuevo hito</button>
+    <div>
+      <h2>Hitos de auditoría de llenado</h2>
+      <p class="resumen-nota">
+        Reglas que usa la auditoría para calcular la fecha esperada de cada campo y medir si se
+        llenó antes o después de lo esperado.
+      </p>
+    </div>
+    <div class="header-acciones">
+      <a routerLink="/importaciones" class="btn-secundario">
+        <i class="fas fa-arrow-left"></i> Volver a Importaciones
+      </a>
+      <button class="btn-primary" (click)="abrirNuevo()"><i class="fas fa-plus"></i> Nuevo hito</button>
+    </div>
   </div>
 
   <div class="wiz-error" *ngIf="error">{{ error }}</div>
   <div *ngIf="cargando">Cargando…</div>
 
-  <div *ngIf="!cargando">
-    <div class="hito-grupo" *ngFor="let seccion of SECCIONES">
-      <h3 class="hito-grupo-titulo">{{ seccion | titlecase }}</h3>
+  <div class="grupos-wrap" *ngIf="!cargando">
+    <div class="hito-grupo" *ngFor="let seccion of SECCIONES; let i = index" [style.--stagger]="i">
+      <div class="hito-grupo-header">
+        <span class="hito-grupo-dot" [style.background]="seccionColor(seccion)"></span>
+        <h3 class="hito-grupo-titulo">{{ seccionLabel(seccion) }}</h3>
+        <span class="hito-grupo-count">{{ hitosPorSeccion(seccion).length }}</span>
+      </div>
       <table class="tabla-mini" *ngIf="hitosPorSeccion(seccion).length; else sinHitos">
         <thead>
           <tr><th>Orden</th><th>Etiqueta</th><th>Campo</th><th>Ancla</th><th>Días</th><th></th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let h of hitosPorSeccion(seccion)">
-            <td>{{ h.orden_hito }}</td>
+            <td class="num">{{ h.orden_hito }}</td>
             <td>{{ h.etiqueta }}</td>
             <td><span class="cli-clave">{{ h.campo_dato }}</span></td>
             <td>{{ h.campo_ancla || 'Alta de embarque' }}</td>
             <td class="num">{{ h.dias_esperados }}</td>
-            <td>
+            <td class="col-acciones">
               <button type="button" class="link-accion" (click)="abrirEdicion(h)">Editar</button>
-              <button type="button" class="link-accion" (click)="eliminar(h)">Eliminar</button>
+              <button type="button" class="link-accion link-accion-peligro" (click)="eliminar(h)">Eliminar</button>
             </td>
           </tr>
         </tbody>
@@ -33,6 +49,7 @@
       <ng-template #sinHitos><p class="asig-vacio">Sin hitos en esta sección.</p></ng-template>
     </div>
   </div>
+ </div>
 </div>
 
 <div class="panel-overlay" *ngIf="modalAbierto" (click)="cerrarModal()">

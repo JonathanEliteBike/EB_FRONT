@@ -10,9 +10,14 @@
         de lo esperado, rojo = después. Clic en un embarque para ver el detalle completo.
       </p>
     </div>
-    <a routerLink="/importaciones" class="btn-secundario">
-      <i class="fas fa-arrow-left"></i> Volver a Importaciones
-    </a>
+    <div class="header-acciones">
+      <a *ngIf="esAdmin" routerLink="/importaciones/hitos-auditoria" class="btn-secundario" title="Configurar los hitos que mide esta auditoría">
+        <i class="fas fa-sliders"></i> Configurar hitos
+      </a>
+      <a routerLink="/importaciones" class="btn-secundario">
+        <i class="fas fa-arrow-left"></i> Volver a Importaciones
+      </a>
+    </div>
   </div>
 
   <div class="wiz-error" *ngIf="error">{{ error }}</div>

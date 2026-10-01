@@ -27,6 +27,7 @@
 }
 .panel-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 16px; }
 .panel-page-header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #e2e8f0; }
+.header-acciones { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .resumen-nota { color: #94a3b8; font-size: 12.5px; margin: 6px 0 0; max-width: 620px; }
 
 .btn-secundario {

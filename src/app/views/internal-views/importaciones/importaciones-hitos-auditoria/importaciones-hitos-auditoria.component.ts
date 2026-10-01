@@ -7,6 +7,21 @@ import { HitosAuditoriaService, HitoAuditoria, HitoAuditoriaPayload } from '../.
 
 const SECCIONES = ['logistica', 'importacion', 'despacho', 'odoo', 'almacen', 'recepcion', 'costos', 'cierre'];
 
+// Mismo mapa de colores/etiquetas que usa el pipeline de auditoría
+// (importaciones-auditoria-resumen) -- se repite aquí (solo 8 entradas)
+// para que ambas pantallas se vean como parte del mismo subsistema sin
+// forzar una dependencia cruzada entre dos componentes de ruta distintos.
+const SECCION_CFG: Record<string, { label: string; color: string }> = {
+  logistica:   { label: 'Logística',   color: '#60a5fa' },
+  costos:      { label: 'Costos',      color: '#fbbf24' },
+  importacion: { label: 'Importación', color: '#c084fc' },
+  odoo:        { label: 'Odoo/SAE',    color: '#22d3ee' },
+  despacho:    { label: 'Despacho',    color: '#f472b6' },
+  almacen:     { label: 'Almacén',     color: '#a78bfa' },
+  recepcion:   { label: 'Recepción',   color: '#38bdf8' },
+  cierre:      { label: 'Cierre',      color: '#94a3b8' },
+};
+
 const FORM_VACIO: HitoAuditoriaPayload = {
   seccion: 'logistica', orden_hito: 1, etiqueta: '', campo_dato: '', campo_ancla: null, dias_esperados: 0,
 };
@@ -47,6 +62,14 @@ export class ImportacionesHitosAuditoriaComponent implements OnInit {
 
   hitosPorSeccion(seccion: string): HitoAuditoria[] {
     return this.hitos.filter((h) => h.seccion === seccion).sort((a, b) => a.orden_hito - b.orden_hito);
+  }
+
+  seccionLabel(seccion: string): string {
+    return SECCION_CFG[seccion]?.label ?? seccion;
+  }
+
+  seccionColor(seccion: string): string {
+    return SECCION_CFG[seccion]?.color ?? '#64748b';
   }
 
   abrirNuevo(): void {
