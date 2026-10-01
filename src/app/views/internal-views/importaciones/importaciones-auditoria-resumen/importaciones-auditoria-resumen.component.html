@@ -150,13 +150,29 @@
               <ng-container *ngIf="e.no_aplica === 0">
                 <span class="auditoria-badge auditoria-rojo" *ngIf="atrasadosConVencidos(e) > 0">{{ atrasadosConVencidos(e) }} atrasado{{ atrasadosConVencidos(e) === 1 ? '' : 's' }}</span>
                 <span class="auditoria-badge auditoria-verde" *ngIf="e.adelantados > 0">{{ e.adelantados }} adelantado{{ e.adelantados === 1 ? '' : 's' }}</span>
+                <span class="auditoria-badge auditoria-gris" *ngIf="e.a_tiempo > 0">{{ e.a_tiempo }} a tiempo</span>
                 <span class="auditoria-badge auditoria-gris" *ngIf="e.sin_historial > 0">{{ e.sin_historial }} sin dato histórico</span>
-                <span class="auditoria-badge auditoria-neutra" *ngIf="atrasadosConVencidos(e) === 0 && e.adelantados === 0">al corriente</span>
+                <span class="auditoria-badge auditoria-neutra" *ngIf="atrasadosConVencidos(e) === 0 && e.adelantados === 0 && e.a_tiempo === 0">al corriente</span>
               </ng-container>
             </div>
             <span class="ec-nombre" [title]="e.nombre">{{ e.nombre }}</span>
             <div class="ec-progress" *ngIf="segmentosProgreso(e).length" [title]="e.hitos.length + ' hitos activos'">
               <span class="ec-progress-seg" *ngFor="let s of segmentosProgreso(e)" [ngClass]="s.clase" [style.width.%]="s.pct" [title]="s.label"></span>
+            </div>
+          </div>
+
+          <div class="cump-ring" *ngIf="e.no_aplica === 0 && pctCumplimiento(e) !== null" [ngClass]="cumplimientoClass(pctCumplimiento(e))"
+               [title]="'Cumplimiento: ' + enTiempo(e) + '/' + e.hitos.length + ' hitos en tiempo (a tiempo o adelantados)'">
+            <svg viewBox="0 0 36 36" class="cump-ring-svg">
+              <path class="cump-ring-track"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="cump-ring-fill"
+                    [attr.stroke-dasharray]="pctCumplimiento(e) + ' 100'"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="cump-ring-center">
+              <span class="cump-ring-pct">{{ pctCumplimiento(e) }}<small>%</small></span>
+              <span class="cump-ring-frac">{{ enTiempo(e) }}/{{ e.hitos.length }}</span>
             </div>
           </div>
         </div>

@@ -175,7 +175,9 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   }
 
   irDetalle(id: number): void {
-    this.router.navigate(['/importaciones', id]);
+    // from: 'auditoria' -- sin esto, el botón "volver" del detalle regresa a
+    // /importaciones en vez de aquí (mismo patrón que dashboard.irDetalle()).
+    this.router.navigate(['/importaciones', id], { queryParams: { from: 'auditoria' } });
   }
 
   // Clic en un hito puntual: lleva directo al campo de origen en el
@@ -255,6 +257,29 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   atrasadosConVencidos(e: AuditoriaResumenEmbarque): number {
     const vencidos = (e.hitos || []).filter(h => this.estaVencido(h)).length;
     return e.atrasados + vencidos;
+  }
+
+  // % de cumplimiento pedido por el usuario: "en tiempo" cuenta a_tiempo +
+  // adelantado (se cumplió el plazo o se ganó tiempo), sobre el TOTAL de
+  // hitos activos configurados (no solo los que ya tienen veredicto) -- el
+  // % solo llega a 100% cuando todos los hitos están en tiempo. Los hitos
+  // todavía pendientes/en_espera/sin_historial restan cumplimiento sin
+  // contar como "a destiempo" (ese bucket es solo atrasado + vencido).
+  enTiempo(e: AuditoriaResumenEmbarque): number {
+    return (e.hitos || []).filter(h => h.estado === 'a_tiempo' || h.estado === 'adelantado').length;
+  }
+
+  pctCumplimiento(e: AuditoriaResumenEmbarque): number | null {
+    const total = e.hitos?.length || 0;
+    if (!total) return null;
+    return Math.round((this.enTiempo(e) / total) * 100);
+  }
+
+  cumplimientoClass(pct: number | null): string {
+    if (pct == null) return '';
+    if (pct >= 80) return 'cump-alto';
+    if (pct >= 50) return 'cump-medio';
+    return 'cump-bajo';
   }
 
   // Latencia TOTAL del panorama: suma (no promedio) del balance neto de

@@ -231,6 +231,49 @@
 .badge-lat.delta-ok   { background: rgba(34,197,94,.12);  color: #4ade80; }
 .badge-lat.delta-late { background: rgba(239,68,68,.14);  color: #f87171; }
 
+/* % de cumplimiento: anillo de progreso (hitos en tiempo / total) --
+   elemento central de la tarjeta, no un badge mas entre otros. Vive a la
+   derecha de .ec-ident dentro de .ec-top (que ya es flex). */
+.cump-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: 68px; height: 68px;
+  align-self: center;
+  opacity: 0;
+  animation: cump-ring-enter 320ms var(--ease-out) forwards;
+  animation-delay: calc(var(--stagger, 0) * 40ms + 80ms);
+}
+.cump-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.cump-ring-track { fill: none; stroke: rgba(148,163,184,.14); stroke-width: 2.6; }
+.cump-ring-fill {
+  fill: none; stroke-width: 2.6; stroke-linecap: round;
+  transition: stroke-dasharray 650ms var(--ease-out);
+}
+.cump-ring.cump-alto  .cump-ring-fill { stroke: #4ade80; }
+.cump-ring.cump-medio .cump-ring-fill { stroke: #fbbf24; }
+.cump-ring.cump-bajo  .cump-ring-fill { stroke: #f87171; }
+.cump-ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.cump-ring-pct { font-size: 16px; font-weight: 800; color: #e2e8f0; letter-spacing: -.02em; }
+.cump-ring-pct small { font-size: 10px; font-weight: 700; margin-left: 1px; }
+.cump-ring.cump-alto  .cump-ring-pct { color: #4ade80; }
+.cump-ring.cump-medio .cump-ring-pct { color: #fbbf24; }
+.cump-ring.cump-bajo  .cump-ring-pct { color: #f87171; }
+.cump-ring-frac { font-size: 9px; font-weight: 600; color: #64748b; margin-top: 2px; }
+
+/* Entrada: opacity + scale(0.95), nunca desde 0 -- nada aparece de la nada */
+@keyframes cump-ring-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cump-ring { animation: none; opacity: 1; }
+  .cump-ring-fill { transition: none; }
+}
+
 /* ── Tarjetas por embarque (mismo patrón que el dashboard de importaciones) ── */
 .cards-wrap {
   display: flex;
@@ -331,13 +374,17 @@
   transition: background-color 150ms var(--ease-out);
 }
 .ec-stage-click { cursor: pointer; }
-.ec-stage-click:hover { background: rgba(56,189,248,.14); }
 .ec-stage.stage-real          { background: rgba(34,197,94,.08); }
 .ec-stage.stage-atrasado      { background: rgba(239,68,68,.09); }
 .ec-stage.stage-en-espera     { background: rgba(251,191,36,.05); }
 .ec-stage.stage-sin-historial { background: rgba(148,163,184,.06); }
 .ec-stage.stage-no-aplica     { justify-content: center; opacity: .5; }
 .ec-stage.stage-pendiente     { justify-content: center; opacity: .5; }
+/* Despues de los colores de estado para que le gane en la cascada (misma
+   especificidad que .stage-* -- si fuera antes, el hover nunca se veria en
+   una celda ya coloreada, que es la mayoria). Mismo patron que el pipeline
+   del dashboard de embarques, donde este orden ya funciona. */
+.ec-stage-click:hover { background: rgba(56,189,248,.14); }
 
 .ec-stage-seccion {
   font-size: .5rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
