@@ -14,9 +14,9 @@ type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | '
 interface CampoValidar { campo: keyof Importacion; label: string; opcional?: boolean; }
 
 // Sección donde vive cada campo destino de un resaltado (?highlight=<campo> en la URL,
-// usado por el pipeline del dashboard para llevar al usuario directo al dato), y su
-// campo "proyectado" hermano -- ambos se resaltan juntos porque viven en la misma
-// sección y es contra lo que se compara el real.
+// usado por el pipeline del dashboard y por el pipeline de auditoría para llevar al
+// usuario directo al dato), y su campo "proyectado" hermano -- ambos se resaltan
+// juntos porque viven en la misma sección y es contra lo que se compara el real.
 const SECCION_POR_CAMPO_RESALTADO: Record<string, Seccion> = {
   log_fecha_entrega:           'logistica',
   log_fecha_booking:           'logistica',
@@ -28,6 +28,27 @@ const SECCION_POR_CAMPO_RESALTADO: Record<string, Seccion> = {
   rec_recepcion_odoo:          'recepcion',
   rec_liberacion_verificacion: 'recepcion',
   rec_liberacion_final:        'recepcion',
+  // Campos rastreados por la auditoría de llenado que no son parte del
+  // pipeline del dashboard -- la sección es la misma que trae cada hito en
+  // importaciones_hitos_auditoria.seccion (ej. "odoo_importador" vive en
+  // logística, no en Odoo/SAE, pese al prefijo del nombre de columna).
+  odoo_importador:              'logistica',
+  log_confirmacion_cotizacion:  'logistica',
+  log_contenedor:               'logistica',
+  cos_flete_proyectado_usd:     'costos',
+  cos_tipo_cambio_pedimento:    'costos',
+  imp_fecha_traduccion:         'importacion',
+  imp_recepcion_draft_pedimento:'importacion',
+  imp_fecha_pago_pedimento:     'importacion',
+  log_recepcion_documentos:     'odoo',
+  odoo_folio_orden:             'odoo',
+  des_solicitud_cita_cruce:     'despacho',
+  des_recepcion_eir:            'despacho',
+  alm_base_datos_etiquetas:     'almacen',
+  alm_envio_info_uva:           'almacen',
+  rec_cedula_costeo:            'recepcion',
+  cie_recepcion_cuenta_gastos:  'cierre',
+  cie_fecha_pago_aa:            'cierre',
 };
 
 const CAMPO_PROG_HERMANO: Record<string, string> = {
@@ -280,9 +301,12 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('from') === 'dashboard') {
+    const from = this.route.snapshot.queryParamMap.get('from');
+    if (from === 'dashboard') {
       const tab = this.route.snapshot.queryParamMap.get('tab');
       this.returnUrl = '/importaciones/dashboard' + (tab ? `?tab=${tab}` : '');
+    } else if (from === 'auditoria') {
+      this.returnUrl = '/importaciones/auditoria';
     }
     this.tiemposSvc.listar().subscribe({
       next: (reglas) => { this._reglasTiempos = reglas; },
@@ -307,10 +331,11 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Si venimos de un click en una etapa del pipeline del dashboard
-  // (?highlight=<campo>), cambia a la sección correspondiente y resalta el campo
-  // real Y su proyectado hermano -- ambos viven en la misma sección y es contra
-  // lo que se está comparando, así que tiene que verse el par completo.
+  // Si venimos de un click en una etapa del pipeline del dashboard o en un
+  // hito del pipeline de auditoría (?highlight=<campo>), cambia a la sección
+  // correspondiente y resalta el campo real Y su proyectado hermano (cuando
+  // existe) -- ambos viven en la misma sección y es contra lo que se está
+  // comparando, así que tiene que verse el par completo.
   private _resaltarCampoDesdeQuery(): void {
     const campo = this.route.snapshot.queryParamMap.get('highlight');
     if (!campo) return;

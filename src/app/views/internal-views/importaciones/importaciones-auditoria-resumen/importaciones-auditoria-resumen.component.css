@@ -152,6 +152,8 @@
   min-width: 0;
   transition: background-color 150ms var(--ease-out);
 }
+.ec-stage-click { cursor: pointer; }
+.ec-stage-click:hover { background: rgba(56,189,248,.14); }
 .ec-stage.stage-real          { background: rgba(34,197,94,.08); }
 .ec-stage.stage-atrasado      { background: rgba(239,68,68,.09); }
 .ec-stage.stage-en-espera     { background: rgba(251,191,36,.05); }

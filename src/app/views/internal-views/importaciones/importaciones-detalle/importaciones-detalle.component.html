@@ -150,7 +150,7 @@
             placeholder="Ej: 996" />
         </div>
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('odoo_importador')">
+        <div class="field-row" id="campo-odoo_importador" [class.campo-faltante]="esCampoFaltante('odoo_importador')">
           <label>1. Importador</label>
           <select [value]="embarque.odoo_importador || ''" (change)="marcarCambio('odoo_importador', $any($event.target).value || null)">
             <option value="">—</option>
@@ -215,7 +215,7 @@
               (dateChange)="marcarCambio('log_fecha_solicitud_cotizaciones', $event || null)">
             </app-date-picker>
         </div>
-        <div class="field-row" [class.campo-error]="esCampoError('log_confirmacion_cotizacion')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_cotizacion')">
+        <div class="field-row" id="campo-log_confirmacion_cotizacion" [class.campo-error]="esCampoError('log_confirmacion_cotizacion')" [class.campo-faltante]="esCampoFaltante('log_confirmacion_cotizacion')">
           <label>9. Confirmación de cotización y forwarder</label>
           <input type="date" [value]="embarque.log_confirmacion_cotizacion || ''"
             (change)="marcarCambio('log_confirmacion_cotizacion', $any($event.target).value || null)" />
@@ -295,7 +295,7 @@
           <input type="text" [value]="embarque.log_puerto_salida || ''"
             (change)="marcarCambio('log_puerto_salida', $any($event.target).value || null)" />
         </div>
-        <div class="field-row full" [class.campo-error]="esCampoError('log_contenedor')" [class.campo-faltante]="esCampoFaltante('log_contenedor')">
+        <div class="field-row full" id="campo-log_contenedor" [class.campo-error]="esCampoError('log_contenedor')" [class.campo-faltante]="esCampoFaltante('log_contenedor')">
           <label>18. Contenedor(es)</label>
           <input type="text" [value]="embarque.log_contenedor || ''"
             (change)="marcarCambio('log_contenedor', $any($event.target).value || null)" />
@@ -353,7 +353,7 @@
     <div class="det-section" *ngIf="seccionActiva === 'importacion'">
       <div class="fields-grid">
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_traduccion')">
+        <div class="field-row" id="campo-imp_fecha_traduccion" [class.campo-faltante]="esCampoFaltante('imp_fecha_traduccion')">
           <label>1. Fecha entrega de traducción al RBF</label>
           <app-date-picker
               mode="single"
@@ -497,7 +497,7 @@
             <option value="">—</option><option>SI</option><option>NO</option><option>N/A</option>
           </select>
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_recepcion_draft_pedimento')"><label>18. Recepción de draft de pedimento</label>
+        <div class="field-row" id="campo-imp_recepcion_draft_pedimento" [class.campo-faltante]="esCampoFaltante('imp_recepcion_draft_pedimento')"><label>18. Recepción de draft de pedimento</label>
           <app-date-picker
               mode="single"
               [value]="embarque.imp_recepcion_draft_pedimento || ''"
@@ -598,7 +598,7 @@
             <button type="button" class="na-toggle" [class.na-activo]="esNA('imp_liberacion_folios')" (click)="toggleNA('imp_liberacion_folios')" title="Marcar como No Aplica">N/A</button>
           </div>
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('imp_fecha_pago_pedimento')"><label>34. Fecha de pago de pedimento</label>
+        <div class="field-row" id="campo-imp_fecha_pago_pedimento" [class.campo-faltante]="esCampoFaltante('imp_fecha_pago_pedimento')"><label>34. Fecha de pago de pedimento</label>
           <app-date-picker
               mode="single"
               [value]="embarque.imp_fecha_pago_pedimento || ''"
@@ -614,7 +614,7 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'despacho'">
       <div class="fields-grid">
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_solicitud_cita_cruce')"><label>1. Solicitud de cita para cruce</label>
+        <div class="field-row" id="campo-des_solicitud_cita_cruce" [class.campo-faltante]="esCampoFaltante('des_solicitud_cita_cruce')"><label>1. Solicitud de cita para cruce</label>
           <app-date-picker
               mode="single"
               [value]="embarque.des_solicitud_cita_cruce || ''"
@@ -755,7 +755,7 @@
             <span *ngIf="!embarque.des_fecha_limite_naviera" style="color:#475569;font-size:.8rem">—</span>
           </div>
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')">
+        <div class="field-row" id="campo-des_recepcion_eir" [class.campo-faltante]="esCampoFaltante('des_recepcion_eir')">
           <label>15. Recepción de documento EIR</label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('des_recepcion_eir')">
@@ -781,7 +781,7 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'odoo'">
       <div class="fields-grid">
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
+        <div class="field-row" id="campo-log_recepcion_documentos" [class.campo-faltante]="esCampoFaltante('log_recepcion_documentos')">
           <label>1. Recepción de documentos</label>
           <app-date-picker
               mode="single"
@@ -807,7 +807,7 @@
               [value]="embarque.odoo_alta_orden_compra || ''"
               (dateChange)="marcarCambio('odoo_alta_orden_compra', $event || null)">
             </app-date-picker></div>
-        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('odoo_folio_orden')"><label>6. Folio(s) de orden de compra</label>
+        <div class="field-row full" id="campo-odoo_folio_orden" [class.campo-faltante]="esCampoFaltante('odoo_folio_orden')"><label>6. Folio(s) de orden de compra</label>
           <input type="text" [value]="embarque.odoo_folio_orden || ''" (change)="marcarCambio('odoo_folio_orden', $any($event.target).value || null)" placeholder="2083, 2084, 2085" /></div>
       </div>
     </div>
@@ -818,7 +818,7 @@
     <div class="det-section" *ngIf="seccionActiva === 'almacen'">
       <div class="fields-grid">
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_etiquetas')"><label>1. Base de datos para etiquetas</label>
+        <div class="field-row" id="campo-alm_base_datos_etiquetas" [class.campo-faltante]="esCampoFaltante('alm_base_datos_etiquetas')"><label>1. Base de datos para etiquetas</label>
           <app-date-picker mode="single" [value]="embarque.alm_base_datos_etiquetas || ''" (dateChange)="marcarCambio('alm_base_datos_etiquetas', $event || null)"></app-date-picker></div>
 
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_base_datos_verificacion')">
@@ -869,7 +869,7 @@
           <label>6. Envío de información a la UVA (Proyectado)</label>
           <app-date-picker mode="single" [value]="embarque.alm_envio_info_uva_prog || ''" (dateChange)="marcarCambio('alm_envio_info_uva_prog', $event || null)"></app-date-picker>
         </div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')">
+        <div class="field-row" id="campo-alm_envio_info_uva" [class.campo-faltante]="esCampoFaltante('alm_envio_info_uva')">
           <label>6. Envío de información a la UVA (Real)</label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('alm_envio_info_uva')">
@@ -927,7 +927,7 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'recepcion'">
       <div class="fields-grid">
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('rec_cedula_costeo')"><label>1. Cédula de costeo de IGI</label>
+        <div class="field-row" id="campo-rec_cedula_costeo" [class.campo-faltante]="esCampoFaltante('rec_cedula_costeo')"><label>1. Cédula de costeo de IGI</label>
           <select [value]="embarque.rec_cedula_costeo || ''" (change)="marcarCambio('rec_cedula_costeo', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option><option>N/A</option>
           </select></div>
@@ -981,7 +981,7 @@
     ═══════════════════════════════════════════════════ -->
     <div class="det-section" *ngIf="seccionActiva === 'cierre'">
       <div class="fields-grid">
-        <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_recepcion_cuenta_gastos')"><label>1. Recepción de cuenta de gastos</label>
+        <div class="field-row full" id="campo-cie_recepcion_cuenta_gastos" [class.campo-faltante]="esCampoFaltante('cie_recepcion_cuenta_gastos')"><label>1. Recepción de cuenta de gastos</label>
           <input type="text" [value]="embarque.cie_recepcion_cuenta_gastos || ''" (change)="marcarCambio('cie_recepcion_cuenta_gastos', $any($event.target).value || null)" placeholder="SI / NO / % recuperadas" /></div>
         <div class="field-row full" [class.campo-faltante]="esCampoFaltante('cie_saldo_favor_elite')"><label>2. Saldo a favor de Elite Bike</label>
           <input type="text" [value]="embarque.cie_saldo_favor_elite || ''" (change)="marcarCambio('cie_saldo_favor_elite', $any($event.target).value || null)" placeholder="SI / NO + importe" /></div>
@@ -1005,7 +1005,7 @@
           <select [value]="embarque.cie_liquidado_aa || ''" (change)="marcarCambio('cie_liquidado_aa', $any($event.target).value || null)">
             <option value="">—</option><option>SI</option><option>NO</option><option>N/A</option>
           </select></div>
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cie_fecha_pago_aa')">
+        <div class="field-row" id="campo-cie_fecha_pago_aa" [class.campo-faltante]="esCampoFaltante('cie_fecha_pago_aa')">
           <label>7. Fecha de pago a Agente Aduanal</label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('cie_fecha_pago_aa')">
@@ -1029,7 +1029,7 @@
           <i class="fas fa-chart-line"></i> Proyección de Costos
         </div>
 
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_flete_proyectado_usd')"><label>Flete proyectado (USD)</label>
+        <div class="field-row" id="campo-cos_flete_proyectado_usd" [class.campo-faltante]="esCampoFaltante('cos_flete_proyectado_usd')"><label>Flete proyectado (USD)</label>
           <div class="na-wrap">
             <ng-container *ngIf="!esNA('cos_flete_proyectado_usd')">
               <input type="text" [value]="formatMoney(embarque.cos_flete_proyectado_usd)" (change)="marcarCambio('cos_flete_proyectado_usd', parseMoney($any($event.target).value))" placeholder="0.00" />
@@ -1069,7 +1069,7 @@
         </div>
 
         <!-- Tipo de cambio: obligatorio, sin N/A -->
-        <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_tipo_cambio_pedimento')"><label>Tipo de cambio pedimento</label>
+        <div class="field-row" id="campo-cos_tipo_cambio_pedimento" [class.campo-faltante]="esCampoFaltante('cos_tipo_cambio_pedimento')"><label>Tipo de cambio pedimento</label>
           <input type="number" step="0.0001" [value]="embarque.cos_tipo_cambio_pedimento || ''" (change)="marcarCambio('cos_tipo_cambio_pedimento', +$any($event.target).value || null)" /></div>
 
         <div class="field-row" [class.campo-faltante]="esCampoFaltante('cos_valor_factura')"><label>Valor factura (del pedimento)</label>

@@ -81,6 +81,17 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     this.router.navigate(['/importaciones', id]);
   }
 
+  // Clic en un hito puntual: lleva directo al campo de origen en el
+  // detalle del embarque (misma mecánica que el pipeline del dashboard),
+  // para que el usuario pueda ir a validar/corregir el dato sin tener que
+  // buscar la sección manualmente.
+  irHito(e: AuditoriaResumenEmbarque, h: HitoAuditoriaResultado, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/importaciones', e.id], {
+      queryParams: { from: 'auditoria', highlight: h.campo_dato },
+    });
+  }
+
   seccionAbbr(seccion: string): string {
     return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.abbr ?? seccion.slice(0, 3).toUpperCase();
   }

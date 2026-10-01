@@ -54,7 +54,8 @@
         <div class="ec-vacio" *ngIf="!e.hitos.length">Sin hitos configurados o activos.</div>
 
         <div class="ec-pipeline" *ngIf="e.hitos.length">
-          <div *ngFor="let h of e.hitos" class="ec-stage" [ngClass]="stageCls(h)" [title]="h.etiqueta">
+          <div *ngFor="let h of e.hitos" class="ec-stage ec-stage-click" [ngClass]="stageCls(h)"
+               (click)="irHito(e, h, $event)" [title]="h.etiqueta + ' — ver en el detalle'">
             <span class="ec-stage-seccion" [style.color]="seccionColor(h.seccion)">{{ seccionAbbr(h.seccion) }}</span>
             <span class="ec-stage-lbl">{{ h.etiqueta }}</span>
 
