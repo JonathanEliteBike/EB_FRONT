@@ -1,8 +1,23 @@
 :host {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* CSS variables heredadas por app-date-picker en este módulo (mismo
+     contrato que el resto de Importaciones -- acento azul, no naranja) */
+  --surface2: #1a1f2e; --border2: #2d3748;
+  --t1: #e2e8f0; --t2: #cbd5e1; --t3: #64748b;
+  --orange: #3b82f6;
 }
 
-.panel-page { padding: 24px; max-width: 1100px; margin: 0 auto; }
+/* Mismo fondo que importaciones-dashboard (#0b0e14, a todo el alto de
+   viewport) -- antes esta vista heredaba el fondo genérico de <body>
+   (#1e1d1b) y se sentía fuera de lugar frente al resto del módulo. */
+.panel-page {
+  min-height: 100vh;
+  background: #0b0e14;
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
 .panel-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 16px; }
 .panel-page-header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #e2e8f0; }
 .resumen-nota { color: #94a3b8; font-size: 12.5px; margin: 6px 0 0; max-width: 620px; }
@@ -67,15 +82,8 @@
 .filtro-select:hover { border-color: #3d4a5f; }
 .filtro-select:focus { outline: none; border-color: #3b82f6; }
 
-.filtro-fechas {
-  display: flex; align-items: center; gap: 6px;
-  background: #12161f; border: 1px solid #2d3748; border-radius: 8px; padding: 4px 8px;
-}
-.filtro-fechas input[type="date"] {
-  background: none; border: none; outline: none; color: #cbd5e1; font-size: 12px;
-  color-scheme: dark; width: 118px;
-}
-.filtro-fechas-sep { color: #475569; }
+.filtro-fechas-picker { width: 240px; flex-shrink: 0; }
+.filtro-fechas-picker app-date-picker { display: block; }
 
 .btn-limpiar-filtros {
   background: #1f1315; color: #f87171; border: 1px solid #7f1d1d; border-radius: 8px;

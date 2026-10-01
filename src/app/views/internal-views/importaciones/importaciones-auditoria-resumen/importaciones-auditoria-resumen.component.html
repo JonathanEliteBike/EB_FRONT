@@ -39,10 +39,14 @@
         <option value="">Todas las secciones</option>
         <option *ngFor="let s of seccionesFiltro" [value]="s.value">{{ s.label }}</option>
       </select>
-      <div class="filtro-fechas" title="Rango de fecha de alta del embarque">
-        <input type="date" [(ngModel)]="fechaDesde" />
-        <span class="filtro-fechas-sep">–</span>
-        <input type="date" [(ngModel)]="fechaHasta" />
+      <div class="filtro-fechas-picker">
+        <app-date-picker
+          mode="range"
+          placeholder="Fecha de alta del embarque"
+          [desde]="fechaDesde"
+          [hasta]="fechaHasta"
+          (rangeChange)="onRangoFechaChange($event)">
+        </app-date-picker>
       </div>
       <button class="btn-limpiar-filtros" *ngIf="hayFiltrosActivos" (click)="limpiarFiltros()">
         <i class="fas fa-xmark"></i> Limpiar

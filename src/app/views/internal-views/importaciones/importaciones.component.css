@@ -169,7 +169,7 @@
   width: 220px; flex-shrink: 0;
   --surface2: #1a1f2e; --border2: #2d3748;
   --t1: #e2e8f0; --t2: #cbd5e1; --t3: #64748b;
-  --orange: #EB5E28;
+  --orange: #3b82f6;
 }
 .filtro-temporada-wrap { display: flex; align-items: center; gap: 8px; }
 .filtro-temporada-lbl { font-size: .8rem; color: #64748b; white-space: nowrap; }

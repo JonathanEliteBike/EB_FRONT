@@ -5,7 +5,7 @@
 :host {
   --surface2: #1a1f2e; --border2: #2d3748;
   --t1: #e2e8f0; --t2: #cbd5e1; --t3: #64748b;
-  --orange: #EB5E28;
+  --orange: #3b82f6;
   /* Easing curves (Emil Kowalski) */
   --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
+import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
 import { ImportacionesService, AuditoriaResumenEmbarque, HitoAuditoriaResultado } from '../../../../services/importaciones.service';
 
 type OrdenCampo = 'atrasados' | 'adelantados' | 'referencia';
@@ -17,7 +18,7 @@ interface Segmento {
 @Component({
   selector: 'app-importaciones-auditoria-resumen',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent, DatePickerComponent],
   templateUrl: './importaciones-auditoria-resumen.component.html',
   styleUrl: './importaciones-auditoria-resumen.component.css',
 })
@@ -84,6 +85,11 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   toggleEstadoFiltro(f: EstadoFiltro): void {
     if (this.estadosFiltro.has(f)) this.estadosFiltro.delete(f);
     else this.estadosFiltro.add(f);
+  }
+
+  onRangoFechaChange(rango: { desde: string; hasta: string }): void {
+    this.fechaDesde = rango.desde;
+    this.fechaHasta = rango.hasta;
   }
 
   get hayFiltrosActivos(): boolean {
