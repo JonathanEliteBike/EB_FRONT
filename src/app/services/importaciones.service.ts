@@ -267,6 +267,7 @@ export interface AuditoriaResumenEmbarque {
   id: number;
   referencia: string;
   nombre: string;
+  creado_en: string;
   atrasados: number;
   adelantados: number;
   a_tiempo: number;

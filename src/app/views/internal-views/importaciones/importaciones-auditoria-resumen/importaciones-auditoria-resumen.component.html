@@ -18,6 +18,37 @@
   <div *ngIf="cargando">Cargando…</div>
 
   <div *ngIf="!cargando && !error">
+    <div class="filtros-row" *ngIf="embarques.length">
+      <div class="filtro-busqueda">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="busqueda" placeholder="Buscar por referencia o nombre…" />
+      </div>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('atrasados')" (click)="toggleEstadoFiltro('atrasados')">
+        Atrasados
+      </button>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('adelantados')" (click)="toggleEstadoFiltro('adelantados')">
+        Adelantados
+      </button>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('sin_historial')" (click)="toggleEstadoFiltro('sin_historial')">
+        Sin dato histórico
+      </button>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('al_corriente')" (click)="toggleEstadoFiltro('al_corriente')">
+        Al corriente
+      </button>
+      <select class="filtro-select" [(ngModel)]="seccionFiltro" title="Mostrar solo embarques con pendientes en esta sección">
+        <option value="">Todas las secciones</option>
+        <option *ngFor="let s of seccionesFiltro" [value]="s.value">{{ s.label }}</option>
+      </select>
+      <div class="filtro-fechas" title="Rango de fecha de alta del embarque">
+        <input type="date" [(ngModel)]="fechaDesde" />
+        <span class="filtro-fechas-sep">–</span>
+        <input type="date" [(ngModel)]="fechaHasta" />
+      </div>
+      <button class="btn-limpiar-filtros" *ngIf="hayFiltrosActivos" (click)="limpiarFiltros()">
+        <i class="fas fa-xmark"></i> Limpiar
+      </button>
+    </div>
+
     <div class="leyenda-row" *ngIf="embarques.length">
       <span class="leg-item"><span class="rk rk-p">P</span>Proyectado</span>
       <span class="leg-item"><span class="rk rk-r">R</span>Real</span>
@@ -31,8 +62,14 @@
       <button class="orden-pill" [class.active]="orden === 'referencia'" (click)="ordenarPor('referencia')">Referencia</button>
     </div>
 
-    <div class="cards-wrap" *ngIf="embarques.length; else sinEmbarques">
-      <div *ngFor="let e of embarquesOrdenados(); let i = index" class="emb-card" [style.--stagger]="i"
+    <p class="asig-vacio" *ngIf="!embarques.length">No hay embarques para auditar.</p>
+    <div class="asig-vacio asig-vacio-filtro" *ngIf="embarques.length && !embarquesVisibles().length">
+      No hay embarques que coincidan con los filtros.
+      <button class="link-limpiar" (click)="limpiarFiltros()">Limpiar filtros</button>
+    </div>
+
+    <div class="cards-wrap" *ngIf="embarquesVisibles().length">
+      <div *ngFor="let e of embarquesVisibles(); let i = index" class="emb-card" [style.--stagger]="i"
            (click)="irDetalle(e.id)">
 
         <div class="ec-top">
@@ -85,6 +122,5 @@
 
       </div>
     </div>
-    <ng-template #sinEmbarques><p class="asig-vacio">No hay embarques para auditar.</p></ng-template>
   </div>
 </div>

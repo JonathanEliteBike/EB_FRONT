@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { ImportacionesService, AuditoriaResumenEmbarque, HitoAuditoriaResultado } from '../../../../services/importaciones.service';
 
 type OrdenCampo = 'atrasados' | 'adelantados' | 'referencia';
+type EstadoFiltro = 'atrasados' | 'adelantados' | 'sin_historial' | 'al_corriente';
 
 interface Segmento {
   clase: string;
@@ -15,7 +17,7 @@ interface Segmento {
 @Component({
   selector: 'app-importaciones-auditoria-resumen',
   standalone: true,
-  imports: [CommonModule, RouterModule, HomeBarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, HomeBarComponent],
   templateUrl: './importaciones-auditoria-resumen.component.html',
   styleUrl: './importaciones-auditoria-resumen.component.css',
 })
@@ -25,21 +27,31 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   error = '';
   orden: OrdenCampo = 'atrasados';
 
+  // Filtros de la barra de búsqueda
+  busqueda = '';
+  estadosFiltro = new Set<EstadoFiltro>();
+  seccionFiltro = '';
+  fechaDesde = '';
+  fechaHasta = '';
+
   // Tag corto + color por sección -- solo como referencia visual encima de
   // cada hito. El pipeline NO se agrupa/reordena por sección: los hitos se
   // llenan en el orden en que se le dieron al usuario (mezclando
   // secciones), así que la tira respeta ese orden tal cual llega del
   // backend (ORDER BY id).
-  private static readonly SECCION_CFG: Record<string, { abbr: string; color: string }> = {
-    logistica:   { abbr: 'LOG', color: '#60a5fa' },
-    costos:      { abbr: 'COS', color: '#fbbf24' },
-    importacion: { abbr: 'IMP', color: '#c084fc' },
-    odoo:        { abbr: 'ODO', color: '#22d3ee' },
-    despacho:    { abbr: 'DES', color: '#f472b6' },
-    almacen:     { abbr: 'ALM', color: '#a78bfa' },
-    recepcion:   { abbr: 'REC', color: '#38bdf8' },
-    cierre:      { abbr: 'CIE', color: '#94a3b8' },
+  private static readonly SECCION_CFG: Record<string, { abbr: string; label: string; color: string }> = {
+    logistica:   { abbr: 'LOG', label: 'Logística',   color: '#60a5fa' },
+    costos:      { abbr: 'COS', label: 'Costos',      color: '#fbbf24' },
+    importacion: { abbr: 'IMP', label: 'Importación', color: '#c084fc' },
+    odoo:        { abbr: 'ODO', label: 'Odoo/SAE',    color: '#22d3ee' },
+    despacho:    { abbr: 'DES', label: 'Despacho',    color: '#f472b6' },
+    almacen:     { abbr: 'ALM', label: 'Almacén',     color: '#a78bfa' },
+    recepcion:   { abbr: 'REC', label: 'Recepción',   color: '#38bdf8' },
+    cierre:      { abbr: 'CIE', label: 'Cierre',      color: '#94a3b8' },
   };
+
+  readonly seccionesFiltro = Object.entries(ImportacionesAuditoriaResumenComponent.SECCION_CFG)
+    .map(([value, cfg]) => ({ value, label: cfg.label }));
 
   private static readonly SEGMENTOS_CFG: { key: keyof AuditoriaResumenEmbarque; clase: string; label: string }[] = [
     { key: 'atrasados',     clase: 'seg-atrasado',      label: 'Atrasados' },
@@ -69,12 +81,58 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     this.orden = campo;
   }
 
-  embarquesOrdenados(): AuditoriaResumenEmbarque[] {
-    const campo = this.orden;
-    if (campo === 'referencia') {
-      return [...this.embarques].sort((a, b) => a.referencia.localeCompare(b.referencia));
+  toggleEstadoFiltro(f: EstadoFiltro): void {
+    if (this.estadosFiltro.has(f)) this.estadosFiltro.delete(f);
+    else this.estadosFiltro.add(f);
+  }
+
+  get hayFiltrosActivos(): boolean {
+    return !!this.busqueda.trim() || this.estadosFiltro.size > 0 || !!this.seccionFiltro
+      || !!this.fechaDesde || !!this.fechaHasta;
+  }
+
+  limpiarFiltros(): void {
+    this.busqueda = '';
+    this.estadosFiltro.clear();
+    this.seccionFiltro = '';
+    this.fechaDesde = '';
+    this.fechaHasta = '';
+  }
+
+  private _pasaFiltros(e: AuditoriaResumenEmbarque): boolean {
+    const q = this.busqueda.trim().toLowerCase();
+    if (q && !e.referencia.toLowerCase().includes(q) && !(e.nombre || '').toLowerCase().includes(q)) {
+      return false;
     }
-    return [...this.embarques].sort((a, b) => b[campo] - a[campo]);
+    if (this.estadosFiltro.size > 0) {
+      const coincideAlguno = Array.from(this.estadosFiltro).some(f => {
+        switch (f) {
+          case 'atrasados':     return e.atrasados > 0;
+          case 'adelantados':   return e.adelantados > 0;
+          case 'sin_historial': return e.sin_historial > 0;
+          case 'al_corriente':  return e.atrasados === 0 && e.adelantados === 0;
+        }
+      });
+      if (!coincideAlguno) return false;
+    }
+    if (this.seccionFiltro) {
+      const tieneProblemaEnSeccion = (e.hitos || []).some(
+        h => h.seccion === this.seccionFiltro && (h.estado === 'atrasado' || h.estado === 'en_espera')
+      );
+      if (!tieneProblemaEnSeccion) return false;
+    }
+    if (this.fechaDesde && e.creado_en < this.fechaDesde) return false;
+    if (this.fechaHasta && e.creado_en > this.fechaHasta) return false;
+    return true;
+  }
+
+  embarquesVisibles(): AuditoriaResumenEmbarque[] {
+    const campo = this.orden;
+    const filtrados = this.embarques.filter(e => this._pasaFiltros(e));
+    if (campo === 'referencia') {
+      return filtrados.sort((a, b) => a.referencia.localeCompare(b.referencia));
+    }
+    return filtrados.sort((a, b) => b[campo] - a[campo]);
   }
 
   irDetalle(id: number): void {
