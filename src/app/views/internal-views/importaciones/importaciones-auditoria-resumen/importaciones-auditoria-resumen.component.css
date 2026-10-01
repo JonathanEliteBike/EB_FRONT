@@ -7,16 +7,23 @@
   --orange: #3b82f6;
 }
 
-/* Mismo fondo que importaciones-dashboard (#0b0e14, a todo el alto de
-   viewport) -- antes esta vista heredaba el fondo genérico de <body>
-   (#1e1d1b) y se sentía fuera de lugar frente al resto del módulo. */
+/* Mismo fondo que importaciones-dashboard (#0b0e14) -- antes esta vista
+   heredaba el fondo genérico de <body> (#1e1d1b) y se sentía fuera de
+   lugar frente al resto del módulo. El fondo va en .panel-page a TODO el
+   ancho (sin max-width) para que llegue borde a borde del viewport, igual
+   que .dash-page; el contenido se centra aparte en .panel-inner -- si el
+   max-width/background vivieran en el mismo elemento, el fondo se cortaría
+   en los 1100px y dejaría ver el gris de <body> a los lados. */
 .panel-page {
   min-height: 100vh;
+  width: 100%;
   background: #0b0e14;
+  box-sizing: border-box;
+}
+.panel-inner {
   padding: 24px;
   max-width: 1100px;
   margin: 0 auto;
-  box-sizing: border-box;
 }
 .panel-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 16px; }
 .panel-page-header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #e2e8f0; }
