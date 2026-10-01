@@ -21,8 +21,9 @@
     <div class="leyenda-row" *ngIf="embarques.length">
       <span class="leg-item"><span class="rk rk-p">P</span>Proyectado</span>
       <span class="leg-item"><span class="rk rk-r">R</span>Real</span>
-      <span class="leg-item leg-realcell"><span class="leg-cell-sw"></span>Fecha real registrada</span>
-      <span class="leg-item leg-realcell leg-sw-sin-historial"><span class="leg-cell-sw"></span>Sin dato histórico</span>
+      <span class="leg-item leg-realcell"><span class="leg-cell-sw"></span>A tiempo / adelantado</span>
+      <span class="leg-item leg-realcell leg-sw-atrasado"><span class="leg-cell-sw"></span>Atrasado</span>
+      <span class="leg-item leg-realcell leg-sw-espera"><span class="leg-cell-sw"></span>En espera</span>
       <span class="leg-divider"></span>
       <span class="leg-sep">Ordenar por:</span>
       <button class="orden-pill" [class.active]="orden === 'atrasados'" (click)="ordenarPor('atrasados')">Atrasados</button>
@@ -44,6 +45,9 @@
               <span class="auditoria-badge auditoria-neutra" *ngIf="e.atrasados === 0 && e.adelantados === 0">al corriente</span>
             </div>
             <span class="ec-nombre" [title]="e.nombre">{{ e.nombre }}</span>
+            <div class="ec-progress" *ngIf="segmentosProgreso(e).length" [title]="e.hitos.length + ' hitos activos'">
+              <span class="ec-progress-seg" *ngFor="let s of segmentosProgreso(e)" [ngClass]="s.clase" [style.width.%]="s.pct" [title]="s.label"></span>
+            </div>
           </div>
         </div>
 
@@ -51,20 +55,30 @@
 
         <div class="ec-pipeline" *ngIf="e.hitos.length">
           <div *ngFor="let h of e.hitos" class="ec-stage" [ngClass]="stageCls(h)" [title]="h.etiqueta">
-            <span class="ec-stage-seccion" [style.color]="seccionColor(h.seccion)">{{ seccionLabel(h.seccion) }}</span>
+            <span class="ec-stage-seccion" [style.color]="seccionColor(h.seccion)">{{ seccionAbbr(h.seccion) }}</span>
             <span class="ec-stage-lbl">{{ h.etiqueta }}</span>
-            <span class="ec-stage-p">
-              <span class="rk rk-p" title="Proyectado">P</span>{{ fmtD(h.fecha_esperada) }}
-            </span>
-            <span class="ec-stage-r">
-              <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
-            </span>
-            <span class="ec-stage-d" *ngIf="h.dias_diferencia != null" [ngClass]="deltaClass(h.dias_diferencia)">
-              {{ absDif(h.dias_diferencia) }}d
-            </span>
-            <span class="ec-stage-espera" *ngIf="h.estado === 'en_espera'">en espera</span>
-            <span class="ec-stage-espera" *ngIf="h.estado === 'pendiente'">pendiente</span>
-            <span class="ec-stage-espera ec-stage-sh-lbl" *ngIf="h.estado === 'sin_historial'">sin dato histórico</span>
+
+            <ng-container *ngIf="h.estado !== 'pendiente'; else bloquePendiente">
+              <span class="ec-stage-p">
+                <span class="rk rk-p" title="Proyectado">P</span>{{ fmtD(h.fecha_esperada) }}
+              </span>
+              <span class="ec-stage-r">
+                <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
+              </span>
+              <span class="ec-stage-d" *ngIf="h.dias_diferencia != null" [ngClass]="deltaClass(h.dias_diferencia)">
+                <i class="fas" [ngClass]="h.dias_diferencia >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                {{ absDif(h.dias_diferencia) }}d
+              </span>
+              <span class="ec-stage-tag ec-tag-espera" *ngIf="h.estado === 'en_espera'">
+                <i class="fas fa-clock"></i> en espera
+              </span>
+              <span class="ec-stage-tag ec-tag-sin-historial" *ngIf="h.estado === 'sin_historial'">
+                <i class="fas fa-circle-info"></i> sin dato histórico
+              </span>
+            </ng-container>
+            <ng-template #bloquePendiente>
+              <span class="ec-stage-tag ec-tag-pendiente"><i class="fas fa-minus"></i> pendiente</span>
+            </ng-template>
           </div>
         </div>
 

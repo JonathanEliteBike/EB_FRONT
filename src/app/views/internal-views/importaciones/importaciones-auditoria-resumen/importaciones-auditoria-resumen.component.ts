@@ -6,6 +6,12 @@ import { ImportacionesService, AuditoriaResumenEmbarque, HitoAuditoriaResultado 
 
 type OrdenCampo = 'atrasados' | 'adelantados' | 'referencia';
 
+interface Segmento {
+  clase: string;
+  pct: number;
+  label: string;
+}
+
 @Component({
   selector: 'app-importaciones-auditoria-resumen',
   standalone: true,
@@ -19,20 +25,30 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   error = '';
   orden: OrdenCampo = 'atrasados';
 
-  // Color por sección, solo para el pequeño tag encima de cada hito -- el
-  // pipeline NO se agrupa/reordena por sección: los hitos se llenan en el
-  // orden en que se le dieron al usuario (mezclando secciones), así que la
-  // tira respeta ese orden tal cual llega del backend (ORDER BY id).
-  private static readonly SECCION_CFG: Record<string, { label: string; color: string }> = {
-    logistica:   { label: 'Logística',   color: '#60a5fa' },
-    costos:      { label: 'Costos',      color: '#fbbf24' },
-    importacion: { label: 'Importación', color: '#c084fc' },
-    odoo:        { label: 'Odoo/SAE',    color: '#22d3ee' },
-    despacho:    { label: 'Despacho',    color: '#f472b6' },
-    almacen:     { label: 'Almacén',     color: '#a78bfa' },
-    recepcion:   { label: 'Recepción',   color: '#38bdf8' },
-    cierre:      { label: 'Cierre',      color: '#94a3b8' },
+  // Tag corto + color por sección -- solo como referencia visual encima de
+  // cada hito. El pipeline NO se agrupa/reordena por sección: los hitos se
+  // llenan en el orden en que se le dieron al usuario (mezclando
+  // secciones), así que la tira respeta ese orden tal cual llega del
+  // backend (ORDER BY id).
+  private static readonly SECCION_CFG: Record<string, { abbr: string; color: string }> = {
+    logistica:   { abbr: 'LOG', color: '#60a5fa' },
+    costos:      { abbr: 'COS', color: '#fbbf24' },
+    importacion: { abbr: 'IMP', color: '#c084fc' },
+    odoo:        { abbr: 'ODO', color: '#22d3ee' },
+    despacho:    { abbr: 'DES', color: '#f472b6' },
+    almacen:     { abbr: 'ALM', color: '#a78bfa' },
+    recepcion:   { abbr: 'REC', color: '#38bdf8' },
+    cierre:      { abbr: 'CIE', color: '#94a3b8' },
   };
+
+  private static readonly SEGMENTOS_CFG: { key: keyof AuditoriaResumenEmbarque; clase: string; label: string }[] = [
+    { key: 'atrasados',     clase: 'seg-atrasado',      label: 'Atrasados' },
+    { key: 'adelantados',   clase: 'seg-adelantado',    label: 'Adelantados' },
+    { key: 'a_tiempo',      clase: 'seg-a-tiempo',      label: 'A tiempo' },
+    { key: 'en_espera',     clase: 'seg-en-espera',     label: 'En espera' },
+    { key: 'sin_historial', clase: 'seg-sin-historial', label: 'Sin dato histórico' },
+    { key: 'pendientes',    clase: 'seg-pendiente',     label: 'Pendientes' },
+  ];
 
   constructor(private svc: ImportacionesService, private router: Router) {}
 
@@ -65,12 +81,22 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     this.router.navigate(['/importaciones', id]);
   }
 
-  seccionLabel(seccion: string): string {
-    return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.label ?? seccion;
+  seccionAbbr(seccion: string): string {
+    return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.abbr ?? seccion.slice(0, 3).toUpperCase();
   }
 
   seccionColor(seccion: string): string {
     return ImportacionesAuditoriaResumenComponent.SECCION_CFG[seccion]?.color ?? '#64748b';
+  }
+
+  // Franja de progreso del embarque: "qué tan auditado" se ve de un vistazo
+  // antes de leer celda por celda -- el resumen primero, el detalle después.
+  segmentosProgreso(e: AuditoriaResumenEmbarque): Segmento[] {
+    const total = e.hitos?.length || 0;
+    if (!total) return [];
+    return ImportacionesAuditoriaResumenComponent.SEGMENTOS_CFG
+      .map(d => ({ clase: d.clase, pct: (e[d.key] as number) / total * 100, label: `${d.label}: ${e[d.key]}` }))
+      .filter(s => s.pct > 0);
   }
 
   fmtD(s: string | null | undefined): string {
@@ -96,9 +122,20 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     return Math.abs(dias);
   }
 
+  // Estado -> clase de la celda. "pendiente" (nada resoluble todavía, aguas
+  // arriba de la cadena) se trata como ruido y se apaga visualmente; el
+  // resto son estados accionables o con información real que deben
+  // destacar en proporción a su importancia.
   stageCls(h: HitoAuditoriaResultado): string {
-    if (h.fecha_real) return 'stage-real';
-    if (h.estado === 'sin_historial') return 'stage-sin-historial';
-    return '';
+    switch (h.estado) {
+      case 'pendiente':     return 'stage-pendiente';
+      case 'en_espera':     return 'stage-en-espera';
+      case 'sin_historial': return 'stage-sin-historial';
+      case 'atrasado':      return 'stage-atrasado';
+      case 'adelantado':
+      case 'a_tiempo':
+        return 'stage-real';
+      default: return '';
+    }
   }
 }
