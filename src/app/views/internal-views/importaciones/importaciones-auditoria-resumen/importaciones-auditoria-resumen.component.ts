@@ -197,7 +197,14 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   // de captura está incompleto (ver estado "sin_historial") y distorsionaría
   // el promedio. Se recalcula sobre la hora local de quien mira la pantalla.
   get fechaHoyISO(): string {
-    return new Date().toISOString().slice(0, 10);
+    // OJO: toISOString() convierte a UTC -- cerca de medianoche eso puede
+    // devolver el día siguiente (ej. 23:57 en México ya es 05:57 UTC del
+    // día después) y excluir del panorama embarques dados de alta "hoy" en
+    // hora local. Se arma la fecha a mano con los getters locales.
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}-${dd}`;
   }
 
   embarquesDesdeHoy(): AuditoriaResumenEmbarque[] {
