@@ -31,7 +31,7 @@
         <div class="panorama-titulo-wrap">
           <h3>Panorama general</h3>
           <p class="panorama-nota">
-            Solo embarques dados de alta desde hoy ({{ fmtD(fechaHoyISO) }}) en adelante -- los anteriores
+            Solo embarques dados de alta desde {{ fmtD(FECHA_INICIO_PANORAMA) }} en adelante -- los anteriores
             no tienen historial completo de captura y distorsionarían el promedio.
           </p>
         </div>
@@ -51,11 +51,14 @@
       </div>
 
       <p class="panorama-vacio" *ngIf="!embarquesDesdeHoy().length">
-        Todavía no hay embarques dados de alta desde hoy -- este panorama se va a ir llenando conforme se
-        registren embarques nuevos.
+        Todavía no hay embarques dados de alta desde {{ fmtD(FECHA_INICIO_PANORAMA) }} -- este panorama se va a
+        ir llenando conforme se registren embarques nuevos.
       </p>
 
-      <div class="panorama-grupos" *ngIf="embarquesDesdeHoy().length && mostrarDesglose">
+      <p class="panorama-vacio" *ngIf="embarquesDesdeHoy().length && mostrarDesglose && !promediosPorSeccion().length">
+        Los embarques de este periodo todavía no tienen ningún hito calculado -- vuelve a revisar en unos días.
+      </p>
+      <div class="panorama-grupos" *ngIf="embarquesDesdeHoy().length && mostrarDesglose && promediosPorSeccion().length">
         <div class="pn-grupo" *ngFor="let grupo of promediosPorSeccion()">
           <div class="pn-grupo-header">
             <span class="pn-dot" [style.background]="seccionColor(grupo.seccion)"></span>
@@ -141,10 +144,10 @@
                 <i class="fas" [ngClass]="latenciaTotal(e)! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
                 Latencia total: {{ latenciaTotal(e)! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotal(e)!) }}d
               </span>
-              <span class="auditoria-badge auditoria-rojo" *ngIf="e.atrasados > 0">{{ e.atrasados }} atrasado{{ e.atrasados === 1 ? '' : 's' }}</span>
+              <span class="auditoria-badge auditoria-rojo" *ngIf="atrasadosConVencidos(e) > 0">{{ atrasadosConVencidos(e) }} atrasado{{ atrasadosConVencidos(e) === 1 ? '' : 's' }}</span>
               <span class="auditoria-badge auditoria-verde" *ngIf="e.adelantados > 0">{{ e.adelantados }} adelantado{{ e.adelantados === 1 ? '' : 's' }}</span>
               <span class="auditoria-badge auditoria-gris" *ngIf="e.sin_historial > 0">{{ e.sin_historial }} sin dato histórico</span>
-              <span class="auditoria-badge auditoria-neutra" *ngIf="e.atrasados === 0 && e.adelantados === 0">al corriente</span>
+              <span class="auditoria-badge auditoria-neutra" *ngIf="atrasadosConVencidos(e) === 0 && e.adelantados === 0">al corriente</span>
             </div>
             <span class="ec-nombre" [title]="e.nombre">{{ e.nombre }}</span>
             <div class="ec-progress" *ngIf="segmentosProgreso(e).length" [title]="e.hitos.length + ' hitos activos'">
@@ -168,11 +171,11 @@
               <span class="ec-stage-r">
                 <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
               </span>
-              <span class="ec-stage-d" *ngIf="h.dias_diferencia != null" [ngClass]="deltaClass(h.dias_diferencia)">
-                <i class="fas" [ngClass]="h.dias_diferencia >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
-                {{ absDif(h.dias_diferencia) }}d
+              <span class="ec-stage-d" *ngIf="diasConVencido(h) != null" [ngClass]="deltaClass(diasConVencido(h))" [title]="estaVencido(h) ? 'Venció y sigue sin llenarse' : ''">
+                <i class="fas" [ngClass]="diasConVencido(h)! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                {{ absDif(diasConVencido(h)!) }}d
               </span>
-              <span class="ec-stage-tag ec-tag-espera" *ngIf="h.estado === 'en_espera'">
+              <span class="ec-stage-tag ec-tag-espera" *ngIf="h.estado === 'en_espera' && !estaVencido(h)">
                 <i class="fas fa-clock"></i> en espera
               </span>
               <span class="ec-stage-tag ec-tag-sin-historial" *ngIf="h.estado === 'sin_historial'">

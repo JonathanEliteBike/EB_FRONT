@@ -92,6 +92,10 @@ export class ImportacionesHitosAuditoriaComponent implements OnInit {
     this.form = {
       seccion: h.seccion, orden_hito: h.orden_hito, etiqueta: h.etiqueta,
       campo_dato: h.campo_dato, campo_ancla: h.campo_ancla, dias_esperados: h.dias_esperados,
+      // Sin esto, el backend recibe el payload sin "activo" y lo trata como
+      // ausente -> True por default, reactivando en silencio un hito que
+      // estuviera desactivado.
+      activo: h.activo,
     };
     this.errorForm = '';
     this.modalAbierto = true;

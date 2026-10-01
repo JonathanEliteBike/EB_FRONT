@@ -1400,13 +1400,19 @@
               <tr *ngFor="let h of grupo.hitos">
                 <td>{{ h.etiqueta }}</td>
                 <td>{{ h.fecha_esperada || 'Pendiente' }}</td>
-                <td>{{ h.fecha_real || 'Sin dato histórico' }}</td>
+                <td>
+                  <span *ngIf="h.fecha_real">{{ h.fecha_real }}</span>
+                  <span *ngIf="!h.fecha_real && h.estado === 'sin_historial'" class="auditoria-vacio-cell" title="El campo ya tenía valor antes de existir esta auditoría -- no se sabe cuándo se llenó">Sin dato histórico</span>
+                  <span *ngIf="!h.fecha_real && h.estado === 'en_espera'" class="auditoria-vacio-cell">Aún sin capturar</span>
+                  <span *ngIf="!h.fecha_real && h.estado === 'pendiente'" class="auditoria-vacio-cell">—</span>
+                </td>
                 <td>
                   <span *ngIf="h.estado === 'adelantado'" class="auditoria-badge auditoria-verde">+{{ h.dias_diferencia }} días</span>
                   <span *ngIf="h.estado === 'atrasado'" class="auditoria-badge auditoria-rojo">{{ h.dias_diferencia }} días</span>
                   <span *ngIf="h.estado === 'a_tiempo'" class="auditoria-badge auditoria-gris">A tiempo</span>
                   <span *ngIf="h.estado === 'pendiente'" class="auditoria-badge auditoria-gris">Pendiente</span>
                   <span *ngIf="h.estado === 'en_espera'" class="auditoria-badge auditoria-gris">En espera</span>
+                  <span *ngIf="h.estado === 'sin_historial'" class="auditoria-badge auditoria-gris">Sin dato histórico</span>
                 </td>
               </tr>
             </tbody>

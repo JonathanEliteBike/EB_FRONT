@@ -435,7 +435,14 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
           applied = true;
         }
       }
-      if (applied && draft.seccion) this.seccionActiva = draft.seccion;
+      if (applied && draft.seccion) {
+        this.seccionActiva = draft.seccion;
+        // seccionActiva se pone directo (no vía cambiarSeccion()), así que
+        // si el borrador restaura justo la pestaña de auditoría, hay que
+        // disparar la carga a mano o se queda vacía ("No hay hitos
+        // configurados" por error, no porque de verdad no haya).
+        if (draft.seccion === 'auditoria') this.cargarAuditoria();
+      }
       if (applied) {
         this._recalcularCamposLocales();
         // Persistir el borrador recuperado a columnas reales para que sea
@@ -666,7 +673,10 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   cambiarSeccion(s: Seccion): void {
-    if (s === 'auditoria' && !this.auditoria.length) this.cargarAuditoria();
+    // Siempre recargar (no solo si auditoria.length === 0): si el usuario
+    // llenó un campo y volvió a esta pestaña, debe ver el estado actual,
+    // no el que tenía la primera vez que la abrió.
+    if (s === 'auditoria') this.cargarAuditoria();
     this.validacionError = [];
     this.camposConError.clear();
     this.seccionActiva = s;

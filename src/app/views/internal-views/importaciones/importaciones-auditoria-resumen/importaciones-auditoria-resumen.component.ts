@@ -142,10 +142,10 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     if (this.estadosFiltro.size > 0) {
       const coincideAlguno = Array.from(this.estadosFiltro).some(f => {
         switch (f) {
-          case 'atrasados':     return e.atrasados > 0;
+          case 'atrasados':     return this.atrasadosConVencidos(e) > 0;
           case 'adelantados':   return e.adelantados > 0;
           case 'sin_historial': return e.sin_historial > 0;
-          case 'al_corriente':  return e.atrasados === 0 && e.adelantados === 0;
+          case 'al_corriente':  return this.atrasadosConVencidos(e) === 0 && e.adelantados === 0;
         }
       });
       if (!coincideAlguno) return false;
@@ -166,6 +166,9 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     const filtrados = this.embarques.filter(e => this._pasaFiltros(e));
     if (campo === 'referencia') {
       return filtrados.sort((a, b) => a.referencia.localeCompare(b.referencia));
+    }
+    if (campo === 'atrasados') {
+      return filtrados.sort((a, b) => this.atrasadosConVencidos(b) - this.atrasadosConVencidos(a));
     }
     return filtrados.sort((a, b) => b[campo] - a[campo]);
   }
@@ -198,23 +201,59 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   }
 
   // ── Panorama general: agregado entre TODOS los embarques dados de alta
-  // desde hoy en adelante -- los anteriores no entran porque su historial
-  // de captura está incompleto (ver estado "sin_historial") y distorsionaría
-  // el promedio. Se recalcula sobre la hora local de quien mira la pantalla.
-  get fechaHoyISO(): string {
-    // OJO: toISOString() convierte a UTC -- cerca de medianoche eso puede
-    // devolver el día siguiente (ej. 23:57 en México ya es 05:57 UTC del
-    // día después) y excluir del panorama embarques dados de alta "hoy" en
-    // hora local. Se arma la fecha a mano con los getters locales.
+  // desde el arranque de esta auditoría en adelante -- los anteriores no
+  // entran porque su historial de captura está incompleto (ver estado
+  // "sin_historial") y distorsionaría el promedio.
+  //
+  // OJO: es una fecha de corte FIJA (el día en que esto se desplegó), NO
+  // "hoy" recalculado en cada carga de la página. Con "hoy" literal el
+  // panorama quedaría casi siempre vacío en producción: un embarque recién
+  // dado de alta ESE MISMO día casi nunca tiene todavía ningún hito con
+  // dias_diferencia calculado (eso toma días), así que el filtro se
+  // vaciaría y se volvería a llenar cada 24h en vez de ir acumulando.
+  readonly FECHA_INICIO_PANORAMA = '2026-10-01';
+
+  embarquesDesdeHoy(): AuditoriaResumenEmbarque[] {
+    return this.embarques.filter(e => e.creado_en >= this.FECHA_INICIO_PANORAMA);
+  }
+
+  // "Hoy" de verdad (no confundir con FECHA_INICIO_PANORAMA, que es un
+  // corte fijo) -- se usa para saber si un hito en_espera ya venció.
+  // Mismos getters locales que ya se usaron para el fix de zona horaria:
+  // toISOString() convierte a UTC y cerca de medianoche en México da el
+  // día siguiente.
+  get hoyISO(): string {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
     return `${d.getFullYear()}-${mm}-${dd}`;
   }
 
-  embarquesDesdeHoy(): AuditoriaResumenEmbarque[] {
-    const hoy = this.fechaHoyISO;
-    return this.embarques.filter(e => e.creado_en >= hoy);
+  // Un hito "en_espera" (el campo sigue vacío) cuya fecha esperada ya pasó
+  // SÍ es un atraso real -- el backend no lo puede saber por sí solo
+  // porque "¿ya venció?" depende del día en que se mira la pantalla, no
+  // de datos fijos del embarque, así que se resuelve aquí.
+  estaVencido(h: HitoAuditoriaResultado): boolean {
+    return h.estado === 'en_espera' && !!h.fecha_esperada && h.fecha_esperada < this.hoyISO;
+  }
+
+  // dias_diferencia real cuando existe; si no, y el hito está vencido, los
+  // días de atraso acumulados hasta hoy (negativo, mismo signo que
+  // dias_diferencia). null en cualquier otro caso (pendiente, en_espera
+  // no vencido, sin_historial).
+  diasConVencido(h: HitoAuditoriaResultado): number | null {
+    if (h.dias_diferencia != null) return h.dias_diferencia;
+    if (!this.estaVencido(h)) return null;
+    const esperada = new Date(h.fecha_esperada + 'T00:00:00');
+    const hoy = new Date(this.hoyISO + 'T00:00:00');
+    return Math.round((esperada.getTime() - hoy.getTime()) / 86400000);
+  }
+
+  // "Atrasados" del embarque, contando también los en_espera vencidos que
+  // el backend no incluye en su contador (no sabe qué día es "hoy").
+  atrasadosConVencidos(e: AuditoriaResumenEmbarque): number {
+    const vencidos = (e.hitos || []).filter(h => this.estaVencido(h)).length;
+    return e.atrasados + vencidos;
   }
 
   // Latencia TOTAL del panorama: suma (no promedio) del balance neto de
@@ -222,7 +261,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   // adelanto o atraso la operación completa".
   latenciaTotalGeneral(): number | null {
     const valores = this.embarquesDesdeHoy()
-      .flatMap(e => (e.hitos || []).map(h => h.dias_diferencia))
+      .flatMap(e => (e.hitos || []).map(h => this.diasConVencido(h)))
       .filter((d): d is number => d != null);
     if (!valores.length) return null;
     return valores.reduce((a, b) => a + b, 0);
@@ -238,9 +277,10 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     const acumulador = new Map<number, { seccion: string; etiqueta: string; suma: number; n: number }>();
     for (const e of this.embarquesDesdeHoy()) {
       for (const h of e.hitos || []) {
-        if (h.dias_diferencia == null) continue;
+        const dias = this.diasConVencido(h);
+        if (dias == null) continue;
         const actual = acumulador.get(h.id) ?? { seccion: h.seccion, etiqueta: h.etiqueta, suma: 0, n: 0 };
-        actual.suma += h.dias_diferencia;
+        actual.suma += dias;
         actual.n += 1;
         acumulador.set(h.id, actual);
       }
@@ -275,7 +315,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   // de otro -- es un balance, no un acumulado de solo atrasos.
   latenciaTotal(e: AuditoriaResumenEmbarque): number | null {
     const valores = (e.hitos || [])
-      .map(h => h.dias_diferencia)
+      .map(h => this.diasConVencido(h))
       .filter((d): d is number => d != null);
     if (!valores.length) return null;
     return valores.reduce((a, b) => a + b, 0);
@@ -309,6 +349,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   // resto son estados accionables o con información real que deben
   // destacar en proporción a su importancia.
   stageCls(h: HitoAuditoriaResultado): string {
+    if (this.estaVencido(h)) return 'stage-atrasado';
     switch (h.estado) {
       case 'pendiente':     return 'stage-pendiente';
       case 'en_espera':     return 'stage-en-espera';
