@@ -270,7 +270,10 @@
               {{ t.estatus }}
             </span>
           </div>
-          <div class="tc-distribuidor">{{ t.distribuidor }}</div>
+          <div class="tc-distribuidor">
+            {{ t.distribuidor }}
+            <span *ngIf="t.clave_distribuidor" class="clave-badge" title="Clave del distribuidor">{{ t.clave_distribuidor }}</span>
+          </div>
           <div class="tc-meta">
             <span class="tc-marca">{{ t.marca }}</span>
             <span class="tc-dot">·</span>
@@ -331,7 +334,13 @@
               <div class="dp-section">
                 <h4 class="dp-section-title">Información del Ticket</h4>
                 <div class="dp-grid">
-                  <div class="dp-field"><span class="dp-key">Distribuidor</span><span class="dp-val">{{ selected.distribuidor }}</span></div>
+                  <div class="dp-field">
+                    <span class="dp-key">Distribuidor</span>
+                    <span class="dp-val">
+                      {{ selected.distribuidor }}
+                      <span *ngIf="selected.clave_distribuidor" class="clave-badge" title="Clave del distribuidor">{{ selected.clave_distribuidor }}</span>
+                    </span>
+                  </div>
                   <div class="dp-field"><span class="dp-key">Contacto</span><span class="dp-val">{{ selected.contacto }}</span></div>
                   <div class="dp-field"><span class="dp-key">Rol</span><span class="dp-val">{{ selected.puesto }}</span></div>
                   <div class="dp-field"><span class="dp-key">Email</span><span class="dp-val">{{ selected.datos?.['email'] || selected.email }}</span></div>

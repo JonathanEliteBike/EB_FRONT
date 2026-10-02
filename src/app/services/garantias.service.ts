@@ -64,6 +64,7 @@ export interface GarantiaFormulario {
   folio: string;
   email: string;
   distribuidor: string;
+  clave_distribuidor?: string | null;
   contacto: string;
   puesto: string;
   marca: string;

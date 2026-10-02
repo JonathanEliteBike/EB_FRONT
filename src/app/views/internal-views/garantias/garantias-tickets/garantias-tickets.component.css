@@ -429,6 +429,15 @@
   text-transform: uppercase; letter-spacing: .4px;
 }
 .tc-distribuidor { font-size: 0.9rem; font-weight: 600; color: var(--t1); margin-bottom: 4px; }
+.clave-badge {
+  display: inline-block; margin-left: 6px;
+  font-size: 0.68rem; font-weight: 700; font-family: monospace;
+  padding: 1px 7px; border-radius: 10px;
+  background: var(--orange-g); color: var(--orange);
+  border: 1px solid var(--orange);
+  letter-spacing: .3px;
+  vertical-align: middle;
+}
 .tc-meta { font-size: 0.78rem; color: var(--t3); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .tc-marca { font-weight: 700; color: var(--t2); }
 .tc-dot { opacity: .4; }
