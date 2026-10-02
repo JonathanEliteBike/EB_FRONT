@@ -41,7 +41,9 @@ export class PrevioService {
 
   actualizarPrevio(todosLosDatos: any[]) {
     return this.http.post(`${this.apiUrl}/actualizar_previo`, { datos: todosLosDatos }).pipe(
-      tap(() => this.previoCache.next(todosLosDatos)) // Actualizamos caché localmente
+      // El backend normaliza metas MY27 y recalcula avances. No debemos cachear
+      // el payload enviado porque puede diferir de la versión oficial guardada.
+      tap(() => this.previoCache.next(null))
     );
   }
 
