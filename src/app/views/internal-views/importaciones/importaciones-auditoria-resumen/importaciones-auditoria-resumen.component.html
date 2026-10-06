@@ -36,12 +36,51 @@
           </p>
         </div>
         <div class="panorama-header-der">
-          <div class="kpi-lat" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
-            <span class="kpi-lat-lbl">Latencia total</span>
-            <span class="kpi-lat-val">
-              <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
-              {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
-            </span>
+          <div class="panorama-kpis">
+            <div class="kpi-lat" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
+              <span class="kpi-lat-lbl">Latencia total</span>
+              <span class="kpi-lat-val">
+                <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
+              </span>
+            </div>
+            <div class="cump-kpi" *ngIf="cumplimientoGeneral() as cg" [ngClass]="cumplimientoClass(cg.pct)" tabindex="0">
+              <div class="cump-kpi-ring">
+                <svg viewBox="0 0 36 36" class="cump-ring-svg">
+                  <path class="cump-ring-track"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="cump-ring-fill"
+                        [attr.stroke-dasharray]="cg.pct + ' 100'"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <span class="cump-kpi-pct">{{ cg.pct }}<small>%</small></span>
+              </div>
+              <div class="cump-kpi-txt">
+                <span class="cump-kpi-lbl">Cumplimiento general</span>
+                <span class="cump-kpi-frac">{{ cg.enTiempo }} de {{ cg.total }} hitos en tiempo</span>
+              </div>
+
+              <div class="cump-kpi-pop" role="tooltip">
+                <div class="cump-kpi-pop-card">
+                  <div class="cump-kpi-pop-head">
+                    <span>Embarques en el cálculo</span>
+                    <span class="cump-kpi-pop-count">{{ cumplimientoParticipantes().length }}</span>
+                  </div>
+                  <button type="button" class="cump-kpi-pop-row" *ngFor="let p of cumplimientoParticipantes()" (click)="irATarjeta(p.id)">
+                    <span class="cump-kpi-pop-line">
+                      <span class="cump-kpi-pop-ref">{{ p.referencia }}</span>
+                      <span class="cump-kpi-pop-val" [ngClass]="cumplimientoClass(p.pct)">
+                        {{ p.enTiempo }}/{{ p.total }}
+                        <span class="cump-kpi-pop-pct">{{ p.pct }}%</span>
+                      </span>
+                    </span>
+                    <span class="cump-kpi-pop-bar">
+                      <span class="cump-kpi-pop-fill" [ngClass]="cumplimientoClass(p.pct)" [style.width.%]="p.pct"></span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <button class="btn-toggle-desglose" *ngIf="embarquesDesdeHoy().length" (click)="mostrarDesglose = !mostrarDesglose">
             {{ mostrarDesglose ? 'Ocultar desglose' : 'Ver desglose por sección' }}
@@ -98,6 +137,38 @@
         <option value="">Todas las secciones</option>
         <option *ngFor="let s of seccionesFiltro" [value]="s.value">{{ s.label }}</option>
       </select>
+      <div class="mes-picker">
+        <button type="button" class="mes-picker-trigger" (click)="toggleMesPicker()" [class.abierto]="mesPickerAbierto"
+                aria-label="Filtrar por mes de alta">
+          <i class="fas fa-calendar-days"></i>
+          <span>{{ mesFiltroLabel }}</span>
+          <i class="fas fa-chevron-down mes-picker-chev"></i>
+        </button>
+
+        <ng-container *ngIf="mesPickerAbierto">
+          <div class="mes-picker-backdrop" (click)="cerrarMesPicker()"></div>
+          <div class="mes-picker-panel" role="dialog" aria-label="Elegir mes">
+            <div class="mes-picker-anio">
+              <button type="button" class="mes-picker-nav" (click)="anioVista = anioVista - 1" aria-label="Año anterior">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="mes-picker-anio-val">{{ anioVista }}</span>
+              <button type="button" class="mes-picker-nav" (click)="anioVista = anioVista + 1" aria-label="Año siguiente">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+            <div class="mes-picker-grid">
+              <button type="button" class="mes-picker-celda" *ngFor="let m of mesesAbr; let i = index"
+                      [class.seleccionado]="mesEsSeleccionado(i)"
+                      [class.vacio]="!mesTieneEmbarques(i)"
+                      (click)="elegirMes(i)">{{ m }}</button>
+            </div>
+            <div class="mes-picker-pie">
+              <button type="button" class="mes-picker-todos" (click)="quitarMesFiltro()">Todos los meses</button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
       <div class="filtro-fechas-picker">
         <app-date-picker
           mode="range"
@@ -132,7 +203,7 @@
     </div>
 
     <div class="cards-wrap" *ngIf="embarquesVisibles().length">
-      <div *ngFor="let e of embarquesVisibles(); let i = index" class="emb-card" [style.--stagger]="i"
+      <div *ngFor="let e of embarquesVisibles(); let i = index" class="emb-card" [id]="'emb-card-' + e.id" [style.--stagger]="i"
            (click)="irDetalle(e.id)">
 
         <div class="ec-top">

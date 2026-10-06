@@ -80,6 +80,97 @@
 .kpi-lat.delta-ok   { background: rgba(34,197,94,.1);  color: #4ade80; }
 .kpi-lat.delta-late { background: rgba(239,68,68,.12); color: #f87171; }
 
+.panorama-kpis { display: flex; gap: 10px; align-items: stretch; }
+
+/* Cumplimiento general: mismo anillo que las tarjetas, sin caja de fondo */
+.cump-kpi {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 4px 6px 4px 4px;
+  outline: none;
+}
+
+/* Panel de embarques participantes. Nace desde su disparador (origen
+   arriba-derecha) con escala 0.96 + opacidad -- nunca desde 0. */
+.cump-kpi-pop {
+  position: absolute; top: 100%; right: 0; z-index: 20;
+  padding-top: 10px; /* puente invisible: el cursor no pierde el hover al bajar */
+  opacity: 0; pointer-events: none;
+  transform: scale(0.96); transform-origin: top right;
+  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+}
+.cump-kpi:focus-within .cump-kpi-pop { opacity: 1; transform: scale(1); pointer-events: auto; }
+@media (hover: hover) and (pointer: fine) {
+  .cump-kpi:hover .cump-kpi-pop { opacity: 1; transform: scale(1); pointer-events: auto; }
+}
+.cump-kpi-pop-card {
+  width: 272px; max-height: 340px; overflow-y: auto;
+  background: #0f1520; border: 1px solid rgba(148,163,184,.14); border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5); padding: 10px;
+}
+.cump-kpi-pop-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  color: #64748b; padding: 2px 6px 10px;
+}
+.cump-kpi-pop-count {
+  font-variant-numeric: tabular-nums; color: #cbd5e1;
+  background: rgba(148,163,184,.12); border-radius: 999px; padding: 1px 7px;
+}
+.cump-kpi-pop-row {
+  width: 100%; display: flex; flex-direction: column; gap: 6px;
+  background: none; border: none; border-radius: 8px; padding: 8px 8px 9px;
+  cursor: pointer; text-align: left;
+  transition: background-color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.cump-kpi-pop-row:hover { background: rgba(56,189,248,.08); }
+.cump-kpi-pop-row:active { transform: scale(0.98); }
+.cump-kpi-pop-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cump-kpi-pop-ref {
+  font-size: .78rem; font-weight: 600; color: #e2e8f0; letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+}
+.cump-kpi-pop-val {
+  font-size: .72rem; font-weight: 700; color: #94a3b8; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cump-kpi-pop-val.cump-alto  { color: #4ade80; }
+.cump-kpi-pop-val.cump-medio { color: #fbbf24; }
+.cump-kpi-pop-val.cump-bajo  { color: #f87171; }
+.cump-kpi-pop-pct { margin-left: 6px; opacity: .85; }
+.cump-kpi-pop-bar {
+  display: block; height: 4px; border-radius: 999px; background: rgba(148,163,184,.14); overflow: hidden;
+}
+.cump-kpi-pop-fill {
+  display: block; height: 100%; border-radius: 999px;
+  transition: width 420ms var(--ease-out);
+}
+.cump-kpi-pop-fill.cump-alto  { background: #4ade80; }
+.cump-kpi-pop-fill.cump-medio { background: #fbbf24; }
+.cump-kpi-pop-fill.cump-bajo  { background: #f87171; }
+@media (prefers-reduced-motion: reduce) {
+  .cump-kpi-pop, .cump-kpi-pop-fill, .cump-kpi-pop-row { transition: opacity 120ms linear; transform: none !important; }
+}
+.cump-kpi-ring { position: relative; width: 52px; height: 52px; flex: 0 0 auto; }
+.cump-kpi-ring .cump-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.cump-kpi .cump-ring-track { stroke-width: 3; }
+.cump-kpi .cump-ring-fill  { stroke-width: 3; }
+.cump-kpi.cump-alto  .cump-ring-fill { stroke: #4ade80; }
+.cump-kpi.cump-medio .cump-ring-fill { stroke: #fbbf24; }
+.cump-kpi.cump-bajo  .cump-ring-fill { stroke: #f87171; }
+.cump-kpi-pct {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #e2e8f0;
+}
+.cump-kpi-pct small { font-size: 9px; margin-left: 1px; }
+.cump-kpi.cump-alto  .cump-kpi-pct { color: #4ade80; }
+.cump-kpi.cump-medio .cump-kpi-pct { color: #fbbf24; }
+.cump-kpi.cump-bajo  .cump-kpi-pct { color: #f87171; }
+.cump-kpi-txt { display: flex; flex-direction: column; gap: 2px; }
+.cump-kpi-lbl { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; }
+.cump-kpi-frac { font-size: .75rem; font-weight: 600; color: #cbd5e1; }
+
 .panorama-header-der { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
 
 .btn-toggle-desglose {
@@ -177,6 +268,64 @@
 }
 .filtro-select:hover { border-color: #3d4a5f; }
 .filtro-select:focus { outline: none; border-color: #3b82f6; }
+
+/* Selector de mes: rejilla de 12 meses con año, acento azul (no naranja) */
+.mes-picker { position: relative; flex-shrink: 0; }
+.mes-picker-trigger {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #12161f; color: #cbd5e1; border: 1px solid #2d3748; border-radius: 8px;
+  padding: 6px 10px; font-size: 12.5px; font-weight: 500; cursor: pointer; min-width: 150px;
+  transition: border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.mes-picker-trigger:hover { border-color: #3d4a5f; }
+.mes-picker-trigger:active { transform: scale(0.98); }
+.mes-picker-trigger.abierto,
+.mes-picker-trigger:focus-visible { outline: none; border-color: #3b82f6; }
+.mes-picker-trigger i.fa-calendar-days { color: #60a5fa; font-size: 12px; }
+.mes-picker-chev { margin-left: auto; font-size: 10px; opacity: .6; }
+
+.mes-picker-backdrop { position: fixed; inset: 0; z-index: 30; }
+.mes-picker-panel {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 31;
+  width: 248px; padding: 12px;
+  background: #0f1520; border: 1px solid #2d3748; border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  transform-origin: top left;
+  animation: mes-panel-in 160ms var(--ease-out);
+}
+@keyframes mes-panel-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.mes-picker-anio { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.mes-picker-anio-val { font-size: 14px; font-weight: 700; color: #e2e8f0; font-variant-numeric: tabular-nums; }
+.mes-picker-nav {
+  width: 28px; height: 28px; border-radius: 8px; border: none; background: none;
+  color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: background-color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.mes-picker-nav:hover { background: rgba(59,130,246,.12); color: #e2e8f0; }
+.mes-picker-nav:active { transform: scale(0.94); }
+.mes-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.mes-picker-celda {
+  height: 36px; border: none; border-radius: 8px; background: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: #cbd5e1;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.mes-picker-celda:hover { background: rgba(59,130,246,.12); color: #e2e8f0; }
+.mes-picker-celda:active { transform: scale(0.95); }
+.mes-picker-celda.vacio { color: #475569; }
+.mes-picker-celda.seleccionado,
+.mes-picker-celda.seleccionado:hover { background: #3b82f6; color: #ffffff; }
+.mes-picker-pie { margin-top: 10px; padding-top: 10px; border-top: 1px solid #1e2535; text-align: center; }
+.mes-picker-todos {
+  background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; color: #60a5fa;
+  padding: 4px 8px; border-radius: 6px; transition: background-color 120ms var(--ease-out);
+}
+.mes-picker-todos:hover { background: rgba(59,130,246,.12); }
+@media (prefers-reduced-motion: reduce) {
+  .mes-picker-panel { animation: none; }
+}
 
 .filtro-fechas-picker { width: 240px; flex-shrink: 0; }
 .filtro-fechas-picker app-date-picker { display: block; }
@@ -300,6 +449,10 @@
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
 }
 .emb-card:active { transform: scale(0.99); }
+.emb-card.emb-card-resaltada {
+  box-shadow: 0 0 0 2px rgba(56,189,248,.55);
+  transition: box-shadow 300ms var(--ease-out);
+}
 
 /* Solo opacity en la entrada -- si el keyframe tocara transform, su valor
    final (forwards) le ganaria en cascada a la transition de hover/active

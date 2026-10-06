@@ -63,6 +63,8 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
   seccionFiltro = '';
   fechaDesde = '';
   fechaHasta = '';
+  // 'AAAA-MM' de la fecha de alta; vacío = todos los meses
+  mesFiltro = '';
 
   // Tag corto + color por sección -- solo como referencia visual encima de
   // cada hito. El pipeline NO se agrupa/reordena por sección: los hitos se
@@ -124,7 +126,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
 
   get hayFiltrosActivos(): boolean {
     return !!this.busqueda.trim() || this.estadosFiltro.size > 0 || !!this.seccionFiltro
-      || !!this.fechaDesde || !!this.fechaHasta;
+      || !!this.fechaDesde || !!this.fechaHasta || !!this.mesFiltro;
   }
 
   limpiarFiltros(): void {
@@ -133,6 +135,48 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     this.seccionFiltro = '';
     this.fechaDesde = '';
     this.fechaHasta = '';
+    this.mesFiltro = '';
+  }
+
+  readonly mesesAbr = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  mesPickerAbierto = false;
+  anioVista = new Date().getFullYear();
+
+  get mesFiltroLabel(): string {
+    if (!this.mesFiltro) return 'Todos los meses';
+    const [anio, mes] = this.mesFiltro.split('-').map(Number);
+    return `${this.mesesAbr[mes - 1]} ${anio}`;
+  }
+
+  toggleMesPicker(): void {
+    if (!this.mesPickerAbierto && this.mesFiltro) {
+      this.anioVista = Number(this.mesFiltro.slice(0, 4));
+    }
+    this.mesPickerAbierto = !this.mesPickerAbierto;
+  }
+
+  cerrarMesPicker(): void {
+    this.mesPickerAbierto = false;
+  }
+
+  elegirMes(indice: number): void {
+    this.mesFiltro = `${this.anioVista}-${String(indice + 1).padStart(2, '0')}`;
+    this.mesPickerAbierto = false;
+  }
+
+  quitarMesFiltro(): void {
+    this.mesFiltro = '';
+    this.mesPickerAbierto = false;
+  }
+
+  mesEsSeleccionado(indice: number): boolean {
+    return this.mesFiltro === `${this.anioVista}-${String(indice + 1).padStart(2, '0')}`;
+  }
+
+  // Un mes sin embarques sigue siendo elegible; solo se atenúa para orientar.
+  mesTieneEmbarques(indice: number): boolean {
+    const prefijo = `${this.anioVista}-${String(indice + 1).padStart(2, '0')}`;
+    return this.embarques.some(e => e.creado_en.startsWith(prefijo));
   }
 
   private _pasaFiltros(e: AuditoriaResumenEmbarque): boolean {
@@ -157,6 +201,7 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
       );
       if (!tieneProblemaEnSeccion) return false;
     }
+    if (this.mesFiltro && !e.creado_en.startsWith(this.mesFiltro)) return false;
     if (this.fechaDesde && e.creado_en < this.fechaDesde) return false;
     if (this.fechaHasta && e.creado_en > this.fechaHasta) return false;
     return true;
@@ -172,6 +217,16 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
       return filtrados.sort((a, b) => this.atrasadosConVencidos(b) - this.atrasadosConVencidos(a));
     }
     return filtrados.sort((a, b) => b[campo] - a[campo]);
+  }
+
+  // Baja hasta la tarjeta del embarque dentro de la página (sin abrir el
+  // detalle). Si el embarque está oculto por algún filtro, no hay tarjeta.
+  irATarjeta(id: number): void {
+    const tarjeta = document.getElementById(`emb-card-${id}`);
+    if (!tarjeta) return;
+    tarjeta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tarjeta.classList.add('emb-card-resaltada');
+    setTimeout(() => tarjeta.classList.remove('emb-card-resaltada'), 1400);
   }
 
   irDetalle(id: number): void {
@@ -273,6 +328,27 @@ export class ImportacionesAuditoriaResumenComponent implements OnInit {
     const total = e.hitos?.length || 0;
     if (!total) return null;
     return Math.round((this.enTiempo(e) / total) * 100);
+  }
+
+  // Cumplimiento agregado: hitos en tiempo sobre el total de hitos de todos los
+  // embarques con porcentaje (los "no aplica" no tienen veredicto, se excluyen).
+  cumplimientoGeneral(): { enTiempo: number; total: number; pct: number } | null {
+    const elegibles = this.embarques.filter(e => e.no_aplica === 0 && (e.hitos?.length || 0) > 0);
+    const total = elegibles.reduce((s, e) => s + e.hitos.length, 0);
+    if (!total) return null;
+    const enTiempo = elegibles.reduce((s, e) => s + this.enTiempo(e), 0);
+    return { enTiempo, total, pct: Math.round((enTiempo / total) * 100) };
+  }
+
+  cumplimientoParticipantes(): { id: number; referencia: string; enTiempo: number; total: number; pct: number }[] {
+    return this.embarques
+      .filter(e => e.no_aplica === 0 && (e.hitos?.length || 0) > 0)
+      .map(e => {
+        const enTiempo = this.enTiempo(e);
+        const total = e.hitos.length;
+        return { id: e.id, referencia: e.referencia, enTiempo, total, pct: Math.round((enTiempo / total) * 100) };
+      })
+      .sort((a, b) => b.pct - a.pct || a.referencia.localeCompare(b.referencia));
   }
 
   cumplimientoClass(pct: number | null): string {
