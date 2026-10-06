@@ -10,19 +10,52 @@ import { AuthService } from '../../../services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 const DOC_LABELS: Record<string, string> = {
-  bici_doc1: 'Fotografía del Daño',
-  bici_doc2: 'Fotografía del Número de Serie',
-  bici_doc3: 'Fotografía del Producto Completo',
-  bici_doc4: 'Factura de Compra y Factura de Venta',
-  bici_doc5: 'Hojas del Historial de Servicio',
-  scott_doc1: 'Fotografía del Daño',
-  scott_doc2: 'Fotografía del Año de Fabricación / Número de Serie',
-  scott_doc3: 'Fotografía del Producto',
-  scott_doc4: 'Factura de Compra y Factura de Venta',
-  vittoria_doc1: 'Fotografía del Daño',
-  vittoria_doc2: 'Fotografía del Año de Fabricación / Número de Serie',
-  vittoria_doc3: 'Fotografía del Producto',
-  vittoria_doc4: 'Factura de Compra y Factura de Venta',
+  // Bicicletas (Scott / Megamo)
+  bici_doc1:  'Fotografía del Daño',
+  bici_doc2:  'Fotografía del Número de Serie',
+  bici_doc3:  'Fotografía del Producto Completo',
+  bici_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  bici_doc4a: 'Factura de Compra',
+  bici_doc4b: 'Factura de Venta',
+  bici_doc5:  'Hojas del Historial de Servicio',
+  // Scott no-bicicletas (cascos, zapatos, protecciones, componentes)
+  scott_doc1:  'Fotografía del Daño',
+  scott_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  scott_doc3:  'Fotografía del Producto',
+  scott_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  scott_doc4a: 'Factura de Compra',
+  scott_doc4b: 'Factura de Venta',
+  // Vittoria (llantas, zapatos, accesorios)
+  vittoria_doc1:  'Fotografía del Daño',
+  vittoria_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  vittoria_doc3:  'Fotografía del Producto',
+  vittoria_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  vittoria_doc4a: 'Factura de Compra',
+  vittoria_doc4b: 'Factura de Venta',
+  // Syncros Manubrios
+  manubrio_doc1:  'Fotografía del Daño',
+  manubrio_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  manubrio_doc3:  'Fotografía del Producto',
+  manubrio_doc4a: 'Factura de Compra',
+  manubrio_doc4b: 'Factura de Venta',
+  // Syncros Asientos
+  asiento_doc1:  'Fotografía del Daño',
+  asiento_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  asiento_doc3:  'Fotografía del Producto',
+  asiento_doc4a: 'Factura de Compra',
+  asiento_doc4b: 'Factura de Venta',
+  // Syncros Poste
+  poste_doc1:  'Fotografía del Daño',
+  poste_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  poste_doc3:  'Fotografía del Producto',
+  poste_doc4a: 'Factura de Compra',
+  poste_doc4b: 'Factura de Venta',
+  // Syncros Ruedos/Rines
+  rin_doc1:  'Fotografía del Daño',
+  rin_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  rin_doc3:  'Fotografía del Producto',
+  rin_doc4a: 'Factura de Compra',
+  rin_doc4b: 'Factura de Venta',
 };
 
 const COLOR_ESTATUS: Record<string, string> = {
@@ -313,7 +346,7 @@ export class GarantiasUsuarioComponent implements OnInit, OnDestroy {
   get documentosTicket(): Array<{ key: string; nombre: string; legible: string; label: string }> {
     if (!this.ticketSeleccionado?.datos) return [];
     return Object.entries(this.ticketSeleccionado.datos)
-      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc)\d+$/.test(k) && v)
+      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc|rin_doc|manubrio_doc|asiento_doc|poste_doc)\d+[ab]?$/.test(k) && v)
       .map(([k, v]) => ({
         key: k,
         nombre: String(v),

@@ -15,6 +15,11 @@ import { environment } from '../../../../../environments/environment';
 
 const ESTATUSES = ['Todos', 'Enviado', 'En revisión', 'Aprobado', 'Rechazado', 'Cerrado'];
 
+/** Fecha de hoy (YYYY-MM-DD) en hora de CDMX, no en UTC. */
+function hoyCdmx(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
+}
+
 const COLOR_ESTATUS: Record<string, string> = {
   enviado:      '#f0ad4e',
   'en revisión':'#5c9bd6',
@@ -220,7 +225,7 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   editFechaCreacion    = '';
 
   get hoy(): string {
-    return new Date().toISOString().slice(0, 10);
+    return hoyCdmx();
   }
 
   // Validación por campo (docs + serie): campo → 'valido' | 'rechazado'
@@ -369,7 +374,7 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   }
 
   esHoy(dia: number | null): boolean {
-    return !!dia && this.diaAFecha(dia) === new Date().toISOString().slice(0, 10);
+    return !!dia && this.diaAFecha(dia) === hoyCdmx();
   }
 
   mesAnterior(): void {
@@ -966,7 +971,7 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
     });
   }
 
-  readonly today = new Date().toISOString().split('T')[0];
+  readonly today = hoyCdmx();
 
   get notasInternas(): GarantiaComentario[] {
     return this.comentarios.filter(c => c.tipo === 'nota_interna');

@@ -532,7 +532,7 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   mostrarListaUsuarios = false;
   usuarioAsignado: { id: number; nombre: string; correo: string; usuario: string } | null = null;
   fechaIngreso = '';
-  readonly hoy = new Date().toISOString().split('T')[0];
+  readonly hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
 
   get usuariosFiltrados() {
     const q = this.busquedaUsuario.toLowerCase().trim();
