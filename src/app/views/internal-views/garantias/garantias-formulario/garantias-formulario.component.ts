@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
@@ -192,6 +193,33 @@ export const SECCIONES: SeccionDef[] = [
   // Always last
   { id: 34, label: 'Términos y Condiciones',                isVisible: () => true },
 ];
+
+const EXT_ARCHIVO_GARANTIA = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.mp4', '.mov', '.avi'];
+const MAX_MB_ARCHIVO_GARANTIA = 100;
+
+function validarArchivoGarantia(file: File): string | null {
+  const nombre = file.name.toLowerCase();
+  if (nombre.endsWith('.heic') || nombre.endsWith('.heif')) {
+    return 'Formato HEIC no compatible. En tu iPhone usa Ajustes > Cámara > Formatos > Más compatible, o convierte la foto a JPG antes de subirla.';
+  }
+  const ext = nombre.includes('.') ? nombre.slice(nombre.lastIndexOf('.')) : '';
+  if (!EXT_ARCHIVO_GARANTIA.includes(ext)) {
+    return `Tipo de archivo no permitido (${ext || 'sin extensión'}). Formatos: JPG, PNG, WEBP, GIF, PDF, MP4, MOV, AVI.`;
+  }
+  const mb = file.size / (1024 * 1024);
+  if (mb > MAX_MB_ARCHIVO_GARANTIA) {
+    return `El archivo pesa ${mb.toFixed(1)} MB y el máximo es ${MAX_MB_ARCHIVO_GARANTIA} MB. Reduce su tamaño o comprime el video e intenta de nuevo.`;
+  }
+  return null;
+}
+
+function mensajeErrorSubida(err: HttpErrorResponse): string {
+  if (err.status === 0) return 'Sin conexión con el servidor. Revisa tu internet e intenta de nuevo.';
+  if (err.status === 413) return `El archivo es demasiado grande (máximo ${MAX_MB_ARCHIVO_GARANTIA} MB).`;
+  if (err.status === 401 || err.status === 403) return 'Tu sesión no tiene permiso para subir archivos. Vuelve a iniciar sesión.';
+  const motivo = err.error?.error;
+  return motivo ? `No se pudo subir el archivo: ${motivo}` : 'No se pudo subir el archivo. Intenta de nuevo.';
+}
 
 @Component({
   selector: 'app-garantias-formulario',
@@ -517,6 +545,7 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   uploadedFiles: { [campo: string]: string } = {};
   uploadingFields: { [campo: string]: boolean } = {};
   uploadProgress: { [campo: string]: number } = {};
+  uploadErrors: { [campo: string]: string } = {};
 
   currentStepIdx = 0;
   enviando = false;
@@ -782,6 +811,16 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
     const file = input.files[0];
+    delete this.uploadErrors[campo];
+
+    const errorLocal = validarArchivoGarantia(file);
+    if (errorLocal) {
+      this.uploadErrors[campo] = errorLocal;
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.uploadingFields[campo] = true;
     this.uploadProgress[campo] = 0;
     this.cdr.detectChanges();
@@ -798,9 +837,11 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
         this.uploadProgress[campo] = 0;
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
+        this.uploadErrors[campo] = mensajeErrorSubida(err);
         this.uploadingFields[campo] = false;
         this.uploadProgress[campo] = 0;
+        input.value = '';
         this.cdr.detectChanges();
       },
     });

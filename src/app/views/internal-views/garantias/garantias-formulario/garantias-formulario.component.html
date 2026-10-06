@@ -469,11 +469,11 @@
         <p class="section-intro">Adjunte los documentos de soporte para la garantía del producto.</p>
 
         <ng-container *ngFor="let doc of [
-          {key:'scott_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
-          {key:'scott_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
-          {key:'scott_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
-          {key:'scott_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
-          {key:'scott_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
+          {key:'scott_doc1',  label:'Fotografía del Daño',                                accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'scott_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'scott_doc3',  label:'Fotografía del Producto',                             accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'scott_doc4a', label:'Factura de Compra',                                   accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'scott_doc4b', label:'Factura de Venta',                                    accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -487,6 +487,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}
@@ -596,12 +599,12 @@
         <p class="section-intro">Adjunte los documentos de soporte para la garantía de la bicicleta.</p>
 
         <ng-container *ngFor="let doc of [
-          {key:'bici_doc1',  label:'Fotografía del Daño',               hint:'Fotografía de la bicicleta del lado derecho del plato', accept:'image/*,video/*,.pdf', req:true},
-          {key:'bici_doc2',  label:'Fotografía del Número de Serie',    hint:'',                                                      accept:'image/*',             req:true},
-          {key:'bici_doc3',  label:'Fotografía del Producto Completo',  hint:'',                                                      accept:'image/*',             req:true},
-          {key:'bici_doc4a', label:'Factura de Compra',                 hint:'',                                                      accept:'image/*,.pdf',        req:true},
-          {key:'bici_doc4b', label:'Factura de Venta',                  hint:'',                                                      accept:'image/*,.pdf',        req:true},
-          {key:'bici_doc5',  label:'Hojas del Historial de Servicio',   hint:'',                                                      accept:'image/*,.pdf',        req:false}
+          {key:'bici_doc1',  label:'Fotografía del Daño',               hint:'Fotografía de la bicicleta del lado derecho del plato', accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'bici_doc2',  label:'Fotografía del Número de Serie',    hint:'',                                                      accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'bici_doc3',  label:'Fotografía del Producto Completo',  hint:'',                                                      accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'bici_doc4a', label:'Factura de Compra',                 hint:'',                                                      accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'bici_doc4b', label:'Factura de Venta',                  hint:'',                                                      accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'bici_doc5',  label:'Hojas del Historial de Servicio',   hint:'',                                                      accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:false}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -616,6 +619,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}
@@ -713,11 +719,11 @@
       <!-- 252: Manubrios — Documentos -->
       <div *ngIf="isSectionVisible(252)" class="section-body">
         <ng-container *ngFor="let doc of [
-          {key:'manubrio_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
-          {key:'manubrio_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
-          {key:'manubrio_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
-          {key:'manubrio_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
-          {key:'manubrio_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
+          {key:'manubrio_doc1',  label:'Fotografía del Daño',                                accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'manubrio_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'manubrio_doc3',  label:'Fotografía del Producto',                             accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'manubrio_doc4a', label:'Factura de Compra',                                   accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'manubrio_doc4b', label:'Factura de Venta',                                    accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -731,6 +737,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}
@@ -807,11 +816,11 @@
       <!-- 272: Asientos — Documentos -->
       <div *ngIf="isSectionVisible(272)" class="section-body">
         <ng-container *ngFor="let doc of [
-          {key:'asiento_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
-          {key:'asiento_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
-          {key:'asiento_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
-          {key:'asiento_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
-          {key:'asiento_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
+          {key:'asiento_doc1',  label:'Fotografía del Daño',                                accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'asiento_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'asiento_doc3',  label:'Fotografía del Producto',                             accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'asiento_doc4a', label:'Factura de Compra',                                   accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'asiento_doc4b', label:'Factura de Venta',                                    accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -825,6 +834,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}
@@ -901,11 +913,11 @@
       <!-- 292: Poste — Documentos -->
       <div *ngIf="isSectionVisible(292)" class="section-body">
         <ng-container *ngFor="let doc of [
-          {key:'poste_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
-          {key:'poste_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
-          {key:'poste_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
-          {key:'poste_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
-          {key:'poste_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
+          {key:'poste_doc1',  label:'Fotografía del Daño',                                accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'poste_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'poste_doc3',  label:'Fotografía del Producto',                             accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'poste_doc4a', label:'Factura de Compra',                                   accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'poste_doc4b', label:'Factura de Venta',                                    accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -919,6 +931,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}
@@ -1004,11 +1019,11 @@
       <!-- ════════════════════════════════════════════════════════ -->
       <div *ngIf="isSectionVisible(315)" class="section-body">
         <ng-container *ngFor="let doc of [
-          {key:'rin_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
-          {key:'rin_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
-          {key:'rin_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
-          {key:'rin_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
-          {key:'rin_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
+          {key:'rin_doc1',  label:'Fotografía del Daño',                                accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'rin_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'rin_doc3',  label:'Fotografía del Producto',                             accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'rin_doc4a', label:'Factura de Compra',                                   accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'rin_doc4b', label:'Factura de Venta',                                    accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -1022,6 +1037,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}
@@ -1068,11 +1086,11 @@
                     [(ngModel)]="formData.vittoria_dano_desc" name="vittoria_dano_desc"></textarea>
         </div>
         <ng-container *ngFor="let doc of [
-          {key:'vittoria_doc1',  label:'Fotografía del Daño',                                accept:'image/*,video/*,.pdf', req:true},
-          {key:'vittoria_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'image/*',             req:true},
-          {key:'vittoria_doc3',  label:'Fotografía del Producto',                             accept:'image/*',             req:true},
-          {key:'vittoria_doc4a', label:'Factura de Compra',                                   accept:'image/*,.pdf',        req:true},
-          {key:'vittoria_doc4b', label:'Factura de Venta',                                    accept:'image/*,.pdf',        req:true}
+          {key:'vittoria_doc1',  label:'Fotografía del Daño',                                accept:'.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.pdf', req:true},
+          {key:'vittoria_doc2',  label:'Fotografía del Año de Fabricación / Número de Serie', accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'vittoria_doc3',  label:'Fotografía del Producto',                             accept:'.jpg,.jpeg,.png,.gif,.webp',             req:true},
+          {key:'vittoria_doc4a', label:'Factura de Compra',                                   accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true},
+          {key:'vittoria_doc4b', label:'Factura de Venta',                                    accept:'.jpg,.jpeg,.png,.gif,.webp,.pdf',        req:true}
         ]">
           <div class="field-group">
             <label class="field-label" [class.required]="doc.req">{{ doc.label }}</label>
@@ -1086,6 +1104,9 @@
                   <i class="fas fa-check"></i> {{ formData[doc.key + '_original'] }}
                 </span>
               </label>
+              <p class="upload-error" *ngIf="uploadErrors[doc.key]">
+                <i class="fas fa-exclamation-circle"></i> {{ uploadErrors[doc.key] }}
+              </p>
               <span class="uploading-badge" *ngIf="uploadingFields[doc.key]">
                 <i class="fas fa-spinner fa-spin"></i>
                 {{ uploadProgress[doc.key] > 0 ? uploadProgress[doc.key] + '%' : 'Subiendo…' }}

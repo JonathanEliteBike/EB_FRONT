@@ -180,6 +180,10 @@
 
 /* ── File upload ── */
 .file-upload-wrap { position: relative; }
+.upload-error {
+  margin: 6px 0 0; font-size: 0.82rem; line-height: 1.4;
+  color: #ff8a80; display: flex; gap: 6px; align-items: flex-start;
+}
 .file-input {
   position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;
 }
