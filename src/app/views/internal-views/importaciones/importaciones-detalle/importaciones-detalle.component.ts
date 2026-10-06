@@ -211,7 +211,6 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       { campo: 'odoo_codificacion',     label: 'Codificación de productos' },
       { campo: 'odoo_alta_catalogo',    label: 'Alta de catálogo en Odoo' },
       { campo: 'odoo_alta_precios',     label: 'Alta de precios en Odoo' },
-      { campo: 'odoo_alta_orden_compra', label: 'Alta de orden de compra' },
       { campo: 'odoo_folio_orden',      label: 'Folio(s) de orden de compra' },
     ],
     almacen: [
@@ -229,7 +228,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     ],
     recepcion: [
       { campo: 'rec_cedula_costeo',           label: 'Cédula de costeo de IGI' },
-      { campo: 'rec_recepcion_odoo',          label: 'Recepción en Odoo' },
+      { campo: 'rec_recepcion_odoo',          label: 'Alta de la orden en Odoo' },
       { campo: 'rec_folio_compra',            label: 'Folio de Compra en Odoo' },
       { campo: 'rec_liberacion_verificacion', label: 'Liberación de productos a verificación' },
       { campo: 'rec_liberacion_final',        label: 'Liberación final del producto' },
