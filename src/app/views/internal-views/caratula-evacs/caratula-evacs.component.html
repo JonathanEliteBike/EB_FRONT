@@ -19,6 +19,7 @@
 
         <button
           class="btn btn-secondary"
+          [disabled]="loading || loadingFacturas || loadingMensual"
           (click)="exportarExcel()">
           <i class="fas fa-file-excel"></i>
           Exportar Excel
@@ -258,6 +259,126 @@
 
   </section>
 
+
+  <!-- Ventas reales mensuales por EVAC; separado del cálculo de metas. -->
+  <section class="seccion-mensual" *ngIf="!loading && !loadingFacturas">
+    <div class="cabecera-mensual">
+      <div>
+        <h3>Ventas mensuales por EVAC</h3>
+        <p>Apparel, Vittoria y Syncros · Fecha de factura · EVAC vigente</p>
+      </div>
+    </div>
+
+    <div class="filtros-mensuales" *ngIf="!loadingMensual && !errorMensual && totalesMensuales">
+      <div class="filtro-mensual-campo">
+        <label for="periodoMensual">Periodo</label>
+        <select id="periodoMensual" [(ngModel)]="modoFiltroMensual"
+                (ngModelChange)="cambiarModoFiltroMensual()" class="filtro-mensual-input">
+          <option value="todos">Todos los meses</option>
+          <option value="mes">Mes específico</option>
+          <option value="rango">Rango de meses</option>
+        </select>
+      </div>
+
+      <div class="filtro-mensual-campo" *ngIf="modoFiltroMensual === 'mes'">
+        <label for="mesMensual">Mes</label>
+        <select id="mesMensual" [(ngModel)]="mesMensualSeleccionado" class="filtro-mensual-input">
+          <option *ngFor="let mes of mesesMensualesDisponibles" [value]="mes">{{ nombreMes(mes) }}</option>
+        </select>
+      </div>
+
+      <ng-container *ngIf="modoFiltroMensual === 'rango'">
+        <div class="filtro-mensual-campo">
+          <label for="desdeMensual">Desde</label>
+          <input id="desdeMensual" type="month" [(ngModel)]="mesDesdeMensual"
+                 class="filtro-mensual-input">
+        </div>
+        <div class="filtro-mensual-campo">
+          <label for="hastaMensual">Hasta</label>
+          <input id="hastaMensual" type="month" [(ngModel)]="mesHastaMensual"
+                 class="filtro-mensual-input">
+        </div>
+      </ng-container>
+
+      <div class="filtro-mensual-campo">
+        <label for="evacMensual">EVAC</label>
+        <select id="evacMensual" [(ngModel)]="evacMensualSeleccionado" class="filtro-mensual-input">
+          <option value="todos">Todos los EVAC</option>
+          <option value="A">EVAC A</option>
+          <option value="B">EVAC B</option>
+        </select>
+      </div>
+
+      <div class="filtro-mensual-acciones">
+        <button type="button" class="btn-limpiar-mensual" (click)="limpiarFiltrosMensuales()"
+                [disabled]="!filtrosMensualesActivos">
+          <i class="fas fa-rotate-left"></i> Limpiar filtros
+        </button>
+        <button type="button" class="btn-exportar-mensual" (click)="exportarExcelMensualFiltrado()"
+                [disabled]="rangoMensualInvalido || ventasMensualesFiltradas.length === 0">
+          <i class="fas fa-file-excel"></i> Exportar filtrado
+        </button>
+      </div>
+    </div>
+
+    <p class="mensaje-mensual mensaje-mensual-error" *ngIf="rangoMensualInvalido" role="alert">
+      Selecciona un mes inicial y final válidos (el inicial no puede ser posterior al final).
+    </p>
+    <p class="mensaje-mensual" *ngIf="loadingMensual">Consultando ventas mensuales…</p>
+    <p class="mensaje-mensual mensaje-mensual-error" *ngIf="errorMensual" role="alert">{{ errorMensual }}</p>
+
+    <ng-container *ngIf="!loadingMensual && !errorMensual && totalesMensualesFiltrados as resumenFiltrado">
+      <div class="tabla-mensual-scroll">
+        <table class="tabla-mensual">
+          <thead>
+            <tr>
+              <th scope="col">MES</th>
+              <th scope="col">EVAC</th>
+              <th scope="col" class="monto-mensual">APPAREL</th>
+              <th scope="col" class="monto-mensual">VITTORIA</th>
+              <th scope="col" class="monto-mensual">SYNCROS</th>
+              <th scope="col" class="monto-mensual">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of ventasMensualesFiltradas">
+              <th scope="row">{{ nombreMes(fila.mes) }}</th>
+              <td><span class="etiqueta-evac" [class.etiqueta-b]="fila.evac === 'B'">EVAC {{ fila.evac }}</span></td>
+              <td class="monto-mensual">{{ fila.apparel | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ fila.vittoria | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ fila.syncros | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual total-mensual">{{ fila.total | currency:'USD':'$':'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="ventasMensualesFiltradas.length === 0"><td colspan="6">No hay registros para los filtros seleccionados.</td></tr>
+          </tbody>
+          <tfoot>
+            <tr *ngIf="evacMensualSeleccionado !== 'B'">
+              <th colspan="2" scope="row">TOTAL EVAC A</th>
+              <td class="monto-mensual">{{ resumenFiltrado.A.apparel | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.A.vittoria | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.A.syncros | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.A.total | currency:'USD':'$':'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="evacMensualSeleccionado !== 'A'">
+              <th colspan="2" scope="row">TOTAL EVAC B</th>
+              <td class="monto-mensual">{{ resumenFiltrado.B.apparel | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.B.vittoria | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.B.syncros | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.B.total | currency:'USD':'$':'1.2-2' }}</td>
+            </tr>
+            <tr class="fila-mensual-general">
+              <th colspan="2" scope="row">{{ filtrosMensualesActivos ? 'TOTAL FILTRADO' : 'TOTAL A + B' }}</th>
+              <td class="monto-mensual">{{ resumenFiltrado.general.apparel | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.general.vittoria | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.general.syncros | currency:'USD':'$':'1.2-2' }}</td>
+              <td class="monto-mensual">{{ resumenFiltrado.general.total | currency:'USD':'$':'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </ng-container>
+    <p class="nota-mensual">Solo clientes activos de la carátula y Multimarcas asignados a A/B. Las ventas no registradas y EVAC GO no se distribuyen entre A/B. En vista oficial pueden aparecer meses previos por ventas anticipadas válidas.</p>
+  </section>
 
   <!-- =========================================================
        TABLAS EVAC A / B

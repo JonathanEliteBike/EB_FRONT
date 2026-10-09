@@ -1,14 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 
 import * as XLSX from 'xlsx';
 
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
-import { CaratulasService } from '../../../services/caratulas.service';
+import { CaratulasService, VentaMensualEvac, TotalesLineaEvac } from '../../../services/caratulas.service';
 import { MonitorOdooService } from '../../../services/monitor-odoo.service';
 
 
@@ -43,7 +43,7 @@ interface ReferenciaCliente {
   templateUrl: './caratula-evacs.component.html',
   styleUrl: './caratula-evacs.component.css'
 })
-export class CaratulaEvacsComponent implements OnInit {
+export class CaratulaEvacsComponent implements OnInit, OnDestroy {
 
 
   // =========================================================
@@ -125,6 +125,141 @@ export class CaratulaEvacsComponent implements OnInit {
   totalSyncros = 0;
   totalBold = 0;
   totalOtros = 0;
+
+  // Desglose por línea, mes y EVAC. No altera los cálculos de metas.
+  ventasMensuales: VentaMensualEvac[] = [];
+  totalesMensuales: { A: TotalesLineaEvac; B: TotalesLineaEvac; general: TotalesLineaEvac } | null = null;
+  loadingMensual = false;
+  errorMensual: string | null = null;
+  private consultaMensual?: Subscription;
+
+  // Filtros locales: no solicitan cambios al backend ni alteran el resumen MY27.
+  modoFiltroMensual: 'todos' | 'mes' | 'rango' = 'todos';
+  mesMensualSeleccionado = '';
+  mesDesdeMensual = '';
+  mesHastaMensual = '';
+  evacMensualSeleccionado: 'todos' | EvacOperativo = 'todos';
+
+  get mesesMensualesDisponibles(): string[] {
+    return [...new Set(this.ventasMensuales.map(fila => fila.mes))].sort();
+  }
+
+  get rangoMensualInvalido(): boolean {
+    return this.modoFiltroMensual === 'rango' && (
+      !this.mesDesdeMensual || !this.mesHastaMensual ||
+      this.mesDesdeMensual > this.mesHastaMensual
+    );
+  }
+
+  get filtrosMensualesActivos(): boolean {
+    return this.modoFiltroMensual !== 'todos' || this.evacMensualSeleccionado !== 'todos';
+  }
+
+  cambiarModoFiltroMensual(): void {
+    const meses = this.mesesMensualesDisponibles;
+    if (this.modoFiltroMensual === 'mes' && !this.mesMensualSeleccionado) {
+      this.mesMensualSeleccionado = meses[meses.length - 1] || '';
+    }
+    if (this.modoFiltroMensual === 'rango') {
+      this.mesDesdeMensual ||= meses[0] || '';
+      this.mesHastaMensual ||= meses[meses.length - 1] || '';
+    }
+  }
+
+  limpiarFiltrosMensuales(): void {
+    this.modoFiltroMensual = 'todos';
+    this.mesMensualSeleccionado = '';
+    this.mesDesdeMensual = '';
+    this.mesHastaMensual = '';
+    this.evacMensualSeleccionado = 'todos';
+  }
+
+  get ventasMensualesFiltradas(): VentaMensualEvac[] {
+    if (this.rangoMensualInvalido) return [];
+    return this.ventasMensuales.filter(fila => {
+      if (this.evacMensualSeleccionado !== 'todos' && fila.evac !== this.evacMensualSeleccionado) {
+        return false;
+      }
+      if (this.modoFiltroMensual === 'mes') {
+        return fila.mes === this.mesMensualSeleccionado;
+      }
+      if (this.modoFiltroMensual === 'rango') {
+        return fila.mes >= this.mesDesdeMensual && fila.mes <= this.mesHastaMensual;
+      }
+      return true;
+    });
+  }
+
+  // Acumulación en centavos para evitar errores de coma flotante en los totales.
+  get totalesMensualesFiltrados(): {
+    A: TotalesLineaEvac;
+    B: TotalesLineaEvac;
+    general: TotalesLineaEvac;
+  } | null {
+    if (!this.totalesMensuales || this.rangoMensualInvalido) return null;
+
+    const vacio = (): TotalesLineaEvac => ({ apparel: 0, vittoria: 0, syncros: 0, total: 0 });
+    const centavos = { A: vacio(), B: vacio(), general: vacio() };
+    const columnas: (keyof TotalesLineaEvac)[] = ['apparel', 'vittoria', 'syncros', 'total'];
+
+    for (const fila of this.ventasMensualesFiltradas) {
+      for (const columna of columnas) {
+        const importe = Math.round((Number(fila[columna]) || 0) * 100);
+        centavos[fila.evac][columna] += importe;
+        centavos.general[columna] += importe;
+      }
+    }
+
+    const aPesos = (datos: TotalesLineaEvac): TotalesLineaEvac => ({
+      apparel: datos.apparel / 100,
+      vittoria: datos.vittoria / 100,
+      syncros: datos.syncros / 100,
+      total: datos.total / 100
+    });
+    return { A: aPesos(centavos.A), B: aPesos(centavos.B), general: aPesos(centavos.general) };
+  }
+
+  ngOnDestroy(): void {
+    this.consultaMensual?.unsubscribe();
+  }
+
+  private cargarDesgloseMensual(
+    fechaDesde?: string,
+    fechaHasta?: string
+  ): void {
+    // Evitar respuestas antiguas si el usuario cambia de periodo rápidamente.
+    this.consultaMensual?.unsubscribe();
+    this.limpiarFiltrosMensuales();
+    this.ventasMensuales = [];
+    this.totalesMensuales = null;
+    this.errorMensual = null;
+    this.loadingMensual = true;
+    this.consultaMensual = this.caratulasService
+      .getVentasLineasEvacsMensual(fechaDesde, fechaHasta)
+      .subscribe({
+        next: (respuesta) => {
+          this.ventasMensuales = respuesta?.filas ?? [];
+          this.totalesMensuales = respuesta?.totales ?? null;
+          this.loadingMensual = false;
+        },
+        error: (error) => {
+          console.error('Error consultando ventas mensuales por EVAC:', error);
+          this.errorMensual = 'No fue posible cargar el desglose mensual.';
+          this.loadingMensual = false;
+        }
+      });
+  }
+
+  nombreMes(mes: string): string {
+    const [anio, mesNumero] = mes.split('-');
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const indice = Number(mesNumero) - 1;
+    return indice >= 0 && indice < 12 ? `${meses[indice]} ${anio}` : mes;
+  }
+
 
 
   // =========================================================
@@ -341,6 +476,7 @@ export class CaratulaEvacsComponent implements OnInit {
         this.loading = false;
 
         this.cargarFacturas();
+        this.cargarDesgloseMensual();
       },
 
       error: (error) => {
@@ -657,6 +793,7 @@ export class CaratulaEvacsComponent implements OnInit {
 
         this.construirMapasClientes();
         this.procesarResumenMaestro();
+        this.cargarDesgloseMensual(this.fechaInicio, this.fechaFin);
 
         this.loadingFacturas = false;
       },
@@ -2556,6 +2693,8 @@ export class CaratulaEvacsComponent implements OnInit {
     );
 
 
+    this.crearHojaVentasMensuales(workbook);
+
     this.crearHojaEvac(
       workbook,
       'EVAC A',
@@ -2580,6 +2719,73 @@ export class CaratulaEvacsComponent implements OnInit {
     );
   }
 
+
+  exportarExcelMensualFiltrado(): void {
+    if (this.loadingMensual || this.errorMensual || this.rangoMensualInvalido ||
+        !this.totalesMensuales || this.ventasMensualesFiltradas.length === 0) return;
+
+    const libro = XLSX.utils.book_new();
+    this.crearHojaVentasMensuales(
+      libro, this.ventasMensualesFiltradas, this.totalesMensualesFiltrados, true
+    );
+    XLSX.writeFile(libro, `Ventas_Mensuales_EVAC_Filtradas_${this.formatearFechaExcel(new Date())}.xlsx`);
+  }
+
+  private crearHojaVentasMensuales(
+    workbook: XLSX.WorkBook,
+    filasMensuales: VentaMensualEvac[] = this.ventasMensuales,
+    resumen: { A: TotalesLineaEvac; B: TotalesLineaEvac; general: TotalesLineaEvac } | null = this.totalesMensuales,
+    soloFiltrado = false
+  ): void {
+    // Los montos quedan como celdas numéricas para permitir sumas/filtros.
+    if (!resumen) return;
+
+    const filas: (string | number)[][] = [];
+    if (soloFiltrado) {
+      const periodo = this.modoFiltroMensual === 'mes'
+        ? this.nombreMes(this.mesMensualSeleccionado)
+        : this.modoFiltroMensual === 'rango'
+          ? `${this.nombreMes(this.mesDesdeMensual)} - ${this.nombreMes(this.mesHastaMensual)}`
+          : 'Todos los meses consultados';
+      filas.push(
+        ['VENTAS MENSUALES POR EVAC - FILTRO'],
+        ['Periodo', periodo],
+        ['EVAC', this.evacMensualSeleccionado === 'todos' ? 'Todos' : `EVAC ${this.evacMensualSeleccionado}`],
+        []
+      );
+    }
+    filas.push(['Mes', 'EVAC', 'APPAREL', 'VITTORIA', 'SYNCROS', 'TOTAL']);
+    for (const fila of filasMensuales) {
+      filas.push([
+        this.nombreMes(fila.mes), `EVAC ${fila.evac}`,
+        fila.apparel, fila.vittoria, fila.syncros, fila.total
+      ]);
+    }
+    for (const evac of ['A', 'B', 'general'] as const) {
+      if (soloFiltrado && evac !== 'general' &&
+          this.evacMensualSeleccionado !== 'todos' && this.evacMensualSeleccionado !== evac) {
+        continue;
+      }
+      const totales = resumen[evac];
+      filas.push([
+        evac === 'general'
+          ? (soloFiltrado ? 'TOTAL FILTRADO' : 'TOTAL A + B')
+          : `TOTAL EVAC ${evac}`,
+        '', totales.apparel, totales.vittoria, totales.syncros, totales.total
+      ]);
+    }
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    hoja['!cols'] = [
+      { wch: 24 }, { wch: 14 }, { wch: 18 },
+      { wch: 18 }, { wch: 18 }, { wch: 20 }
+    ];
+    for (const [celda, valor] of Object.entries(hoja)) {
+      if (/^[C-F]\d+$/.test(celda) && valor && typeof valor === 'object' && 't' in valor && valor.t === 'n') {
+        valor.z = '#,##0.00';
+      }
+    }
+    XLSX.utils.book_append_sheet(workbook, hoja, 'Ventas mensuales');
+  }
 
   private crearHojaResumenTotales(
     workbook: XLSX.WorkBook
