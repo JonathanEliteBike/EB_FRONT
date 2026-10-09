@@ -19,6 +19,7 @@ export interface CuadroDetalle {
 }
 
 export interface PiezaDetalle {
+  id: number;
   folio: string;
   distribuidor: string;
   marca: string;

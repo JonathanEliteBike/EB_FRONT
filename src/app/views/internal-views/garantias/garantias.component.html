@@ -826,7 +826,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let d of piezaDetalleFiltrada">
+          <tr *ngFor="let d of piezaDetalleFiltrada" class="lt-row-click" (click)="irATicket(d.id)" title="Abrir en Seguimiento de Tickets">
             <td class="lat-folio">{{ d.folio }}</td>
             <td class="lat-dist">{{ d.distribuidor }}</td>
             <td>{{ d.marca }}</td>
