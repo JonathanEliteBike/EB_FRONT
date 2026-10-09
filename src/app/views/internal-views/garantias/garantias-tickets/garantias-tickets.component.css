@@ -662,6 +662,19 @@
 .tl-fecha { font-size: 0.74rem; color: var(--t3); margin-left: auto; }
 .tl-texto { font-size: 0.88rem; color: var(--t2); line-height: 1.5; }
 
+.tl-comment-actions { display: flex; align-items: center; gap: 4px; }
+.tl-action-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--t3); font-size: 0.78rem; padding: 3px 5px; border-radius: 4px;
+  transition: color .15s, background .15s;
+}
+.tl-action-btn:hover:not(:disabled) { color: var(--orange); background: rgba(255,255,255,0.05); }
+.tl-action-btn.tl-action-del:hover:not(:disabled) { color: #e57373; }
+.tl-action-btn:disabled { opacity: .5; cursor: default; }
+.tl-confirm-label { font-size: 0.74rem; color: var(--t3); }
+.tl-edit-form { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.tl-edit-actions { display: flex; gap: 8px; }
+
 /* Tipo badge en timeline */
 .tl-tipo-badge {
   font-size: 0.65rem; font-weight: 800;

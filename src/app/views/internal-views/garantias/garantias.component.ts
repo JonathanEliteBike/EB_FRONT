@@ -18,7 +18,7 @@ import { Chart, registerables } from 'chart.js';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../components/temporada-selector/temporada-selector.component';
 import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
-import { GarantiasService, GarantiasDashboard, GarantiaFormulario, LatenciaTicket, CuadroDetalle } from '../../../services/garantias.service';
+import { GarantiasService, GarantiasDashboard, GarantiaFormulario, LatenciaTicket, CuadroDetalle, PiezaDetalle } from '../../../services/garantias.service';
 import { AuthService } from '../../../services/auth.service';
 
 interface Temporada { etiqueta: string; fecha_inicio: string; fecha_fin: string; estado: string; }
@@ -164,6 +164,10 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
   // ── Cuadros por tipo de marco (desde Piezas de Reemplazo) ─────────────────
   modalCuadrosAbierto = false;
   cuadroTipoSeleccionado: string | null = null;
+
+  // ── Detalle por pieza de reemplazo (folios con esa pieza) ─────────────────
+  modalPiezaAbierto = false;
+  piezaSeleccionada: string | null = null;
 
   private charts: Chart[] = [];
   private modalChart?: Chart;
@@ -763,6 +767,25 @@ export class GarantiasComponent implements OnInit, AfterViewInit, OnDestroy {
   get cuadrosDetalleFiltrado(): CuadroDetalle[] {
     if (!this.dashboard || !this.cuadroTipoSeleccionado) return [];
     return this.dashboard.cuadros_detalle.filter(c => c.tipo_marco === this.cuadroTipoSeleccionado);
+  }
+
+  // ── Detalle por pieza de reemplazo ──────────────────────────────────────────
+  abrirPiezaDetalle(pieza: string): void {
+    if (pieza === 'CUADRO') { this.abrirCuadros(); return; }
+    this.piezaSeleccionada = pieza;
+    this.modalPiezaAbierto = true;
+    this.cdr.markForCheck();
+  }
+
+  cerrarPiezaDetalle(): void {
+    this.modalPiezaAbierto = false;
+    this.piezaSeleccionada = null;
+    this.cdr.markForCheck();
+  }
+
+  get piezaDetalleFiltrada(): PiezaDetalle[] {
+    if (!this.dashboard || !this.piezaSeleccionada) return [];
+    return this.dashboard.piezas_detalle.filter(p => p.pieza_reemplazo === this.piezaSeleccionada);
   }
 
   // ── Modal ────────────────────────────────────────────────────────────────

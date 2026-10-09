@@ -869,6 +869,64 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Editar / eliminar comentarios y notas internas ──────────────────────────
+  editandoComentarioId: number | null = null;
+  textoComentarioEditado = '';
+  guardandoEdicionComentario = false;
+  confirmandoEliminarComentarioId: number | null = null;
+  eliminandoComentarioId: number | null = null;
+
+  iniciarEdicionComentario(c: GarantiaComentario): void {
+    this.editandoComentarioId = c.id;
+    this.textoComentarioEditado = c.texto;
+    this.cdr.markForCheck();
+  }
+
+  cancelarEdicionComentario(): void {
+    this.editandoComentarioId = null;
+    this.textoComentarioEditado = '';
+    this.cdr.markForCheck();
+  }
+
+  guardarEdicionComentario(): void {
+    if (!this.editandoComentarioId || !this.textoComentarioEditado.trim() || this.guardandoEdicionComentario) return;
+    this.guardandoEdicionComentario = true;
+    this.cdr.markForCheck();
+    this.svc.editarComentario(this.editandoComentarioId, this.textoComentarioEditado.trim()).subscribe({
+      next: () => {
+        this.editandoComentarioId = null;
+        this.textoComentarioEditado = '';
+        this.guardandoEdicionComentario = false;
+        this.cargarComentarios(this.selected!.id, true);
+      },
+      error: () => { this.guardandoEdicionComentario = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  confirmarEliminarComentario(id: number): void {
+    this.confirmandoEliminarComentarioId = id;
+    this.cdr.markForCheck();
+  }
+
+  cancelarEliminarComentario(): void {
+    this.confirmandoEliminarComentarioId = null;
+    this.cdr.markForCheck();
+  }
+
+  eliminarComentario(id: number): void {
+    if (this.eliminandoComentarioId) return;
+    this.eliminandoComentarioId = id;
+    this.cdr.markForCheck();
+    this.svc.eliminarComentario(id).subscribe({
+      next: () => {
+        this.confirmandoEliminarComentarioId = null;
+        this.eliminandoComentarioId = null;
+        this.cargarComentarios(this.selected!.id, true);
+      },
+      error: () => { this.eliminandoComentarioId = null; this.cdr.markForCheck(); },
+    });
+  }
+
   get piezaEsNA(): boolean {
     return this.piezaSeleccionada === 'N/A';
   }

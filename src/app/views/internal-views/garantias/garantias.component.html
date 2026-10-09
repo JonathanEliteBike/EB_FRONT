@@ -354,13 +354,13 @@
           <div *ngIf="topPiezas.length === 0" class="rank-empty">
             <i class="fas fa-wrench"></i> Sin piezas asignadas aún.
           </div>
-          <div class="rank-row" [class.rank-row-click]="item.key === 'CUADRO'"
+          <div class="rank-row rank-row-click"
                *ngFor="let item of rankOrdenado(topPiezas, 'piezas_reemplazo'); let i = index"
-               (click)="item.key === 'CUADRO' && abrirCuadros()"
-               [title]="item.key === 'CUADRO' ? 'Ver desglose por tipo de marco' : item.key">
+               (click)="abrirPiezaDetalle(item.key)"
+               [title]="item.key === 'CUADRO' ? 'Ver desglose por tipo de marco' : 'Ver tickets con esta pieza'">
             <span class="rank-num" [style.background]="item.color">{{ i + 1 }}</span>
             <span class="rank-label">{{ item.key }}
-              <i class="fas fa-chevron-right rank-drill-icon" *ngIf="item.key === 'CUADRO'"></i>
+              <i class="fas fa-chevron-right rank-drill-icon"></i>
             </span>
             <div class="rank-bar-track">
               <div class="rank-bar-fill" [style.width.%]="item.pct" [style.background]="item.color"></div>
@@ -790,6 +790,47 @@
             <td class="lat-folio">{{ d.folio }}</td>
             <td class="lat-dist">{{ d.distribuidor }}</td>
             <td>{{ d.tipo_dano }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODAL DETALLE DE PIEZA ═══ -->
+<div class="modal-overlay" *ngIf="modalPiezaAbierto" (click)="cerrarPiezaDetalle()">
+  <div class="modal-panel modal-lat-panel" (click)="$event.stopPropagation()">
+
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <div class="modal-icon-wrap"><i class="fas fa-wrench"></i></div>
+        <div>
+          <h2>{{ piezaSeleccionada }}</h2>
+          <p class="modal-sub">{{ piezaDetalleFiltrada.length }} ticket{{ piezaDetalleFiltrada.length !== 1 ? 's' : '' }} con esta pieza</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="cerrarPiezaDetalle()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="mlat-table-wrap">
+      <table class="lat-table mlat-table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Distribuidor</th>
+            <th>Marca</th>
+            <th>Estatus</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of piezaDetalleFiltrada">
+            <td class="lat-folio">{{ d.folio }}</td>
+            <td class="lat-dist">{{ d.distribuidor }}</td>
+            <td>{{ d.marca }}</td>
+            <td>{{ d.estatus }}</td>
           </tr>
         </tbody>
       </table>

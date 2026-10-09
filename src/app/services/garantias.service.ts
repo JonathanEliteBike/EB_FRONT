@@ -18,6 +18,14 @@ export interface CuadroDetalle {
   tipo_dano: string;
 }
 
+export interface PiezaDetalle {
+  folio: string;
+  distribuidor: string;
+  marca: string;
+  estatus: string;
+  pieza_reemplazo: string;
+}
+
 export interface GarantiasDashboard {
   kpis: GarantiasKpis;
   por_estatus: Record<string, number>;
@@ -25,6 +33,7 @@ export interface GarantiasDashboard {
   latencia_por_cliente: Record<string, number>;
   garantias_por_cliente: Record<string, number>;
   piezas_reemplazo: Record<string, number>;
+  piezas_detalle: PiezaDetalle[];
   ubicacion_dano: Record<string, number>;
   por_marca: Record<string, number>;
   cuadros_por_tipo_marco: Record<string, number>;
@@ -230,6 +239,14 @@ export class GarantiasService {
       texto,
       tipo
     });
+  }
+
+  editarComentario(comentarioId: number, texto: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/comentario/${comentarioId}`, { texto });
+  }
+
+  eliminarComentario(comentarioId: number): Observable<any> {
+    return this.http.delete(`${this.api}/garantias/comentario/${comentarioId}`);
   }
 
   getMisTickets(): Observable<GarantiaFormulario[]> {

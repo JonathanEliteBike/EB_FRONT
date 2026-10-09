@@ -750,8 +750,35 @@
                           {{ c.tipo === 'estatus' ? 'Estatus' : c.tipo === 'pieza' ? 'Pieza' : c.tipo === 'validacion' ? 'Validación' : c.tipo === 'nota_interna' ? 'Nota interna' : 'Nota' }}
                         </span>
                         <span class="tl-fecha">{{ c.fecha }}</span>
+                        <span class="tl-comment-actions" *ngIf="esAdmin && c.tipo === 'comentario' && editandoComentarioId !== c.id">
+                          <button class="tl-action-btn" title="Editar" (click)="iniciarEdicionComentario(c)">
+                            <i class="fas fa-pen"></i>
+                          </button>
+                          <button class="tl-action-btn tl-action-del" title="Eliminar"
+                                  (click)="confirmarEliminarComentario(c.id)" *ngIf="confirmandoEliminarComentarioId !== c.id">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                          <ng-container *ngIf="confirmandoEliminarComentarioId === c.id">
+                            <span class="tl-confirm-label">¿Eliminar?</span>
+                            <button class="tl-action-btn tl-action-del" [disabled]="eliminandoComentarioId === c.id" (click)="eliminarComentario(c.id)">
+                              <i class="fas" [class.fa-check]="eliminandoComentarioId !== c.id" [class.fa-spinner]="eliminandoComentarioId === c.id" [class.fa-spin]="eliminandoComentarioId === c.id"></i>
+                            </button>
+                            <button class="tl-action-btn" [disabled]="eliminandoComentarioId === c.id" (click)="cancelarEliminarComentario()">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          </ng-container>
+                        </span>
                       </div>
-                      <div class="tl-texto">{{ c.texto }}</div>
+                      <div class="tl-texto" *ngIf="editandoComentarioId !== c.id">{{ c.texto }}</div>
+                      <div class="tl-edit-form" *ngIf="editandoComentarioId === c.id">
+                        <textarea class="comment-input" [(ngModel)]="textoComentarioEditado" rows="2"></textarea>
+                        <div class="tl-edit-actions">
+                          <button class="btn btn-primary btn-sm" [disabled]="!textoComentarioEditado.trim() || guardandoEdicionComentario" (click)="guardarEdicionComentario()">
+                            {{ guardandoEdicionComentario ? 'Guardando…' : 'Guardar' }}
+                          </button>
+                          <button class="btn btn-outline btn-sm" [disabled]="guardandoEdicionComentario" (click)="cancelarEdicionComentario()">Cancelar</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -790,8 +817,35 @@
                           <span class="tl-autor">{{ c.autor }}</span>
                           <span class="tl-tipo-badge" data-tipo="nota_interna">Nota interna</span>
                           <span class="tl-fecha">{{ c.fecha }}</span>
+                          <span class="tl-comment-actions" *ngIf="editandoComentarioId !== c.id">
+                            <button class="tl-action-btn" title="Editar" (click)="iniciarEdicionComentario(c)">
+                              <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="tl-action-btn tl-action-del" title="Eliminar"
+                                    (click)="confirmarEliminarComentario(c.id)" *ngIf="confirmandoEliminarComentarioId !== c.id">
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <ng-container *ngIf="confirmandoEliminarComentarioId === c.id">
+                              <span class="tl-confirm-label">¿Eliminar?</span>
+                              <button class="tl-action-btn tl-action-del" [disabled]="eliminandoComentarioId === c.id" (click)="eliminarComentario(c.id)">
+                                <i class="fas" [class.fa-check]="eliminandoComentarioId !== c.id" [class.fa-spinner]="eliminandoComentarioId === c.id" [class.fa-spin]="eliminandoComentarioId === c.id"></i>
+                              </button>
+                              <button class="tl-action-btn" [disabled]="eliminandoComentarioId === c.id" (click)="cancelarEliminarComentario()">
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </ng-container>
+                          </span>
                         </div>
-                        <div class="tl-texto">{{ c.texto }}</div>
+                        <div class="tl-texto" *ngIf="editandoComentarioId !== c.id">{{ c.texto }}</div>
+                        <div class="tl-edit-form" *ngIf="editandoComentarioId === c.id">
+                          <textarea class="comment-input" [(ngModel)]="textoComentarioEditado" rows="2"></textarea>
+                          <div class="tl-edit-actions">
+                            <button class="btn btn-primary btn-sm" [disabled]="!textoComentarioEditado.trim() || guardandoEdicionComentario" (click)="guardarEdicionComentario()">
+                              {{ guardandoEdicionComentario ? 'Guardando…' : 'Guardar' }}
+                            </button>
+                            <button class="btn btn-outline btn-sm" [disabled]="guardandoEdicionComentario" (click)="cancelarEdicionComentario()">Cancelar</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </ng-container>
