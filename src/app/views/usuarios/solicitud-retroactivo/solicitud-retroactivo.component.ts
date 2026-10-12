@@ -424,8 +424,9 @@ export class SolicitudRetroactivoComponent implements OnInit {
     if (token) {
       try {
         const decoded: any = jwtDecode(token);
-        this.esCliente = decoded.rol === 2 || decoded.rol === 3;
-        this.esAdmin = decoded.rol === 1;
+        const rolId = Number(decoded.rol);
+        this.esCliente = rolId === 2 || rolId === 3;
+        this.esAdmin = rolId === 1;
         if (decoded.cliente_id) {
           clienteIdUsuario = Number(decoded.cliente_id);
         }
