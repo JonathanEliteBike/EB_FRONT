@@ -12,6 +12,7 @@ export interface GarantiasKpis {
 }
 
 export interface CuadroDetalle {
+  id: number;
   folio: string;
   distribuidor: string;
   tipo_marco: string;

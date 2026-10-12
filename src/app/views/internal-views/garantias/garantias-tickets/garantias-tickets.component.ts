@@ -265,9 +265,14 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
 
   volver(): void {
     if (this.vieneDeDeepLink) {
+      // Llegaste con ?id= desde un drill-down del dashboard (ej. clic en un
+      // folio de "Piezas de Reemplazo") -- regresa justo a esa pagina.
       this.location.back();
     } else {
-      this.router.navigateByUrl('/garantias/dashboard');
+      // Entraste directo a Seguimiento de Tickets (desde el hub del modulo,
+      // una pestana nueva, etc.) -- el hub es el "padre" natural, no el
+      // dashboard, que es solo una de sus secciones.
+      this.router.navigateByUrl('/garantias');
     }
   }
 
