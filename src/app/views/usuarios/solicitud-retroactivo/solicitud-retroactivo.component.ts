@@ -792,8 +792,9 @@ export class SolicitudRetroactivoComponent implements OnInit {
     this.limpiarSeriesDisponibles();
     const solicitudActual = ++this.solicitudSeriesActual;
     this.cargandoSeries = true;
+    const clienteId = this.esAdmin ? Number(this.ventaForm.get('id_cliente')?.value) : undefined;
 
-    this.solicitudService.seriesDisponibles(sku).subscribe({
+    this.solicitudService.seriesDisponibles(sku, undefined, clienteId).subscribe({
       next: (respuesta) => {
         if (solicitudActual !== this.solicitudSeriesActual) return;
         this.cargandoSeries = false;
