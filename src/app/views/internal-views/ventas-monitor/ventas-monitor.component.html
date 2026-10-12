@@ -11,6 +11,21 @@
     <p class="vm-subtexto">Historial de facturación desde Odoo &mdash; totales, desglose mensual y top de productos.</p>
   </div>
 
+  <!-- Navegación principal del módulo: el resumen conserva el flujo existente. -->
+  <nav class="vm-main-tabs" aria-label="Vistas de Monitor de Ventas">
+    <button type="button" class="vm-main-tab" [class.activo]="vistaPrincipal === 'resumen'"
+      (click)="cambiarVistaPrincipal('resumen')">
+      <i class="fas fa-chart-bar"></i> Resumen de ventas
+    </button>
+    <button type="button" class="vm-main-tab" [class.activo]="vistaPrincipal === 'dashboard'"
+      (click)="cambiarVistaPrincipal('dashboard')">
+      <i class="fas fa-table-cells-large"></i> Dashboard de ventas
+      <span class="vm-main-tab-badge">Nuevo</span>
+    </button>
+  </nav>
+
+  <ng-container *ngIf="vistaPrincipal === 'resumen'">
+
   <!-- SELECTOR DE MODO -->
   <div class="vm-modo-tabs">
     <button class="vm-tab" [class.activo]="modo === 'anual'"
@@ -941,6 +956,260 @@
     <p *ngIf="modo !== 'cliente'">Selecciona el periodo y presiona <strong>Consultar</strong> para ver los datos.</p>
     <p *ngIf="modo === 'cliente'">Escribe al menos 2 letras del nombre del cliente para ver sugerencias.</p>
   </div>
+
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!--  DASHBOARD DE VENTAS · BLOQUE 1            -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="vm-dashboard" *ngIf="vistaPrincipal === 'dashboard'">
+    <div class="vm-dashboard-intro">
+      <div>
+        <p class="vm-kicker"><i class="fas fa-chart-simple"></i> Consulta dinámica</p>
+        <h2>Dashboard de ventas</h2>
+        <p>Combina dimensiones, consulta opciones compatibles y aplica el resultado al periodo seleccionado.</p>
+      </div>
+      <span class="vm-draft-chip"><i class="fas fa-filter"></i> {{ dashboardFiltrosActivos }} filtro{{ dashboardFiltrosActivos === 1 ? '' : 's' }} activo{{ dashboardFiltrosActivos === 1 ? '' : 's' }}</span>
+    </div>
+
+    <section class="vm-dashboard-panel vm-dashboard-periodo" aria-label="Periodo de consulta">
+      <div class="vm-dashboard-section-title">
+        <i class="fas fa-calendar-alt"></i>
+        <div><h3>Periodo de consulta</h3><p>Usa los mismos criterios de fecha y vista del Monitor.</p></div>
+      </div>
+      <div class="vm-dashboard-periodo-controls">
+        <div class="vm-control-group">
+          <label>Fecha inicio</label>
+          <input type="date" class="vm-date-input" [(ngModel)]="fechaInicioStr" [max]="fechaFinStr">
+        </div>
+        <div class="vm-control-group">
+          <label>Fecha fin</label>
+          <input type="date" class="vm-date-input" [(ngModel)]="fechaFinStr" [min]="fechaInicioStr" [max]="hoy">
+        </div>
+        <div class="vm-vista-pills vm-dashboard-vista">
+          <button type="button" class="vm-vista-pill" [class.activa]="vista === 'facturas'" (click)="cambiarVista('facturas')">
+            <i class="fas fa-file-invoice-dollar"></i> Ventas Totales (Facturadas)
+          </button>
+          <button type="button" class="vm-vista-pill" [class.activa]="vista === 'cobranza'" (click)="cambiarVista('cobranza')">
+            <i class="fas fa-hand-holding-usd"></i> Cobranza (Pagado / Parcial)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="vm-dashboard-panel">
+      <div class="vm-dashboard-section-title">
+        <i class="fas fa-filter"></i>
+        <div><h3>Filtros de consulta</h3><p>Abre un filtro o escribe para ver opciones compatibles con tu contexto actual.</p></div>
+      </div>
+      <div class="vm-dashboard-filters">
+        <div class="vm-dashboard-filter vm-dashboard-filter-search" *ngFor="let filtro of dashboardDimensiones">
+          <div class="vm-dashboard-filter-heading">
+            <label [for]="'filtro-' + filtro.valor">{{ filtro.etiqueta }}</label>
+            <button type="button" class="vm-filter-clear" *ngIf="(dashboardFiltros[filtro.valor] ?? []).length" (click)="limpiarFiltroDashboard(filtro.valor)">Limpiar</button>
+          </div>
+          <button type="button" class="vm-filter-trigger" [class.abierto]="dashboardFiltroAbierto === filtro.valor"
+            [disabled]="!puedeConsultarFiltroDashboard(filtro.valor)"
+            [title]="!puedeConsultarFiltroDashboard(filtro.valor) ? 'Selecciona Producto y Categoría primero.' : null"
+            (click)="abrirFiltroDashboard(filtro.valor)" [attr.aria-expanded]="dashboardFiltroAbierto === filtro.valor">
+            <span *ngIf="!(dashboardFiltros[filtro.valor] ?? []).length">{{ filtro.valor === 'subcategoria' && !puedeConsultarFiltroDashboard(filtro.valor) ? 'Selecciona Producto y Categoría' : 'Seleccionar ' + filtro.etiqueta.toLowerCase() }}</span>
+            <span *ngIf="(dashboardFiltros[filtro.valor] ?? []).length">{{ (dashboardFiltros[filtro.valor] ?? []).length }} seleccionado{{ (dashboardFiltros[filtro.valor] ?? []).length === 1 ? '' : 's' }}</span>
+            <i class="fas" [class.fa-chevron-up]="dashboardFiltroAbierto === filtro.valor" [class.fa-chevron-down]="dashboardFiltroAbierto !== filtro.valor"></i>
+          </button>
+          <div class="vm-filter-chips" *ngIf="(dashboardFiltros[filtro.valor] ?? []).length">
+            <span class="vm-filter-chip" *ngFor="let id of dashboardFiltros[filtro.valor]">
+              {{ etiquetaOpcionDashboard(filtro.valor, id) }}
+              <button type="button" (click)="quitarOpcionDashboard(filtro.valor, id)" [attr.aria-label]="'Quitar ' + etiquetaOpcionDashboard(filtro.valor, id)"><i class="fas fa-times"></i></button>
+            </span>
+          </div>
+          <div class="vm-filter-menu" *ngIf="dashboardFiltroAbierto === filtro.valor">
+            <div class="vm-filter-searchbox">
+              <i class="fas fa-magnifying-glass"></i>
+              <input [id]="'filtro-' + filtro.valor" type="search" autocomplete="off" placeholder="Buscar..."
+                [ngModel]="dashboardBusquedas[filtro.valor] ?? ''" (ngModelChange)="buscarFiltroDashboard(filtro.valor, $event)">
+            </div>
+            <div class="vm-filter-loading" *ngIf="dashboardCargandoFiltro[filtro.valor]"><i class="fas fa-circle-notch fa-spin"></i> Cargando opciones...</div>
+            <div class="vm-filter-error" *ngIf="dashboardErrorFiltro[filtro.valor]"><i class="fas fa-exclamation-circle"></i> {{ dashboardErrorFiltro[filtro.valor] }}</div>
+            <div class="vm-filter-options" *ngIf="!dashboardCargandoFiltro[filtro.valor] && !dashboardErrorFiltro[filtro.valor]">
+              <label class="vm-filter-option" *ngFor="let opcion of dashboardOpciones[filtro.valor] ?? []">
+                <input type="checkbox" [checked]="opcionDashboardSeleccionada(filtro.valor, opcion.id)" (change)="alternarOpcionDashboard(filtro.valor, opcion)">
+                <span>{{ opcion.label }}</span><small *ngIf="filtro.valor === 'cliente' && opcion.extra?.['clave']">{{ opcion.extra?.['clave'] }}</small>
+              </label>
+              <p class="vm-filter-empty" *ngIf="!(dashboardOpciones[filtro.valor] ?? []).length">Sin opciones para este contexto.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="vm-dashboard-actions">
+        <button type="button" class="vm-btn-consultar" (click)="aplicarFiltrosDashboard()" [disabled]="dashboardCargandoConsulta">
+          <i class="fas fa-filter"></i> Aplicar filtros
+        </button>
+        <button type="button" class="vm-btn-secondary" (click)="limpiarFiltrosDashboard()">
+          <i class="fas fa-rotate-left"></i> Limpiar filtros
+        </button>
+        <span class="vm-dashboard-action-note" *ngIf="dashboardCargandoConsulta"><i class="fas fa-circle-notch fa-spin"></i> Consultando ventas...</span>
+        <span class="vm-dashboard-action-note vm-dashboard-action-error" *ngIf="dashboardErrorConsulta"><i class="fas fa-exclamation-circle"></i> {{ dashboardErrorConsulta }}</span>
+      </div>
+    </section>
+
+    <section class="vm-dashboard-panel">
+      <div class="vm-dashboard-section-title">
+        <i class="fas fa-chart-column"></i>
+        <div><h3>Desglosar por</h3><p>Opcional. Añade una dimensión a los resultados de los filtros actuales.</p></div>
+      </div>
+      <div class="vm-desglose-controls">
+        <div class="vm-analysis-options" role="group" aria-label="Desglosar por">
+          <button type="button" *ngFor="let item of dashboardDimensiones" class="vm-analysis-option"
+            [class.activo]="dashboardDesgloses.includes(item.valor)" (click)="seleccionarDesgloseDashboard(item.valor)"
+            [attr.aria-pressed]="dashboardDesgloses.includes(item.valor)">
+            <i class="fas" [ngClass]="item.icono"></i>{{ item.etiqueta }}
+            <i class="fas fa-check" *ngIf="dashboardDesgloses.includes(item.valor)"></i>
+          </button>
+        </div>
+        <button type="button" class="vm-btn-secondary" *ngIf="dashboardDesgloses.length" (click)="quitarDesgloseDashboard()"><i class="fas fa-times"></i> Quitar desglose</button>
+      </div>
+    </section>
+
+    <section class="vm-dashboard-kpis" aria-label="Resumen de consulta">
+      <article class="vm-dashboard-kpi"><span><i class="fas fa-dollar-sign"></i> Venta total</span><strong>{{ dashboardMontoTotal }}</strong></article>
+      <article class="vm-dashboard-kpi"><span><i class="fas fa-cubes"></i> Pzas / Unidades</span><strong>{{ dashboardPzasTotal == null ? '—' : (dashboardPzasTotal | number:'1.0-2') }}</strong></article>
+    </section>
+
+    <section class="vm-dashboard-panel vm-dashboard-chart-panel">
+      <div class="vm-dashboard-analysis-header">
+        <div class="vm-dashboard-section-title">
+          <i class="fas fa-chart-column"></i>
+          <div><h3>Análisis de ventas</h3><p>Visualiza el resultado de la consulta actual.</p></div>
+        </div>
+        <button type="button" class="vm-dashboard-all-button" disabled title="Próximamente">
+          Ver todas <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <div class="vm-dashboard-chart-tabs" role="tablist" aria-label="Tipo de visualización">
+        <button type="button" class="vm-dashboard-chart-tab" [class.activo]="dashboardGraficaActiva === 'barras'" role="tab" [attr.aria-selected]="dashboardGraficaActiva === 'barras'" (click)="seleccionarGraficaDashboard('barras')"><i class="fas fa-chart-bar"></i> Barras</button>
+        <button type="button" class="vm-dashboard-chart-tab" [class.activo]="dashboardGraficaActiva === 'tendencia'" role="tab" [attr.aria-selected]="dashboardGraficaActiva === 'tendencia'" (click)="seleccionarGraficaDashboard('tendencia')"><i class="fas fa-chart-line"></i> Tendencia</button>
+        <button type="button" class="vm-dashboard-chart-tab" role="tab" disabled title="Próximamente"><i class="fas fa-percent"></i> Participación <span>Próximamente</span></button>
+        <button type="button" class="vm-dashboard-chart-tab" role="tab" disabled title="Próximamente"><i class="fas fa-arrows-left-right"></i> Pzas vs Venta <span>Próximamente</span></button>
+        <button type="button" class="vm-dashboard-chart-tab" role="tab" disabled title="Próximamente"><i class="fas fa-arrow-up-wide-short"></i> Top 10 <span>Próximamente</span></button>
+        <button type="button" class="vm-dashboard-chart-tab" role="tab" disabled title="Próximamente"><i class="fas fa-arrow-down-wide-short"></i> Baja rotación <span>Próximamente</span></button>
+      </div>
+
+      <div class="vm-dashboard-chart-state" *ngIf="dashboardCargandoConsulta || (dashboardGraficaActiva === 'tendencia' && dashboardCargandoTendencia)"><i class="fas fa-circle-notch fa-spin"></i> Generando visualización...</div>
+      <div class="vm-dashboard-chart-state vm-dashboard-chart-state-error" *ngIf="!dashboardCargandoConsulta && dashboardErrorConsulta"><i class="fas fa-exclamation-triangle"></i> No se pudo generar la visualización.</div>
+      <div class="vm-dashboard-chart-state vm-dashboard-chart-state-error" *ngIf="!dashboardCargandoConsulta && dashboardGraficaActiva === 'tendencia' && dashboardErrorTendencia"><i class="fas fa-exclamation-triangle"></i> {{ dashboardErrorTendencia }}</div>
+      <div class="vm-dashboard-chart-state" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && !dashboardFiltrosAplicados"><i class="fas fa-filter"></i> Aplica una consulta para ver el análisis de ventas.</div>
+      <ng-container *ngIf="dashboardGraficaActiva === 'barras'">
+        <div class="vm-dashboard-chart-state" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && dashboardFiltrosAplicados && dashboardConsulta && !dashboardTieneDesgloseGrafica"><i class="fas fa-sitemap"></i> Selecciona al menos un desglose para visualizar las barras.</div>
+        <div class="vm-dashboard-chart-state" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && dashboardConsulta && dashboardTieneDesgloseGrafica && !dashboardDatosGrafica.length"><i class="fas fa-inbox"></i> No hay datos para visualizar con esta consulta.</div>
+
+      <div class="vm-dashboard-bars" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && dashboardConsulta && dashboardTieneDesgloseGrafica && dashboardDatosGrafica.length">
+        <div class="vm-dashboard-bars-toolbar">
+          <div>
+            <h4>{{ dashboardTituloGrafica }}</h4>
+            <p>Top {{ dashboardDatosGrafica.length }} de la consulta actual, ordenado de mayor a menor.</p>
+          </div>
+          <div class="vm-dashboard-metric-toggle" role="group" aria-label="Métrica de la gráfica">
+            <button type="button" [class.activo]="dashboardMetricaGrafica === 'pzas'" (click)="seleccionarMetricaGrafica('pzas')" [attr.aria-pressed]="dashboardMetricaGrafica === 'pzas'">Pzas</button>
+            <button type="button" *ngIf="!debeOcultarMontosDashboard()" [class.activo]="dashboardMetricaGrafica === 'venta'" (click)="seleccionarMetricaGrafica('venta')" [attr.aria-pressed]="dashboardMetricaGrafica === 'venta'">Venta</button>
+          </div>
+        </div>
+        <div class="vm-dashboard-chart-canvas" [style.height.px]="dashboardAlturaGrafica">
+          <canvas #dashboardBarras [attr.aria-label]="dashboardTituloGrafica" role="img"></canvas>
+        </div>
+      </div>
+      </ng-container>
+
+      <ng-container *ngIf="dashboardGraficaActiva === 'tendencia'">
+        <div class="vm-dashboard-chart-state" *ngIf="!dashboardCargandoConsulta && !dashboardCargandoTendencia && !dashboardErrorConsulta && !dashboardErrorTendencia && dashboardConsulta && !dashboardTieneDatosTendencia"><i class="fas fa-inbox"></i> No hay datos de tendencia para los filtros seleccionados.</div>
+        <div class="vm-dashboard-bars vm-dashboard-trend" *ngIf="!dashboardCargandoConsulta && !dashboardCargandoTendencia && !dashboardErrorConsulta && !dashboardErrorTendencia && dashboardTieneDatosTendencia">
+          <div class="vm-dashboard-bars-toolbar">
+            <div>
+              <h4>Tendencia mensual</h4>
+              <p>{{ dashboardMetricaGrafica === 'venta' ? 'Venta por mes' : 'Piezas vendidas por mes' }} · Evolución según los filtros aplicados.</p>
+            </div>
+            <div class="vm-dashboard-metric-toggle" role="group" aria-label="Métrica de la tendencia">
+              <button type="button" [class.activo]="dashboardMetricaGrafica === 'pzas'" (click)="seleccionarMetricaGrafica('pzas')" [attr.aria-pressed]="dashboardMetricaGrafica === 'pzas'">Pzas</button>
+              <button type="button" *ngIf="!debeOcultarMontosDashboard()" [class.activo]="dashboardMetricaGrafica === 'venta'" (click)="seleccionarMetricaGrafica('venta')" [attr.aria-pressed]="dashboardMetricaGrafica === 'venta'">Venta</button>
+            </div>
+          </div>
+          <div class="vm-dashboard-chart-canvas vm-dashboard-trend-canvas">
+            <canvas #dashboardTendencia aria-label="Tendencia mensual" role="img"></canvas>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+
+    <section class="vm-dashboard-panel vm-dashboard-detail">
+      <div class="vm-dashboard-detail-header">
+        <div class="vm-dashboard-section-title">
+          <i class="fas fa-list"></i>
+          <div><h3>Detalle de consulta</h3><p>Columnas y agrupaciones definidas por la consulta aplicada.</p></div>
+        </div>
+        <button type="button" class="vm-export-btn" disabled title="Disponible al contar con resultados">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
+      </div>
+      <div class="vm-dashboard-result-state" *ngIf="dashboardCargandoConsulta"><i class="fas fa-circle-notch fa-spin"></i> Procesando consulta...</div>
+      <div class="vm-dashboard-result-state vm-dashboard-result-error" *ngIf="!dashboardCargandoConsulta && dashboardErrorConsulta"><i class="fas fa-exclamation-triangle"></i> {{ dashboardErrorConsulta }}</div>
+      <div class="vm-dashboard-result-state" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && !dashboardFiltrosAplicados"><i class="fas fa-arrow-up"></i> Selecciona los filtros y aplica la consulta para visualizar resultados.</div>
+      <div class="vm-dashboard-result-state" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && dashboardFiltrosAplicados && dashboardConsulta && !dashboardConsulta.filas.length"><i class="fas fa-inbox"></i> No se encontraron ventas con los filtros seleccionados.</div>
+      <div class="vm-table-wrapper vm-dashboard-table-wrap" *ngIf="!dashboardCargandoConsulta && !dashboardErrorConsulta && dashboardConsulta && dashboardConsulta.filas.length">
+        <table class="vm-tabla vm-dashboard-table">
+          <thead>
+            <tr>
+              <th *ngFor="let columna of dashboardConsulta.columnas"
+                [class.num]="columna.tipo === 'metrica'"
+                [class.vm-dashboard-sortable]="columna.key === 'pzas' || columna.key === 'venta' || columna.key === 'participacion'"
+                (click)="columna.key === 'pzas' || columna.key === 'venta' || columna.key === 'participacion' ? ordenarDashboard(columna.key) : null"
+                [attr.aria-sort]="esOrdenActivoDashboard(columna.key) ? (dashboardOrden.direccion === 'asc' ? 'ascending' : 'descending') : null">
+                <span>{{ columna.label }}</span><span class="vm-dashboard-sort-indicator" *ngIf="indicadorOrdenDashboard(columna.key)"> {{ indicadorOrdenDashboard(columna.key) }}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of dashboardConsulta.filas">
+              <td *ngFor="let columna of dashboardConsulta.columnas"
+                [class.num]="columna.tipo === 'metrica'"
+                [class.vm-dashboard-dimension-cell]="columna.tipo === 'dimension'"
+                [title]="columna.tipo === 'dimension' ? etiquetaDimensionDashboard(fila, columna.key) : null">
+                <ng-container [ngSwitch]="columna.tipo">
+                  <span *ngSwitchCase="'dimension'">{{ etiquetaDimensionDashboard(fila, columna.key) }}</span>
+                  <ng-container *ngSwitchCase="'informativa'">
+                    <div class="vm-dashboard-reference" *ngFor="let referencia of referenciasComercialesVisiblesDashboard(fila)">{{ referencia }}</div>
+                    <div class="vm-dashboard-reference-more" *ngIf="referenciasComercialesRestantesDashboard(fila) as restantes">+{{ restantes }} más</div>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'metrica'" [ngSwitch]="columna.key">
+                    <ng-container *ngSwitchCase="'pzas'">{{ formatearPzasDashboard(metricaDashboard(fila, 'pzas')) }}</ng-container>
+                    <ng-container *ngSwitchCase="'venta'">{{ formatCurrency(metricaDashboard(fila, 'venta')) }}</ng-container>
+                    <ng-container *ngSwitchCase="'participacion'">
+                      <div class="mini-barra-wrap">
+                        <div class="mini-barra-track">
+                          <div class="mini-barra" [style.width.%]="anchoParticipacionDashboard(metricaDashboard(fila, 'participacion'))"></div>
+                        </div>
+                        <span class="mini-barra-pct">{{ formatearParticipacionDashboard(metricaDashboard(fila, 'participacion')) }}</span>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot *ngIf="dashboardMostrarTotales">
+            <tr class="vm-dashboard-total-row">
+              <td *ngFor="let columna of dashboardConsulta.columnas" [class.num]="columna.tipo === 'metrica'">
+                <ng-container [ngSwitch]="columna.key">
+                  <strong *ngSwitchCase="'pzas'">{{ formatearPzasDashboard(dashboardConsulta.totales.pzas) }}</strong>
+                  <strong *ngSwitchCase="'venta'">{{ formatCurrency(dashboardConsulta.totales.venta) }}</strong>
+                  <strong *ngSwitchCase="'participacion'">100%</strong>
+                  <strong *ngSwitchDefault>{{ columna === dashboardColumnasDimension[0] ? 'Total' : '' }}</strong>
+                </ng-container>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  </section>
 
 </div>
 

@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
+import { Chart, registerables } from 'chart.js';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { FacturasClienteComponent } from '../../../components/facturas-cliente/facturas-cliente.component';
 import {
@@ -16,13 +17,23 @@ import {
   TopProducto,
   PorEstado,
   DesglosePorEstado,
+  DimensionDashboard,
+  FiltrosDashboard,
+  OpcionFiltroDashboard,
+  RespuestaConsultaDashboard,
+  RespuestaTendenciaDashboard,
 } from '../../../services/ventas.service';
 import { AuthService } from '../../../services/auth.service';
 
 type Modo = 'anual' | 'comparar' | 'comparar-anual' | 'comparar-integrales' | 'cliente';
-
+type VistaPrincipal = 'resumen' | 'dashboard';
+type CampoOrdenDashboard = 'pzas' | 'venta' | 'participacion';
+type MetricaGraficaDashboard = 'pzas' | 'venta';
+type GraficaDashboard = 'barras' | 'tendencia';
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round1 = (n: number) => Math.round(n * 10)  / 10;
+
+Chart.register(...registerables);
 
 const MESES = [
   { num: 1,  nombre: 'Enero'      },
@@ -46,13 +57,14 @@ const MESES = [
   templateUrl: './ventas-monitor.component.html',
   styleUrl: './ventas-monitor.component.css',
 })
-export class VentasMonitorComponent implements OnInit, OnDestroy {
+export class VentasMonitorComponent implements OnInit, OnDestroy, AfterViewInit {
   private ventasService = inject(VentasService);
   private authService = inject(AuthService);
   private busquedaSubject = new Subject<string>();
 
   // ── Estado general ──────────────────────────────────────────────────────────
   modo: Modo = 'anual';
+  vistaPrincipal: VistaPrincipal = 'resumen';
   aniosDisponibles: number[] = [];
   grupos: { id: number; nombre_grupo: string }[] = [];
   grupoSeleccionado: number | null = null;
@@ -106,6 +118,122 @@ export class VentasMonitorComponent implements OnInit, OnDestroy {
   // ── Máximo de barras / ordenamiento ────────────────────────────────────────
   sortProductos: 'total' | 'unidades' = 'total';
   sortClientes:  'total' | 'facturas' = 'total';
+
+  // ── Dashboard de ventas (Bloque 3: filtros dinámicos) ─────────────────────
+  dashboardDesgloses: DimensionDashboard[] = [];
+  dashboardFiltrosAplicados = false;
+  private dashboardFiltrosConsulta: FiltrosDashboard = {};
+  private dashboardDesglosesConsulta: DimensionDashboard[] = [];
+  private dashboardFechaInicioConsulta = '';
+  private dashboardFechaFinConsulta = '';
+  private dashboardVistaConsulta: 'facturas' | 'cobranza' = 'cobranza';
+  dashboardConsulta: RespuestaConsultaDashboard | null = null;
+  dashboardCargandoConsulta = false;
+  dashboardErrorConsulta: string | null = null;
+  private dashboardConsultaSolicitud = 0;
+  dashboardMetricaGrafica: MetricaGraficaDashboard = 'pzas';
+  dashboardGraficaActiva: GraficaDashboard = 'barras';
+  dashboardTendencia: RespuestaTendenciaDashboard | null = null;
+  dashboardCargandoTendencia = false;
+  dashboardErrorTendencia: string | null = null;
+  private dashboardTendenciaClave: string | null = null;
+  private dashboardTendenciaSolicitud = 0;
+  @ViewChild('dashboardBarras') private dashboardBarrasCanvas?: ElementRef<HTMLCanvasElement>;
+  private dashboardBarrasChart?: Chart;
+  @ViewChild('dashboardTendencia') private dashboardTendenciaCanvas?: ElementRef<HTMLCanvasElement>;
+  private dashboardTendenciaChart?: Chart;
+  dashboardOrden: { campo: CampoOrdenDashboard; direccion: 'asc' | 'desc' } = {
+    campo: 'venta', direccion: 'desc',
+  };
+  dashboardFiltros: FiltrosDashboard = {};
+  dashboardOpciones: Partial<Record<DimensionDashboard, OpcionFiltroDashboard[]>> = {};
+  dashboardBusquedas: Partial<Record<DimensionDashboard, string>> = {};
+  dashboardCargandoFiltro: Partial<Record<DimensionDashboard, boolean>> = {};
+  dashboardErrorFiltro: Partial<Record<DimensionDashboard, string>> = {};
+  dashboardFiltroAbierto: DimensionDashboard | null = null;
+  private dashboardFiltroSolicitudes: Partial<Record<DimensionDashboard, number>> = {};
+  private dashboardFiltroClaveEnCurso: Partial<Record<DimensionDashboard, string>> = {};
+  private dashboardBusquedaTimers: Partial<Record<DimensionDashboard, ReturnType<typeof setTimeout>>> = {};
+  readonly dashboardDimensiones: { valor: DimensionDashboard; etiqueta: string; icono: string }[] = [
+    { valor: 'marca', etiqueta: 'Marca', icono: 'fa-certificate' },
+    { valor: 'producto', etiqueta: 'Producto', icono: 'fa-bicycle' },
+    { valor: 'categoria', etiqueta: 'Categoría', icono: 'fa-tags' },
+    { valor: 'subcategoria', etiqueta: 'Subcategoría', icono: 'fa-folder-tree' },
+    { valor: 'modelo', etiqueta: 'Modelo', icono: 'fa-cubes' },
+    { valor: 'submodelo', etiqueta: 'Submodelo', icono: 'fa-cube' },
+    { valor: 'talla', etiqueta: 'Talla', icono: 'fa-ruler-combined' },
+    { valor: 'color', etiqueta: 'Color', icono: 'fa-palette' },
+    { valor: 'estado', etiqueta: 'Estado', icono: 'fa-map-marker-alt' },
+    { valor: 'cliente', etiqueta: 'Cliente', icono: 'fa-user-tag' },
+    { valor: 'integral', etiqueta: 'Integral', icono: 'fa-layer-group' },
+  ];
+
+  get dashboardMontoTotal(): string {
+    if (this.debeOcultarMontosDashboard()) return '-';
+    return this.dashboardConsulta?.totales.venta == null ? '—' : this.formatCurrency(this.dashboardConsulta.totales.venta);
+  }
+
+  debeOcultarMontosDashboard(): boolean {
+    return this.dashboardConsulta?.permisos.ocultar_montos
+      ?? this.authService.debeOcultarMontos('ventas_monitor');
+  }
+
+  get dashboardPzasTotal(): number | null {
+    return this.dashboardConsulta?.totales.pzas ?? null;
+  }
+
+  get dashboardColumnasDimension(): { key: string; label: string; tipo: 'dimension' | 'informativa' | 'metrica' }[] {
+    return this.dashboardConsulta?.columnas.filter(columna => columna.tipo === 'dimension') ?? [];
+  }
+
+  get dashboardMostrarTotales(): boolean {
+    return (this.dashboardConsulta?.filas.length ?? 0) > 1;
+  }
+
+  get dashboardDesglosesGrafica(): DimensionDashboard[] {
+    return this.dashboardConsulta?.consulta.desgloses ?? this.dashboardDesglosesConsulta;
+  }
+
+  get dashboardTieneDesgloseGrafica(): boolean {
+    return this.dashboardDesglosesGrafica.length > 0;
+  }
+
+  get dashboardDatosGrafica(): { etiqueta: string; valor: number }[] {
+    if (!this.dashboardConsulta || !this.dashboardTieneDesgloseGrafica) return [];
+    const metrica = this.metricaGraficaEfectiva();
+    return this.dashboardConsulta.filas
+      .map(fila => ({
+        etiqueta: this.dashboardDesglosesGrafica
+          .map(dimension => this.etiquetaDimensionDashboard(fila, dimension))
+          .join(' · '),
+        valor: this.metricaDashboard(fila, metrica) ?? 0,
+      }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 15);
+  }
+
+  get dashboardTituloGrafica(): string {
+    const dimensiones = this.dashboardDesglosesGrafica
+      .map(dimension => this.dashboardDimensiones.find(item => item.valor === dimension)?.etiqueta ?? dimension);
+    const metrica = this.metricaGraficaEfectiva() === 'venta' ? 'Venta' : 'Piezas vendidas';
+    return dimensiones.length ? `${metrica} por ${dimensiones.join(' y ')}` : 'Análisis de ventas';
+  }
+
+  get dashboardAlturaGrafica(): number {
+    return Math.max(300, this.dashboardDatosGrafica.length * 38 + 86);
+  }
+
+  get dashboardDatosTendencia() {
+    return this.dashboardTendencia?.periodos ?? [];
+  }
+
+  get dashboardTieneDatosTendencia(): boolean {
+    return this.dashboardDatosTendencia.some(periodo => periodo.pzas !== 0 || (periodo.venta ?? 0) !== 0);
+  }
+
+  get dashboardFiltrosActivos(): number {
+    return Object.values(this.dashboardFiltros).filter(valores => valores?.length).length;
+  }
 
   get maxMesTotal(): number {
     if (!this.resumen?.por_mes.length) return 1;
@@ -239,7 +367,15 @@ export class VentasMonitorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destruirGraficasDashboard();
     this.busquedaSubject.complete();
+    Object.values(this.dashboardBusquedaTimers).forEach(timer => {
+      if (timer) clearTimeout(timer);
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.programarGraficaDashboard();
   }
 
   // ── Navegación ──────────────────────────────────────────────────────────────
@@ -249,9 +385,513 @@ export class VentasMonitorComponent implements OnInit, OnDestroy {
     this.comparacionAnual = null; this.modalClienteAbierto = false; this.error = null;
   }
 
+  cambiarVistaPrincipal(vista: VistaPrincipal): void {
+    this.vistaPrincipal = vista;
+    if (vista === 'dashboard') {
+      this.cerrarModalEstado();
+      this.programarGraficaDashboard();
+    }
+  }
+
+  aplicarFiltrosDashboard(): void {
+    this.dashboardFiltrosConsulta = this.copiarFiltrosDashboard(this.dashboardFiltros);
+    this.dashboardDesglosesConsulta = [...this.dashboardDesgloses];
+    this.dashboardFechaInicioConsulta = this.fechaInicioStr;
+    this.dashboardFechaFinConsulta = this.fechaFinStr;
+    this.dashboardVistaConsulta = this.vista;
+    this.ejecutarConsultaDashboard();
+  }
+
+  private ejecutarConsultaDashboard(): void {
+    const solicitud = ++this.dashboardConsultaSolicitud;
+    this.dashboardCargandoConsulta = true;
+    this.dashboardErrorConsulta = null;
+    this.dashboardFiltrosAplicados = true;
+    if (this.dashboardTendenciaClave && this.dashboardTendenciaClave !== this.claveTendenciaDashboard()) {
+      this.invalidarTendenciaDashboard();
+    }
+    this.destruirGraficasDashboard();
+    this.ventasService.consultarDashboard({
+      fecha_inicio: this.dashboardFechaInicioConsulta,
+      fecha_fin: this.dashboardFechaFinConsulta,
+      vista: this.dashboardVistaConsulta,
+      filtros: this.dashboardFiltrosConsulta,
+      desgloses: this.dashboardDesglosesConsulta,
+      orden: this.ordenDashboardParaConsulta(),
+    }).subscribe({
+      next: datos => {
+        if (this.dashboardConsultaSolicitud !== solicitud) return;
+        this.dashboardConsulta = datos;
+        if (datos.permisos.ocultar_montos && this.dashboardOrden.campo === 'venta') {
+          this.dashboardOrden = { campo: 'pzas', direccion: 'desc' };
+        }
+        if (datos.permisos.ocultar_montos) this.dashboardMetricaGrafica = 'pzas';
+        this.dashboardCargandoConsulta = false;
+        this.programarGraficaDashboard();
+      },
+      error: (e) => {
+        if (this.dashboardConsultaSolicitud !== solicitud) return;
+        this.dashboardConsulta = null;
+        this.dashboardErrorConsulta = e?.error?.error || 'No se pudo cargar la consulta del dashboard.';
+        this.dashboardCargandoConsulta = false;
+        this.destruirGraficasDashboard();
+      },
+    });
+  }
+
+  limpiarFiltrosDashboard(): void {
+    Object.values(this.dashboardBusquedaTimers).forEach(timer => {
+      if (timer) clearTimeout(timer);
+    });
+    this.dashboardBusquedaTimers = {};
+    this.dashboardFiltrosAplicados = false;
+    this.dashboardDesgloses = [];
+    this.dashboardFiltrosConsulta = {};
+    this.dashboardDesglosesConsulta = [];
+    this.dashboardFechaInicioConsulta = '';
+    this.dashboardFechaFinConsulta = '';
+    this.dashboardVistaConsulta = 'cobranza';
+    this.dashboardFiltros = {};
+    this.dashboardOpciones = {};
+    this.dashboardBusquedas = {};
+    this.dashboardCargandoFiltro = {};
+    this.dashboardErrorFiltro = {};
+    this.dashboardFiltroAbierto = null;
+    this.dashboardConsulta = null;
+    this.dashboardErrorConsulta = null;
+    this.invalidarTendenciaDashboard();
+    this.destruirGraficasDashboard();
+  }
+
+  abrirFiltroDashboard(dimension: DimensionDashboard): void {
+    if (!this.puedeConsultarFiltroDashboard(dimension)) return;
+    this.dashboardFiltroAbierto = this.dashboardFiltroAbierto === dimension ? null : dimension;
+    if (this.dashboardFiltroAbierto === dimension) this.cargarOpcionesDashboard(dimension);
+  }
+
+  buscarFiltroDashboard(dimension: DimensionDashboard, texto: string): void {
+    this.dashboardBusquedas[dimension] = texto;
+    const timer = this.dashboardBusquedaTimers[dimension];
+    if (timer) clearTimeout(timer);
+    this.dashboardBusquedaTimers[dimension] = setTimeout(
+      () => this.cargarOpcionesDashboard(dimension), 300
+    );
+  }
+
+  cargarOpcionesDashboard(dimension: DimensionDashboard): void {
+    const filtrosContexto = this.filtrosContextoDashboard(dimension);
+    const claveSolicitud = JSON.stringify({
+      fechaInicio: this.fechaInicioStr,
+      fechaFin: this.fechaFinStr,
+      vista: this.vista,
+      dimension,
+      buscar: this.dashboardBusquedas[dimension] ?? '',
+      filtros: filtrosContexto,
+    });
+    if (this.dashboardFiltroClaveEnCurso[dimension] === claveSolicitud) return;
+    const solicitud = (this.dashboardFiltroSolicitudes[dimension] ?? 0) + 1;
+    this.dashboardFiltroSolicitudes[dimension] = solicitud;
+    this.dashboardFiltroClaveEnCurso[dimension] = claveSolicitud;
+    this.dashboardCargandoFiltro[dimension] = true;
+    this.dashboardErrorFiltro[dimension] = '';
+    this.ventasService.obtenerFiltrosDashboard({
+      fecha_inicio: this.fechaInicioStr,
+      fecha_fin: this.fechaFinStr,
+      vista: this.vista,
+      dimension,
+      buscar: this.dashboardBusquedas[dimension] ?? '',
+      filtros: filtrosContexto,
+      limite: 50,
+    }).subscribe({
+      next: respuesta => {
+        if (this.dashboardFiltroSolicitudes[dimension] !== solicitud) return;
+        this.dashboardOpciones[dimension] = this.conservarOpcionesSeleccionadasDashboard(
+          dimension, respuesta.opciones
+        );
+        this.dashboardCargandoFiltro[dimension] = false;
+        this.dashboardFiltroClaveEnCurso[dimension] = '';
+      },
+      error: (e) => {
+        if (this.dashboardFiltroSolicitudes[dimension] !== solicitud) return;
+        this.dashboardOpciones[dimension] = [];
+        this.dashboardErrorFiltro[dimension] = e?.error?.error || 'No se pudieron cargar las opciones.';
+        this.dashboardCargandoFiltro[dimension] = false;
+        this.dashboardFiltroClaveEnCurso[dimension] = '';
+      },
+    });
+  }
+
+  alternarOpcionDashboard(dimension: DimensionDashboard, opcion: OpcionFiltroDashboard): void {
+    const actuales = this.dashboardFiltros[dimension] ?? [];
+    this.dashboardFiltros = {
+      ...this.dashboardFiltros,
+      [dimension]: actuales.includes(opcion.id)
+        ? actuales.filter(id => id !== opcion.id)
+        : [...actuales, opcion.id],
+    };
+  }
+
+  quitarOpcionDashboard(dimension: DimensionDashboard, id: string): void {
+    this.dashboardFiltros = {
+      ...this.dashboardFiltros,
+      [dimension]: (this.dashboardFiltros[dimension] ?? []).filter(valor => valor !== id),
+    };
+  }
+
+  limpiarFiltroDashboard(dimension: DimensionDashboard): void {
+    this.dashboardFiltros = { ...this.dashboardFiltros, [dimension]: [] };
+    this.dashboardBusquedas[dimension] = '';
+  }
+
+  opcionDashboardSeleccionada(dimension: DimensionDashboard, id: string): boolean {
+    return (this.dashboardFiltros[dimension] ?? []).includes(id);
+  }
+
+  puedeConsultarFiltroDashboard(dimension: DimensionDashboard): boolean {
+    return dimension !== 'subcategoria'
+      || Boolean((this.dashboardFiltros.producto ?? []).length && (this.dashboardFiltros.categoria ?? []).length);
+  }
+
+  etiquetaOpcionDashboard(dimension: DimensionDashboard, id: string): string {
+    return this.dashboardOpciones[dimension]?.find(opcion => opcion.id === id)?.label ?? id;
+  }
+
+  private filtrosContextoDashboard(dimension: DimensionDashboard): FiltrosDashboard {
+    const filtros: FiltrosDashboard = {};
+    this.dashboardDimensiones.forEach(({ valor }) => {
+      filtros[valor] = valor === dimension ? [] : [...(this.dashboardFiltros[valor] ?? [])];
+    });
+    return filtros;
+  }
+
+  private conservarOpcionesSeleccionadasDashboard(
+    dimension: DimensionDashboard,
+    opciones: OpcionFiltroDashboard[]
+  ): OpcionFiltroDashboard[] {
+    const opcionesPrevias = this.dashboardOpciones[dimension] ?? [];
+    const presentes = new Set(opciones.map(opcion => opcion.id));
+    const seleccionadasFaltantes = (this.dashboardFiltros[dimension] ?? [])
+      .filter(id => !presentes.has(id))
+      .map(id => opcionesPrevias.find(opcion => opcion.id === id) ?? { id, label: id });
+    return [...seleccionadasFaltantes, ...opciones];
+  }
+
+  quitarDesgloseDashboard(): void {
+    this.dashboardDesgloses = [];
+    if (!this.dashboardFiltrosAplicados || this.dashboardCargandoConsulta) return;
+    this.dashboardDesglosesConsulta = [];
+    this.ejecutarConsultaDashboard();
+  }
+
+  seleccionarDesgloseDashboard(dimension: DimensionDashboard): void {
+    this.dashboardDesgloses = this.dashboardDesgloses.includes(dimension)
+      ? this.dashboardDesgloses.filter(valor => valor !== dimension)
+      : [...this.dashboardDesgloses, dimension];
+    if (!this.dashboardFiltrosAplicados || this.dashboardCargandoConsulta) return;
+    this.dashboardDesglosesConsulta = [...this.dashboardDesgloses];
+    this.ejecutarConsultaDashboard();
+  }
+
+  ordenarDashboard(campo: string): void {
+    if (this.dashboardCargandoConsulta || !this.dashboardConsulta) return;
+    if (campo !== 'pzas' && campo !== 'venta' && campo !== 'participacion') return;
+    this.dashboardOrden = this.dashboardOrden.campo === campo
+      ? { campo, direccion: this.dashboardOrden.direccion === 'desc' ? 'asc' : 'desc' }
+      : { campo, direccion: 'desc' };
+    this.ejecutarConsultaDashboard();
+  }
+
+  esOrdenActivoDashboard(campo: string): boolean {
+    return this.dashboardOrden.campo === campo;
+  }
+
+  indicadorOrdenDashboard(campo: string): string {
+    if (!this.esOrdenActivoDashboard(campo)) return '';
+    return this.dashboardOrden.direccion === 'desc' ? '▼' : '▲';
+  }
+
+  etiquetaDimensionDashboard(fila: Record<string, unknown>, clave: string): string {
+    const dimensiones = fila['dimensiones'] as Record<string, { label?: unknown }> | undefined;
+    const etiqueta = dimensiones?.[clave]?.label;
+    return etiqueta == null || String(etiqueta).trim() === '' ? '-' : String(etiqueta);
+  }
+
+  referenciasComercialesDashboard(fila: Record<string, unknown>): string[] {
+    const referencia = fila['referencia_comercial'];
+    const valores = Array.isArray(referencia) ? referencia : referencia == null ? [] : [referencia];
+    return valores
+      .map(valor => String(valor).trim())
+      .filter((valor, indice, todos) => Boolean(valor) && todos.indexOf(valor) === indice);
+  }
+
+  referenciasComercialesVisiblesDashboard(fila: Record<string, unknown>): string[] {
+    return this.referenciasComercialesDashboard(fila).slice(0, 3);
+  }
+
+  referenciasComercialesRestantesDashboard(fila: Record<string, unknown>): number {
+    return Math.max(0, this.referenciasComercialesDashboard(fila).length - 3);
+  }
+
+  metricaDashboard(fila: Record<string, unknown>, clave: CampoOrdenDashboard): number | null {
+    const valor = fila[clave];
+    return typeof valor === 'number' && Number.isFinite(valor) ? valor : null;
+  }
+
+  formatearPzasDashboard(valor: number | null): string {
+    if (valor == null) return '-';
+    return new Intl.NumberFormat('es-MX', { maximumFractionDigits: 2 }).format(valor);
+  }
+
+  formatearParticipacionDashboard(valor: number | null): string {
+    return valor == null ? '-' : `${valor.toLocaleString('es-MX', { maximumFractionDigits: 2 })}%`;
+  }
+
+  anchoParticipacionDashboard(valor: number | null): number {
+    return Math.min(100, Math.max(0, valor ?? 0));
+  }
+
+  seleccionarMetricaGrafica(metrica: MetricaGraficaDashboard): void {
+    if (metrica === 'venta' && this.debeOcultarMontosDashboard()) return;
+    this.dashboardMetricaGrafica = metrica;
+    this.programarGraficaDashboard();
+  }
+
+  seleccionarGraficaDashboard(grafica: GraficaDashboard): void {
+    this.dashboardGraficaActiva = grafica;
+    if (grafica === 'tendencia') {
+      this.cargarTendenciaDashboard();
+      return;
+    }
+    this.programarGraficaDashboard();
+  }
+
+  private metricaGraficaEfectiva(): MetricaGraficaDashboard {
+    return this.dashboardMetricaGrafica === 'venta' && !this.debeOcultarMontosDashboard()
+      ? 'venta'
+      : 'pzas';
+  }
+
+  private programarGraficaDashboard(): void {
+    setTimeout(() => {
+      if (this.dashboardGraficaActiva === 'barras') this.renderizarGraficaDashboard();
+      else this.renderizarTendenciaDashboard();
+    });
+  }
+
+  private destruirGraficasDashboard(): void {
+    this.dashboardBarrasChart?.destroy();
+    this.dashboardBarrasChart = undefined;
+    this.dashboardTendenciaChart?.destroy();
+    this.dashboardTendenciaChart = undefined;
+  }
+
+  private renderizarGraficaDashboard(): void {
+    this.dashboardBarrasChart?.destroy();
+    this.dashboardBarrasChart = undefined;
+    const canvas = this.dashboardBarrasCanvas?.nativeElement;
+    const datos = this.dashboardDatosGrafica;
+    if (!canvas || this.vistaPrincipal !== 'dashboard' || !datos.length) return;
+
+    const esVenta = this.metricaGraficaEfectiva() === 'venta';
+    this.dashboardBarrasChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: datos.map(dato => dato.etiqueta),
+        datasets: [{
+          data: datos.map(dato => dato.valor),
+          backgroundColor: '#EB5E28',
+          hoverBackgroundColor: '#ff7847',
+          borderRadius: 5,
+          borderSkipped: false,
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            displayColors: false,
+            callbacks: {
+              label: contexto => esVenta
+                ? `Venta: ${this.formatearMontoGrafica(Number(contexto.raw))}`
+                : `Pzas: ${this.formatearPzasDashboard(Number(contexto.raw))}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255, 252, 242, .08)' },
+            ticks: {
+              color: '#a79d93',
+              callback: valor => esVenta
+                ? this.formatearMontoGrafica(Number(valor))
+                : this.formatearPzasDashboard(Number(valor)),
+            },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#e2ddd7', font: { size: 11 } },
+          },
+        },
+      },
+    });
+  }
+
+  private formatearMontoGrafica(valor: number): string {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
+    }).format(valor);
+  }
+
+  private claveTendenciaDashboard(): string {
+    return JSON.stringify({
+      fecha_inicio: this.dashboardFechaInicioConsulta,
+      fecha_fin: this.dashboardFechaFinConsulta,
+      vista: this.dashboardVistaConsulta,
+      filtros: this.dashboardFiltrosConsulta,
+    });
+  }
+
+  private invalidarTendenciaDashboard(): void {
+    this.dashboardTendenciaSolicitud++;
+    this.dashboardTendencia = null;
+    this.dashboardTendenciaClave = null;
+    this.dashboardCargandoTendencia = false;
+    this.dashboardErrorTendencia = null;
+    this.dashboardTendenciaChart?.destroy();
+    this.dashboardTendenciaChart = undefined;
+  }
+
+  private cargarTendenciaDashboard(): void {
+    if (!this.dashboardFiltrosAplicados || !this.dashboardConsulta || this.dashboardCargandoConsulta) return;
+    const clave = this.claveTendenciaDashboard();
+    if (this.dashboardTendenciaClave === clave && (this.dashboardTendencia || this.dashboardCargandoTendencia)) {
+      this.programarGraficaDashboard();
+      return;
+    }
+    const solicitud = ++this.dashboardTendenciaSolicitud;
+    this.dashboardTendenciaClave = clave;
+    this.dashboardTendencia = null;
+    this.dashboardErrorTendencia = null;
+    this.dashboardCargandoTendencia = true;
+    this.dashboardTendenciaChart?.destroy();
+    this.dashboardTendenciaChart = undefined;
+    this.ventasService.consultarTendenciaDashboard({
+      fecha_inicio: this.dashboardFechaInicioConsulta,
+      fecha_fin: this.dashboardFechaFinConsulta,
+      vista: this.dashboardVistaConsulta,
+      filtros: this.dashboardFiltrosConsulta,
+    }).subscribe({
+      next: datos => {
+        if (solicitud !== this.dashboardTendenciaSolicitud) return;
+        this.dashboardTendencia = datos;
+        if (datos.permisos.ocultar_montos) this.dashboardMetricaGrafica = 'pzas';
+        this.dashboardCargandoTendencia = false;
+        this.programarGraficaDashboard();
+      },
+      error: () => {
+        if (solicitud !== this.dashboardTendenciaSolicitud) return;
+        this.dashboardTendencia = null;
+        this.dashboardErrorTendencia = 'No fue posible cargar la tendencia de ventas.';
+        this.dashboardCargandoTendencia = false;
+      },
+    });
+  }
+
+  private renderizarTendenciaDashboard(): void {
+    this.dashboardTendenciaChart?.destroy();
+    this.dashboardTendenciaChart = undefined;
+    const canvas = this.dashboardTendenciaCanvas?.nativeElement;
+    const datos = this.dashboardDatosTendencia;
+    if (!canvas || this.vistaPrincipal !== 'dashboard' || this.dashboardGraficaActiva !== 'tendencia' || !datos.length) return;
+
+    const esVenta = this.metricaGraficaEfectiva() === 'venta';
+    this.dashboardTendenciaChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: datos.map(dato => dato.label),
+        datasets: [{
+          data: datos.map(dato => esVenta ? dato.venta ?? 0 : dato.pzas),
+          borderColor: '#EB5E28',
+          backgroundColor: 'rgba(235, 94, 40, .14)',
+          pointBackgroundColor: '#FFFCF2',
+          pointBorderColor: '#EB5E28',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: .24,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            displayColors: false,
+            callbacks: {
+              title: contexto => this.etiquetaCompletaTendencia(datos[contexto[0]?.dataIndex]),
+              label: contexto => esVenta
+                ? `Venta: ${this.formatearMontoGrafica(Number(contexto.raw))}`
+                : `Pzas: ${this.formatearPzasDashboard(Number(contexto.raw))}`,
+            },
+          },
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255, 252, 242, .08)' }, ticks: { color: '#a79d93' } },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255, 252, 242, .08)' },
+            ticks: {
+              color: '#a79d93',
+              callback: valor => esVenta ? this.formatearMontoCompacto(Number(valor)) : this.formatearPzasDashboard(Number(valor)),
+            },
+          },
+        },
+      },
+    });
+  }
+
+  private etiquetaCompletaTendencia(periodo?: { periodo: string }): string {
+    if (!periodo?.periodo) return '';
+    const [anio, mes] = periodo.periodo.split('-').map(Number);
+    return `${MESES[mes - 1]?.nombre ?? periodo.periodo} ${anio}`;
+  }
+
+  private formatearMontoCompacto(valor: number): string {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency', currency: 'MXN', notation: 'compact', maximumFractionDigits: 1,
+    }).format(valor);
+  }
+
+  private copiarFiltrosDashboard(filtros: FiltrosDashboard): FiltrosDashboard {
+    const copia: FiltrosDashboard = {};
+    this.dashboardDimensiones.forEach(({ valor }) => {
+      copia[valor] = [...(filtros[valor] ?? [])];
+    });
+    return copia;
+  }
+
+  private ordenDashboardParaConsulta(): { campo: CampoOrdenDashboard; direccion: 'asc' | 'desc' } {
+    if (this.dashboardOrden.campo === 'venta' && this.debeOcultarMontosDashboard()) {
+      return { campo: 'pzas', direccion: 'desc' };
+    }
+    return this.dashboardOrden;
+  }
+
   cambiarVista(v: 'facturas' | 'cobranza'): void {
     if (this.vista === v) return;
     this.vista = v;
+    if (this.dashboardFiltrosAplicados) {
+      // La vista forma parte del universo aplicado: al cambiarla se conserva
+      // el resto de la consulta, pero se solicita el universo correspondiente.
+      this.dashboardVistaConsulta = v;
+      this.ejecutarConsultaDashboard();
+    }
     if (this.resumen || this.comparacionAnual || this.resumen1 || this.resumen2) {
       this.consultar();
     }

@@ -84,6 +84,70 @@ export interface ComparacionAnual {
   meses: MesComparado[];
 }
 
+export interface VentaCategoria {
+  categoria: string;
+  unidades: number;
+  venta?: number;
+  participacion: number;
+}
+
+export interface DashboardCategorias {
+  total_venta?: number;
+  total_unidades: number;
+  categorias: VentaCategoria[];
+}
+
+export type DimensionDashboard =
+  | 'marca' | 'producto' | 'categoria' | 'subcategoria'
+  | 'modelo' | 'submodelo' | 'talla' | 'color' | 'estado' | 'cliente' | 'integral';
+
+export type FiltrosDashboard = Partial<Record<DimensionDashboard, string[]>>;
+
+export interface OpcionFiltroDashboard {
+  id: string;
+  label: string;
+  extra?: Record<string, string>;
+}
+
+export interface RespuestaFiltrosDashboard {
+  dimension: DimensionDashboard;
+  buscar: string;
+  opciones: OpcionFiltroDashboard[];
+  total: number;
+  limit: number;
+}
+
+export interface ConsultaDashboard {
+  fecha_inicio: string;
+  fecha_fin: string;
+  vista: 'facturas' | 'cobranza';
+  filtros: FiltrosDashboard;
+  desgloses: DimensionDashboard[];
+  /** Compatibilidad temporal con respuestas o clientes del contrato anterior. */
+  desglose?: DimensionDashboard | null;
+  orden: { campo: 'pzas' | 'venta' | 'participacion'; direccion: 'asc' | 'desc' };
+}
+
+export interface RespuestaConsultaDashboard {
+  consulta: ConsultaDashboard;
+  columnas: { key: string; label: string; tipo: 'dimension' | 'informativa' | 'metrica' }[];
+  filas: Array<Record<string, unknown>>;
+  totales: { pzas: number; venta?: number };
+  permisos: { ocultar_montos: boolean };
+}
+
+export interface TendenciaDashboardPeriodo {
+  periodo: string;
+  label: string;
+  pzas: number;
+  venta?: number;
+}
+
+export interface RespuestaTendenciaDashboard {
+  periodos: TendenciaDashboardPeriodo[];
+  permisos: { ocultar_montos: boolean };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -153,5 +217,32 @@ export class VentasService {
     return this.http.get<DesglosePorEstado>(
       `${this.apiUrl}/ventas/productos-por-estado?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&estado=${e}&vista=${vista}`
     );
+  }
+
+  getDashboardCategorias(fechaInicio: string, fechaFin: string, vista: 'facturas' | 'cobranza', categoria?: string): Observable<DashboardCategorias> {
+    const categoriaParam = categoria ? `&categoria=${encodeURIComponent(categoria)}` : '';
+    return this.http.get<DashboardCategorias>(
+      `${this.apiUrl}/ventas/dashboard/categorias?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&vista=${vista}${categoriaParam}`
+    );
+  }
+
+  obtenerFiltrosDashboard(payload: {
+    fecha_inicio: string;
+    fecha_fin: string;
+    vista: 'facturas' | 'cobranza';
+    dimension: DimensionDashboard;
+    buscar?: string;
+    filtros?: FiltrosDashboard;
+    limite?: number;
+  }): Observable<RespuestaFiltrosDashboard> {
+    return this.http.post<RespuestaFiltrosDashboard>(`${this.apiUrl}/ventas/dashboard/filtros`, payload);
+  }
+
+  consultarDashboard(payload: ConsultaDashboard): Observable<RespuestaConsultaDashboard> {
+    return this.http.post<RespuestaConsultaDashboard>(`${this.apiUrl}/ventas/dashboard/consulta`, payload);
+  }
+
+  consultarTendenciaDashboard(payload: Pick<ConsultaDashboard, 'fecha_inicio' | 'fecha_fin' | 'vista' | 'filtros'>): Observable<RespuestaTendenciaDashboard> {
+    return this.http.post<RespuestaTendenciaDashboard>(`${this.apiUrl}/ventas/dashboard/tendencia`, payload);
   }
 }
