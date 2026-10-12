@@ -384,7 +384,13 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     if (this._autoguardadoTimer) clearTimeout(this._autoguardadoTimer);
     if (!this.embarque) return;
     const tieneCambios = Object.keys(this.cambiosPendientes).length > 0;
-    if (!tieneCambios) return;
+    if (!tieneCambios) {
+      // Sin esto, un borrador viejo que haya quedado de una sesión anterior
+      // (ej. se cerró la pestaña antes de que un guardado terminara) se
+      // queda ahí para siempre aunque esta sesión haya guardado todo bien.
+      localStorage.removeItem(`imp_draft_${this.embarque.id}`);
+      return;
+    }
     const draft = {
       seccion:  this.seccionActiva,
       cambios:  this.cambiosPendientes,
@@ -459,6 +465,14 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
           applied = true;
         }
       }
+      // Un borrador local se consume una sola vez: en cuanto se aplica (se
+      // haya usado o no -- "applied" solo indica si quedaba algo vigente),
+      // se borra de inmediato. Si no se borrara aquí, un borrador viejo que
+      // alguna vez quedó con un N/A indebido resucitaría en cada carga de
+      // la página para siempre, sin importar cuántas veces se corrija en
+      // vivo -- el bug real detrás de "lo desmarco y al recargar se vuelve
+      // a marcar".
+      localStorage.removeItem(`imp_draft_${id}`);
       if (applied && draft.seccion) {
         this.seccionActiva = draft.seccion;
         // seccionActiva se pone directo (no vía cambiarSeccion()), así que
@@ -557,9 +571,22 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       // otros usuarios vean los datos al instante vía polling.
       const payload: any = { ...this.cambiosPendientes };
       for (const campo of this.camposNA) { payload[campo] = '__NA__'; }
+      const camposEnviados = Object.keys(payload);
       this.svc.actualizar(this.embarque.id, payload).subscribe({
         next: (res) => {
           this.autoguardandoOk = true;
+          // Quitar de cambiosPendientes justo lo que se acaba de guardar (no
+          // todo el objeto, por si el usuario ya editó algo más mientras la
+          // petición estaba en vuelo). Sin esto, cambiosPendientes nunca
+          // volvía a quedar vacío en toda la sesión después del primer
+          // cambio, así que CADA cierre/recarga de la pestaña escribía un
+          // borrador local nuevo -- la fuente del bug de "se vuelve a
+          // marcar solo": un N/A ya quitado y guardado podía resucitar
+          // desde un borrador local viejo en cualquier recarga posterior.
+          for (const c of camposEnviados) { delete (this.cambiosPendientes as any)[c]; }
+          if (Object.keys(this.cambiosPendientes).length === 0 && this.embarque) {
+            localStorage.removeItem(`imp_draft_${this.embarque.id}`);
+          }
           // Actualizar updated_at local para que el polling no genere falsa alerta
           if (this.embarque) {
             this.embarque.updated_at = new Date().toISOString();
@@ -778,8 +805,15 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       next: () => {
         this.guardando = false;
         this.cambiosPendientes = {};
+        // Igual que guardar() -- ya se persistió, no debe quedar un
+        // borrador local que resucite esto en la próxima carga.
+        localStorage.removeItem(`imp_draft_${this.embarque!.id}`);
         this.svc.obtener(this.embarque!.id).subscribe(d => {
           this.embarque = d;
+          this.camposNA.clear();
+          for (const campo of (d.campos_na || [])) {
+            this.camposNA.add(campo);
+          }
           this._aplicarBorradores();
         });
       },

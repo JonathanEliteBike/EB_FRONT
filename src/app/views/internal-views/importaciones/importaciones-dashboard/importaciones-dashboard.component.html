@@ -651,10 +651,10 @@
                    (click)="irEtapa(e, st.key, $event)" title="Ver este dato en el detalle">
                 <span class="ec-stage-lbl">{{ st.label }}</span>
                 <span class="ec-stage-p">
-                  <span class="rk rk-p" [title]="st.pTitle || 'Proyectado'">{{ st.pLabel || 'P' }}</span>{{ fmtD(stage(e, st.key)?.proy) }}
+                  <span class="rk rk-p" [title]="st.pTitle || 'Proyectado'">{{ st.pLabel || 'P' }}</span>{{ stage(e, st.key)?.na_proy ? 'N/A' : fmtD(stage(e, st.key)?.proy) }}
                 </span>
                 <span class="ec-stage-r">
-                  <span class="rk rk-r" title="Real">R</span>{{ fmtD(stage(e, st.key)?.real) }}
+                  <span class="rk rk-r" title="Real">R</span>{{ stage(e, st.key)?.na_real ? 'N/A' : fmtD(stage(e, st.key)?.real) }}
                 </span>
                 <span class="ec-stage-d" *ngIf="stage(e, st.key)?.delta != null"
                       [ngClass]="deltaClass(stage(e, st.key)!.delta)">

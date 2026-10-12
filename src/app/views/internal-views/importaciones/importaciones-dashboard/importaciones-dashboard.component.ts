@@ -278,7 +278,7 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
   // entrada en ETAPAS/ETAPA_PIPELINE_KEY/_ESTADO_CFG ni en el backend
   // (_estado_actual()): es puramente informativo, no cuenta para la etapa.
 
-  stage(e: any, key: string): { proy: string | null; real: string | null; delta: number | null } | undefined {
+  stage(e: any, key: string): { proy: string | null; real: string | null; delta: number | null; na_proy?: boolean; na_real?: boolean } | undefined {
     return e?.pipeline?.[key] ?? undefined;
   }
 
@@ -1049,6 +1049,8 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
 
   stageCls(stage: { proy?: string | null; real?: string | null; delta?: number | null } | undefined): string {
     // Solo se resalta (verde) cuando la etapa tiene fecha REAL registrada.
+    // N/A se muestra como texto en el propio campo (P o R), sin tratamiento
+    // especial de celda -- cada lado es independiente.
     return stage?.real ? 'stage-real' : '';
   }
 
