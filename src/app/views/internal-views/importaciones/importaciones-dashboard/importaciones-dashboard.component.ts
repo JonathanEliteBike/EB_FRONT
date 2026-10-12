@@ -1047,11 +1047,12 @@ export class ImportacionesDashboardComponent implements OnInit, AfterViewInit, O
     return { background: cfg.bg, color: cfg.color };
   }
 
-  stageCls(stage: { proy?: string | null; real?: string | null; delta?: number | null } | undefined): string {
-    // Solo se resalta (verde) cuando la etapa tiene fecha REAL registrada.
-    // N/A se muestra como texto en el propio campo (P o R), sin tratamiento
-    // especial de celda -- cada lado es independiente.
-    return stage?.real ? 'stage-real' : '';
+  stageCls(stage: { proy?: string | null; real?: string | null; delta?: number | null; na_real?: boolean } | undefined): string {
+    // Se resalta (verde) cuando el lado REAL está resuelto: tiene fecha
+    // registrada, o está marcado N/A (es definitivo -- nunca va a tener
+    // fecha, y eso ya se sabe). Si el real sigue pendiente (sin fecha y sin
+    // N/A), la etapa se queda neutral aunque el proyectado sí esté en N/A.
+    return (stage?.real || stage?.na_real) ? 'stage-real' : '';
   }
 
   latTotalColor(dias: number | null | undefined): string {
