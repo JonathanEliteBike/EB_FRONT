@@ -876,7 +876,13 @@
 
         <div class="field-row" id="campo-alm_liberacion_uva_prog">
           <label>7. Liberación de etiquetado por la UVA (Proyectado)</label>
-          <app-date-picker mode="single" [value]="embarque.alm_liberacion_uva_prog || ''" (dateChange)="marcarCambio('alm_liberacion_uva_prog', $event || null)"></app-date-picker>
+          <div class="na-wrap">
+            <ng-container *ngIf="!esNA('alm_liberacion_uva_prog')">
+              <app-date-picker mode="single" [value]="embarque.alm_liberacion_uva_prog || ''" (dateChange)="marcarCambio('alm_liberacion_uva_prog', $event || null)"></app-date-picker>
+            </ng-container>
+            <span *ngIf="esNA('alm_liberacion_uva_prog')" class="na-badge" (click)="toggleNA('alm_liberacion_uva_prog')" title="Click para quitar N/A"><i class="fas fa-check"></i> N/A</span>
+            <button type="button" class="na-toggle" [class.na-activo]="esNA('alm_liberacion_uva_prog')" (click)="toggleNA('alm_liberacion_uva_prog')" title="Marcar como No Aplica">N/A</button>
+          </div>
         </div>
         <div class="field-row" id="campo-alm_liberacion_uva" [class.campo-faltante]="esCampoFaltante('alm_liberacion_uva')">
           <label>7. Liberación de etiquetado por la UVA (Real)</label>
