@@ -728,6 +728,7 @@
   resize: vertical;
   font-family: inherit;
   width: 100%;
+  min-height: 140px;
   box-sizing: border-box;
   transition: border-color .2s;
 }

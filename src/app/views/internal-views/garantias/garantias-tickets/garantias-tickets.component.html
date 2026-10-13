@@ -787,7 +787,7 @@
                 <div class="comment-form" *ngIf="puedeCrear">
                   <textarea class="comment-input" [(ngModel)]="nuevoComentario"
                             placeholder="Escribe un comentario visible para el cliente…"
-                            rows="3"></textarea>
+                            rows="7"></textarea>
                   <button class="btn btn-primary btn-sm" (click)="enviarComentario()"
                           [disabled]="!nuevoComentario.trim() || enviandoComentario">
                     <i class="fas" [class.fa-paper-plane]="!enviandoComentario" [class.fa-spinner]="enviandoComentario"
@@ -854,7 +854,7 @@
                 <div class="comment-form nota-interna-form">
                   <textarea class="comment-input" [(ngModel)]="notaInterna"
                             placeholder="Escribe una nota interna (solo visible para administradores)…"
-                            rows="3"></textarea>
+                            rows="7"></textarea>
                   <button class="btn btn-nota-interna btn-sm" (click)="enviarNotaInterna()"
                           [disabled]="!notaInterna.trim() || enviandoNota">
                     <i class="fas" [class.fa-lock]="!enviandoNota" [class.fa-spinner]="enviandoNota"
