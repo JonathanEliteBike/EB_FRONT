@@ -643,14 +643,15 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     if (diasEtiq !== null) e.alm_real_dias_etiquetado = diasEtiq;
 
     // Fechas proyectadas Booking→Almacén: mismo criterio que _recalcular_campos()
-    // en el backend (Entrega + regla de Tiempos Estimados por origen+producto+vía).
-    // Es solo un adelanto visual mientras se edita -- el backend recalcula y
-    // persiste el valor real de verdad al autoguardar.
+    // en el backend (Entrega PROYECTADA + regla de Tiempos Estimados por
+    // origen+producto+vía -- nunca la Entrega Real, toda esta cadena son
+    // fechas proyectadas). Es solo un adelanto visual mientras se edita -- el
+    // backend recalcula y persiste el valor real de verdad al autoguardar.
     this._recalcularProyLocal(e);
   }
 
   private _recalcularProyLocal(e: any): void {
-    const entrega = e.log_fecha_entrega;
+    const entrega = e.log_fecha_entrega_prog;
     const regla = this._reglasTiempos.find(r =>
       r.origen === e.log_origen &&
       r.tipo_producto === e.log_tipo_productos &&
