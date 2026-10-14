@@ -317,7 +317,7 @@
 .tl-rechazado .tl-tipo[data-tipo="validacion"] { background: rgba(229,57,53,0.12); color: var(--red); }
 .tl-rechazado .tl-texto { color: #e57373; }
 .tl-fecha { font-size: 0.75rem; color: var(--t3); }
-.tl-texto { font-size: 0.85rem; color: var(--t2); line-height: 1.4; }
+.tl-texto { font-size: 0.85rem; color: var(--t2); line-height: 1.4; white-space: pre-wrap; }
 
 @media (max-width: 750px) {
   .garantias-page { padding: 16px 16px 60px; }
