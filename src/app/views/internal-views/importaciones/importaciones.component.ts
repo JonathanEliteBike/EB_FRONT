@@ -27,16 +27,17 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     } catch { return false; }
   })();
 
-  // Rol 99 "Importaciones": solo llenado de datos, sin acceso a la
-  // auditoría de llenado -- esa ruta queda restringida por
-  // importacionesAuditoriaGuard en app.routes.ts; este flag solo evita
-  // mostrar un botón que llevaría a ese rol a un redirect.
-  readonly puedeVerAuditoria: boolean = (() => {
-    try {
-      const token = localStorage.getItem('token');
-      return !token || (jwtDecode(token) as any).rol !== 99;
-    } catch { return true; }
-  })();
+  // Rol 99 "Importaciones" queda fuera de Auditoría. El rol 4 hereda
+  // Importaciones/Ver para las pantallas hijas; los botones reflejan esa
+  // misma regla antes de que el guard valide la ruta.
+  get puedeVerAuditoria(): boolean {
+    const rol = this.auth.getRol();
+    return rol === 1 || (rol === 4 && this.auth.tienePermisoInterno('importaciones', 'ver'));
+  }
+
+  get puedeVerHitosAuditoria(): boolean {
+    return this.puedeVerAuditoria;
+  }
 
   embarques: Importacion[] = [];
   embarquesFiltrados: Importacion[] = [];

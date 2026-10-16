@@ -296,12 +296,11 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     return !this.auth.debeOcultarMontos('importaciones');
   }
 
-  // Rol 99 "Importaciones": solo llenado de datos, sin acceso a Auditoría
-  // (ni a Hitos ni Tiempos Estimados, ya restringidos por adminGuard en
-  // app.routes.ts -- este es el único de los tres que vive como pestaña
-  // dentro del detalle en vez de ruta propia).
+  // Rol 99 "Importaciones" no accede a Auditoría. Para el rol 4, la pestaña
+  // refleja el mismo permiso Importaciones/Ver que protege su endpoint.
   get puedeVerAuditoria(): boolean {
-    return this.auth.getRol() !== 99;
+    const rol = this.auth.getRol();
+    return rol === 1 || (rol === 4 && this.auth.tienePermisoInterno('importaciones', 'ver'));
   }
 
   get tabsVisibles(): { key: Seccion; label: string; icon: string }[] {

@@ -115,6 +115,7 @@ export interface RespuestaFiltrosDashboard {
   opciones: OpcionFiltroDashboard[];
   total: number;
   limit: number;
+  selecciones_validas?: string[];
 }
 
 export interface ConsultaDashboard {
@@ -125,7 +126,7 @@ export interface ConsultaDashboard {
   desgloses: DimensionDashboard[];
   /** Compatibilidad temporal con respuestas o clientes del contrato anterior. */
   desglose?: DimensionDashboard | null;
-  orden: { campo: 'pzas' | 'venta' | 'participacion'; direccion: 'asc' | 'desc' };
+  orden: { campo: 'pzas' | 'existencia' | 'venta' | 'participacion'; direccion: 'asc' | 'desc' };
 }
 
 export interface RespuestaConsultaDashboard {
@@ -146,6 +147,23 @@ export interface TendenciaDashboardPeriodo {
 export interface RespuestaTendenciaDashboard {
   periodos: TendenciaDashboardPeriodo[];
   permisos: { ocultar_montos: boolean };
+}
+
+export interface ProductoSinVentaDashboard {
+  product_id: number;
+  etiqueta: string;
+  ultima_venta: string | null;
+  dias_sin_venta: number | null;
+  existencia: number;
+  con_existencia: boolean;
+}
+
+export interface RespuestaSinVentaDashboard {
+  fecha_corte: string;
+  productos: ProductoSinVentaDashboard[];
+  top: ProductoSinVentaDashboard[];
+  total: number;
+  nunca_vendidos: number;
 }
 
 @Injectable({
@@ -240,6 +258,10 @@ export class VentasService {
 
   consultarDashboard(payload: ConsultaDashboard): Observable<RespuestaConsultaDashboard> {
     return this.http.post<RespuestaConsultaDashboard>(`${this.apiUrl}/ventas/dashboard/consulta`, payload);
+  }
+
+  consultarSinVentaDashboard(payload: ConsultaDashboard): Observable<RespuestaSinVentaDashboard> {
+    return this.http.post<RespuestaSinVentaDashboard>(`${this.apiUrl}/ventas/dashboard/sin-venta`, payload);
   }
 
   consultarTendenciaDashboard(payload: Pick<ConsultaDashboard, 'fecha_inicio' | 'fecha_fin' | 'vista' | 'filtros'>): Observable<RespuestaTendenciaDashboard> {
