@@ -58,7 +58,7 @@
         <tbody>
           <tr *ngFor="let c of campaniasFiltradas">
             <td><strong>{{ c.nombre }}</strong></td>
-            <td>{{ c.fecha_inicio | date:'dd/MM/yyyy' }} - {{ c.fecha_fin | date:'dd/MM/yyyy' }}</td>
+            <td>{{ normalizarFecha(c.fecha_inicio) | date:'dd/MM/yyyy' }} - {{ normalizarFecha(c.fecha_fin) | date:'dd/MM/yyyy' }}</td>
             <td>
               <span class="msi-chip" *ngFor="let m of c.msi">{{ m.plazo_meses }}m ({{ m.porcentaje }}%)</span>
               <span *ngIf="!c.msi.length">—</span>
