@@ -204,8 +204,16 @@
         </div>
         <div class="field-row full" [class.campo-error]="esCampoError('log_tipo_productos')" [class.campo-faltante]="esCampoFaltante('log_tipo_productos')">
           <label>7. Tipo de productos</label>
-          <input type="text" [value]="embarque.log_tipo_productos || ''"
-            (change)="marcarCambio('log_tipo_productos', $any($event.target).value || null)" />
+          <div class="tipo-producto-selector-det">
+            <button type="button" class="tipo-chip-det" *ngFor="let t of tiposProductoDisponibles()"
+              [class.active]="embarque.log_tipo_productos === t"
+              (click)="marcarCambio('log_tipo_productos', t, { preservarTexto: true })">
+              {{ t }}
+            </button>
+          </div>
+          <span class="tipo-producto-legacy" *ngIf="embarque.log_tipo_productos && !tiposProductoDisponibles().includes(embarque.log_tipo_productos)">
+            Valor actual (texto libre, sin categoría asignada): "{{ embarque.log_tipo_productos }}" — elige una opción arriba para corregirlo.
+          </span>
         </div>
         <div class="field-row" [class.campo-error]="esCampoError('log_fecha_solicitud_cotizaciones')" [class.campo-faltante]="esCampoFaltante('log_fecha_solicitud_cotizaciones')">
           <label>8. Fecha solicitud de cotizaciones</label>

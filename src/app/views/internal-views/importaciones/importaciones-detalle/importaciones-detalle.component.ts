@@ -546,11 +546,29 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     return pesos / tc;
   }
 
-  marcarCambio(campo: keyof Importacion, valor: any): void {
+  /** Catálogo cerrado de "Tipo de productos", igual al selector de chips usado al
+   *  crear el embarque — evita que el campo 7 vuelva a divergir del catálogo de
+   *  Tiempos Estimados por texto libre (ver caso R26-1564: "BICICLETAS" vs "Bicicleta"). */
+  private readonly TIPOS_PRODUCTO_BASE = ['Bicicleta', 'Cascos', 'Zapatos', 'Accesorios', 'Accesorios y Bicicletas'];
+
+  private esCombinacionBicicletaElectrica(): boolean {
+    return this.embarque?.via_transporte === 'AEREO' && this.embarque?.log_origen === 'ESPAÑA';
+  }
+
+  tiposProductoDisponibles(): string[] {
+    const tipos = [...this.TIPOS_PRODUCTO_BASE];
+    if (this.esCombinacionBicicletaElectrica()) {
+      tipos.unshift('Bicicleta eléctrica');
+    }
+    return tipos;
+  }
+
+  marcarCambio(campo: keyof Importacion, valor: any, opts?: { preservarTexto?: boolean }): void {
     if (!this.puedeEditarImportacion) return;
     if (!this.embarque) return;
-    // Uppercase texto libre; excluye fechas ISO (YYYY-MM-DD) y valores nulos/numéricos
-    if (typeof valor === 'string' && valor && !/^\d{4}-\d{2}-\d{2}/.test(valor)) {
+    // Uppercase texto libre; excluye fechas ISO (YYYY-MM-DD), valores nulos/numéricos
+    // y los valores que ya vienen de un selector cerrado (ej. chips de Tipo de productos).
+    if (!opts?.preservarTexto && typeof valor === 'string' && valor && !/^\d{4}-\d{2}-\d{2}/.test(valor)) {
       valor = valor.toUpperCase();
     }
     (this.embarque as any)[campo] = valor;

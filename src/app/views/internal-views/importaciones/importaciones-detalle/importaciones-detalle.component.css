@@ -366,6 +366,20 @@
 .via-btn-det:hover { background: #243044; color: #e2e8f0; }
 .via-btn-det.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; font-weight: 600; }
 
+/* ── Selector de tipo de producto en detalle (catálogo cerrado) ── */
+.tipo-producto-selector-det { display: flex; flex-wrap: wrap; gap: 8px; }
+.tipo-chip-det {
+  background: #1a1f2e; border: 1px solid #2d3748; border-radius: 999px;
+  color: #94a3b8; padding: 7px 14px; font-size: .8125rem; cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, transform 120ms ease-out;
+}
+.tipo-chip-det:hover  { background: #243044; color: #e2e8f0; }
+.tipo-chip-det:active { transform: scale(0.96); }
+.tipo-chip-det.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; font-weight: 600; }
+.tipo-producto-legacy {
+  display: block; margin-top: 8px; font-size: .75rem; color: #f59e0b;
+}
+
 /* ── FAB guardar ── */
 .fab-guardar {
   position: fixed; bottom: 28px; right: 28px; z-index: 50;
