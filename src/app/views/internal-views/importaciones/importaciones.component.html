@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="header-actions">
-      <button *ngIf="esAdmin" class="btn-dash" routerLink="/importaciones/tiempos-estimados" title="Configurar reglas de tiempos estimados">
+      <button *ngIf="puedeVerTiemposEstimados" class="btn-dash" routerLink="/importaciones/tiempos-estimados" title="Configurar reglas de tiempos estimados">
         <i class="fas fa-stopwatch"></i> Tiempos Estimados
       </button>
       <button *ngIf="puedeVerHitosAuditoria" class="btn-dash" routerLink="/importaciones/hitos-auditoria" title="Configurar los hitos que mide la auditoría de llenado">

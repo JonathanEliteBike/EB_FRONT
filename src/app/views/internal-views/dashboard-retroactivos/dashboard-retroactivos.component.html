@@ -21,7 +21,7 @@
         </button>
 
         <button class="btn btn-actualizar" (click)="actualizarDatos()" [disabled]="cargando"
-            *ngIf="!modoHistorico">
+            *ngIf="!modoHistorico && puedeSincronizar">
             <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i>
             {{ cargando ? 'Sincronizando...' : 'Actualizar Odoo' }}
         </button>
@@ -45,12 +45,17 @@
         <p>Procesando datos financieros...</p>
     </div>
 
-    <div *ngIf="!cargando && retroactivosOriginales.length === 0" class="sin-datos">
+    <div *ngIf="!cargando && errorCarga" class="sin-datos">
+        <i class="fas fa-triangle-exclamation fa-2x" style="margin-bottom: 10px; display:block;"></i>
+        <p>{{ errorCarga }}</p>
+    </div>
+
+    <div *ngIf="!cargando && !errorCarga && retroactivosOriginales.length === 0" class="sin-datos">
         <i class="fas fa-search fa-2x" style="margin-bottom: 10px; display:block;"></i>
         <p>No hay información de retroactivos disponible para mostrar.</p>
     </div>
 
-    <div class="tabla-scroll-wrapper" *ngIf="!cargando && retroactivosOriginales.length > 0">
+    <div class="tabla-scroll-wrapper" *ngIf="!cargando && !errorCarga && retroactivosOriginales.length > 0">
 
         <div class="dummy-scroll-wrapper" #dummyScroll (scroll)="tablaContainer.scrollLeft = dummyScroll.scrollLeft">
             <div class="dummy-scroll-content" [style.width.px]="tabla.offsetWidth"></div>
