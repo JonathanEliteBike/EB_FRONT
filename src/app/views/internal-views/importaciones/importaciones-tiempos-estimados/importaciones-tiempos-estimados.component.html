@@ -10,7 +10,7 @@
         <p class="te-sub">Reglas de días por etapa que calculan solas las fechas proyectadas de cada embarque</p>
       </div>
     </div>
-    <button class="btn-nuevo" (click)="abrirNueva()">
+    <button *ngIf="puedeCrear" class="btn-nuevo" (click)="abrirNueva()">
       <i class="fas fa-plus"></i> Nueva regla
     </button>
   </div>
@@ -57,8 +57,8 @@
           <td class="celda-dias">{{ r.dias_destino_a_almacen }}d</td>
           <td class="celda-total">{{ totalDias(r) }}d</td>
           <td class="col-acciones">
-            <button class="btn-icon" title="Editar" (click)="abrirEdicion(r)"><i class="fas fa-pen"></i></button>
-            <button class="btn-icon btn-icon-del" title="Eliminar" (click)="eliminar(r)"><i class="fas fa-trash"></i></button>
+            <button *ngIf="puedeEditar" class="btn-icon" title="Editar" (click)="abrirEdicion(r)"><i class="fas fa-pen"></i></button>
+            <button *ngIf="puedeEliminar" class="btn-icon btn-icon-del" title="Eliminar" (click)="eliminar(r)"><i class="fas fa-trash"></i></button>
           </td>
         </tr>
       </tbody>

@@ -136,6 +136,10 @@ export class ProyeccionesMY27Component implements OnInit {
     private auth: AuthService,
   ) {}
 
+  get ocultarMontos(): boolean {
+    return this.auth.debeOcultarMontos('proyecciones_my27');
+  }
+
   get puedeEditar(): boolean {
     return this.auth.getRol() !== 4
       || this.auth.tienePermisoInterno('proyecciones_my27', 'editar');
@@ -269,12 +273,13 @@ export class ProyeccionesMY27Component implements OnInit {
     return this.datos?.total_costo_mes?.[mes] ?? null;
   }
 
-  formatPrecio(v: number): string {
-    return v > 0 ? '$' + v.toLocaleString('es-MX', { minimumFractionDigits: 0 }) : '—';
+  formatPrecio(v: number | null | undefined): string {
+    if (this.ocultarMontos || v === null || v === undefined) return '-';
+    return '$' + v.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   formatCosto(v: number | null | undefined): string {
-    if (v === null || v === undefined) return '-';
+    if (this.ocultarMontos || v === null || v === undefined) return '-';
     return '$' + v.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 

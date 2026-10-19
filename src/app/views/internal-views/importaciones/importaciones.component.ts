@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef } from '@angula
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { jwtDecode } from 'jwt-decode';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../components/temporada-selector/temporada-selector.component';
@@ -17,15 +16,10 @@ import { AuthService } from '../../../services/auth.service';
   styleUrl: './importaciones.component.css',
 })
 export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy {
-  // Solo Administrador (rol 1) ve el acceso a Tiempos Estimados -- esa
-  // pantalla queda restringida por adminGuard en app.routes.ts; este flag
-  // solo evita mostrar un botón que llevaría a un usuario normal a un redirect.
-  readonly esAdmin: boolean = (() => {
-    try {
-      const token = localStorage.getItem('token');
-      return !!token && (jwtDecode(token) as any).rol === 1;
-    } catch { return false; }
-  })();
+  get puedeVerTiemposEstimados(): boolean {
+    const rol = this.auth.getRol();
+    return rol === 1 || (rol === 4 && this.auth.tienePermisoInterno('importaciones', 'ver'));
+  }
 
   // Rol 99 "Importaciones" queda fuera de Auditoría. El rol 4 hereda
   // Importaciones/Ver para las pantallas hijas; los botones reflejan esa

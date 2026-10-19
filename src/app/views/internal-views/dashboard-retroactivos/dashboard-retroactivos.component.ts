@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { RetroactivosService } from '../../../services/retroactivos.service';
+import { AuthService } from '../../../services/auth.service';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { FiltroComponent } from '../../../components/filtro/filtro.component';
 import { TemporadaSelectorComponent } from '../../../components/temporada-selector/temporada-selector.component';
@@ -28,6 +29,7 @@ export class DashboardRetroactivosComponent implements OnInit {
   retroactivosOriginales: any[] = []; // Guarda los datos puros que vienen del backend
   retroactivos: any[] = [];           // Esta es la tabla que se muestra (filtrada)
   cargando: boolean = true;
+  errorCarga: string | null = null;
   fechaActual: Date = new Date();
 
   // Variables para Opciones de Filtros
@@ -74,7 +76,12 @@ export class DashboardRetroactivosComponent implements OnInit {
   modoHistorico = false;
   temporadaHistoricaSeleccionada: string | null = null;
 
-  constructor(private retroactivosService: RetroactivosService) { }
+  constructor(private retroactivosService: RetroactivosService, private auth: AuthService) { }
+
+  get puedeSincronizar(): boolean {
+    return this.auth.getRol() === 1 || (this.auth.getRol() === 4
+      && this.auth.tienePermisoInterno('dashboard_retroactivos', 'editar'));
+  }
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -154,6 +161,7 @@ export class DashboardRetroactivosComponent implements OnInit {
 
   cargarDatos(): void {
     this.cargando = true;
+    this.errorCarga = null;
     this.retroactivosService.getRetroactivos().subscribe({
       next: (data) => {
         this.retroactivosOriginales = data;
@@ -165,9 +173,19 @@ export class DashboardRetroactivosComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar retroactivos', err);
+        this.errorCarga = this.mensajeErrorCarga(err?.status);
         this.cargando = false;
       }
     });
+  }
+
+  private mensajeErrorCarga(status: number | undefined): string {
+    switch (status) {
+      case 401: return 'Tu sesión no es válida o expiró. Inicia sesión nuevamente.';
+      case 403: return 'No cuentas con permiso para consultar el Dashboard de Retroactivos.';
+      case 500: return 'Ocurrió un error al cargar los retroactivos. Intenta nuevamente más tarde.';
+      default: return 'No fue posible cargar los retroactivos. Verifica tu conexión e intenta nuevamente.';
+    }
   }
 
   // ==========================================

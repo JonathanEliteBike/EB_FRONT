@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { TiemposEstimadosService, TiempoEstimado, TiempoEstimadoPayload } from '../../../../services/tiempos-estimados.service';
+import { AuthService } from '../../../../services/auth.service';
 
 const ORIGENES_DISPONIBLES = ['VIETNAM', 'ESPAÑA', 'TAIWAN', 'BELGICA', 'CAMBOYA', 'ESTADOS UNIDOS', 'CHINA'];
 // "Bicicleta eléctrica" no está aquí a propósito -- solo se trae de España y
@@ -36,7 +37,22 @@ export class ImportacionesTiemposEstimadosComponent implements OnInit {
   errorForm = '';
   form: TiempoEstimadoPayload = { ...FORM_VACIO };
 
-  constructor(private svc: TiemposEstimadosService) {}
+  constructor(private svc: TiemposEstimadosService, private auth: AuthService) {}
+
+  get puedeCrear(): boolean {
+    return this.auth.getRol() === 1 || (this.auth.getRol() === 4
+      && this.auth.tienePermisoInterno('importaciones', 'crear'));
+  }
+
+  get puedeEditar(): boolean {
+    return this.auth.getRol() === 1 || (this.auth.getRol() === 4
+      && this.auth.tienePermisoInterno('importaciones', 'editar'));
+  }
+
+  get puedeEliminar(): boolean {
+    return this.auth.getRol() === 1 || (this.auth.getRol() === 4
+      && this.auth.tienePermisoInterno('importaciones', 'eliminar'));
+  }
 
   ngOnInit(): void {
     this.cargar();
