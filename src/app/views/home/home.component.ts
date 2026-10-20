@@ -1,8 +1,8 @@
-﻿import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { MonitorOdooService } from '../../services/monitor-odoo.service';
 import { HomeBarComponent } from '../../components/home-bar/home-bar.component';
 import { environment } from '../../../environments/environment';
@@ -61,6 +61,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private timerInterval: any;
 
   busquedaModulos = '';
+  inventarioItAutorizado = false;
 
   modulos: Modulo[] = [
     {
@@ -173,11 +174,12 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get modulosFiltrados(): Modulo[] {
     const q = this.busquedaModulos.trim().toLowerCase();
+    const permitidos = this.modulos.filter(m => m.ruta !== '/inventario-it' || this.inventarioItAutorizado);
     const lista = q
-      ? this.modulos.filter(m =>
+      ? permitidos.filter(m =>
           m.titulo.toLowerCase().includes(q) || m.descripcion.toLowerCase().includes(q)
         )
-      : this.modulos;
+      : permitidos;
     return [...lista.filter(m => m.pinned), ...lista.filter(m => !m.pinned)];
   }
 
@@ -244,6 +246,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPins();
+    this.comprobarAccesoInventario();
+  }
+
+  private comprobarAccesoInventario(): void {
+    this.inventarioItAutorizado = false;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    this.http.get<{ autorizado: boolean }>(`${this.apiUrl}/api/inventario/acceso`, {
+      headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
+    }).subscribe({
+      next: (r) => this.inventarioItAutorizado = r.autorizado === true,
+      error: () => this.inventarioItAutorizado = false
+    });
   }
 
   ngOnDestroy(): void {

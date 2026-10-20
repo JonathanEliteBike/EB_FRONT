@@ -1540,3 +1540,8 @@ tbody tr:last-child td {
     display: inline;
   }
 }
+
+/* Selector de rango compartido con Garantías */
+.fecha-rango-inventario { display: flex; flex-direction: column; gap: 7px; min-width: 220px; position: relative; z-index: 10; }
+.fecha-rango-titulo { color: var(--text-muted, #afb4ae); font-size: 10px; font-weight: 900; letter-spacing: .4px; text-transform: uppercase; }
+.fecha-rango-inventario app-fecha-inventario { width: 100%; }

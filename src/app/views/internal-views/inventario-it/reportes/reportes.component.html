@@ -442,44 +442,16 @@
         </select>
 
       </label>
-
-
-
-      <!-- FECHA INICIAL -->
-
-      <label *ngIf="mostrarFiltrosFecha">
-
-        <span>
-          Fecha inicial
-        </span>
-
-        <input
-          type="date"
-          [(ngModel)]="fechaInicio"
-          [disabled]="cargando"
-          (change)="aplicarFiltros()"
-        />
-
-      </label>
-
-
-
-      <!-- FECHA FINAL -->
-
-      <label *ngIf="mostrarFiltrosFecha">
-
-        <span>
-          Fecha final
-        </span>
-
-        <input
-          type="date"
-          [(ngModel)]="fechaFin"
-          [disabled]="cargando"
-          (change)="aplicarFiltros()"
-        />
-
-      </label>
+      <div class="fecha-rango-inventario" *ngIf="mostrarFiltrosFecha">
+        <span class="fecha-rango-titulo">Periodo</span>
+        <app-fecha-inventario mode="range" placeholder="Filtrar por fecha"
+          [desde]="fechaInicio"
+          [hasta]="fechaFin"
+          (desdeChange)="fechaInicio = $event"
+          (hastaChange)="fechaFin = $event"
+          (rangeChange)="aplicarFiltros()">
+        </app-fecha-inventario>
+      </div>
 
     </div>
 

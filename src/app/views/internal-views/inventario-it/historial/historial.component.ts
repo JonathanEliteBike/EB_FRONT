@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { FechaInventarioComponent } from '../fecha-inventario/fecha-inventario.component';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ControlCambiosComponent } from '../control-cambios/control-cambios.component';
+import { ActividadUsuariosComponent } from '../actividad-usuarios/actividad-usuarios.component';
 
 import {
   HistorialCatalogos,
@@ -27,13 +30,19 @@ type FiltroTarjetaHistorial =
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink
+    RouterLink,
+    ActividadUsuariosComponent,
+    ControlCambiosComponent,
+    FechaInventarioComponent
   ],
 
   templateUrl: './historial.component.html',
   styleUrl: './historial.component.css'
 })
 export class HistorialComponent implements OnInit {
+
+  pestanaHistorial: 'control' | 'movimientos' | 'actividad' = 'control';
+  private movimientosInicializados = false;
 
   movimientos: MovimientoHistorial[] = [];
 
@@ -89,11 +98,29 @@ export class HistorialComponent implements OnInit {
 
   constructor(
     private historialService:
-      HistorialService
+      HistorialService,
+    private rutaActiva: ActivatedRoute
   ) {}
 
 
   ngOnInit(): void {
+    const pestana = this.rutaActiva.snapshot.queryParamMap.get('pestana');
+    if (pestana === 'movimientos' || pestana === 'actividad' || pestana === 'control') {
+      this.pestanaHistorial = pestana;
+    }
+    if (this.pestanaHistorial === 'movimientos') {
+      this.inicializarMovimientos();
+    }
+  }
+
+  seleccionarPestana(pestana: 'control' | 'movimientos' | 'actividad'): void {
+    this.pestanaHistorial = pestana;
+    if (pestana === 'movimientos') this.inicializarMovimientos();
+  }
+
+  private inicializarMovimientos(): void {
+    if (this.movimientosInicializados) return;
+    this.movimientosInicializados = true;
     this.cargarCatalogos();
     this.cargarInformacion();
   }

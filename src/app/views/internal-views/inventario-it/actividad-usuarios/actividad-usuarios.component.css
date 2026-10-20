@@ -1,0 +1,249 @@
+/* Hereda variables cromáticas del host de Historial de Movimientos. */
+:host { display: block; }
+* { box-sizing: border-box; }
+button, input, select { font: inherit; }
+/* ==========================================================
+   TRAZABILIDAD POR USUARIO — integración con el tema oscuro
+   ========================================================== */
+.actividad-usuarios {
+  width: 100%;
+  max-width: 1680px;
+  margin: 26px auto;
+  padding: 27px 28px;
+  border: 1px solid var(--border-main);
+  border-radius: 18px;
+  background: var(--background-panel);
+  color: var(--text-main);
+}
+
+.actividad-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.actividad-heading .eyebrow {
+  color: var(--orange);
+  margin: 0 0 7px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.actividad-heading h2 {
+  margin: 0 0 9px;
+  font-size: clamp(21px, 2.3vw, 26px);
+  font-weight: 850;
+  color: var(--text-main);
+}
+
+.actividad-heading p:not(.eyebrow) {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.actividad-total {
+  white-space: nowrap;
+  color: var(--orange);
+  font-size: 28px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.actividad-total small {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.actividad-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 22px 0 12px;
+}
+
+.actividad-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.actividad-filtros select,
+.actividad-filtros input {
+  min-height: 43px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-main);
+  border-radius: 9px;
+  background: var(--background-input);
+  color: var(--text-main);
+  color-scheme: dark;
+}
+
+.actividad-filtros select:focus-visible,
+.actividad-filtros input:focus-visible,
+.actividad-filtrar:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.actividad-filtrar {
+  min-height: 43px;
+  padding: 10px 16px;
+  border: 1px solid var(--orange);
+  border-radius: 9px;
+  background: var(--orange);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.actividad-filtrar:hover:not(:disabled) { background: var(--orange-hover); }
+.actividad-filtrar:disabled { opacity: .55; cursor: default; }
+
+.actividad-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.actividad-panel {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border-main);
+  border-radius: 13px;
+  background: var(--background-panel-soft);
+  color: var(--text-main);
+}
+
+.actividad-panel h3 {
+  margin: 0 0 18px;
+  color: var(--text-main);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.actividad-usuario { margin: 0 0 17px; }
+.actividad-usuario:last-child { margin-bottom: 0; }
+.actividad-usuario-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+  color: var(--text-main);
+  font-size: 13px;
+}
+.actividad-usuario-info strong {
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.actividad-barra {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 30px;
+  background: var(--border-main);
+}
+.actividad-barra span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--orange);
+  transition: width .2s ease;
+}
+.actividad-lista { max-height: 350px; overflow: auto; }
+.actividad-evento {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-main);
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.actividad-evento:first-child { padding-top: 0; }
+.actividad-evento strong { color: var(--text-main); }
+.actividad-evento small { display: block; margin-top: 5px; color: var(--text-muted); }
+.actividad-ayuda {
+  margin: 11px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.actividad-error { color: var(--red); font-weight: 700; }
+
+@media (max-width: 850px) {
+  .actividad-grid { grid-template-columns: 1fr; }
+  .actividad-heading { flex-direction: column; }
+  .actividad-usuarios { padding: 20px; }
+}
+
+/* ETAPA 4: historial individual sin abandonar Auditorías. */
+.actividad-usuario-enlace {
+  padding: 0; border: 0; background: transparent; font: inherit;
+  color: var(--text-main); text-align: left; cursor: pointer;
+}
+.actividad-usuario-enlace:hover { color: var(--orange); text-decoration: underline; }
+.actividad-usuario-enlace:focus-visible,
+.actividad-modal-cerrar:focus-visible,
+.actividad-modal-evento-boton:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.actividad-modal-fondo {
+  position: fixed; z-index: 2500; inset: 0; padding: 22px;
+  background: rgba(0, 0, 0, .77); display: grid; place-items: center;
+}
+.actividad-modal {
+  box-sizing: border-box; width: min(960px, 100%);
+  max-height: min(88vh, 900px); overflow-y: auto;
+  padding: clamp(18px, 3vw, 30px); border-radius: 18px;
+  border: 1px solid var(--border-main);
+  background: var(--background-panel); color: var(--text-main);
+  box-shadow: 0 28px 85px rgba(0,0,0,.5);
+}
+.actividad-modal-header { display: flex; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
+.actividad-modal-header h2 { margin: 7px 0; font-size: 24px; color: var(--text-main); }
+.actividad-modal-header p { color: var(--text-secondary); margin: 0; font-size: 13px; }
+.actividad-modal-etiqueta { font-size: 10px; color: var(--orange); font-weight: 800; letter-spacing: .09em; }
+.actividad-modal-cerrar { align-self: start; font-size: 21px; width: 39px; height: 39px; flex: 0 0 auto; border: 1px solid var(--border-main); border-radius: 9px; color: var(--text-main); background: var(--background-panel-soft); cursor: pointer; }
+.actividad-modal-evento { border: 1px solid var(--border-main); border-radius: 11px; overflow: hidden; margin: 0 0 12px; }
+.actividad-modal-evento-boton { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 15px; border: 0; padding: 17px; background: var(--background-panel-soft); color: var(--text-main); cursor: pointer; text-align: left; }
+.actividad-modal-evento-boton strong { display: block; font-size: 14px; }
+.actividad-modal-evento-boton small { display: block; font-size: 12px; margin-top: 5px; color: var(--text-muted); }
+.actividad-chevron { font-size: 21px; color: var(--orange); }
+.actividad-modal-cambios { padding: 16px; overflow-wrap: anywhere; }
+.actividad-modal-tabla-header, .actividad-modal-fila { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: center; }
+.actividad-modal-tabla-header { font-size: 12px; font-weight: 700; color: var(--text-secondary); padding: 0 0 9px; border-bottom: 1px solid var(--border-main); }
+.actividad-modal-fila { font-size: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-main); color: var(--text-secondary); }
+.actividad-modal-fila:last-child { border-bottom: 0; }
+.actividad-modal-valor-nuevo { color: var(--text-main); font-weight: 700; }
+.actividad-modal-pie { margin-top: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: var(--text-muted); }
+@media (max-width: 640px) {
+ .actividad-modal-fondo { padding: 8px; }
+ .actividad-modal { max-height: 94vh; }
+ .actividad-modal-tabla-header, .actividad-modal-fila { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+}
+
+
+
+.actividad-limpiar {
+  background: transparent;
+  border-color: var(--border-main);
+  color: var(--text-main);
+}
+.actividad-limpiar:hover:not(:disabled) {
+  background: var(--background-panel-soft);
+  border-color: var(--orange);
+}
+
+
+/* Selector de rango compartido con Garantías */
+.fecha-rango-inventario { display: flex; flex-direction: column; gap: 7px; min-width: 220px; position: relative; z-index: 10; }
+.fecha-rango-titulo { color: var(--text-muted, #afb4ae); font-size: 10px; font-weight: 900; letter-spacing: .4px; text-transform: uppercase; }
+.fecha-rango-inventario app-fecha-inventario { width: 100%; }
+
+.actividad-filtros .fecha-rango-inventario { flex: 0 1 315px; }

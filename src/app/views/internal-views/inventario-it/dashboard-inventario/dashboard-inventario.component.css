@@ -1556,3 +1556,14 @@ a {
     width: 100%;
   }
 }
+/* Dashboard = resumen. Las revisiones se trabajan en Control y auditoría. */
+.monthly-control-panel { border:1px solid #3f413a; border-radius:15px; background:#242622; padding:22px; margin:0 0 25px; }
+.monthly-heading {display:flex;justify-content:space-between;gap:18px;align-items:center}
+.monthly-heading h2 {font-size:18px;margin:0 0 6px;color:#f8f8f3}
+.monthly-heading p,.monthly-help {font-size:12px;color:#a7aaa3;line-height:1.5;margin:4px 0}
+.monthly-heading a {color:#f3a271;border:1px solid #675040;border-radius:10px;padding:11px 14px;font-weight:700;font-size:12px;white-space:nowrap}
+.monthly-heading a:hover {border-color:#f46b2a}
+.monthly-metrics {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:19px 0 15px}
+.monthly-metrics>div {background:#1c1e1b;border:1px solid #3a3d37;border-radius:12px;padding:16px;display:grid;gap:12px}
+.monthly-metrics small {font-size:12px;color:#b0b3ac}.monthly-metrics strong {font-size:27px;color:#f5f5ef}
+@media(max-width:800px){.monthly-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.monthly-heading{flex-direction:column;align-items:start}}

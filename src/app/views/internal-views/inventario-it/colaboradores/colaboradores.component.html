@@ -429,11 +429,10 @@
               Fecha de ingreso
             </span>
 
-            <input
-              type="date"
-              name="fechaIngreso"
-              [(ngModel)]="nuevoColaborador.fechaIngreso"
-            />
+            <app-fecha-inventario mode="single" placeholder="Seleccionar fecha"
+              [value]="nuevoColaborador.fechaIngreso || ''"
+              (dateChange)="nuevoColaborador.fechaIngreso = $event">
+            </app-fecha-inventario>
 
           </label>
 

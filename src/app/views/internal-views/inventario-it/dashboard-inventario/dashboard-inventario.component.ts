@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ControlCambiosService, ResumenControlCambios } from '../../../../services/inventario/control-cambios.service';
 import { RouterLink } from '@angular/router';
 
 import {
@@ -71,6 +72,10 @@ interface IndicadorOperativo {
 })
 export class DashboardInventarioComponent implements OnInit {
   dashboard: DashboardInventarioData = this.crearDashboardVacio();
+  controlMensual: ResumenControlCambios = {total: 0, pendientes: 0, validados: 0, observados: 0};
+  controlMensualCargando = false;
+  controlMensualError = '';
+  periodoControlEtiqueta = new Intl.DateTimeFormat('es-MX', {month: 'long', year: 'numeric'}).format(new Date());
 
   empresas: string[] = [];
   departamentos: string[] = [];
@@ -99,12 +104,14 @@ export class DashboardInventarioComponent implements OnInit {
 
 
   constructor(
-    private dashboardService: DashboardInventarioService
+    private dashboardService: DashboardInventarioService,
+    private controlCambiosService: ControlCambiosService
   ) {}
 
   ngOnInit(): void {
     this.cargarCatalogos();
     this.cargarDashboard();
+    this.cargarControlMensual();
   }
 
 
@@ -113,6 +120,22 @@ export class DashboardInventarioComponent implements OnInit {
     if (this.mostrarDetalle) {
       this.cerrarDetalle();
     }
+  }
+
+  cargarControlMensual(): void {
+    const hoy = new Date();
+    const mes = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+    this.controlMensualCargando = true;
+    this.controlMensualError = '';
+    this.controlCambiosService.resumen(`${mes}-01`, `${mes}-${String(ultimoDia).padStart(2, '0')}`)
+      .subscribe({
+        next: datos => { this.controlMensual = datos.resumen; this.controlMensualCargando = false; },
+        error: () => {
+          this.controlMensualCargando = false;
+          this.controlMensualError = 'Control de cambios pendiente de configurar en backend.';
+        }
+      });
   }
 
   cargarCatalogos(): void {
@@ -500,7 +523,7 @@ export class DashboardInventarioComponent implements OnInit {
         clase: 'naranja'
       },
       {
-        etiqueta: 'Auditorías finalizadas',
+        etiqueta: 'Verificaciones físicas finalizadas',
         porcentaje: this.porcentajeAuditoriasFinalizadas,
         detalle:
           `${this.dashboard.resumen.auditorias.finalizadas} de ` +
@@ -553,7 +576,7 @@ export class DashboardInventarioComponent implements OnInit {
           `${resumen.hallazgos.noLocalizados} ` +
           'equipos no localizados',
         descripcion:
-          'Estos activos no fueron encontrados en una auditoría.',
+          'Estos activos no fueron encontrados en una verificación.',
         ruta: '/inventario-it/auditorias',
         boton: 'Revisar activos',
         queryParams: {
@@ -746,12 +769,12 @@ export class DashboardInventarioComponent implements OnInit {
       return {
         tipo,
         estado,
-        titulo: 'Auditorías en proceso',
+        titulo: 'Verificaciones físicas en proceso',
         descripcion: 'Revisiones físicas que aún no han finalizado.',
         ruta: '/inventario-it/auditorias',
         columnas: [
           { clave: 'folio', titulo: 'Folio' },
-          { clave: 'nombre', titulo: 'Auditoría' },
+          { clave: 'nombre', titulo: 'Verificación' },
           { clave: 'tipo', titulo: 'Tipo' },
           { clave: 'empresa', titulo: 'Empresa' },
           { clave: 'departamento', titulo: 'Departamento' },
@@ -762,7 +785,7 @@ export class DashboardInventarioComponent implements OnInit {
           },
           {
             clave: 'auditor_responsable',
-            titulo: 'Auditor responsable'
+            titulo: 'Verificador responsable'
           },
           { clave: 'estado', titulo: 'Estado', tipo: 'estado' }
         ]

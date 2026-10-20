@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 
 import {
-  RouterLink
+  ActivatedRoute, RouterLink
 } from '@angular/router';
 
 import {
@@ -106,6 +106,7 @@ implements OnInit, OnDestroy {
    */
 
   errorCarga = '';
+  avisoResponsivaVinculada = '';
 
   mensajeExito = '';
 
@@ -155,8 +156,8 @@ implements OnInit, OnDestroy {
 
 
   constructor(
-    private responsivasService:
-      ResponsivasService
+    private responsivasService: ResponsivasService,
+    private route: ActivatedRoute
   ) {}
 
 
@@ -168,6 +169,7 @@ implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.cargarInformacion();
+    this.abrirResponsivaDesdeAuditoria();
   }
 
 
@@ -218,6 +220,26 @@ implements OnInit, OnDestroy {
    * CARGA GENERAL
    * =========================================================
    */
+
+  /** Solo abre la responsiva exacta, no una búsqueda aproximada por folio. */
+  private abrirResponsivaDesdeAuditoria(): void {
+    const valor = this.route.snapshot.queryParamMap.get('responsivaId');
+    if (valor === null) return;
+    const id = Number(valor);
+    if (!/^\d+$/.test(valor) || !Number.isSafeInteger(id) || id <= 0) {
+      this.avisoResponsivaVinculada = 'El identificador de responsiva del enlace no es válido.';
+      return;
+    }
+    this.responsivasService.obtenerResponsiva(id).subscribe({
+      next: resp => {
+        if (resp?.id === id) this.verDetalle(resp);
+        else this.avisoResponsivaVinculada = 'El documento recibido no corresponde al movimiento seleccionado.';
+      },
+      error: () => {
+        this.avisoResponsivaVinculada = `No fue posible abrir la responsiva #${id}. No se seleccionó otro documento.`;
+      }
+    });
+  }
 
   cargarInformacion(): void {
     this.cargarResponsivas();

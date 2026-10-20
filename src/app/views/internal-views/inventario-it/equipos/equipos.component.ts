@@ -1,3 +1,4 @@
+import { FechaInventarioComponent } from '../fecha-inventario/fecha-inventario.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +17,8 @@ import {
   imports: [
     CommonModule,
     RouterModule,
-    FormsModule
+    FormsModule,
+    FechaInventarioComponent
   ],
   templateUrl: './equipos.component.html',
   styleUrl: './equipos.component.css'
@@ -29,11 +31,13 @@ export class EquiposComponent implements OnInit {
 
   cargando = false;
   errorCarga = '';
+  avisoEquipoVinculado = '';
 
   mostrarFormulario = false;
   guardando = false;
   errorFormulario = '';
   mensajeExito = '';
+  folioRecienGenerado = '';
 
   mostrarDetalle = false;
   equipoSeleccionado: Equipo | null = null;
@@ -100,6 +104,7 @@ export class EquiposComponent implements OnInit {
   ngOnInit(): void {
     this.aplicarFiltrosDeRuta();
     this.cargarEquipos();
+    this.abrirEquipoDesdeAuditoria();
   }
 
   get modoEdicion(): boolean {
@@ -234,6 +239,26 @@ export class EquiposComponent implements OnInit {
     });
   }
 
+  /** Abre exclusivamente el ID real indicado por Control y auditoría. */
+  private abrirEquipoDesdeAuditoria(): void {
+    const valor = this.route.snapshot.queryParamMap.get('equipoId');
+    if (valor === null) return;
+    const id = Number(valor);
+    if (!/^\d+$/.test(valor) || !Number.isSafeInteger(id) || id <= 0) {
+      this.avisoEquipoVinculado = 'El enlace de auditoría contiene un identificador de equipo inválido.';
+      return;
+    }
+    this.equiposService.obtenerEquipo(id).subscribe({
+      next: equipo => {
+        if (equipo?.id === id) this.verEquipo(equipo);
+        else this.avisoEquipoVinculado = 'El equipo solicitado no coincide con el identificador del movimiento.';
+      },
+      error: () => {
+        this.avisoEquipoVinculado = `No fue posible abrir el equipo #${id}. No se seleccionó ningún otro equipo.`;
+      }
+    });
+  }
+
   seleccionarEstado(estado: string): void {
     if (!this.estadosFiltro.includes(estado)) {
       return;
@@ -289,6 +314,7 @@ export class EquiposComponent implements OnInit {
     this.equipoEditandoId = null;
     this.estadoOriginalEdicion = null;
     this.nuevoEquipo = this.crearEquipoVacio();
+    this.folioRecienGenerado = '';
 
     this.errorFormulario = '';
     this.mensajeExito = '';
@@ -419,20 +445,19 @@ export class EquiposComponent implements OnInit {
         this.nuevoEquipo.ubicacion
       );
 
-    if (!inventario || !categoria || !nombre) {
-      this.errorFormulario =
-        'Completa los campos obligatorios: ' +
-        'No. inventario, categoría y equipo.';
-
-      return;
-    }
-
     const editando =
       this.equipoEditandoId !== null;
 
+    if ((editando && !inventario) || !categoria || !nombre) {
+      this.errorFormulario = editando
+        ? 'Completa el número de inventario, categoría y equipo.'
+        : 'Completa los campos obligatorios: categoría y equipo.';
+      return;
+    }
+
     const equipoGuardar: NuevoEquipo = {
       ...this.nuevoEquipo,
-      inventario,
+      inventario: editando ? (inventario || '') : '',
       categoria,
       nombre,
       marca,
@@ -472,10 +497,15 @@ export class EquiposComponent implements OnInit {
 
     solicitud.subscribe({
       next: respuesta => {
-        console.log(respuesta.message);
-
         this.guardando = false;
         this.cerrarFormulario();
+        if (!editando && respuesta.inventario) {
+          this.folioRecienGenerado = respuesta.inventario;
+          this.terminoBusqueda = respuesta.inventario;
+          this.filtroEstado = 'Todos';
+          this.filtroResponsiva = 'Todas';
+          this.filtroEmpresa = 'Todas';
+        }
         this.cargarEquipos();
       },
 

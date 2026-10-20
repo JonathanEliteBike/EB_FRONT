@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { FechaInventarioComponent } from '../fecha-inventario/fecha-inventario.component';
 import { RouterLink } from '@angular/router';
 
 import {
@@ -31,7 +32,7 @@ interface OpcionReporte {
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, FechaInventarioComponent],
   templateUrl: './reportes.component.html',
   styleUrl: './reportes.component.css'
 })
@@ -84,7 +85,7 @@ export class ReportesComponent implements OnInit, OnDestroy {
     },
     {
       tipo: 'auditorias',
-      titulo: 'Auditorías',
+      titulo: 'Verificaciones físicas',
       descripcion: 'Revisiones, avances, diferencias y correcciones pendientes.',
       icono: '◎'
     },

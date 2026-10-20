@@ -471,11 +471,9 @@
               Fecha de asignación
             </span>
 
-            <input
-              type="datetime-local"
-              name="fechaAsignacion"
-              [(ngModel)]="nuevaAsignacion.fechaAsignacion"
-            />
+            <app-fecha-inventario mode="datetime" placeholder="Seleccionar fecha"
+            [value]="nuevaAsignacion.fechaAsignacion" (dateChange)="nuevaAsignacion.fechaAsignacion = $event">
+          </app-fecha-inventario>
 
           </label>
 
@@ -1593,11 +1591,9 @@
             Fecha de devolución
           </span>
 
-          <input
-            type="datetime-local"
-            name="fechaDevolucion"
-            [(ngModel)]="datosDevolucion.fechaDevolucion"
-          />
+          <app-fecha-inventario mode="datetime" placeholder="Seleccionar fecha"
+            [value]="datosDevolucion.fechaDevolucion" (dateChange)="datosDevolucion.fechaDevolucion = $event">
+          </app-fecha-inventario>
 
         </label>
 

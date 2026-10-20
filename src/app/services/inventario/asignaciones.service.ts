@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { Injectable } from '@angular/core';
 import {
   HttpClient,
@@ -126,8 +127,10 @@ export interface FiltrosAsignaciones {
   providedIn: 'root'
 })
 export class AsignacionesService {
+  private readonly baseUrl = environment.apiUrl.replace(/\/+$/, '');
+
   private readonly apiUrl =
-    'http://localhost:5000/api/inventario/asignaciones';
+    `${this.baseUrl}${this.baseUrl.endsWith('/api') ? '' : '/api'}/inventario/asignaciones`;
 
   constructor(
     private http: HttpClient

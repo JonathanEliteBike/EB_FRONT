@@ -48,6 +48,11 @@
   </header>
 
 
+  <div class="form-alert success" role="status" *ngIf="folioRecienGenerado">
+    ✓ Equipo registrado correctamente. Folio asignado:
+    <strong>{{ folioRecienGenerado }}</strong>
+  </div>
+
   <!-- ======================================================
        FORMULARIO DE REGISTRO Y EDICIÓN
        ====================================================== -->
@@ -139,6 +144,7 @@
               No. inventario
 
               <b
+                *ngIf="modoEdicion"
                 class="required"
                 aria-label="Campo obligatorio">
                 *
@@ -146,16 +152,26 @@
             </span>
 
             <input
+              *ngIf="!modoEdicion"
+              type="text"
+              value="Se genera al guardar"
+              readonly
+              aria-label="Folio automático al registrar equipo"
+            />
+            <input
+              *ngIf="modoEdicion"
               type="text"
               name="inventario"
               [(ngModel)]="nuevoEquipo.inventario"
-              placeholder="Ej. EB-ADM-CG-0002"
               maxlength="100"
               required
             />
 
-            <small class="field-help">
-              Código interno único para localizar el activo.
+            <small class="field-help" *ngIf="!modoEdicion">
+              Se asigna automáticamente al guardar. Ejemplo: EB-IT-000123.
+            </small>
+            <small class="field-help" *ngIf="modoEdicion">
+              Identificador actual del equipo. No lo cambies salvo una corrección justificada.
             </small>
           </label>
 
@@ -167,11 +183,10 @@
               Fecha de registro
             </span>
 
-            <input
-              type="date"
-              name="fechaRegistro"
-              [(ngModel)]="nuevoEquipo.fechaRegistro"
-            />
+            <app-fecha-inventario mode="single" placeholder="Seleccionar fecha"
+              [value]="nuevoEquipo.fechaRegistro || ''"
+              (dateChange)="nuevoEquipo.fechaRegistro = $event">
+            </app-fecha-inventario>
 
             <small class="field-help">
               Se precarga automáticamente con la fecha actual.
@@ -841,6 +856,8 @@
     Cargando equipos desde el backend...
   </div>
 
+
+  <div class="alert error" role="alert" *ngIf="avisoEquipoVinculado">{{ avisoEquipoVinculado }}</div>
 
   <div
     class="error-message"

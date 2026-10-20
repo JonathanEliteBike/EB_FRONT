@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -58,14 +59,17 @@ export interface NuevoEquipo {
 export interface RespuestaEquipo {
   message: string;
   id: number;
+  inventario?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class EquiposService {
+  private readonly baseUrl = environment.apiUrl.replace(/\/+$/, '');
+
   private readonly apiUrl =
-    'http://localhost:5000/api/inventario/equipos';
+    `${this.baseUrl}${this.baseUrl.endsWith('/api') ? '' : '/api'}/inventario/equipos`;
 
   constructor(private http: HttpClient) {}
 

@@ -154,10 +154,10 @@ export class InventarioItComponent implements OnInit {
 
     {
       numero: '07',
-      titulo: 'Historial',
+      titulo: 'Control y auditoría',
 
       descripcion:
-        'Revisa la trazabilidad y los movimientos de cada equipo.',
+        'Valida cambios mensuales, responsables e historial de los activos.',
 
       ruta:
         '/inventario-it/historial',
@@ -172,10 +172,10 @@ export class InventarioItComponent implements OnInit {
 
     {
       numero: '08',
-      titulo: 'Auditorías',
+      titulo: 'Verificación de equipos',
 
       descripcion:
-        'Realiza revisiones físicas y controla los hallazgos.',
+        'Sistemas verifica equipos, responsivas y diferencias físicas.',
 
       ruta:
         '/inventario-it/auditorias',

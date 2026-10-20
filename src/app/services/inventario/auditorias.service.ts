@@ -130,6 +130,11 @@ export interface AuditoriasFiltros {
   fechaFin?: string;
 }
 
+export interface CuentaAuditoriaActual {
+  id: number;
+  nombre: string;
+}
+
 export interface GuardarAuditoriaPayload {
   nombre: string;
   tipo?: TipoAuditoria;
@@ -138,14 +143,13 @@ export interface GuardarAuditoriaPayload {
   ubicacion?: string;
   incluirBajas?: boolean;
   fechaProgramada: string;
-  auditorResponsable: string;
   observaciones?: string;
-  usuarioRegistro?: string;
   equipoIds?: number[];
 }
 
 export interface RevisionEquipoPayload {
   encontrado?: boolean;
+  verificaciones?: Record<string, '' | 'Coincide' | 'Diferente' | 'No verificable' | 'Sin dato'>;
   resultado?: ResultadoAuditoria;
   codigoBarrasEncontrado?: string;
   numeroSerieEncontrado?: string;
@@ -161,7 +165,53 @@ export interface RevisionEquipoPayload {
   evidenciaUrl?: string;
   accionRequerida?: string;
   estadoCorreccion?: EstadoCorreccion;
-  revisadoPor?: string;
+}
+
+export interface ParticipacionInventarioUsuario {
+  usuarioId: number;
+  usuario: string;
+  cantidad: number;
+  porcentaje: number;
+}
+
+export interface EventoInventarioUsuario {
+  id: number;
+  usuarioId: number;
+  usuario: string;
+  accion: string;
+  entidad: string;
+  entidadId: number | null;
+  fecha: string;
+}
+
+export interface CambioInventario {
+  campo: string;
+  antes: string | number | boolean | null;
+  despues: string | number | boolean | null;
+}
+
+export interface EventoInventarioDetallado extends EventoInventarioUsuario {
+  cambios: CambioInventario[];
+  camposEnviados: string[];
+  detalleDisponible: boolean;
+}
+
+export interface HistorialInventarioUsuarioRespuesta {
+  usuarioId: number;
+  usuario: string;
+  total: number;
+  limite: number;
+  offset: number;
+  eventos: EventoInventarioDetallado[];
+}
+
+export interface ActividadInventarioRespuesta {
+  total: number;
+  modo: 'ediciones' | 'todas';
+  desde: string;
+  hasta: string;
+  usuarios: ParticipacionInventarioUsuario[];
+  eventos: EventoInventarioUsuario[];
 }
 
 @Injectable({
@@ -174,6 +224,36 @@ export class AuditoriasService {
 
   constructor(private http: HttpClient) {}
 
+  obtenerActividad(
+    modo: 'ediciones' | 'todas' = 'ediciones',
+    desde = '',
+    hasta = ''
+  ): Observable<ActividadInventarioRespuesta> {
+    let params = new HttpParams().set('modo', modo);
+    if (desde) params = params.set('desde', desde);
+    if (hasta) params = params.set('hasta', hasta);
+    return this.http.get<ActividadInventarioRespuesta>(`${this.apiUrl}/actividad`, {params});
+  }
+
+  obtenerHistorialUsuario(
+    usuarioId: number,
+    modo: 'ediciones' | 'todas' = 'todas',
+    desde = '',
+    hasta = '',
+    offset = 0,
+    limite = 25
+  ): Observable<HistorialInventarioUsuarioRespuesta> {
+    let params = new HttpParams()
+      .set('modo', modo)
+      .set('offset', offset.toString())
+      .set('limite', limite.toString());
+    if (desde) params = params.set('desde', desde);
+    if (hasta) params = params.set('hasta', hasta);
+    return this.http.get<HistorialInventarioUsuarioRespuesta>(
+      `${this.apiUrl}/actividad/usuarios/${usuarioId}`, { params }
+    );
+  }
+
   obtenerAuditorias(filtros: AuditoriasFiltros = {}): Observable<Auditoria[]> {
     return this.http.get<Auditoria[]>(this.apiUrl, {
       params: this.crearParametros(filtros)
@@ -184,6 +264,10 @@ export class AuditoriasService {
     return this.http.get<AuditoriasEstadisticas>(`${this.apiUrl}/estadisticas`, {
       params: this.crearParametros(filtros)
     });
+  }
+
+  obtenerMiUsuario(): Observable<CuentaAuditoriaActual> {
+    return this.http.get<CuentaAuditoriaActual>(`${this.apiUrl}/mi-usuario`);
   }
 
   obtenerCatalogos(): Observable<AuditoriasCatalogos> {
@@ -216,7 +300,7 @@ export class AuditoriasService {
     auditoriaId: number,
     datos: Pick<
       GuardarAuditoriaPayload,
-      'nombre' | 'fechaProgramada' | 'auditorResponsable' | 'observaciones'
+      'nombre' | 'fechaProgramada' | 'observaciones'
     >
   ): Observable<unknown> {
     return this.http.put(`${this.apiUrl}/${auditoriaId}`, datos);
@@ -261,10 +345,6 @@ export class AuditoriasService {
     return this.http.put(`${this.apiUrl}/${auditoriaId}/cancelar`, {
       motivo
     });
-  }
-
-  eliminarAuditoria(auditoriaId: number): Observable<unknown> {
-    return this.http.delete(`${this.apiUrl}/${auditoriaId}`);
   }
 
   exportarAuditoria(auditoriaId: number): Observable<Blob> {

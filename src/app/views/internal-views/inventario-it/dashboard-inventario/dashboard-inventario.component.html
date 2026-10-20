@@ -34,7 +34,7 @@
       type="button"
       class="refresh-btn"
       [disabled]="cargando"
-      (click)="cargarDashboard()">
+      (click)="cargarDashboard(); cargarControlMensual()">
 
       <span [class.rotating]="cargando">↻</span>
 
@@ -195,7 +195,7 @@
       </div>
 
       <div class="priority-card-body">
-        <span>Auditorías en proceso</span>
+        <span>Verificaciones físicas en proceso</span>
 
         <strong>
           {{ dashboard.resumen.auditorias.enProceso }}
@@ -205,7 +205,7 @@
           {{
             dashboard.resumen.auditorias.enProceso > 0
               ? 'Haz clic para consultar las revisiones'
-              : 'No hay auditorías abiertas'
+              : 'No hay verificaciones abiertas'
           }}
         </small>
       </div>
@@ -396,7 +396,7 @@
           [queryParams]="{ estado: 'Finalizada' }">
 
           <div class="operation-title">
-            <span>Auditorías finalizadas</span>
+            <span>Verificaciones físicas finalizadas</span>
 
             <strong>
               {{ dashboard.resumen.auditorias.finalizadas }}
@@ -451,6 +451,29 @@
     </article>
   </section>
 
+
+  <!-- CONTROL MENSUAL: resumen, no una segunda pantalla de trabajo -->
+  <div class="section-label"><span>✓</span> CONTROL DE CAMBIOS DEL MES</div>
+  <section class="monthly-control-panel">
+    <div class="monthly-heading">
+      <div>
+        <h2>Revisión administrativa · {{ periodoControlEtiqueta | titlecase }}</h2>
+        <p>Movimientos registrados por usuario. Estos indicadores no dependen de los filtros de empresa o departamento del inventario.</p>
+      </div>
+      <a routerLink="/inventario-it/historial" [queryParams]="{ pestana: 'control' }">
+        Abrir control mensual →
+      </a>
+    </div>
+    <p *ngIf="controlMensualCargando" class="monthly-help">Consultando la bitácora…</p>
+    <p *ngIf="controlMensualError" class="monthly-help">{{ controlMensualError }}</p>
+    <div class="monthly-metrics" *ngIf="!controlMensualError">
+      <div><small>Operaciones registradas</small><strong>{{ controlMensual.total }}</strong></div>
+      <div><small>Pendientes de validar</small><strong>{{ controlMensual.pendientes }}</strong></div>
+      <div><small>Validadas</small><strong>{{ controlMensual.validados }}</strong></div>
+      <div><small>Con observaciones</small><strong>{{ controlMensual.observados }}</strong></div>
+    </div>
+    <p class="monthly-help">La revisión y las observaciones se realizan únicamente desde Control y auditoría.</p>
+  </section>
 
   <!-- ANÁLISIS COMPLEMENTARIO -->
 
@@ -676,8 +699,8 @@
 
       <a
         class="panel-link"
-        routerLink="/inventario-it/historial">
-        Ver historial →
+        routerLink="/inventario-it/historial" [queryParams]="{pestana: 'movimientos'}">
+        Ver movimientos de equipos →
       </a>
     </header>
 

@@ -33,13 +33,12 @@
           </p>
 
           <h1>
-            Historial de movimientos
+            Control y auditoría
           </h1>
 
           <p>
-            Consulta la trazabilidad completa de asignaciones,
-            devoluciones y cambios realizados sobre los equipos
-            tecnológicos.
+            Revisa los cambios mensuales, documenta sus validaciones
+            y consulta la trazabilidad de los equipos tecnológicos.
           </p>
 
         </div>
@@ -52,6 +51,7 @@
     <button
       type="button"
       class="export-btn"
+      *ngIf="pestanaHistorial === 'movimientos'"
       [disabled]="exportando"
       (click)="exportarHistorial()">
 
@@ -64,6 +64,21 @@
     </button>
 
   </header>
+  <nav class="historial-tabs" aria-label="Secciones de Control y auditoría">
+    <button type="button" [class.active]="pestanaHistorial === 'control'"
+            [attr.aria-current]="pestanaHistorial === 'control' ? 'page' : null"
+            (click)="seleccionarPestana('control')">Control mensual de cambios</button>
+    <button type="button" [class.active]="pestanaHistorial === 'movimientos'"
+            [attr.aria-current]="pestanaHistorial === 'movimientos' ? 'page' : null"
+            (click)="seleccionarPestana('movimientos')">Movimientos de equipos</button>
+    <button type="button" [class.active]="pestanaHistorial === 'actividad'"
+            [attr.aria-current]="pestanaHistorial === 'actividad' ? 'page' : null"
+            (click)="seleccionarPestana('actividad')">Actividad por usuario</button>
+  </nav>
+  <app-control-cambios *ngIf="pestanaHistorial === 'control'"></app-control-cambios>
+  <app-inventario-actividad *ngIf="pestanaHistorial === 'actividad'"></app-inventario-actividad>
+  <ng-container *ngIf="pestanaHistorial === 'movimientos'">
+
 
 
   <!-- =========================================================
@@ -316,34 +331,16 @@
         </select>
 
       </label>
-
-
-      <label>
-
-        <span>
-          Fecha inicial
-        </span>
-
-        <input
-          type="date"
-          [(ngModel)]="fechaInicio"
-        />
-
-      </label>
-
-
-      <label>
-
-        <span>
-          Fecha final
-        </span>
-
-        <input
-          type="date"
-          [(ngModel)]="fechaFin"
-        />
-
-      </label>
+      <div class="fecha-rango-inventario">
+        <span class="fecha-rango-titulo">Periodo</span>
+        <app-fecha-inventario mode="range" placeholder="Filtrar por fecha"
+          [desde]="fechaInicio"
+          [hasta]="fechaFin"
+          (desdeChange)="fechaInicio = $event"
+          (hastaChange)="fechaFin = $event"
+          (rangeChange)="aplicarFiltros()">
+        </app-fecha-inventario>
+      </div>
 
 
       <button
@@ -1229,4 +1226,5 @@
 
   </ng-container>
 
+  </ng-container>
 </section>

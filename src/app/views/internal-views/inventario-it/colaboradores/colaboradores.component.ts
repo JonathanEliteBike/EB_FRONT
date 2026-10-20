@@ -1,3 +1,4 @@
+import { FechaInventarioComponent } from '../fecha-inventario/fecha-inventario.component';
 import {
   Component,
   HostListener,
@@ -46,7 +47,8 @@ type FiltroKpi =
   imports: [
     CommonModule,
     RouterModule,
-    FormsModule
+    FormsModule,
+    FechaInventarioComponent
   ],
 
   templateUrl: './colaboradores.component.html',

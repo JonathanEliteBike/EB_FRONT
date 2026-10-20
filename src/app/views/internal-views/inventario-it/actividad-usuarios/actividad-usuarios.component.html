@@ -1,0 +1,121 @@
+  <!-- Trazabilidad: se alimenta de la bitácora transaccional en MySQL. -->
+  <section class="actividad-usuarios" aria-label="Trazabilidad de actividad por usuario">
+    <div class="actividad-heading">
+      <div>
+        <p class="eyebrow">TRAZABILIDAD · INVENTARIO IT</p>
+        <h2>Actividad por usuario</h2>
+        <p>Consulta qué proporción de las operaciones registradas realizó cada cuenta.</p>
+      </div>
+      <strong class="actividad-total">{{ actividad.total }} <small>operaciones</small></strong>
+    </div>
+
+    <div class="actividad-filtros">
+      <label>Mostrar
+        <select [(ngModel)]="modoActividad" (ngModelChange)="cargarActividad()" aria-label="Tipo de participación">
+          <option value="ediciones">Solo ediciones</option>
+          <option value="todas">Todas las operaciones</option>
+        </select>
+      </label>
+      <div class="fecha-rango-inventario">
+        <span class="fecha-rango-titulo">Periodo</span>
+        <app-fecha-inventario mode="range" placeholder="Filtrar por fecha"
+          [desde]="fechaDesdeActividad"
+          [hasta]="fechaHastaActividad"
+          (desdeChange)="fechaDesdeActividad = $event"
+          (hastaChange)="fechaHastaActividad = $event"
+          (rangeChange)="cargarActividad()">
+        </app-fecha-inventario>
+      </div>
+      <button type="button" class="actividad-filtrar actividad-limpiar" (click)="limpiarFiltrosActividad()"
+        [disabled]="cargandoActividad || (!fechaDesdeActividad && !fechaHastaActividad && modoActividad === 'todas')">
+        Limpiar filtros
+      </button>
+    </div>
+    <p class="actividad-ayuda">Un registro equivale a una operación exitosa, no a un campo editado. Las ediciones son cambios en equipos, colaboradores, auditorías, correcciones o responsivas; otras operaciones se cuentan por separado.</p>
+    <p *ngIf="errorActividad" class="actividad-error" role="alert">{{ errorActividad }}</p>
+    <div class="actividad-grid">
+      <div class="actividad-panel">
+        <h3>Participación del equipo</h3>
+        <p *ngIf="!cargandoActividad && actividad.usuarios.length === 0">Todavía no hay movimientos para el filtro seleccionado.</p>
+        <div class="actividad-usuario" *ngFor="let usuario of actividad.usuarios">
+          <div class="actividad-usuario-info">
+            <button type="button" class="actividad-usuario-enlace"
+              (click)="abrirHistorialUsuario(usuario)"
+              [attr.aria-label]="'Ver historial completo de ' + usuario.usuario">
+              {{ usuario.usuario }} <span aria-hidden="true">↗</span>
+            </button>
+            <strong>{{ usuario.cantidad }} · {{ usuario.porcentaje | number:'1.2-2' }}%</strong>
+          </div>
+          <div class="actividad-barra" role="progressbar" [attr.aria-valuenow]="usuario.porcentaje"
+               aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Participación de ' + usuario.usuario">
+            <span [style.width.%]="usuario.porcentaje"></span>
+          </div>
+        </div>
+              </div>
+      <div class="actividad-panel actividad-panel-historial">
+        <h3>Últimos movimientos registrados</h3>
+        <div class="actividad-lista" *ngIf="actividad.eventos.length; else sinActividad">
+          <div class="actividad-evento" *ngFor="let ev of actividad.eventos">
+            <div><strong>{{ ev.usuario }}</strong> · {{ ev.accion }} · {{ ev.entidad }}<span *ngIf="ev.entidadId"> #{{ ev.entidadId }}</span></div>
+            <small>{{ ev.fecha }}</small>
+          </div>
+        </div>
+        <ng-template #sinActividad><p class="actividad-ayuda">Sin movimientos en este filtro.</p></ng-template>
+        <p class="actividad-ayuda">Se muestran los 50 movimientos más recientes según los filtros.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Detalle individual de movimientos. La selección no altera los porcentajes. -->
+  <div *ngIf="usuarioSeleccionado as usuario" class="actividad-modal-fondo"
+       (click)="cerrarHistorialUsuario()">
+    <section class="actividad-modal" role="dialog" aria-modal="true"
+             [attr.aria-label]="'Historial de ' + usuario.usuario"
+             (click)="$event.stopPropagation()">
+      <header class="actividad-modal-header">
+        <div>
+          <span class="actividad-modal-etiqueta">TRAZABILIDAD · INVENTARIO IT</span>
+          <h2>Historial de {{ usuario.usuario }}</h2>
+          <p>{{ historialTotal }} operaciones registradas · {{ modoActividad === 'todas' ? 'Todas las operaciones' : 'Solo ediciones' }}</p>
+        </div>
+        <button type="button" class="actividad-modal-cerrar" (click)="cerrarHistorialUsuario()" aria-label="Cerrar historial">✕</button>
+      </header>
+      <p *ngIf="errorHistorial" class="actividad-error" role="alert">{{ errorHistorial }}</p>
+      <p *ngIf="cargandoHistorial && !historialUsuario.length" class="actividad-ayuda">Cargando movimientos…</p>
+      <p *ngIf="!cargandoHistorial && !historialUsuario.length && !errorHistorial" class="actividad-ayuda">No hay movimientos en este periodo.</p>
+      <div class="actividad-modal-lista">
+        <article *ngFor="let evento of historialUsuario" class="actividad-modal-evento">
+          <button type="button" class="actividad-modal-evento-boton" (click)="alternarEvento(evento.id)"
+                  [attr.aria-expanded]="historialExpandidoId === evento.id">
+            <span>
+              <strong>{{ evento.accion | titlecase }} · {{ evento.entidad }}<span *ngIf="evento.entidadId !== null"> #{{ evento.entidadId }}</span></strong>
+              <small>{{ evento.fecha }}</small>
+            </span>
+            <span class="actividad-chevron" aria-hidden="true">{{ historialExpandidoId === evento.id ? '−' : '+' }}</span>
+          </button>
+          <div *ngIf="historialExpandidoId === evento.id" class="actividad-modal-cambios">
+            <ng-container *ngIf="evento.detalleDisponible && evento.cambios.length; else sinDatosPrevios">
+              <div class="actividad-modal-tabla-header"><span>Campo</span><span>Antes</span><span>Después</span></div>
+              <div *ngFor="let cambio of evento.cambios" class="actividad-modal-fila">
+                <span>{{ etiquetaCampo(cambio.campo) }}</span>
+                <span>{{ mostrarValorAuditoria(cambio.antes) }}</span>
+                <span class="actividad-modal-valor-nuevo">{{ mostrarValorAuditoria(cambio.despues) }}</span>
+              </div>
+            </ng-container>
+            <ng-template #sinDatosPrevios>
+              <p class="actividad-ayuda">Este movimiento quedó registrado sin valores anteriores y posteriores disponibles. Los detalles de cambios se conservan desde la instalación de esta etapa.</p>
+              <p *ngIf="evento.camposEnviados.length" class="actividad-ayuda">Campos indicados en la solicitud: {{ evento.camposEnviados.join(', ') }}.</p>
+            </ng-template>
+          </div>
+        </article>
+      </div>
+      <footer class="actividad-modal-pie">
+        <small>Mostrando {{ historialUsuario.length }} de {{ historialTotal }} movimientos</small>
+        <button *ngIf="historialUsuario.length < historialTotal" class="actividad-filtrar"
+                type="button" (click)="cargarHistorialUsuario()" [disabled]="cargandoHistorial">
+          {{ cargandoHistorial ? 'Cargando…' : 'Mostrar más movimientos' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+

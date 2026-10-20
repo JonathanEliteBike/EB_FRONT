@@ -63,6 +63,7 @@ import { usuarioGuard } from './guards/usuario.guard';
 import { flujoGuard } from './guards/flujo.guard';
 import { loggedInGuard } from './guards/logged-in.guard';
 import { importacionesGuard } from './guards/importaciones.guard';
+import { inventarioItGuard } from './guards/inventario-it.guard';
 
 import { CalculadoraRetroactivosComponent } from './views/internal-views/calculadora-retroactivos/calculadora-retroactivos.component';
 import { SolicitudRetroactivoComponent } from './views/usuarios/solicitud-retroactivo/solicitud-retroactivo.component';
@@ -146,15 +147,15 @@ export const routes: Routes = [
   { path: 'proyecciones-my27', component: ProyeccionesMY27Component, canActivate: [adminGuard] },
   { path: 'importaciones',           component: ImportacionesComponent,          canActivate: [importacionesGuard] },
   { path: 'importaciones/dashboard', component: ImportacionesDashboardComponent,  canActivate: [importacionesGuard] },
-  { path: 'inventario-it', component: InventarioItComponent },
-  { path: 'inventario-it/equipos', component: EquiposComponent},
-  { path: 'inventario-it/colaboradores', component: ColaboradoresComponent},
-  { path: 'inventario-it/asignaciones', component: AsignacionesComponent },
-  { path: 'inventario-it/responsivas', component: ResponsivasComponent },
-  { path: 'inventario-it/historial', component: HistorialComponent },
-  { path: 'inventario-it/auditorias', component: AuditoriasComponent },
-  { path: 'inventario-it/reportes', component: ReportesComponent },
-  { path: 'inventario-it/dashboard', component: DashboardInventarioComponent },
+  { path: 'inventario-it', component: InventarioItComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/equipos', component: EquiposComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/colaboradores', component: ColaboradoresComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/asignaciones', component: AsignacionesComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/responsivas', component: ResponsivasComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/historial', component: HistorialComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/auditorias', component: AuditoriasComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/reportes', component: ReportesComponent, canActivate: [inventarioItGuard] },
+  { path: 'inventario-it/dashboard', component: DashboardInventarioComponent, canActivate: [inventarioItGuard] },
   { path: 'importaciones/:id',       component: ImportacionesDetalleComponent,    canActivate: [importacionesGuard] },
   { path: '**', redirectTo: '' }
 ];

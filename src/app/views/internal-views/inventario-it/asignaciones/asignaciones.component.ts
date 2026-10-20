@@ -1,3 +1,5 @@
+import { FechaInventarioComponent } from '../fecha-inventario/fecha-inventario.component';
+import { jwtDecode } from 'jwt-decode';
 import {
   Component,
   HostListener,
@@ -32,7 +34,8 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    FechaInventarioComponent
   ],
   templateUrl: './asignaciones.component.html',
   styleUrl: './asignaciones.component.css'
@@ -518,6 +521,19 @@ export class AsignacionesComponent implements OnInit {
     return `${año}-${mes}-${dia}T${horas}:${minutos}`;
   }
 
+  // Nombre únicamente para mostrarlo en el formulario.
+  // El servidor determina quién registró la operación usando el JWT validado.
+  private obtenerUsuarioSesion(): string {
+    const token = localStorage.getItem('token');
+    if (!token) return '';
+    try {
+      const datos = jwtDecode<{ nombre?: string; usuario?: string }>(token);
+      return datos.nombre || datos.usuario || '';
+    } catch {
+      return '';
+    }
+  }
+
   private crearAsignacionVacia():
     NuevaAsignacion {
     return {
@@ -526,7 +542,7 @@ export class AsignacionesComponent implements OnInit {
       fechaAsignacion:
         this.obtenerFechaActual(),
       observacionesEntrega: '',
-      usuarioRegistro: 'Natalia'
+      usuarioRegistro: this.obtenerUsuarioSesion()
     };
   }
 
@@ -536,7 +552,7 @@ export class AsignacionesComponent implements OnInit {
       fechaDevolucion:
         this.obtenerFechaActual(),
       observacionesDevolucion: '',
-      usuarioRegistro: 'Natalia'
+      usuarioRegistro: this.obtenerUsuarioSesion()
     };
   }
 }

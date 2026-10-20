@@ -33,7 +33,7 @@
           </p>
 
           <h1>
-            Auditorías de inventario
+            Verificación de equipos
           </h1>
 
           <p>
@@ -54,7 +54,7 @@
       [disabled]="procesando"
       (click)="abrirNuevaAuditoria()">
 
-      + Nueva auditoría
+      + Nueva verificación
 
     </button>
 
@@ -67,7 +67,7 @@
 
   <section
     class="stats-grid"
-    aria-label="Filtros por estado de auditoría">
+    aria-label="Filtros por estado de verificación">
 
 
     <!-- TOTAL -->
@@ -98,7 +98,7 @@
 
 
       <small>
-        Todas las auditorías registradas
+        Todas las verificaciones registradas
       </small>
 
     </button>
@@ -132,7 +132,7 @@
 
 
       <small>
-        Auditorías pendientes de iniciar
+        Verificaciones pendientes de iniciar
       </small>
 
     </button>
@@ -200,7 +200,7 @@
 
 
       <small>
-        Auditorías completadas
+        Verificaciones completadas
       </small>
 
     </button>
@@ -243,7 +243,7 @@
 
 
   <p class="stats-help">
-    Selecciona una tarjeta para filtrar el programa de auditorías.
+    Selecciona una tarjeta para filtrar el programa de verificaciones.
   </p>
 
 
@@ -305,7 +305,7 @@
         [(ngModel)]="terminoBusqueda"
         (keyup.enter)="buscar()"
         placeholder="Buscar por folio, nombre, auditor, empresa, departamento, ubicación o usuario..."
-        aria-label="Buscar auditorías"
+        aria-label="Buscar verificaciones"
       />
 
 
@@ -337,7 +337,7 @@
         </span>
 
         <select
-          [(ngModel)]="filtroTipo">
+          [(ngModel)]="filtroTipo" (ngModelChange)="aplicarFiltros()">
 
           <option value="Todos">
             Todos
@@ -363,7 +363,7 @@
         </span>
 
         <select
-          [(ngModel)]="filtroEmpresa">
+          [(ngModel)]="filtroEmpresa" (ngModelChange)="aplicarFiltros()">
 
           <option value="Todas">
             Todas
@@ -380,45 +380,16 @@
         </select>
 
       </label>
-
-
-      <label>
-
-        <span>
-          Fecha inicial
-        </span>
-
-        <input
-          type="date"
-          [(ngModel)]="fechaInicio"
-        />
-
-      </label>
-
-
-      <label>
-
-        <span>
-          Fecha final
-        </span>
-
-        <input
-          type="date"
-          [(ngModel)]="fechaFin"
-        />
-
-      </label>
-
-
-      <button
-        type="button"
-        class="apply-btn"
-        [disabled]="cargando"
-        (click)="aplicarFiltros()">
-
-        Aplicar filtros
-
-      </button>
+      <div class="fecha-rango-inventario">
+        <span class="fecha-rango-titulo">Periodo</span>
+        <app-fecha-inventario mode="range" placeholder="Filtrar por fecha"
+          [desde]="fechaInicio"
+          [hasta]="fechaFin"
+          (desdeChange)="fechaInicio = $event"
+          (hastaChange)="fechaFin = $event"
+          (rangeChange)="aplicarFiltros()">
+        </app-fecha-inventario>
+      </div>
 
 
       <button
@@ -447,7 +418,7 @@
           {{ auditorias.length }}
         </strong>
 
-        auditoría{{
+        verificación{{
           auditorias.length === 1
             ? ''
             : 's'
@@ -476,7 +447,7 @@
       !mostrarDetalle
     ">
 
-    Cargando auditorías...
+    Cargando verificaciones...
 
   </div>
 
@@ -496,7 +467,7 @@
         </p>
 
         <h2>
-          Programa de auditorías
+          Programa de verificaciones
         </h2>
 
         <p>
@@ -527,342 +498,80 @@
       <table>
 
         <thead>
-
           <tr>
-
-            <th>
-              Folio
-            </th>
-
-            <th>
-              Auditoría
-            </th>
-
-            <th>
-              Alcance
-            </th>
-
-            <th>
-              Fecha
-            </th>
-
-            <th>
-              Auditor
-            </th>
-
-            <th>
-              Progreso
-            </th>
-
-            <th>
-              Hallazgos
-            </th>
-
-            <th>
-              Estado
-            </th>
-
-            <th class="actions-heading">
-              Acciones
-            </th>
-
+            <th>Folio</th>
+            <th>Verificación</th>
+            <th>Fecha</th>
+            <th>Verificador</th>
+            <th>Progreso</th>
+            <th>Estado</th>
+            <th class="actions-heading">Acciones</th>
           </tr>
-
         </thead>
-
-
         <tbody>
-
-          <tr
-            *ngFor="
-              let auditoria of auditorias;
-              trackBy: trackByAuditoria
-            ">
-
-
-            <!-- FOLIO -->
-
-            <td class="folio-cell">
-
-              {{ auditoria.folio }}
-
-            </td>
-
-
-            <!-- NOMBRE -->
-
-            <td class="name-cell">
-
-              <strong>
-                {{ auditoria.nombre }}
-              </strong>
-
-              <small>
-
-                Creada por
-
-                {{
-                  auditoria.usuarioRegistro ||
-                  'Sistema'
-                }}
-
-              </small>
-
-            </td>
-
-
-            <!-- ALCANCE -->
-
-            <td>
-
-              <strong>
-                {{ auditoria.tipo }}
-              </strong>
-
-
-              <small *ngIf="auditoria.empresa">
-                {{ auditoria.empresa }}
-              </small>
-
-
-              <small *ngIf="auditoria.departamento">
-                {{ auditoria.departamento }}
-              </small>
-
-
-              <small *ngIf="auditoria.ubicacion">
-                {{ auditoria.ubicacion }}
-              </small>
-
-
-              <small *ngIf="auditoria.tipo === 'General'">
-                Todos los equipos aplicables
-              </small>
-
-
-              <small *ngIf="auditoria.tipo === 'Muestra'">
-                Selección manual de equipos
-              </small>
-
-            </td>
-
-
-            <!-- FECHA -->
-
-            <td class="date-cell">
-
-              {{
-                formatearFecha(
-                  auditoria.fechaProgramada
-                )
-              }}
-
-            </td>
-
-
-            <!-- AUDITOR -->
-
-            <td class="auditor-cell">
-
-              {{
-                auditoria.auditorResponsable ||
-                'Sin auditor responsable'
-              }}
-
-            </td>
-
-
-            <!-- PROGRESO -->
-
-            <td class="progress-cell">
-
-              <div class="progress-label">
-
-                <span>
-
-                  {{ auditoria.resumen.revisados }}
-
-                  /
-
-                  {{ auditoria.resumen.totalEquipos }}
-
-                </span>
-
-
-                <strong>
-                  {{ auditoria.resumen.porcentaje }}%
-                </strong>
-
-              </div>
-
-
-              <div class="progress-track">
-
-                <span
-                  [style.width.%]="
-                    porcentajeSeguro(
-                      auditoria.resumen.porcentaje
-                    )
-                  ">
-                </span>
-
-              </div>
-
-            </td>
-
-
-            <!-- HALLAZGOS -->
-
-            <td class="findings-cell">
-
-              <span class="finding difference">
-
-                {{ auditoria.resumen.conDiferencia }}
-
-                diferencia{{
-                  auditoria.resumen.conDiferencia === 1
-                    ? ''
-                    : 's'
-                }}
-
-              </span>
-
-
-              <span class="finding missing">
-
-                {{ auditoria.resumen.noLocalizados }}
-
-                no localizado{{
-                  auditoria.resumen.noLocalizados === 1
-                    ? ''
-                    : 's'
-                }}
-
-              </span>
-
-            </td>
-
-
-            <!-- ESTADO -->
-
-            <td>
-
-              <span
-                class="status"
-                [ngClass]="
-                  estadoClase(
-                    auditoria.estado
-                  )
-                ">
-
-                {{ auditoria.estado }}
-
-              </span>
-
-            </td>
-
-
-            <!-- ACCIONES -->
-
-            <td class="actions-cell">
-
-              <div class="actions">
-
-
-                <button
-                  type="button"
-                  class="action-btn view"
-                  (click)="verAuditoria(auditoria)">
-
-                  Ver
-
-                </button>
-
-
-                <button
-                  *ngIf="auditoria.estado === 'Planeada'"
-                  type="button"
-                  class="action-btn edit"
-                  [disabled]="procesando"
-                  (click)="abrirEdicion(auditoria)">
-
-                  Editar
-
-                </button>
-
-
-                <button
-                  *ngIf="auditoria.estado === 'Planeada'"
-                  type="button"
-                  class="action-btn start"
-                  [disabled]="procesando"
-                  (click)="iniciarAuditoria(auditoria)">
-
-                  Iniciar
-
-                </button>
-
-
-                <button
-                  *ngIf="auditoria.estado === 'En proceso'"
-                  type="button"
-                  class="action-btn finish"
-                  [disabled]="procesando"
-                  (click)="abrirFinalizacion(auditoria)">
-
-                  Finalizar
-
-                </button>
-
-
-                <button
-                  *ngIf="auditoria.estado !== 'Cancelada'"
-                  type="button"
-                  class="action-btn export"
-                  [disabled]="exportandoId !== null"
-                  (click)="exportarAuditoria(auditoria)">
-
-                  {{
-                    exportandoId === auditoria.id
-                      ? 'Exportando...'
-                      : 'Exportar'
-                  }}
-
-                </button>
-
-
-                <button
-                  *ngIf="
-                    auditoria.estado === 'Planeada' ||
-                    auditoria.estado === 'En proceso'
-                  "
-                  type="button"
-                  class="action-btn cancel"
-                  [disabled]="procesando"
-                  (click)="abrirCancelacion(auditoria)">
-
-                  Cancelar
-
-                </button>
-
-
-                <button
-                  *ngIf="auditoria.estado === 'Planeada'"
-                  type="button"
-                  class="action-btn delete"
-                  [disabled]="procesando"
-                  (click)="eliminarAuditoria(auditoria)">
-
-                  Eliminar
-
-                </button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
+          <ng-container *ngFor="let auditoria of auditorias; trackBy: trackByAuditoria">
+            <tr>
+              <td class="folio-cell">{{ auditoria.folio }}</td>
+              <td class="name-cell">
+                <strong>{{ auditoria.nombre }}</strong>
+                <small>{{ auditoria.tipo }}
+                  <ng-container *ngIf="auditoria.empresa"> · {{ auditoria.empresa }}</ng-container>
+                  <ng-container *ngIf="auditoria.departamento"> · {{ auditoria.departamento }}</ng-container>
+                  <ng-container *ngIf="auditoria.ubicacion"> · {{ auditoria.ubicacion }}</ng-container>
+                </small>
+              </td>
+              <td class="date-cell">{{ formatearFecha(auditoria.fechaProgramada) }}</td>
+              <td class="auditor-cell">{{ auditoria.auditorResponsable || 'Sin responsable' }}</td>
+              <td class="progress-cell">
+                <div class="progress-label">
+                  <span>{{ auditoria.resumen.revisados }} / {{ auditoria.resumen.totalEquipos }}</span>
+                  <strong>{{ auditoria.resumen.porcentaje }}%</strong>
+                </div>
+                <div class="progress-track">
+                  <span [style.width.%]="porcentajeSeguro(auditoria.resumen.porcentaje)"></span>
+                </div>
+                <small *ngIf="auditoria.resumen.conDiferencia || auditoria.resumen.noLocalizados">
+                  {{ auditoria.resumen.conDiferencia }} diferencias ·
+                  {{ auditoria.resumen.noLocalizados }} no localizados
+                </small>
+              </td>
+              <td><span class="status" [ngClass]="estadoClase(auditoria.estado)">{{ auditoria.estado }}</span></td>
+              <td class="actions-cell">
+                <div class="actions">
+                  <button *ngIf="auditoria.estado === 'Planeada'"
+                    type="button" class="action-btn start" [disabled]="procesando"
+                    (click)="iniciarAuditoria(auditoria)">Iniciar</button>
+                  <button *ngIf="auditoria.estado !== 'Planeada'"
+                    type="button" class="action-btn view"
+                    (click)="verAuditoria(auditoria)">
+                    {{ auditoria.estado === 'En proceso' ? 'Continuar' : 'Ver' }}
+                  </button>
+                  <button *ngIf="auditoria.estado !== 'Cancelada'" type="button"
+                    class="action-btn more" [attr.aria-expanded]="accionesAuditoriaId === auditoria.id"
+                    [attr.aria-label]="'Más acciones de ' + auditoria.folio"
+                    (click)="alternarAccionesAuditoria(auditoria.id)">⋯</button>
+                </div>
+              </td>
+            </tr>
+            <tr class="audit-secondary-row" *ngIf="accionesAuditoriaId === auditoria.id && auditoria.estado !== 'Cancelada'">
+              <td colspan="7">
+                <div class="audit-secondary-actions">
+                  <span>Acciones para {{ auditoria.folio }}</span>
+                  <button type="button" class="action-btn view" *ngIf="auditoria.estado === 'Planeada'"
+                    (click)="verAuditoria(auditoria)">Ver detalles</button>
+                  <button type="button" class="action-btn edit" *ngIf="auditoria.estado === 'Planeada'"
+                    [disabled]="procesando" (click)="abrirEdicion(auditoria)">Editar</button>
+                  <button type="button" class="action-btn finish" *ngIf="auditoria.estado === 'En proceso'"
+                    [disabled]="procesando" (click)="abrirFinalizacion(auditoria)">Finalizar</button>
+                  <button type="button" class="action-btn export" [disabled]="exportandoId !== null"
+                    (click)="exportarAuditoria(auditoria)">{{ exportandoId === auditoria.id ? 'Exportando…' : 'Exportar' }}</button>
+                  <button type="button" class="action-btn cancel"
+                    *ngIf="auditoria.estado === 'Planeada' || auditoria.estado === 'En proceso'"
+                    [disabled]="procesando" (click)="abrirCancelacion(auditoria)">Cancelar</button>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
 
           <!-- SIN RESULTADOS -->
 
@@ -873,7 +582,7 @@
             ">
 
             <td
-              colspan="9"
+              colspan="7"
               class="empty-state">
 
               <span class="empty-icon">
@@ -881,7 +590,7 @@
               </span>
 
               <strong>
-                No se encontraron auditorías
+                No se encontraron verificaciones
               </strong>
 
               <span>
@@ -930,8 +639,8 @@
 
             {{
               modoEdicion
-                ? 'Editar auditoría planeada'
-                : 'Programar auditoría'
+                ? 'Editar verificación planeada'
+                : 'Programar verificación'
             }}
 
           </h2>
@@ -960,12 +669,12 @@
 
           <label class="wide">
 
-            Nombre de la auditoría *
+            Nombre de la verificación *
 
             <input
               type="text"
               [(ngModel)]="formulario.nombre"
-              placeholder="Ej. Auditoría general de Inventario IT"
+              placeholder="Ej. Verificación general de Inventario IT"
             />
 
           </label>
@@ -1000,44 +709,20 @@
 
             Fecha programada *
 
-            <input
-              type="date"
-              [(ngModel)]="formulario.fechaProgramada"
-            />
+            <app-fecha-inventario mode="single" placeholder="Seleccionar fecha"
+              [value]="formulario.fechaProgramada"
+              (dateChange)="formulario.fechaProgramada = $event">
+            </app-fecha-inventario>
 
           </label>
 
 
-          <!-- AUDITOR -->
-
-          <label>
-
-            Auditor responsable *
-
-            <input
-              type="text"
-              [(ngModel)]="formulario.auditorResponsable"
-              placeholder="Nombre o puesto del auditor"
-            />
-
-          </label>
-
-
-          <!-- USUARIO -->
-
-          <label>
-
-            Usuario que registra
-
-            <input
-              type="text"
-              [(ngModel)]="formulario.usuarioRegistro"
-              [disabled]="modoEdicion"
-              placeholder="Usuario del sistema"
-            />
-
-          </label>
-
+          <!-- La identidad viene del JWT verificado, no se captura manualmente. -->
+          <div class="auditor-identidad wide" role="status">
+            <span class="auditor-identidad-etiqueta">Verificador asignado automáticamente</span>
+            <strong>{{ auditorActual || 'Se identificará desde tu sesión al guardar' }}</strong>
+            <small>El sistema conserva quién creó y modificó la verificación en la bitácora.</small>
+          </div>
 
           <!-- EMPRESA -->
 
@@ -1146,7 +831,7 @@
 
             <textarea
               [(ngModel)]="formulario.observaciones"
-              placeholder="Objetivo, indicaciones o notas previas de la auditoría">
+              placeholder="Objetivo, indicaciones o notas previas de la verificación">
             </textarea>
 
           </label>
@@ -1175,7 +860,7 @@
 
               <p>
                 Selecciona los equipos que formarán parte
-                de esta auditoría.
+                de esta verificación.
               </p>
 
             </div>
@@ -1286,7 +971,7 @@
                 : (
                     modoEdicion
                       ? 'Guardar cambios'
-                      : 'Crear auditoría'
+                      : 'Crear verificación'
                   )
             }}
 
@@ -1374,7 +1059,7 @@
             <article>
 
               <span>
-                Auditor
+                Verificador
               </span>
 
               <strong>
@@ -1551,7 +1236,7 @@
             class="loading-message"
             *ngIf="cargando">
 
-            Cargando detalle de la auditoría...
+            Cargando detalle de la verificación...
 
           </div>
 
@@ -1817,7 +1502,7 @@
               [disabled]="procesando"
               (click)="iniciarAuditoria(seleccionada)">
 
-              Iniciar auditoría
+              Iniciar verificación
 
             </button>
 
@@ -1829,7 +1514,7 @@
               [disabled]="procesando"
               (click)="abrirFinalizacion(seleccionada)">
 
-              Finalizar auditoría
+              Finalizar verificación
 
             </button>
 
@@ -1971,385 +1656,141 @@
           </section>
 
 
-          <!-- OPCIONES DE LOCALIZACIÓN -->
-
-          <div class="review-options">
-
-            <label class="toggle-option">
-
-              <input
-                type="checkbox"
-                [(ngModel)]="formularioRevision.encontrado"
-                (change)="cambiarEncontrado()"
-              />
-
-              <span>
-                El equipo fue localizado físicamente
-              </span>
-
-            </label>
-
-
-            <button
-              type="button"
-              class="not-applicable-btn"
-              [disabled]="procesando"
-              (click)="marcarNoAplica()">
-
-              Marcar como no aplica
-
-            </button>
-
-          </div>
-
-
-          <!-- DATOS ENCONTRADOS -->
-
-          <div
-            class="form-grid"
-            *ngIf="
-              formularioRevision.encontrado &&
-              formularioRevision.resultado !== 'No aplica'
-            ">
-
-            <label>
-
-              Código de barras encontrado
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.codigoBarrasEncontrado
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.codigoBarras ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Número de serie encontrado
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.numeroSerieEncontrado
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.serie ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Empresa encontrada
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.empresaEncontrada
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.empresa ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Departamento encontrado
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.departamentoEncontrado
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.departamento ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Responsable encontrado
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.responsableEncontrado
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.responsable ||
-                  'Sin responsable'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Estado encontrado
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.estadoEncontrado
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.estado ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Ubicación encontrada
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.ubicacionEncontrada
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.ubicacion ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label>
-
-              Funcionamiento encontrado
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.funcionamientoEncontrado
-                "
-              />
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.funcionamiento ||
-                  'Sin dato'
-                }}
-
-              </small>
-
-            </label>
-
-
-            <label class="wide">
-
-              Extras encontrados
-
-              <textarea
-                [(ngModel)]="
-                  formularioRevision.extrasEncontrados
-                ">
-              </textarea>
-
-              <small>
-
-                Esperado:
-
-                {{
-                  detalle.esperado.extras ||
-                  'Sin extras'
-                }}
-
-              </small>
-
-            </label>
-
-          </div>
-
-
-          <!-- INFORMACIÓN COMPLEMENTARIA -->
-
-          <section class="review-extra-grid">
-
-            <label>
-
-              Revisado por *
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.revisadoPor
-                "
-                placeholder="Nombre del revisor"
-              />
-
-            </label>
-
-
-            <label>
-
-              Tipo de diferencia
-
-              <input
-                type="text"
-                [(ngModel)]="
-                  formularioRevision.tipoDiferencia
-                "
-                placeholder="Se calcula automáticamente si se deja vacío"
-              />
-
-            </label>
-
-
-            <label>
-
-              Estado de corrección
-
-              <select
-                [(ngModel)]="
-                  formularioRevision.estadoCorreccion
-                ">
-
-                <option value="No aplica">
-                  No aplica
-                </option>
-
-                <option value="Pendiente">
-                  Pendiente
-                </option>
-
-                <option value="En proceso">
-                  En proceso
-                </option>
-
-                <option value="Corregida">
-                  Corregida
-                </option>
-
-              </select>
-
-            </label>
-
-
-            <label>
-
-              URL de evidencia
-
-              <input
-                type="url"
-                [(ngModel)]="
-                  formularioRevision.evidenciaUrl
-                "
-                placeholder="Liga de Google Drive..."
-              />
-
-            </label>
-
-
-            <label class="wide">
-
-              Observaciones
-
-              <textarea
-                [(ngModel)]="
-                  formularioRevision.observaciones
-                "
-                placeholder="Comentarios relacionados con la revisión">
-              </textarea>
-
-            </label>
-
-
-            <label class="wide">
-
-              Acción requerida
-
-              <textarea
-                [(ngModel)]="
-                  formularioRevision.accionRequerida
-                "
-                placeholder="Indica qué debe corregirse o verificarse">
-              </textarea>
-
-            </label>
-
+          <!-- Ruta de trabajo rápida: tres decisiones, campos solo ante diferencias. -->
+          <section class="revision-verificacion revision-flujo-rapido">
+            <div class="revision-ruta-header">
+              <div>
+                <strong>¿Cuál fue el resultado de la visita?</strong>
+                <p>Revisa físicamente el equipo y selecciona una opción. No se confirma nada automáticamente al abrir la ficha.</p>
+              </div>
+              <button *ngIf="modoRevision !== 'inicio'" type="button" class="revision-cambiar-btn"
+                      [disabled]="procesando" (click)="volverOpcionesRevision()">
+                Cambiar resultado
+              </button>
+            </div>
+
+            <div *ngIf="modoRevision === 'inicio'" class="revision-decisiones">
+              <button type="button" class="revision-decision revision-decision-ok"
+                      [disabled]="procesando" (click)="seleccionarSinIncidencias()">
+                <span class="revision-decision-icon">✓</span>
+                <span><strong>Localizado, todo coincide</strong>
+                  <small>Ya comparé los datos del equipo. Confirmación rápida.</small></span>
+              </button>
+              <button type="button" class="revision-decision"
+                      [disabled]="procesando" (click)="seleccionarConDiferencias()">
+                <span class="revision-decision-icon">!</span>
+                <span><strong>Encontré diferencias</strong>
+                  <small>Registraré solo lo que no coincide.</small></span>
+              </button>
+              <button type="button" class="revision-decision"
+                      [disabled]="procesando" (click)="seleccionarNoLocalizado()">
+                <span class="revision-decision-icon">×</span>
+                <span><strong>No localizado</strong>
+                  <small>Documentar la búsqueda realizada.</small></span>
+              </button>
+              <button type="button" class="revision-no-aplica" [disabled]="procesando"
+                      (click)="marcarNoAplica()">Este equipo no aplica a la revisión</button>
+            </div>
+
+            <div *ngIf="avisoRevision" class="revision-aviso-faltantes" role="status">
+              {{ avisoRevision }}
+            </div>
+
+            <div *ngIf="modoRevision === 'rapida'" class="revision-confirmacion-rapida">
+              <strong>Revisión sin incidencias</strong>
+              <p>{{ cantidadComprobacionesConDato }} datos registrados preparados como «Coincide».
+                Los campos que no tienen referencia no se declaran comprobados.
+                El código de barras no es obligatorio.</p>
+              <label class="revision-check-confirmacion">
+                <input type="checkbox" [(ngModel)]="confirmaRevisionFisica" />
+                <span>Confirmo que localicé físicamente el dispositivo y que contrasté sus datos
+                  con la información mostrada. No estoy validando la firma de la responsiva.</span>
+              </label>
+            </div>
+
+            <ng-container *ngIf="modoRevision === 'diferencias'">
+              <div class="revision-leyenda">
+                <strong>Señala únicamente las diferencias</strong>
+                <p>Los campos con referencia se marcan inicialmente «Coincide» para agilizar la captura.
+                  Revísalos antes de guardar y modifica los que no correspondan.
+                  Los datos sin referencia esencial quedan «No verificable».</p>
+                <span>{{ cantidadDiferenciasSeleccionadas }} campo(s) requieren atención</span>
+                <label class="revision-check-confirmacion revision-confirmacion-diferencias">
+                  <input type="checkbox" [(ngModel)]="confirmaRevisionFisica" />
+                  <span>Confirmo que revisé físicamente los demás campos que permanecen como «Coincide».</span>
+                </label>
+              </div>
+              <div class="revision-campos">
+                <div class="revision-campo" *ngFor="let campo of camposRevision">
+                  <div class="revision-campo-info">
+                    <strong>{{ campo.etiqueta }}</strong>
+                    <small>En el sistema: {{ detalle.esperado[campo.esperado] || 'Sin dato registrado' }}</small>
+                  </div>
+                  <label class="revision-campo-estado">
+                    <span>Resultado</span>
+                    <select [(ngModel)]="formularioRevision.verificaciones[campo.clave]">
+                      <option value="Coincide" *ngIf="detalle.esperado[campo.esperado]">Coincide</option>
+                      <option value="Diferente">Es diferente</option>
+                      <option value="No verificable">No se pudo verificar</option>
+                      <option value="Sin dato" *ngIf="!detalle.esperado[campo.esperado]">Sin dato registrado</option>
+                    </select>
+                  </label>
+                  <label class="revision-campo-captura" *ngIf="formularioRevision.verificaciones[campo.clave] === 'Diferente'">
+                    <span>Dato encontrado físicamente</span>
+                    <input type="text" [(ngModel)]="formularioRevision[campo.campo]"
+                           placeholder="Escribe exactamente lo encontrado" />
+                  </label>
+                </div>
+              </div>
+            </ng-container>
+
+            <div *ngIf="modoRevision === 'no-localizado'" class="revision-aviso-faltantes">
+              <strong>Equipo no localizado.</strong> Describe dónde lo buscaste. La revisión
+              quedará con una corrección pendiente.
+            </div>
+            <div *ngIf="modoRevision === 'no-aplica'" class="revision-aviso-faltantes">
+              <strong>Fuera del alcance.</strong> Es obligatorio justificar por qué no aplica.
+            </div>
           </section>
 
+          <section class="revision-extra-rapida" *ngIf="modoRevision !== 'inicio'">
+            <div class="revision-extra-identidad">
+              <span>Revisado por</span>
+              <strong>{{ auditorActual || 'Cuenta que inició sesión' }}</strong>
+              <small>Se guarda desde la sesión autenticada.</small>
+            </div>
+            <label class="revision-observacion" *ngIf="modoRevision !== 'rapida'">
+              {{ modoRevision === 'no-localizado' ? '¿Dónde se buscó el equipo? *' :
+                 modoRevision === 'no-aplica' ? '¿Por qué no aplica? *' :
+                 'Observaciones (opcional)' }}
+              <textarea [(ngModel)]="formularioRevision.observaciones"
+                  [placeholder]="modoRevision === 'no-localizado' ? 'Indica los lugares revisados y las acciones realizadas' : 'Explica cualquier diferencia o comentario'">
+              </textarea>
+            </label>
+            <button type="button" class="revision-cambiar-btn" [disabled]="procesando"
+                    (click)="mostrarCamposOpcionales = !mostrarCamposOpcionales">
+              {{ mostrarCamposOpcionales ? 'Ocultar detalles opcionales' : 'Añadir evidencia u observaciones' }}
+            </button>
+            <div class="revision-adicionales" *ngIf="mostrarCamposOpcionales">
+              <label *ngIf="modoRevision === 'rapida'">
+                Observaciones (opcional)
+                <textarea [(ngModel)]="formularioRevision.observaciones" placeholder="Detalles de la revisión..."></textarea>
+              </label>
+              <label>Enlace de evidencia
+                <input type="url" [(ngModel)]="formularioRevision.evidenciaUrl" placeholder="URL de evidencia (opcional)" />
+              </label>
+              <label *ngIf="modoRevision === 'diferencias'">Acción requerida
+                <textarea [(ngModel)]="formularioRevision.accionRequerida" placeholder="¿Qué debe corregirse?"></textarea>
+              </label>
+            </div>
+          </section>
 
           <!-- RESULTADO -->
 
-          <div class="result-preview">
+          <div class="result-preview" *ngIf="modoRevision !== 'inicio'">
+            <p class="revision-aviso-documental">Nota: un resultado «Conforme» verifica los datos físicos
+              comprobados aquí. No significa que la responsiva firmada ya se haya validado.
+            </p>
 
             <span>
               El resultado será calculado por el backend:
@@ -2369,7 +1810,7 @@
             <strong
               *ngIf="
                 formularioRevision.resultado !== 'No aplica' &&
-                !formularioRevision.encontrado
+                formularioRevision.encontrado === false
               ">
 
               No localizado
@@ -2380,7 +1821,7 @@
             <strong
               *ngIf="
                 formularioRevision.resultado !== 'No aplica' &&
-                formularioRevision.encontrado
+                formularioRevision.encontrado === true
               ">
 
               Conforme o Con diferencia, según la comparación
@@ -2414,14 +1855,25 @@
 
             <button
               type="button"
+              class="secondary-btn"
+              *ngIf="haySiguientePendiente"
+              [disabled]="procesando || modoRevision === 'inicio' ||
+                ((modoRevision === 'rapida' || modoRevision === 'diferencias') && !confirmaRevisionFisica)"
+              (click)="guardarRevision(true)">
+              Guardar y siguiente →
+            </button>
+
+            <button
+              type="button"
               class="primary-btn modal-primary"
-              [disabled]="procesando"
+              [disabled]="procesando || modoRevision === 'inicio' ||
+                ((modoRevision === 'rapida' || modoRevision === 'diferencias') && !confirmaRevisionFisica)"
               (click)="guardarRevision()">
 
               {{
                 procesando
                   ? 'Guardando revisión...'
-                  : 'Guardar revisión'
+                  : modoRevision === 'rapida' ? 'Guardar sin incidencias' : 'Guardar revisión'
               }}
 
             </button>
@@ -2456,7 +1908,7 @@
           </p>
 
           <h2>
-            Finalizar auditoría
+            Finalizar verificación
           </h2>
 
         </div>
@@ -2478,7 +1930,7 @@
       <div class="modal-body">
 
         <p class="modal-description">
-          La auditoría solo podrá finalizarse cuando no existan
+          La verificación solo podrá finalizarse cuando no existan
           equipos pendientes de revisión.
         </p>
 
@@ -2559,7 +2011,7 @@
           </p>
 
           <h2>
-            Cancelar auditoría
+            Cancelar verificación
           </h2>
 
         </div>
@@ -2581,7 +2033,7 @@
       <div class="modal-body">
 
         <p class="warning-text">
-          La auditoría quedará registrada como cancelada
+          La verificación quedará registrada como cancelada
           y ya no podrá continuarse.
         </p>
 
@@ -2592,7 +2044,7 @@
 
           <textarea
             [(ngModel)]="motivoCancelacion"
-            placeholder="Explica por qué se cancela la auditoría">
+            placeholder="Explica por qué se cancela la verificación">
           </textarea>
 
         </label>
@@ -2640,6 +2092,38 @@
 
     </div>
 
+  </div>
+
+
+  <!-- Confirmación integrada con el tema oscuro, sin window.confirm() -->
+  <div class="modal-overlay" *ngIf="auditoriaPendienteInicio as pendiente">
+    <section class="modal inicio-modal" role="dialog" aria-modal="true"
+             [attr.aria-label]="'Iniciar verificación ' + pendiente.folio">
+      <header class="modal-header">
+        <div>
+          <p class="modal-eyebrow">INVENTARIO IT · CONFIRMACIÓN</p>
+          <h2>Iniciar verificación</h2>
+        </div>
+        <button type="button" class="close-btn" aria-label="Cerrar"
+                [disabled]="procesando" (click)="cancelarInicioAuditoria()">×</button>
+      </header>
+      <div class="modal-body">
+        <p class="inicio-intro">Vas a comenzar la revisión física de:</p>
+        <div class="inicio-ficha">
+          <strong>{{ pendiente.nombre }}</strong>
+          <small>{{ pendiente.folio }} · {{ pendiente.resumen.totalEquipos }} equipos programados</small>
+        </div>
+        <p class="inicio-nota">Su estado cambiará de <b>Planeada</b> a <b>En proceso</b>. Podrás registrar las verificaciones y continuar después.</p>
+        <div class="modal-actions">
+          <button type="button" class="secondary-btn" [disabled]="procesando"
+                  (click)="cancelarInicioAuditoria()">Volver</button>
+          <button type="button" class="inicio-confirm-btn" [disabled]="procesando"
+                  (click)="confirmarInicioAuditoria()">
+            {{ procesando ? 'Iniciando…' : 'Iniciar verificación' }}
+          </button>
+        </div>
+      </div>
+    </section>
   </div>
 
 </section>

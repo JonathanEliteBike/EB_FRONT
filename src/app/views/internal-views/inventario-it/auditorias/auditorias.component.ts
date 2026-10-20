@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { FechaInventarioComponent } from '../fecha-inventario/fecha-inventario.component';
 import { RouterLink } from '@angular/router';
 
 import {
@@ -19,6 +20,22 @@ import {
 } from '../../../../services/inventario/auditorias.service';
 
 
+// Las coincidencias solo se preparan tras una declaración expresa de revisión física.
+// Abrir una ventana nunca confirma datos por sí solo.
+type CampoComprobacion = 'serie' | 'empresa' | 'departamento' | 'responsable' |
+  'estado' | 'ubicacion' | 'funcionamiento' | 'extras';
+type DecisionComprobacion = '' | 'Coincide' | 'Diferente' | 'No verificable' | 'Sin dato';
+type CampoFormulario = 'numeroSerieEncontrado' | 'empresaEncontrada' |
+  'departamentoEncontrado' | 'responsableEncontrado' | 'estadoEncontrado' |
+  'ubicacionEncontrada' | 'funcionamientoEncontrado' | 'extrasEncontrados';
+type CampoEsperado = 'serie' | 'empresa' | 'departamento' | 'responsable' |
+  'estado' | 'ubicacion' | 'funcionamiento' | 'extras';
+
+const NUEVAS_COMPROBACIONES: Record<CampoComprobacion, DecisionComprobacion> = {
+  serie: '', empresa: '', departamento: '', responsable: '', estado: '',
+  ubicacion: '', funcionamiento: '', extras: ''
+};
+
 @Component({
   selector: 'app-auditorias',
   standalone: true,
@@ -26,7 +43,8 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink
+    RouterLink,
+    FechaInventarioComponent
   ],
 
   templateUrl: './auditorias.component.html',
@@ -35,7 +53,26 @@ import {
 export class AuditoriasComponent implements OnInit {
 
   auditorias: Auditoria[] = [];
+  auditorActual = '';
+  accionesAuditoriaId: number | null = null;
 
+  private versionListado = 0;
+  private versionEstadisticas = 0;
+
+  alternarAccionesAuditoria(id: number): void {
+    this.accionesAuditoriaId = this.accionesAuditoriaId === id ? null : id;
+  }
+
+  auditoriaPendienteInicio: Auditoria | null = null;
+
+  @HostListener('document:keydown.escape')
+  cerrarConfirmacionConEscape(): void {
+    this.cancelarInicioAuditoria();
+  }
+
+  cancelarInicioAuditoria(): void {
+    if (!this.procesando) this.auditoriaPendienteInicio = null;
+  }
 
   estadisticas: AuditoriasEstadisticas = {
     total: 0,
@@ -130,6 +167,112 @@ export class AuditoriasComponent implements OnInit {
 
   mostrarRevision = false;
 
+  // Flujo guiado: el detalle campo por campo solo se abre cuando hay diferencias.
+  modoRevision: 'inicio' | 'rapida' | 'diferencias' | 'no-localizado' | 'no-aplica' = 'inicio';
+  confirmaRevisionFisica = false;
+  mostrarCamposOpcionales = false;
+  avisoRevision = '';
+
+  // Los extras pueden ser opcionales, pero una serie o referencia operativa ausente
+  // NO debe aprobarse silenciosamente como "Coincide".
+  get camposSinReferenciaEsencial(): string[] {
+    if (!this.detalleSeleccionado) return [];
+    return this.camposRevision
+      .filter(c => c.clave !== 'extras' &&
+        !(c.clave === 'responsable' &&
+          !/asignad/i.test(this.detalleSeleccionado?.esperado.estado || '')) &&
+        !String(this.detalleSeleccionado?.esperado[c.esperado] ?? '').trim())
+      .map(c => c.etiqueta);
+  }
+
+  get cantidadComprobacionesConDato(): number {
+    if (!this.detalleSeleccionado) return 0;
+    return this.camposRevision.filter(c =>
+      !!String(this.detalleSeleccionado?.esperado[c.esperado] ?? '').trim()).length;
+  }
+
+  get haySiguientePendiente(): boolean {
+    return !!this.auditoriaSeleccionada?.detalles?.some(d =>
+      d.id !== this.detalleSeleccionado?.id && d.resultado === 'Pendiente');
+  }
+
+  get cantidadDiferenciasSeleccionadas(): number {
+    return Object.values(this.formularioRevision.verificaciones)
+      .filter(v => v === 'Diferente' || v === 'No verificable').length;
+  }
+
+  private rellenarDecisionesTrasVerificar(): void {
+    const esperado = this.detalleSeleccionado?.esperado;
+    if (!esperado) return;
+    const verificaciones = { ...NUEVAS_COMPROBACIONES };
+    for (const campo of this.camposRevision) {
+      verificaciones[campo.clave] = String(esperado[campo.esperado] ?? '').trim()
+        ? 'Coincide'
+        : 'Sin dato';
+    }
+    this.formularioRevision.verificaciones = verificaciones;
+  }
+
+  seleccionarSinIncidencias(): void {
+    if (!this.detalleSeleccionado) return;
+    this.errorAccion = '';
+    this.confirmaRevisionFisica = false;
+    const faltantes = this.camposSinReferenciaEsencial;
+    if (faltantes.length) {
+      this.seleccionarConDiferencias();
+      // No inventar datos que no están guardados, ni declararlos "coincidentes".
+      for (const campo of this.camposRevision) {
+        if (faltantes.includes(campo.etiqueta)) {
+          this.formularioRevision.verificaciones[campo.clave] = 'No verificable';
+        }
+      }
+      this.avisoRevision = `No se puede emitir «Sin incidencias»: faltan datos para contrastar (${faltantes.join(', ')}). Completa los valores físicos como «Es diferente» o conserva «No se pudo verificar» para registrar una corrección pendiente.`;
+      return;
+    }
+    this.modoRevision = 'rapida';
+    this.avisoRevision = '';
+    this.formularioRevision.encontrado = true;
+    this.formularioRevision.resultado = '';
+    this.formularioRevision.estadoCorreccion = 'No aplica';
+    this.rellenarDecisionesTrasVerificar();
+  }
+
+  seleccionarConDiferencias(): void {
+    this.modoRevision = 'diferencias';
+    this.avisoRevision = '';
+    this.errorAccion = '';
+    this.confirmaRevisionFisica = false;
+    this.formularioRevision.encontrado = true;
+    this.formularioRevision.resultado = '';
+    this.formularioRevision.estadoCorreccion = 'Pendiente';
+    this.rellenarDecisionesTrasVerificar();
+    for (const campo of this.camposRevision) {
+      if (this.camposSinReferenciaEsencial.includes(campo.etiqueta)) {
+        this.formularioRevision.verificaciones[campo.clave] = 'No verificable';
+      }
+    }
+  }
+
+  seleccionarNoLocalizado(): void {
+    this.modoRevision = 'no-localizado';
+    this.avisoRevision = '';
+    this.errorAccion = '';
+    this.formularioRevision.encontrado = false;
+    this.formularioRevision.resultado = '';
+    this.formularioRevision.estadoCorreccion = 'Pendiente';
+    this.formularioRevision.verificaciones = { ...NUEVAS_COMPROBACIONES };
+  }
+
+  volverOpcionesRevision(): void {
+    this.modoRevision = 'inicio';
+    this.avisoRevision = '';
+    this.errorAccion = '';
+    this.confirmaRevisionFisica = false;
+    this.formularioRevision.encontrado = null;
+    this.formularioRevision.resultado = '';
+    this.formularioRevision.verificaciones = { ...NUEVAS_COMPROBACIONES };
+  }
+
   detalleSeleccionado:
     AuditoriaDetalle | null = null;
 
@@ -149,8 +292,23 @@ export class AuditoriasComponent implements OnInit {
       this.crearFormularioVacio();
 
 
+  readonly camposRevision: Array<{
+    clave: CampoComprobacion; etiqueta: string;
+    esperado: CampoEsperado; campo: CampoFormulario
+  }> = [
+    { clave: 'serie', etiqueta: 'Número de serie', esperado: 'serie', campo: 'numeroSerieEncontrado' },
+    { clave: 'empresa', etiqueta: 'Empresa', esperado: 'empresa', campo: 'empresaEncontrada' },
+    { clave: 'departamento', etiqueta: 'Departamento', esperado: 'departamento', campo: 'departamentoEncontrado' },
+    { clave: 'responsable', etiqueta: 'Responsable', esperado: 'responsable', campo: 'responsableEncontrado' },
+    { clave: 'estado', etiqueta: 'Estado del equipo', esperado: 'estado', campo: 'estadoEncontrado' },
+    { clave: 'ubicacion', etiqueta: 'Ubicación', esperado: 'ubicacion', campo: 'ubicacionEncontrada' },
+    { clave: 'funcionamiento', etiqueta: 'Funcionamiento', esperado: 'funcionamiento', campo: 'funcionamientoEncontrado' },
+    { clave: 'extras', etiqueta: 'Accesorios y extras', esperado: 'extras', campo: 'extrasEncontrados' }
+  ];
+
   formularioRevision = {
-    encontrado: true,
+    encontrado: null as boolean | null,
+    verificaciones: { ...NUEVAS_COMPROBACIONES },
 
     resultado:
       '' as '' | ResultadoAuditoria,
@@ -195,6 +353,10 @@ export class AuditoriasComponent implements OnInit {
 
 
   ngOnInit(): void {
+    this.auditoriasService.obtenerMiUsuario().subscribe({
+      next: cuenta => this.auditorActual = cuenta.nombre,
+      error: () => this.auditorActual = ''
+    });
     this.cargarCatalogos();
     this.cargarInformacion();
   }
@@ -207,12 +369,17 @@ export class AuditoriasComponent implements OnInit {
    */
 
   cargarInformacion(): void {
+    this.cargarListadoYEstadisticas();
+  }
+
+  private cargarListadoYEstadisticas(): void {
     this.cargarAuditorias();
     this.cargarEstadisticas();
   }
 
 
   cargarAuditorias(): void {
+    const version = ++this.versionListado;
     this.cargando = true;
 
     this.errorCarga = '';
@@ -225,6 +392,7 @@ export class AuditoriasComponent implements OnInit {
         next: (
           datos: Auditoria[]
         ) => {
+          if (version !== this.versionListado) return;
           this.auditorias =
             Array.isArray(datos)
               ? datos
@@ -236,8 +404,9 @@ export class AuditoriasComponent implements OnInit {
         error: (
           error: HttpErrorResponse
         ) => {
+          if (version !== this.versionListado) return;
           console.error(
-            'Error al cargar auditorías:',
+            'Error al cargar verificaciones:',
             error
           );
 
@@ -246,7 +415,7 @@ export class AuditoriasComponent implements OnInit {
           this.errorCarga =
             this.obtenerMensajeError(
               error,
-              'No se pudieron cargar las auditorías.'
+              'No se pudieron cargar las verificaciones.'
             );
 
           this.cargando = false;
@@ -262,6 +431,7 @@ export class AuditoriasComponent implements OnInit {
      * continúan funcionando como navegación.
      */
 
+    const version = ++this.versionEstadisticas;
     this.auditoriasService
       .obtenerEstadisticas(
         this.obtenerFiltrosEstadisticas()
@@ -270,6 +440,7 @@ export class AuditoriasComponent implements OnInit {
         next: (
           datos: AuditoriasEstadisticas
         ) => {
+          if (version !== this.versionEstadisticas) return;
           this.estadisticas = {
             total:
               Number(datos?.total) || 0,
@@ -291,6 +462,7 @@ export class AuditoriasComponent implements OnInit {
         error: (
           error: HttpErrorResponse
         ) => {
+          if (version !== this.versionEstadisticas) return;
           console.error(
             'Error al cargar estadísticas:',
             error
@@ -374,26 +546,26 @@ export class AuditoriasComponent implements OnInit {
 
     this.limpiarMensajes();
 
-    this.cargarInformacion();
+    this.cargarListadoYEstadisticas();
   }
 
 
   get textoFiltroEstado(): string {
     switch (this.filtroEstado) {
       case 'Planeada':
-        return 'Mostrando auditorías planeadas';
+        return 'Mostrando verificaciones planeadas';
 
       case 'En proceso':
-        return 'Mostrando auditorías en proceso';
+        return 'Mostrando verificaciones en proceso';
 
       case 'Finalizada':
-        return 'Mostrando auditorías finalizadas';
+        return 'Mostrando verificaciones finalizadas';
 
       case 'Cancelada':
-        return 'Mostrando auditorías canceladas';
+        return 'Mostrando verificaciones canceladas';
 
       default:
-        return 'Mostrando todas las auditorías';
+        return 'Mostrando todas las verificaciones';
     }
   }
 
@@ -411,7 +583,7 @@ export class AuditoriasComponent implements OnInit {
 
     this.limpiarMensajes();
 
-    this.cargarInformacion();
+    this.cargarListadoYEstadisticas();
   }
 
 
@@ -422,7 +594,7 @@ export class AuditoriasComponent implements OnInit {
 
     this.limpiarMensajes();
 
-    this.cargarInformacion();
+    this.cargarListadoYEstadisticas();
   }
 
 
@@ -441,7 +613,7 @@ export class AuditoriasComponent implements OnInit {
 
     this.limpiarMensajes();
 
-    this.cargarInformacion();
+    this.cargarListadoYEstadisticas();
   }
 
 
@@ -508,14 +680,8 @@ export class AuditoriasComponent implements OnInit {
         auditoria.fechaProgramada
           ?.slice(0, 10) || '',
 
-      auditorResponsable:
-        auditoria.auditorResponsable,
-
       observaciones:
         auditoria.observaciones,
-
-      usuarioRegistro:
-        auditoria.usuarioRegistro,
 
       equipoIds: []
     };
@@ -576,10 +742,6 @@ export class AuditoriasComponent implements OnInit {
               this.formulario
                 .fechaProgramada,
 
-            auditorResponsable:
-              this.formulario
-                .auditorResponsable,
-
             observaciones:
               this.formulario
                 .observaciones || ''
@@ -588,7 +750,7 @@ export class AuditoriasComponent implements OnInit {
         .subscribe({
           next: () =>
             this.finalizarGuardado(
-              'La auditoría se actualizó correctamente.'
+              'La verificación se actualizó correctamente.'
             ),
 
           error: (
@@ -596,7 +758,7 @@ export class AuditoriasComponent implements OnInit {
           ) =>
             this.manejarErrorAccion(
               error,
-              'No se pudo actualizar la auditoría.'
+              'No se pudo actualizar la verificación.'
             )
         });
 
@@ -616,7 +778,7 @@ export class AuditoriasComponent implements OnInit {
       .subscribe({
         next: () =>
           this.finalizarGuardado(
-            'La auditoría se creó correctamente.'
+            'La verificación se creó correctamente.'
           ),
 
         error: (
@@ -624,7 +786,7 @@ export class AuditoriasComponent implements OnInit {
         ) =>
           this.manejarErrorAccion(
             error,
-            'No se pudo crear la auditoría.'
+            'No se pudo crear la verificación.'
           )
       });
   }
@@ -684,7 +846,7 @@ export class AuditoriasComponent implements OnInit {
           this.errorAccion =
             this.obtenerMensajeError(
               error,
-              'No se pudo cargar el detalle de la auditoría.'
+              'No se pudo cargar el detalle de la verificación.'
             );
 
           this.cargando = false;
@@ -717,50 +879,31 @@ export class AuditoriasComponent implements OnInit {
    * =========================================================
    */
 
-  iniciarAuditoria(
-    auditoria: Auditoria
-  ): void {
-    if (
-      !window.confirm(
-        `¿Deseas iniciar la auditoría ${auditoria.folio}?`
-      )
-    ) {
-      return;
-    }
+  iniciarAuditoria(auditoria: Auditoria): void {
+    if (this.procesando || auditoria.estado !== 'Planeada') return;
+    this.auditoriaPendienteInicio = auditoria;
+  }
 
+  confirmarInicioAuditoria(): void {
+    const auditoria = this.auditoriaPendienteInicio;
+    if (!auditoria || this.procesando) return;
     this.procesando = true;
-
     this.limpiarMensajes();
-
-    this.auditoriasService
-      .iniciarAuditoria(
-        auditoria.id
-      )
-      .subscribe({
-        next: () => {
-          this.procesando = false;
-
-          this.mensajeExito =
-            'La auditoría se inició correctamente.';
-
-          this.cargarInformacion();
-
-          if (
-            this.auditoriaSeleccionada
-              ?.id === auditoria.id
-          ) {
-            this.cargarDetalle();
-          }
-        },
-
-        error: (
-          error: HttpErrorResponse
-        ) =>
-          this.manejarErrorAccion(
-            error,
-            'No se pudo iniciar la auditoría.'
-          )
-      });
+    this.auditoriasService.iniciarAuditoria(auditoria.id).subscribe({
+      next: () => {
+        this.procesando = false;
+        this.auditoriaPendienteInicio = null;
+        this.mensajeExito = 'La verificación se inició correctamente.';
+        this.cargarInformacion();
+        if (this.auditoriaSeleccionada?.id === auditoria.id) {
+          this.cargarDetalle();
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.auditoriaPendienteInicio = null;
+        this.manejarErrorAccion(error, 'No se pudo iniciar la verificación.');
+      }
+    });
   }
 
 
@@ -776,85 +919,44 @@ export class AuditoriasComponent implements OnInit {
     this.detalleSeleccionado =
       detalle;
 
-    const datos =
-      detalle.encontradoDatos;
-
-    const esperado =
-      detalle.esperado;
-
+    // Al iniciar o repetir una revisión no precargamos datos supuestamente
+    // encontrados. El usuario debe verificarlos físicamente en esta sesión.
     this.formularioRevision = {
-      encontrado:
-        detalle.encontrado ?? true,
-
-      resultado:
-        detalle.resultado ===
-        'No aplica'
-          ? 'No aplica'
-          : '',
-
-      codigoBarrasEncontrado:
-        datos.codigoBarras ||
-        esperado.codigoBarras,
-
-      numeroSerieEncontrado:
-        datos.serie ||
-        esperado.serie,
-
-      empresaEncontrada:
-        datos.empresa ||
-        esperado.empresa,
-
-      departamentoEncontrado:
-        datos.departamento ||
-        esperado.departamento,
-
-      responsableEncontrado:
-        datos.responsable ||
-        esperado.responsable,
-
-      estadoEncontrado:
-        datos.estado ||
-        esperado.estado,
-
-      ubicacionEncontrada:
-        datos.ubicacion ||
-        esperado.ubicacion,
-
-      funcionamientoEncontrado:
-        datos.funcionamiento ||
-        esperado.funcionamiento,
-
-      extrasEncontrados:
-        datos.extras ||
-        esperado.extras,
-
-      tipoDiferencia:
-        detalle.tipoDiferencia,
-
-      observaciones:
-        detalle.observaciones,
-
-      evidenciaUrl:
-        detalle.evidenciaUrl,
-
-      accionRequerida:
-        detalle.accionRequerida,
-
-      estadoCorreccion:
-        detalle.estadoCorreccion ||
-        'No aplica',
-
-      revisadoPor:
-        detalle.revisadoPor || ''
+      encontrado: null,
+      verificaciones: { ...NUEVAS_COMPROBACIONES },
+      resultado: '',
+      codigoBarrasEncontrado: '',
+      numeroSerieEncontrado: '',
+      empresaEncontrada: '',
+      departamentoEncontrado: '',
+      responsableEncontrado: '',
+      estadoEncontrado: '',
+      ubicacionEncontrada: '',
+      funcionamientoEncontrado: '',
+      extrasEncontrados: '',
+      tipoDiferencia: '',
+      observaciones: '',
+      evidenciaUrl: '',
+      accionRequerida: '',
+      estadoCorreccion: 'No aplica',
+      revisadoPor: this.auditorActual || ''
     };
 
     this.mostrarRevision = true;
+    this.modoRevision = 'inicio';
+    this.confirmaRevisionFisica = false;
+    this.mostrarCamposOpcionales = false;
+    this.avisoRevision = '';
 
     this.errorAccion = '';
   }
 
 
   marcarNoAplica(): void {
+    this.modoRevision = 'no-aplica';
+    this.avisoRevision = '';
+    this.errorAccion = '';
+    this.formularioRevision.verificaciones = { ...NUEVAS_COMPROBACIONES };
     this.formularioRevision
       .resultado = 'No aplica';
 
@@ -905,23 +1007,52 @@ export class AuditoriasComponent implements OnInit {
   }
 
 
-  guardarRevision(): void {
-    if (
-      !this.auditoriaSeleccionada ||
-      !this.detalleSeleccionado
-    ) {
+  guardarRevision(continuarConSiguiente = false): void {
+    if (!this.auditoriaSeleccionada || !this.detalleSeleccionado) return;
+    if (this.modoRevision === 'inicio') {
+      this.errorAccion = 'Primero indica el resultado de la revisión física.';
+      return;
+    }
+    if ((this.modoRevision === 'rapida' || this.modoRevision === 'diferencias') && !this.confirmaRevisionFisica) {
+      this.errorAccion = 'Confirma que revisaste físicamente el equipo y comparaste los datos mostrados.';
+      return;
+    }
+    if (this.modoRevision === 'diferencias' && !this.cantidadDiferenciasSeleccionadas) {
+      this.errorAccion = 'No marcaste ninguna diferencia. Usa «Todo coincide» si ya revisaste el equipo y está correcto.';
       return;
     }
 
-    if (
-      !this.formularioRevision
-        .revisadoPor
-        .trim()
-    ) {
-      this.errorAccion =
-        'Indica quién realizó la revisión.';
-
+    const form = this.formularioRevision;
+    if (form.resultado === 'No aplica') {
+      if (!form.observaciones.trim()) {
+        this.errorAccion = 'Indica en observaciones por qué el equipo no aplica.';
+        return;
+      }
+    } else if (form.encontrado === null) {
+      this.errorAccion = 'Confirma si el equipo se localizó físicamente.';
       return;
+    } else if (form.encontrado === false) {
+      if (!form.observaciones.trim()) {
+        this.errorAccion = 'Describe la búsqueda del equipo no localizado.';
+        return;
+      }
+    } else {
+      const esperado = this.detalleSeleccionado.esperado;
+      for (const campo of this.camposRevision) {
+        const decision = form.verificaciones[campo.clave];
+        if (!decision || (decision === 'Sin dato' && esperado[campo.esperado])) {
+          this.errorAccion = `Confirma el resultado de ${campo.etiqueta}.`;
+          return;
+        }
+        if (decision === 'Coincide' && !esperado[campo.esperado]) {
+          this.errorAccion = `${campo.etiqueta} no tiene un valor registrado con el cual coincidir.`;
+          return;
+        }
+        if (decision === 'Diferente' && !form[campo.campo].trim()) {
+          this.errorAccion = `Captura el valor encontrado en ${campo.etiqueta}.`;
+          return;
+        }
+      }
     }
 
     this.procesando = true;
@@ -935,7 +1066,9 @@ export class AuditoriasComponent implements OnInit {
         {
           encontrado:
             this.formularioRevision
-              .encontrado,
+              .encontrado === true,
+
+          verificaciones: { ...this.formularioRevision.verificaciones },
 
           resultado:
             this.formularioRevision
@@ -1005,27 +1138,24 @@ export class AuditoriasComponent implements OnInit {
                 : this.formularioRevision
                     .estadoCorreccion,
 
-          revisadoPor:
-            this.formularioRevision
-              .revisadoPor
         }
       )
       .subscribe({
         next: () => {
           this.procesando = false;
+          // Continuar en la misma sesión de verificación sin volver al listado.
+          // Solo avanza a otro detalle pendiente de la auditoría visible.
+          const siguiente = continuarConSiguiente
+            ? this.auditoriaSeleccionada?.detalles?.find(d =>
+                d.id !== this.detalleSeleccionado?.id && d.resultado === 'Pendiente')
+            : undefined;
 
-          this.mostrarRevision =
-            false;
-
-          this.detalleSeleccionado =
-            null;
-
-          this.mensajeExito =
-            'La revisión se guardó correctamente.';
-
+          this.mostrarRevision = false;
+          this.detalleSeleccionado = null;
+          this.mensajeExito = 'La revisión se guardó correctamente.';
           this.cargarDetalle();
-
           this.cargarInformacion();
+          if (siguiente) this.abrirRevision(siguiente);
         },
 
         error: (
@@ -1099,7 +1229,7 @@ export class AuditoriasComponent implements OnInit {
             false;
 
           this.mensajeExito =
-            'La auditoría se finalizó correctamente.';
+            'La verificación se finalizó correctamente.';
 
           this.cargarInformacion();
 
@@ -1111,7 +1241,7 @@ export class AuditoriasComponent implements OnInit {
         ) =>
           this.manejarErrorAccion(
             error,
-            'No se pudo finalizar la auditoría.'
+            'No se pudo finalizar la verificación.'
           )
       });
   }
@@ -1182,7 +1312,7 @@ export class AuditoriasComponent implements OnInit {
             false;
 
           this.mensajeExito =
-            'La auditoría se canceló correctamente.';
+            'La verificación se canceló correctamente.';
 
           this.cargarInformacion();
 
@@ -1194,7 +1324,7 @@ export class AuditoriasComponent implements OnInit {
         ) =>
           this.manejarErrorAccion(
             error,
-            'No se pudo cancelar la auditoría.'
+            'No se pudo cancelar la verificación.'
           )
       });
   }
@@ -1205,46 +1335,6 @@ export class AuditoriasComponent implements OnInit {
    * ELIMINACIÓN Y EXPORTACIÓN
    * =========================================================
    */
-
-  eliminarAuditoria(
-    auditoria: Auditoria
-  ): void {
-    if (
-      !window.confirm(
-        `¿Eliminar definitivamente la auditoría ${auditoria.folio}?`
-      )
-    ) {
-      return;
-    }
-
-    this.procesando = true;
-
-    this.limpiarMensajes();
-
-    this.auditoriasService
-      .eliminarAuditoria(
-        auditoria.id
-      )
-      .subscribe({
-        next: () => {
-          this.procesando = false;
-
-          this.mensajeExito =
-            'La auditoría se eliminó correctamente.';
-
-          this.cargarInformacion();
-        },
-
-        error: (
-          error: HttpErrorResponse
-        ) =>
-          this.manejarErrorAccion(
-            error,
-            'No se pudo eliminar la auditoría.'
-          )
-      });
-  }
-
 
   exportarAuditoria(
     auditoria: Auditoria
@@ -1309,7 +1399,7 @@ export class AuditoriasComponent implements OnInit {
           this.exportandoId = null;
 
           this.mensajeExito =
-            'La auditoría se exportó correctamente.';
+            'La verificación se exportó correctamente.';
         },
 
         error: (
@@ -1318,7 +1408,7 @@ export class AuditoriasComponent implements OnInit {
           this.exportandoId = null;
 
           this.errorAccion =
-            'No se pudo exportar la auditoría.';
+            'No se pudo exportar la verificación.';
 
           if (
             error.error instanceof Blob
@@ -1330,7 +1420,7 @@ export class AuditoriasComponent implements OnInit {
             this.errorAccion =
               this.obtenerMensajeError(
                 error,
-                'No se pudo exportar la auditoría.'
+                'No se pudo exportar la verificación.'
               );
           }
         }
@@ -1495,11 +1585,7 @@ export class AuditoriasComponent implements OnInit {
           .toISOString()
           .slice(0, 10),
 
-      auditorResponsable: '',
-
       observaciones: '',
-
-      usuarioRegistro: 'Sistema',
 
       equipoIds: []
     };
@@ -1513,7 +1599,7 @@ export class AuditoriasComponent implements OnInit {
         .trim()
     ) {
       return (
-        'El nombre de la auditoría es obligatorio.'
+        'El nombre de la verificación es obligatorio.'
       );
     }
 
@@ -1523,16 +1609,6 @@ export class AuditoriasComponent implements OnInit {
     ) {
       return (
         'La fecha programada es obligatoria.'
-      );
-    }
-
-    if (
-      !this.formulario
-        .auditorResponsable
-        .trim()
-    ) {
-      return (
-        'El auditor responsable es obligatorio.'
       );
     }
 
@@ -1746,10 +1822,10 @@ export class AuditoriasComponent implements OnInit {
         this.errorAccion =
           respuesta.detalle ||
           respuesta.error ||
-          'No se pudo exportar la auditoría.';
+          'No se pudo exportar la verificación.';
       } catch {
         this.errorAccion =
-          'No se pudo exportar la auditoría.';
+          'No se pudo exportar la verificación.';
       }
     };
 

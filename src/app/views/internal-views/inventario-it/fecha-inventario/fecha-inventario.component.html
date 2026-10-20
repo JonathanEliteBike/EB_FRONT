@@ -1,0 +1,25 @@
+<ng-container [ngSwitch]="mode">
+  <app-date-range-picker *ngSwitchCase="'range'"
+    [fechaDesde]="desde || null"
+    [fechaHasta]="hasta || null"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    (fechaDesdeChange)="desdeChange.emit($event || '')"
+    (fechaHastaChange)="hastaChange.emit($event || '')"
+    (rangoCompleto)="rangeChange.emit($event)"
+    (limpiar)="limpiarRango()">
+  </app-date-range-picker>
+
+  <ng-container *ngSwitchDefault>
+    <app-date-picker mode="single"
+      [value]="fecha"
+      [placeholder]="placeholder"
+      (dateChange)="cambiarFecha($event)">
+    </app-date-picker>
+    <label *ngIf="mode === 'datetime'" class="hora-field">
+      <span>Hora</span>
+      <input type="time" [value]="hora" [disabled]="disabled"
+        aria-label="Hora local" (change)="cambiarHora($any($event.target).value)" />
+    </label>
+  </ng-container>
+</ng-container>

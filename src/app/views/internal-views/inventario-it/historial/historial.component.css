@@ -1477,3 +1477,17 @@ tbody tr:last-child td {
     width: 100%;
   }
 }
+/* Pestañas para separar movimientos del equipo de auditoría de usuarios. */
+.historial-tabs { width: 100%; max-width: 1680px; margin: 24px auto 14px; display: flex; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-main); padding-bottom: 12px; }
+.historial-tabs button { background: var(--background-panel); color: var(--text-secondary); border: 1px solid var(--border-main); border-radius: 10px; padding: 12px 17px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.historial-tabs button.active { border-color: var(--orange); background: var(--orange-soft); color: var(--text-main); }
+.historial-tabs button:hover:not(.active) { color: var(--text-main); border-color: var(--text-muted); }
+.historial-tabs button:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+
+
+/* Selector de rango compartido con Garantías */
+.fecha-rango-inventario { display: flex; flex-direction: column; gap: 7px; min-width: 220px; position: relative; z-index: 10; }
+.fecha-rango-titulo { color: var(--text-muted, #afb4ae); font-size: 10px; font-weight: 900; letter-spacing: .4px; text-transform: uppercase; }
+.fecha-rango-inventario app-fecha-inventario { width: 100%; }
+
+.advanced-filters { grid-template-columns: minmax(210px, 1.3fr) minmax(245px, 1.5fr) auto auto; }
