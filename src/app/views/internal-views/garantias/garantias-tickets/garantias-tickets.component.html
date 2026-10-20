@@ -770,11 +770,11 @@
                 </div>
               </div>
 
-              <!-- Notas Internas (solo administradores) -->
-              <div class="dp-section nota-interna-section" *ngIf="esAdmin">
+              <!-- Notas Internas -->
+              <div class="dp-section nota-interna-section" *ngIf="puedeVerNotasInternas">
                 <h4 class="dp-section-title nota-interna-title">
                   <i class="fas fa-lock"></i> Notas Internas
-                  <span class="nota-interna-badge">Solo admins</span>
+                  <span class="nota-interna-badge">Personal autorizado</span>
                 </h4>
                 <p class="nota-interna-hint">Estas notas no son visibles para el cliente.</p>
 
@@ -797,7 +797,7 @@
                   </ng-container>
                 </div>
 
-                <div class="comment-form nota-interna-form">
+                <div class="comment-form nota-interna-form" *ngIf="puedeCrearNotasInternas">
                   <textarea class="comment-input" [(ngModel)]="notaInterna"
                             placeholder="Escribe una nota interna (solo visible para administradores)…"
                             rows="3"></textarea>

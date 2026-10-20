@@ -248,6 +248,12 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   }
 
   get esAdmin(): boolean { return this.auth.isAdmin(); }
+  get puedeVerNotasInternas(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'ver'));
+  }
+  get puedeCrearNotasInternas(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear'));
+  }
   get puedeCrear(): boolean {
     return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear'));
   }
@@ -851,7 +857,7 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   }
 
   enviarNotaInterna(): void {
-    if (!this.selected || !this.notaInterna.trim() || this.enviandoNota) return;
+    if (!this.puedeCrearNotasInternas || !this.selected || !this.notaInterna.trim() || this.enviandoNota) return;
     this.enviandoNota = true;
     this.cdr.markForCheck();
     this.svc.addComentario(this.selected.id, '', this.notaInterna.trim(), 'nota_interna').subscribe({
