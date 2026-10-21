@@ -184,7 +184,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       boton: 'Ir a Inventario',
       ruta: '/inventario-it',
       accion: null
-    },  
+    },
   ];
 
   private readonly PINS_KEY = 'eb_home_pinned';
