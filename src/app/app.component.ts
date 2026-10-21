@@ -28,7 +28,9 @@ import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dial
       <button class="update-banner__btn" (click)="actualizarAhora()">Actualizar ahora</button>
       <button class="update-banner__close" (click)="hayActualizacion = false" aria-label="Cerrar">✕</button>
     </div>
-    <router-outlet></router-outlet>
+    <div [class.montos-ocultos]="debeOcultarMontosEnCaratulas">
+      <router-outlet></router-outlet>
+    </div>
     <app-alerta *ngIf="mensajeVisible" [mensaje]="mensaje" [tipo]="tipo"></app-alerta>
     <app-confirm-dialog></app-confirm-dialog>
   `,
@@ -168,7 +170,25 @@ export class AppComponent implements OnInit, OnDestroy {
     this.updateService.recargar();
   }
 
+  get debeOcultarMontosEnCaratulas(): boolean {
+    const ruta = this.router.url.split('?')[0].replace(/\/+$/, '');
+    const moduloPorRuta: Record<string, string> = {
+      '/caratulas': 'caratulas',
+      '/caratula-evacs': 'caratula_evacs',
+      '/caratula-evac-a': 'caratula_evac_a',
+      '/caratula-evac-b': 'caratula_evac_b',
+      '/monitor': 'monitor',
+    };
+    const modulo = moduloPorRuta[ruta];
+    return this.authService.getRol() === 4 &&
+      !!modulo && this.authService.debeOcultarMontos(modulo);
+  }
+
   private iniciarPrecargaDatos() {
+    // La autorización interna resuelve los endpoints compartidos con la ruta
+    // activa. Estas precargas se ejecutan fuera de una pantalla concreta, por
+    // lo que para rol 4 se cargan desde cada componente al navegar a él.
+    if (this.authService.getRol() === 4) return;
     this.monitorService.precargarDatos();
     this.previoService.precargarDatos();
     this.caratulasService.precargarDatos();

@@ -1,25 +1,61 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
 import { GarantiasService, GarantiaFormulario, GarantiaComentario } from '../../../services/garantias.service';
+import { AuthService } from '../../../services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 const DOC_LABELS: Record<string, string> = {
-  bici_doc1: 'Fotografía del Daño',
-  bici_doc2: 'Fotografía del Número de Serie',
-  bici_doc3: 'Fotografía del Producto Completo',
-  bici_doc4: 'Factura de Compra y Factura de Venta',
-  bici_doc5: 'Hojas del Historial de Servicio',
-  scott_doc1: 'Fotografía del Daño',
-  scott_doc2: 'Fotografía del Año de Fabricación / Número de Serie',
-  scott_doc3: 'Fotografía del Producto',
-  scott_doc4: 'Factura de Compra y Factura de Venta',
-  vittoria_doc1: 'Fotografía del Daño',
-  vittoria_doc2: 'Fotografía del Año de Fabricación / Número de Serie',
-  vittoria_doc3: 'Fotografía del Producto',
-  vittoria_doc4: 'Factura de Compra y Factura de Venta',
+  // Bicicletas (Scott / Megamo)
+  bici_doc1:  'Fotografía del Daño',
+  bici_doc2:  'Fotografía del Número de Serie',
+  bici_doc3:  'Fotografía del Producto Completo',
+  bici_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  bici_doc4a: 'Factura de Compra',
+  bici_doc4b: 'Factura de Venta',
+  bici_doc5:  'Hojas del Historial de Servicio',
+  // Scott no-bicicletas (cascos, zapatos, protecciones, componentes)
+  scott_doc1:  'Fotografía del Daño',
+  scott_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  scott_doc3:  'Fotografía del Producto',
+  scott_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  scott_doc4a: 'Factura de Compra',
+  scott_doc4b: 'Factura de Venta',
+  // Vittoria (llantas, zapatos, accesorios)
+  vittoria_doc1:  'Fotografía del Daño',
+  vittoria_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  vittoria_doc3:  'Fotografía del Producto',
+  vittoria_doc4:  'Factura de Compra y Factura de Venta',  // legacy
+  vittoria_doc4a: 'Factura de Compra',
+  vittoria_doc4b: 'Factura de Venta',
+  // Syncros Manubrios
+  manubrio_doc1:  'Fotografía del Daño',
+  manubrio_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  manubrio_doc3:  'Fotografía del Producto',
+  manubrio_doc4a: 'Factura de Compra',
+  manubrio_doc4b: 'Factura de Venta',
+  // Syncros Asientos
+  asiento_doc1:  'Fotografía del Daño',
+  asiento_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  asiento_doc3:  'Fotografía del Producto',
+  asiento_doc4a: 'Factura de Compra',
+  asiento_doc4b: 'Factura de Venta',
+  // Syncros Poste
+  poste_doc1:  'Fotografía del Daño',
+  poste_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  poste_doc3:  'Fotografía del Producto',
+  poste_doc4a: 'Factura de Compra',
+  poste_doc4b: 'Factura de Venta',
+  // Syncros Ruedos/Rines
+  rin_doc1:  'Fotografía del Daño',
+  rin_doc2:  'Fotografía del Año de Fabricación / Número de Serie',
+  rin_doc3:  'Fotografía del Producto',
+  rin_doc4a: 'Factura de Compra',
+  rin_doc4b: 'Factura de Venta',
 };
 
 const COLOR_ESTATUS: Record<string, string> = {
@@ -47,7 +83,7 @@ const COLOR_PIEZA: Record<string, string> = {
   styleUrl: './garantias-usuario.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GarantiasUsuarioComponent implements OnInit {
+export class GarantiasUsuarioComponent implements OnInit, OnDestroy {
   vista: 'hub' | 'tickets' | 'detalle' = 'hub';
 
   // Lista
@@ -78,13 +114,36 @@ export class GarantiasUsuarioComponent implements OnInit {
   nuevaSerie = '';
   actualizandoSerie = false;
 
-  constructor(private svc: GarantiasService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private svc: GarantiasService,
+    private cdr: ChangeDetectorRef,
+    private auth: AuthService,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer,
+  ) {}
 
   ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.limpiarArchivoUrls();
+  }
+
+  get puedeVer(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
+
+  get puedeCrear(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
+
+  get puedeEditar(): boolean {
+    return this.auth.tieneModulo('usuarios_garantias');
+  }
 
   // ── Navegación ──────────────────────────────────────────────────────────────
 
   verMisTickets(): void {
+    if (!this.puedeVer) return;
     this.vista = 'tickets';
     this.cargar();
     this.cdr.markForCheck();
@@ -96,12 +155,14 @@ export class GarantiasUsuarioComponent implements OnInit {
   }
 
   volverATickets(): void {
+    this.limpiarArchivoUrls();
     this.vista = 'tickets';
     this.ticketSeleccionado = null;
     this.cdr.markForCheck();
   }
 
   verDetalle(t: GarantiaFormulario): void {
+    this.limpiarArchivoUrls();
     this.ticketSeleccionado = t;
     this.validacionDocs = { ...(t.validacion_docs_json ?? {}) };
     this.nuevaSerie = '';
@@ -134,6 +195,7 @@ export class GarantiasUsuarioComponent implements OnInit {
         this.validacionDocs = { ...(f.validacion_docs_json ?? {}) };
         this.nuevaSerie = f.datos?.['bici_serie'] ?? '';
         this.cargandoDetalle = false;
+        this.cargarArchivosSeguros();
         this.cdr.markForCheck();
       },
       error: () => { this.cargandoDetalle = false; this.cdr.markForCheck(); },
@@ -160,7 +222,7 @@ export class GarantiasUsuarioComponent implements OnInit {
   }
 
   enviarComentario(): void {
-    if (!this.ticketSeleccionado || !this.nuevoComentario.trim() || this.enviandoComentario) return;
+    if (!this.puedeEditar || !this.ticketSeleccionado || !this.nuevoComentario.trim() || this.enviandoComentario) return;
     this.enviandoComentario = true;
     this.cdr.markForCheck();
     const autor = this.getNombreUsuario();
@@ -177,12 +239,13 @@ export class GarantiasUsuarioComponent implements OnInit {
   // ── Re-subida de documentos ───────────────────────────────────────────────────
 
   onReupload(event: Event, campo: string): void {
+    if (!this.puedeEditar) return;
     const input = event.target as HTMLInputElement;
     if (!input.files?.length || !this.ticketSeleccionado) return;
     const file = input.files[0];
     this.resubiendo[campo] = true;
     this.cdr.markForCheck();
-    this.svc.subirArchivo(file).subscribe({
+    this.svc.subirArchivo(file, 'editar').subscribe({
       next: (res) => {
         this.svc.actualizarDato(this.ticketSeleccionado!.id, campo, res.nombre).subscribe({
           next: (r) => {
@@ -192,6 +255,7 @@ export class GarantiasUsuarioComponent implements OnInit {
               this.ticketSeleccionado.datos[campo] = res.nombre;
               this.ticketSeleccionado.validacion_docs_json = this.validacionDocs;
             }
+            this.cargarArchivosSeguros();
             this.resubiendo[campo] = false;
             this.cargarComentarios(this.ticketSeleccionado!.id);
           },
@@ -205,7 +269,7 @@ export class GarantiasUsuarioComponent implements OnInit {
   // ── Re-entrada de número de serie ─────────────────────────────────────────────
 
   actualizarSerie(): void {
-    if (!this.ticketSeleccionado || !this.nuevaSerie.trim() || this.actualizandoSerie) return;
+    if (!this.puedeEditar || !this.ticketSeleccionado || !this.nuevaSerie.trim() || this.actualizandoSerie) return;
     this.actualizandoSerie = true;
     this.cdr.markForCheck();
     this.svc.actualizarDato(this.ticketSeleccionado.id, 'bici_serie', this.nuevaSerie.trim()).subscribe({
@@ -282,7 +346,7 @@ export class GarantiasUsuarioComponent implements OnInit {
   get documentosTicket(): Array<{ key: string; nombre: string; legible: string; label: string }> {
     if (!this.ticketSeleccionado?.datos) return [];
     return Object.entries(this.ticketSeleccionado.datos)
-      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc)\d+$/.test(k) && v)
+      .filter(([k, v]) => /^(bici_doc|scott_doc|vittoria_doc|rin_doc|manubrio_doc|asiento_doc|poste_doc)\d+[ab]?$/.test(k) && v)
       .map(([k, v]) => ({
         key: k,
         nombre: String(v),
@@ -296,8 +360,42 @@ export class GarantiasUsuarioComponent implements OnInit {
     return s ? String(s) : null;
   }
 
-  archivoVerUrl(nombre: string): string {
-    return `${environment.apiUrl}/garantias/archivo/${nombre}`;
+  // La ruta /garantias/archivo/<nombre> exige JWT (Authorization header), así
+  // que no se puede usar directo en [src]/[href]: el navegador no manda el
+  // token en esas peticiones. Se descarga vía HttpClient (sí lleva el token
+  // por el interceptor) y se expone como blob URL.
+  private archivoUrls: Map<string, SafeUrl> = new Map();
+  private archivoRawUrls: Map<string, string> = new Map();
+
+  private limpiarArchivoUrls(): void {
+    for (const url of this.archivoRawUrls.values()) URL.revokeObjectURL(url);
+    this.archivoUrls.clear();
+    this.archivoRawUrls.clear();
+  }
+
+  private cargarArchivosSeguros(): void {
+    for (const doc of this.documentosTicket) {
+      const nombre = doc.nombre;
+      if (this.archivoUrls.has(nombre)) continue;
+      this.http.get(`${environment.apiUrl}/garantias/archivo/${nombre}`, { responseType: 'blob' })
+        .subscribe({
+          next: (blob) => {
+            const raw = URL.createObjectURL(blob);
+            this.archivoRawUrls.set(nombre, raw);
+            this.archivoUrls.set(nombre, this.sanitizer.bypassSecurityTrustUrl(raw));
+            this.cdr.markForCheck();
+          },
+          error: () => { /* se deja sin URL: el doc no será clicable */ },
+        });
+    }
+  }
+
+  archivoListo(nombre: string): boolean {
+    return this.archivoUrls.has(nombre);
+  }
+
+  archivoSrc(nombre: string): SafeUrl | null {
+    return this.archivoUrls.get(nombre) ?? null;
   }
 
   esImagen(nombre: string): boolean {

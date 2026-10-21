@@ -1,0 +1,589 @@
+:host {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* CSS variables heredadas por app-date-picker en este módulo (mismo
+     contrato que el resto de Importaciones -- acento azul, no naranja) */
+  --surface2: #1a1f2e; --border2: #2d3748;
+  --t1: #e2e8f0; --t2: #cbd5e1; --t3: #64748b;
+  --orange: #3b82f6;
+}
+
+/* Mismo fondo que importaciones-dashboard (#0b0e14) -- antes esta vista
+   heredaba el fondo genérico de <body> (#1e1d1b) y se sentía fuera de
+   lugar frente al resto del módulo. El fondo va en .panel-page a TODO el
+   ancho (sin max-width) para que llegue borde a borde del viewport, igual
+   que .dash-page; el contenido se centra aparte en .panel-inner -- si el
+   max-width/background vivieran en el mismo elemento, el fondo se cortaría
+   en los 1100px y dejaría ver el gris de <body> a los lados. */
+.panel-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #0b0e14;
+  box-sizing: border-box;
+}
+.panel-inner {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.panel-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 16px; }
+.panel-page-header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #e2e8f0; }
+.header-izq { display: flex; align-items: flex-start; gap: 12px; }
+.header-acciones { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.resumen-nota { color: #94a3b8; font-size: 12.5px; margin: 6px 0 0; max-width: 620px; }
+
+/* Botón "volver" icono-solo -- misma posición/estilo que el resto del
+   módulo (dashboard, detalle): a la izquierda, antes del título. */
+.back-btn {
+  width: 36px; height: 36px; margin-top: 2px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #1a1f2e; border: 1px solid #2d3748; border-radius: 8px;
+  color: #94a3b8; cursor: pointer; font-size: 1rem; text-decoration: none;
+  transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out),
+              color 150ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.back-btn:hover  { background: #243044; color: #e2e8f0; }
+.back-btn:active { transform: scale(0.93); }
+
+.btn-secundario {
+  background: #1a1f2e; color: #94a3b8; border: 1px solid #2d3748; border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 500; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  transition: background 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.btn-secundario:hover { background: #243044; border-color: #3d4a5f; color: #e2e8f0; }
+.btn-secundario:active { transform: scale(0.97); }
+
+/* ── Panorama general (agregado entre todos los embarques desde hoy) ──
+   Las celdas de hito usan CSS Grid con minmax(…,1fr) de ancho TOPADO, no
+   flexbox con flex-grow: con pocos hitos en una sección, flex-grow
+   repartía TODO el espacio sobrante entre ellos y dejaba cajas enormes
+   casi vacías; grid simplemente deja esas columnas sin usar. */
+.panorama {
+  background: #0f1623; border: 1px solid #1e2535; border-radius: 12px;
+  padding: 18px 20px; margin-bottom: 16px;
+}
+.panorama-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+.panorama-titulo-wrap { flex: 1 1 320px; min-width: 240px; }
+.panorama-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #e2e8f0; }
+.panorama-nota { color: #94a3b8; font-size: 12px; margin: 4px 0 0; max-width: 560px; line-height: 1.4; }
+.panorama-vacio { color: #64748b; font-size: 13px; padding: 16px 0 2px; }
+
+/* Insignia KPI de latencia total: número grande como foco visual, no una
+   pill genérica perdida junto al título. */
+.kpi-lat {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  padding: 8px 18px; border-radius: 10px; flex-shrink: 0;
+}
+.kpi-lat-lbl { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .75; }
+.kpi-lat-val { display: inline-flex; align-items: center; gap: 6px; font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
+.kpi-lat-val i { font-size: 1rem; }
+.kpi-lat.delta-ok   { background: rgba(34,197,94,.1);  color: #4ade80; }
+.kpi-lat.delta-late { background: rgba(239,68,68,.12); color: #f87171; }
+
+.panorama-kpis { display: flex; gap: 10px; align-items: stretch; }
+
+/* Cumplimiento general: mismo anillo que las tarjetas, sin caja de fondo */
+.cump-kpi {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 4px 6px 4px 4px;
+  outline: none;
+}
+
+/* Panel de embarques participantes. Nace desde su disparador (origen
+   arriba-derecha) con escala 0.96 + opacidad -- nunca desde 0. */
+.cump-kpi-pop {
+  position: absolute; top: 100%; right: 0; z-index: 20;
+  padding-top: 10px; /* puente invisible: el cursor no pierde el hover al bajar */
+  opacity: 0; pointer-events: none;
+  transform: scale(0.96); transform-origin: top right;
+  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+}
+.cump-kpi:focus-within .cump-kpi-pop { opacity: 1; transform: scale(1); pointer-events: auto; }
+@media (hover: hover) and (pointer: fine) {
+  .cump-kpi:hover .cump-kpi-pop { opacity: 1; transform: scale(1); pointer-events: auto; }
+}
+.cump-kpi-pop-card {
+  width: 272px; max-height: 340px; overflow-y: auto;
+  background: #0f1520; border: 1px solid rgba(148,163,184,.14); border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5); padding: 10px;
+}
+.cump-kpi-pop-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  color: #64748b; padding: 2px 6px 10px;
+}
+.cump-kpi-pop-count {
+  font-variant-numeric: tabular-nums; color: #cbd5e1;
+  background: rgba(148,163,184,.12); border-radius: 999px; padding: 1px 7px;
+}
+.cump-kpi-pop-row {
+  width: 100%; display: flex; flex-direction: column; gap: 6px;
+  background: none; border: none; border-radius: 8px; padding: 8px 8px 9px;
+  cursor: pointer; text-align: left;
+  transition: background-color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.cump-kpi-pop-row:hover { background: rgba(56,189,248,.08); }
+.cump-kpi-pop-row:active { transform: scale(0.98); }
+.cump-kpi-pop-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cump-kpi-pop-ref {
+  font-size: .78rem; font-weight: 600; color: #e2e8f0; letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+}
+.cump-kpi-pop-val {
+  font-size: .72rem; font-weight: 700; color: #94a3b8; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cump-kpi-pop-val.cump-alto  { color: #4ade80; }
+.cump-kpi-pop-val.cump-medio { color: #fbbf24; }
+.cump-kpi-pop-val.cump-bajo  { color: #f87171; }
+.cump-kpi-pop-pct { margin-left: 6px; opacity: .85; }
+.cump-kpi-pop-bar {
+  display: block; height: 4px; border-radius: 999px; background: rgba(148,163,184,.14); overflow: hidden;
+}
+.cump-kpi-pop-fill {
+  display: block; height: 100%; border-radius: 999px;
+  transition: width 420ms var(--ease-out);
+}
+.cump-kpi-pop-fill.cump-alto  { background: #4ade80; }
+.cump-kpi-pop-fill.cump-medio { background: #fbbf24; }
+.cump-kpi-pop-fill.cump-bajo  { background: #f87171; }
+@media (prefers-reduced-motion: reduce) {
+  .cump-kpi-pop, .cump-kpi-pop-fill, .cump-kpi-pop-row { transition: opacity 120ms linear; transform: none !important; }
+}
+.cump-kpi-ring { position: relative; width: 52px; height: 52px; flex: 0 0 auto; }
+.cump-kpi-ring .cump-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.cump-kpi .cump-ring-track { stroke-width: 3; }
+.cump-kpi .cump-ring-fill  { stroke-width: 3; }
+.cump-kpi.cump-alto  .cump-ring-fill { stroke: #4ade80; }
+.cump-kpi.cump-medio .cump-ring-fill { stroke: #fbbf24; }
+.cump-kpi.cump-bajo  .cump-ring-fill { stroke: #f87171; }
+.cump-kpi-pct {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #e2e8f0;
+}
+.cump-kpi-pct small { font-size: 9px; margin-left: 1px; }
+.cump-kpi.cump-alto  .cump-kpi-pct { color: #4ade80; }
+.cump-kpi.cump-medio .cump-kpi-pct { color: #fbbf24; }
+.cump-kpi.cump-bajo  .cump-kpi-pct { color: #f87171; }
+.cump-kpi-txt { display: flex; flex-direction: column; gap: 2px; }
+.cump-kpi-lbl { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; }
+.cump-kpi-frac { font-size: .75rem; font-weight: 600; color: #cbd5e1; }
+
+.panorama-header-der { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+
+.btn-toggle-desglose {
+  background: none; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #60a5fa;
+  padding: 2px 2px; transition: color 120ms var(--ease-out);
+}
+.btn-toggle-desglose:hover { color: #93c5fd; }
+.btn-toggle-desglose:active { transform: scale(0.97); }
+.btn-toggle-desglose i { font-size: 10px; }
+
+/* Varias tarjetas de sección por fila -- antes cada una ocupaba el ancho
+   completo aunque solo tuviera 2-3 hitos, obligando a mucho scroll. */
+.panorama-grupos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.pn-grupo { background: #0b111c; border: 1px solid #1a2233; border-radius: 10px; overflow: hidden; }
+.pn-grupo-header { display: flex; align-items: center; gap: 8px; padding: 9px 13px; border-bottom: 1px solid #1a2233; }
+.pn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pn-titulo { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #cbd5e1; }
+
+.pn-hitos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 150px));
+  justify-content: flex-start;
+}
+.pn-hito {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  padding: 10px 13px;
+  border-right: 1px solid rgba(148,163,184,.08); border-bottom: 1px solid rgba(148,163,184,.08);
+  transition: background-color 150ms var(--ease-out);
+}
+.pn-hito.delta-ok   { background: rgba(34,197,94,.045); }
+.pn-hito.delta-late { background: rgba(239,68,68,.05); }
+.pn-hito-prom { font-size: 1.05rem; font-weight: 800; line-height: 1.1; }
+.pn-hito.delta-ok   .pn-hito-prom { color: #22c55e; }
+.pn-hito.delta-late .pn-hito-prom { color: #ef4444; }
+.pn-hito-lbl {
+  font-size: .64rem; font-weight: 600; color: #94a3b8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+.pn-hito-n { font-size: .58rem; color: #475569; }
+
+.wiz-error {
+  color: #f87171; font-size: 13px; background: #1f1315; border: 1px solid #7f1d1d;
+  padding: 10px 12px; border-radius: 8px; margin: 8px 0 14px;
+}
+
+.asig-vacio { color: #94a3b8; text-align: center; padding: 32px; font-size: 13px; }
+.asig-vacio-filtro { padding: 24px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.link-limpiar {
+  background: none; border: none; color: #60a5fa; font-size: 13px; font-weight: 600;
+  cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px;
+}
+.link-limpiar:active { transform: scale(0.97); display: inline-block; }
+
+/* ── Barra de búsqueda y filtros ── */
+.filtros-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin: 0 0 14px; padding: 10px 12px;
+  background: #0f1623; border: 1px solid #1e2535; border-radius: 10px;
+}
+.filtro-busqueda {
+  display: flex; align-items: center; gap: 8px;
+  background: #0b111c; border: 1px solid #2d3748; border-radius: 8px;
+  padding: 6px 12px; flex: 1 1 220px; min-width: 180px;
+  transition: border-color 150ms var(--ease-out);
+}
+.filtro-busqueda:focus-within { border-color: #3b82f6; }
+.filtro-busqueda i { color: #64748b; font-size: 12px; }
+.filtro-busqueda input {
+  flex: 1; background: none; border: none; outline: none;
+  color: #e2e8f0; font-size: 13px;
+}
+.filtro-busqueda input::placeholder { color: #64748b; }
+
+.filtro-chip {
+  background: #12161f; color: #94a3b8; border: 1px solid #2d3748; border-radius: 999px;
+  padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out),
+              color 120ms var(--ease-out), transform 100ms var(--ease-out);
+}
+.filtro-chip:hover { border-color: #3d4a5f; color: #e2e8f0; }
+.filtro-chip:active { transform: scale(0.96); }
+.filtro-chip.active { background: rgba(59,130,246,.16); border-color: #3b82f6; color: #93c5fd; }
+
+.filtro-select {
+  background: #12161f; color: #cbd5e1; border: 1px solid #2d3748; border-radius: 8px;
+  padding: 6px 10px; font-size: 12.5px; font-weight: 500; cursor: pointer;
+  transition: border-color 150ms var(--ease-out);
+}
+.filtro-select:hover { border-color: #3d4a5f; }
+.filtro-select:focus { outline: none; border-color: #3b82f6; }
+
+/* Selector de mes: rejilla de 12 meses con año, acento azul (no naranja) */
+.mes-picker { position: relative; flex-shrink: 0; }
+.mes-picker-trigger {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #12161f; color: #cbd5e1; border: 1px solid #2d3748; border-radius: 8px;
+  padding: 6px 10px; font-size: 12.5px; font-weight: 500; cursor: pointer; min-width: 150px;
+  transition: border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.mes-picker-trigger:hover { border-color: #3d4a5f; }
+.mes-picker-trigger:active { transform: scale(0.98); }
+.mes-picker-trigger.abierto,
+.mes-picker-trigger:focus-visible { outline: none; border-color: #3b82f6; }
+.mes-picker-trigger i.fa-calendar-days { color: #60a5fa; font-size: 12px; }
+.mes-picker-chev { margin-left: auto; font-size: 10px; opacity: .6; }
+
+.mes-picker-backdrop { position: fixed; inset: 0; z-index: 30; }
+.mes-picker-panel {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 31;
+  width: 248px; padding: 12px;
+  background: #0f1520; border: 1px solid #2d3748; border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  transform-origin: top left;
+  animation: mes-panel-in 160ms var(--ease-out);
+}
+@keyframes mes-panel-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.mes-picker-anio { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.mes-picker-anio-val { font-size: 14px; font-weight: 700; color: #e2e8f0; font-variant-numeric: tabular-nums; }
+.mes-picker-nav {
+  width: 28px; height: 28px; border-radius: 8px; border: none; background: none;
+  color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: background-color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.mes-picker-nav:hover { background: rgba(59,130,246,.12); color: #e2e8f0; }
+.mes-picker-nav:active { transform: scale(0.94); }
+.mes-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.mes-picker-celda {
+  height: 36px; border: none; border-radius: 8px; background: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: #cbd5e1;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.mes-picker-celda:hover { background: rgba(59,130,246,.12); color: #e2e8f0; }
+.mes-picker-celda:active { transform: scale(0.95); }
+.mes-picker-celda.vacio { color: #475569; }
+.mes-picker-celda.seleccionado,
+.mes-picker-celda.seleccionado:hover { background: #3b82f6; color: #ffffff; }
+.mes-picker-pie { margin-top: 10px; padding-top: 10px; border-top: 1px solid #1e2535; text-align: center; }
+.mes-picker-todos {
+  background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; color: #60a5fa;
+  padding: 4px 8px; border-radius: 6px; transition: background-color 120ms var(--ease-out);
+}
+.mes-picker-todos:hover { background: rgba(59,130,246,.12); }
+@media (prefers-reduced-motion: reduce) {
+  .mes-picker-panel { animation: none; }
+}
+
+.filtro-fechas-picker { width: 240px; flex-shrink: 0; }
+.filtro-fechas-picker app-date-picker { display: block; }
+
+.btn-limpiar-filtros {
+  background: #1f1315; color: #f87171; border: 1px solid #7f1d1d; border-radius: 8px;
+  padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: background 120ms var(--ease-out), transform 100ms var(--ease-out);
+  margin-left: auto;
+}
+.btn-limpiar-filtros:hover { background: #2a1a1c; }
+.btn-limpiar-filtros:active { transform: scale(0.96); }
+
+/* ── Leyenda + orden ── */
+.leyenda-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin: 0 0 12px; padding: 8px 2px; font-size: 12px; color: #94a3b8;
+}
+.leg-item { display: inline-flex; align-items: center; gap: 5px; }
+.leg-divider { width: 1px; height: 16px; background: #2d3748; }
+.leg-cell-sw {
+  width: 14px; height: 11px; border-radius: 3px; flex-shrink: 0;
+  background: rgba(34,197,94,.10); border: 1px solid rgba(34,197,94,.35);
+}
+.leg-sw-atrasado .leg-cell-sw { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.4); }
+.leg-sw-espera .leg-cell-sw { background: rgba(251,191,36,.10); border-color: rgba(251,191,36,.4); }
+.leg-sep { font-weight: 600; color: #64748b; }
+.orden-pill {
+  background: #12161f; color: #94a3b8; border: 1px solid #2d3748; border-radius: 999px;
+  padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out),
+              color 120ms var(--ease-out), transform 100ms var(--ease-out);
+}
+.orden-pill:hover { border-color: #3d4a5f; color: #e2e8f0; }
+.orden-pill:active { transform: scale(0.96); }
+.orden-pill.active { background: rgba(59,130,246,.16); border-color: #3b82f6; color: #93c5fd; }
+
+/* ── Badges de conteo ── */
+.auditoria-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.auditoria-verde { background: #12251a; color: #4ade80; }
+.auditoria-rojo { background: #2a1416; color: #f87171; }
+.auditoria-gris { background: #171c26; color: #94a3b8; }
+.auditoria-neutra { background: #12161f; color: #64748b; }
+
+/* Balance neto de días (suma de adelantos y atrasos de todos los hitos) */
+.badge-lat {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+}
+.badge-lat i { font-size: 10px; }
+.badge-lat.delta-ok   { background: rgba(34,197,94,.12);  color: #4ade80; }
+.badge-lat.delta-late { background: rgba(239,68,68,.14);  color: #f87171; }
+
+/* % de cumplimiento: anillo de progreso (hitos en tiempo / total) --
+   elemento central de la tarjeta, no un badge mas entre otros. Vive a la
+   derecha de .ec-ident dentro de .ec-top (que ya es flex). */
+.cump-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: 68px; height: 68px;
+  align-self: center;
+  opacity: 0;
+  animation: cump-ring-enter 320ms var(--ease-out) forwards;
+  animation-delay: calc(var(--stagger, 0) * 40ms + 80ms);
+}
+.cump-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.cump-ring-track { fill: none; stroke: rgba(148,163,184,.14); stroke-width: 2.6; }
+.cump-ring-fill {
+  fill: none; stroke-width: 2.6; stroke-linecap: round;
+  transition: stroke-dasharray 650ms var(--ease-out);
+}
+.cump-ring.cump-alto  .cump-ring-fill { stroke: #4ade80; }
+.cump-ring.cump-medio .cump-ring-fill { stroke: #fbbf24; }
+.cump-ring.cump-bajo  .cump-ring-fill { stroke: #f87171; }
+.cump-ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.cump-ring-pct { font-size: 16px; font-weight: 800; color: #e2e8f0; letter-spacing: -.02em; }
+.cump-ring-pct small { font-size: 10px; font-weight: 700; margin-left: 1px; }
+.cump-ring.cump-alto  .cump-ring-pct { color: #4ade80; }
+.cump-ring.cump-medio .cump-ring-pct { color: #fbbf24; }
+.cump-ring.cump-bajo  .cump-ring-pct { color: #f87171; }
+.cump-ring-frac { font-size: 9px; font-weight: 600; color: #64748b; margin-top: 2px; }
+
+/* Entrada: opacity + scale(0.95), nunca desde 0 -- nada aparece de la nada */
+@keyframes cump-ring-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cump-ring { animation: none; opacity: 1; }
+  .cump-ring-fill { transition: none; }
+}
+
+/* ── Tarjetas por embarque (mismo patrón que el dashboard de importaciones) ── */
+.cards-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 2px 8px;
+}
+
+.emb-card {
+  flex: 0 0 auto;
+  background: #0f1623;
+  border: 1px solid #1e2535;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 150ms var(--ease-out), transform 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+  opacity: 0;
+  animation: card-enter 260ms var(--ease-out) forwards;
+  animation-delay: calc(var(--stagger, 0) * 40ms);
+}
+.emb-card:hover {
+  border-color: #2d3a52;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.emb-card:active { transform: scale(0.99); }
+.emb-card.emb-card-resaltada {
+  box-shadow: 0 0 0 2px rgba(56,189,248,.55);
+  transition: box-shadow 300ms var(--ease-out);
+}
+
+/* Solo opacity en la entrada -- si el keyframe tocara transform, su valor
+   final (forwards) le ganaria en cascada a la transition de hover/active
+   sobre esa misma propiedad. Separarlas evita el conflicto. */
+@keyframes card-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .emb-card { animation: none; opacity: 1; }
+}
+
+.ec-top { display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px; padding: 14px 16px 12px; }
+.ec-ident { flex: 1 1 260px; min-width: 220px; display: flex; flex-direction: column; gap: 7px; }
+.ec-ref-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ec-ref-row .ref-badge {
+  font-size: .8rem; font-weight: 700; color: #e2e8f0; background: #1e293b;
+  padding: 3px 9px; border-radius: 6px; letter-spacing: .02em;
+}
+.ec-nombre { font-size: .8rem; font-weight: 600; color: #cbd5e1; line-height: 1.3; }
+
+/* Franja de progreso: da el "de un vistazo" antes de leer celda por celda */
+.ec-progress {
+  display: flex;
+  width: 100%;
+  max-width: 420px;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #171c26;
+  margin-top: 2px;
+}
+.ec-progress-seg { height: 100%; transition: width 200ms var(--ease-out); }
+.ec-progress-seg.seg-atrasado      { background: #ef4444; }
+.ec-progress-seg.seg-adelantado    { background: #22c55e; }
+.ec-progress-seg.seg-a-tiempo      { background: #3ba55a; }
+.ec-progress-seg.seg-en-espera     { background: #f59e0b; }
+.ec-progress-seg.seg-sin-historial { background: #64748b; }
+.ec-progress-seg.seg-pendiente     { background: #273045; }
+.ec-progress-seg.seg-no-aplica     { background: #334155; }
+
+.ec-vacio { color: #64748b; font-size: 12.5px; padding: 4px 16px 14px; }
+
+/* ── Pipeline: tira continua, en el orden exacto en que se llenan los hitos
+   (mezclando secciones) -- NO se agrupa ni se reordena por sección. Cada
+   celda lleva su propio tag de sección como referencia visual.
+
+   Jerarquía deliberada: "pendiente" (nada resoluble todavía, aguas arriba
+   de la cadena) no aporta información nueva, así que se apaga y se
+   comprime -- no compite por atención con lo que sí importa. Los estados
+   accionables (en_espera) y los resultados reales (atrasado/adelantado/
+   a_tiempo/sin_historial) mantienen la celda completa. ── */
+.ec-pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  border-top: 1px solid #1a2233;
+  background: #0b111c;
+}
+.ec-stage {
+  flex: 1 1 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 8px 6px;
+  min-height: 70px;
+  border-right: 1px solid rgba(148,163,184,.14);
+  border-bottom: 1px solid rgba(148,163,184,.14);
+  min-width: 0;
+  transition: background-color 150ms var(--ease-out);
+}
+.ec-stage-click { cursor: pointer; }
+.ec-stage.stage-real          { background: rgba(34,197,94,.08); }
+.ec-stage.stage-atrasado      { background: rgba(239,68,68,.09); }
+.ec-stage.stage-en-espera     { background: rgba(251,191,36,.05); }
+.ec-stage.stage-sin-historial { background: rgba(148,163,184,.06); }
+.ec-stage.stage-no-aplica     { justify-content: center; opacity: .5; }
+.ec-stage.stage-pendiente     { justify-content: center; opacity: .5; }
+/* Despues de los colores de estado para que le gane en la cascada (misma
+   especificidad que .stage-* -- si fuera antes, el hover nunca se veria en
+   una celda ya coloreada, que es la mayoria). Mismo patron que el pipeline
+   del dashboard de embarques, donde este orden ya funciona. */
+.ec-stage-click:hover { background: rgba(56,189,248,.14); }
+
+.ec-stage-seccion {
+  font-size: .5rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  margin-bottom: 1px; opacity: .7;
+}
+.ec-stage-lbl {
+  font-size: .58rem; font-weight: 700;
+  color: #94a3b8; text-align: center; white-space: normal; margin-bottom: 2px;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.stage-pendiente .ec-stage-lbl { -webkit-line-clamp: 1; margin-bottom: 1px; }
+
+.ec-stage-p {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: .64rem; color: #6b7688; font-weight: 500;
+}
+.ec-stage-r {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: .7rem; color: #f1f5f9; font-weight: 700;
+}
+.rk {
+  flex-shrink: 0;
+  font-size: .5rem; font-weight: 800; line-height: 1;
+  padding: 1px 3px; border-radius: 3px; letter-spacing: .02em;
+}
+.rk-p { color: #94a3b8; background: rgba(100,116,139,.16); }
+.rk-r { color: #93c5fd; background: rgba(59,130,246,.22); }
+
+.ec-stage-d {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: .64rem; font-weight: 800; border-radius: 3px; padding: 1px 5px;
+}
+.ec-stage-d i { font-size: .56rem; }
+.ec-stage-d.delta-ok   { color: #22c55e; background: rgba(34,197,94,.12); }
+.ec-stage-d.delta-late { color: #ef4444; background: rgba(239,68,68,.14); }
+
+.ec-stage-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .56rem; font-weight: 600;
+}
+.ec-stage-tag i { font-size: .5rem; }
+.ec-tag-espera        { color: #fbbf24; }
+.ec-tag-sin-historial { color: #94a3b8; }
+.ec-tag-no-aplica     { color: #64748b; }
+.ec-tag-pendiente     { color: #475569; font-weight: 500; }
+
+@media (max-width: 700px) {
+  .ec-stage { flex: 1 1 45%; }
+}

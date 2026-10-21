@@ -1,9 +1,13 @@
-import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
+import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { inject } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
+import { AuthService } from '../services/auth.service';
+import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 
-export const adminGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+export const adminGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const router = inject(Router);
+  const authService = inject(AuthService);
   const token = localStorage.getItem('token');
   const ruta = route.routeConfig?.path || '';
 
@@ -27,14 +31,20 @@ export const adminGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
     if (decodedToken.rol === 1) {
       return true;
-    } else if (decodedToken.rol === 3) {
-      // Importaciones — solo puede acceder a sus rutas propias
-      router.navigate(['/importaciones/dashboard']);
-      return false;
-    } else {
-      router.navigate(['/usuarios/dashboard']);
-      return false;
     }
+
+    if (decodedToken.rol === 4) {
+      return authService.validarAccesoRutaInterna(state.url).pipe(
+        map(resultado => resultado.catalogada && resultado.permitido
+          ? true
+          : router.parseUrl('/acceso-restringido')
+        ),
+        catchError(() => of(router.parseUrl('/acceso-restringido')))
+      );
+    }
+
+    router.navigate(['/usuarios/dashboard']);
+    return false;
   } catch (error) {
     console.error('Token inválido o error al decodificar:', error);
     router.navigate(['/login']);

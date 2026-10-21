@@ -12,10 +12,19 @@
       </div>
     </div>
     <div class="header-actions">
+      <button *ngIf="puedeVerTiemposEstimados" class="btn-dash" routerLink="/importaciones/tiempos-estimados" title="Configurar reglas de tiempos estimados">
+        <i class="fas fa-stopwatch"></i> Tiempos Estimados
+      </button>
+      <button *ngIf="puedeVerHitosAuditoria" class="btn-dash" routerLink="/importaciones/hitos-auditoria" title="Configurar los hitos que mide la auditoría de llenado">
+        <i class="fas fa-list-check"></i> Hitos de Auditoría
+      </button>
       <button class="btn-dash" routerLink="/importaciones/dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard
       </button>
-      <button class="btn-nuevo" (click)="mostrarNuevo = true">
+      <button *ngIf="puedeVerAuditoria" class="btn-dash" routerLink="/importaciones/auditoria" title="Ver el estado de auditoría de llenado de todos los embarques">
+        <i class="fas fa-magnifying-glass-chart"></i> Auditoría
+      </button>
+      <button *ngIf="puedeCrearImportacion()" class="btn-nuevo" (click)="abrirNuevo()">
         <i class="fas fa-plus"></i> Nuevo Embarque
       </button>
     </div>
@@ -190,7 +199,7 @@
 
             <!-- Eliminar -->
             <td class="col-del">
-              <button class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
+              <button *ngIf="puedeEliminarImportacion()" class="btn-del" (click)="eliminar(e, $event)" [disabled]="eliminando === e.id" title="Eliminar embarque">
                 <i class="fas" [ngClass]="eliminando === e.id ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
               </button>
             </td>
@@ -227,21 +236,30 @@
       <div class="via-selector">
         <button type="button" class="via-btn"
           [class.active]="nuevoEmbarque.via_transporte === 'MARITIMO'"
-          (click)="nuevoEmbarque.via_transporte = 'MARITIMO'">
+          (click)="cambiarViaTransporte('MARITIMO')">
           <i class="fas fa-ship"></i> Marítimo
         </button>
         <button type="button" class="via-btn"
           [class.active]="nuevoEmbarque.via_transporte === 'AEREO'"
-          (click)="nuevoEmbarque.via_transporte = 'AEREO'">
+          (click)="cambiarViaTransporte('AEREO')">
           <i class="fas fa-plane"></i> Aéreo
         </button>
       </div>
 
       <label>Origen</label>
-      <input type="text" [(ngModel)]="nuevoEmbarque.log_origen" placeholder="Ej: BELGICA, VIETNAM, TAIWAN..." />
+      <select [ngModel]="nuevoEmbarque.log_origen" (ngModelChange)="cambiarOrigen($event)">
+        <option value="" disabled selected>Selecciona un origen…</option>
+        <option *ngFor="let o of ORIGENES_DISPONIBLES" [value]="o">{{ o }}</option>
+      </select>
 
       <label>Tipo de Productos</label>
-      <input type="text" [(ngModel)]="nuevoEmbarque.log_tipo_productos" placeholder="Ej: BICICLETAS, ROPA Y ACCESORIOS" />
+      <div class="tipo-producto-selector">
+        <button type="button" class="tipo-chip" *ngFor="let t of tiposProductoDisponibles()"
+          [class.active]="nuevoEmbarque.log_tipo_productos === t"
+          (click)="seleccionarTipoProducto(t)">
+          {{ t }}
+        </button>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" (click)="mostrarNuevo = false">Cancelar</button>

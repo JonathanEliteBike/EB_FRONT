@@ -24,6 +24,31 @@ export interface CaratulaResponse {
   message?: string;
 }
 
+export interface VentaMensualEvac {
+  mes: string; // YYYY-MM
+  evac: 'A' | 'B';
+  apparel: number;
+  vittoria: number;
+  syncros: number;
+  total: number;
+}
+
+export interface TotalesLineaEvac {
+  apparel: number;
+  vittoria: number;
+  syncros: number;
+  total: number;
+}
+
+export interface DesgloseMensualEvacs {
+  filas: VentaMensualEvac[];
+  totales: {
+    A: TotalesLineaEvac;
+    B: TotalesLineaEvac;
+    general: TotalesLineaEvac;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -322,6 +347,23 @@ export class CaratulasService {
 
     return this.http.get<any>(
       `${this.apiUrl}/resumen_caratulas_my27`,
+      { params }
+    );
+  }
+
+  /** Desglose por mes y EVAC con los mismos filtros del resumen oficial MY27. */
+  getVentasLineasEvacsMensual(
+    fechaDesde?: string,
+    fechaHasta?: string
+  ): Observable<DesgloseMensualEvacs> {
+    let params = new HttpParams();
+    if (fechaDesde && fechaHasta) {
+      params = params
+        .set('fecha_desde', fechaDesde)
+        .set('fecha_hasta', fechaHasta);
+    }
+    return this.http.get<DesgloseMensualEvacs>(
+      `${this.apiUrl}/ventas_lineas_evacs_mensual`,
       { params }
     );
   }

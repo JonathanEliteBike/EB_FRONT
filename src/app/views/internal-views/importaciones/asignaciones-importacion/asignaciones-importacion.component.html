@@ -1,0 +1,173 @@
+<app-home-bar></app-home-bar>
+
+<div class="asig-container" *ngIf="!cargando; else cargandoTpl">
+  <div class="asig-error" *ngIf="error">{{ error }}</div>
+
+  <ng-container *ngIf="resumen">
+    <div class="asig-header">
+      <button class="back-btn" (click)="volver()"><i class="fas fa-arrow-left"></i></button>
+      <div>
+        <span class="asig-ref">{{ resumen.embarque.referencia }}</span>
+        <h1>{{ resumen.embarque.nombre }} — Asignaciones</h1>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.unidades_embarcadas }}</span>
+        <span class="kpi-label">Embarcadas</span>
+      </div>
+      <div class="kpi-card kpi-clickable" title="Ver quién tiene qué reservado" (click)="abrirReservasDetalle()">
+        <span class="kpi-num">{{ resumen.kpis.unidades_reservadas }}</span>
+        <span class="kpi-label">Reservadas <i class="fas fa-arrow-up-right-from-square kpi-icono"></i></span>
+      </div>
+      <div class="kpi-card kpi-clickable" [class.kpi-activo]="soloSobrantes"
+           title="Filtrar la tabla de abajo para ver solo los productos con sobrante"
+           (click)="toggleFiltroSobrantes()">
+        <span class="kpi-num">{{ resumen.kpis.unidades_sobrantes }}</span>
+        <span class="kpi-label">
+          Sobrantes <i class="fas kpi-icono" [ngClass]="soloSobrantes ? 'fa-filter-circle-xmark' : 'fa-filter'"></i>
+        </span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-num">{{ resumen.kpis.unidades_vendidas }}</span>
+        <span class="kpi-label">Vendidas (sobrante)</span>
+      </div>
+    </div>
+
+    <div class="asig-toolbar">
+      <h2>
+        Productos del embarque
+        <span class="filtro-activo-nota" *ngIf="soloSobrantes">
+          · mostrando solo sobrantes
+          <button type="button" class="filtro-quitar" (click)="toggleFiltroSobrantes()">Quitar filtro</button>
+        </span>
+      </h2>
+      <div class="asig-toolbar-acciones">
+        <button class="btn-secundario" (click)="abrirReservasCliente()">
+          <i class="fas fa-search"></i> Buscar por cliente
+        </button>
+        <button class="btn-primary" *ngIf="seleccionados.size" (click)="abrirPropuestaMasiva()">
+          Ver propuesta ({{ seleccionados.size }})
+        </button>
+      </div>
+    </div>
+
+    <div class="import-panel">
+      <div class="import-fila">
+        <select class="import-periodo" [(ngModel)]="periodoImport" name="periodoImport">
+          <option value="" disabled selected>Periodo…</option>
+          <option *ngFor="let p of periodos" [value]="p">{{ p }}</option>
+        </select>
+        <button type="button" class="btn-periodo-siguiente" [disabled]="creandoSiguientePeriodo || !periodos.length"
+                [title]="'Abrir el siguiente periodo (' + siguientePeriodoPreview() + ')'"
+                (click)="crearSiguientePeriodo()">
+          <i class="fas" [ngClass]="creandoSiguientePeriodo ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+        </button>
+        <label class="import-file-label">
+          <input type="file" accept=".xlsx,.xls" (change)="onArchivoSeleccionado($event)" />
+          <span>{{ archivoNombre || 'Elegir archivo Excel…' }}</span>
+        </label>
+        <button class="btn-primary" [disabled]="importando || !archivoImport || !periodoImport.trim()"
+                (click)="importarExcel()">
+          {{ importando ? 'Importando…' : 'Importar' }}
+        </button>
+      </div>
+      <p class="import-ayuda">
+        El Excel debe tener una fila de encabezados con columnas <b>SKU</b>, <b>Cantidad</b> y
+        (opcional) <b>Descripción</b>. Los SKU que ya existan en el embarque se actualizan; los nuevos se agregan.
+      </p>
+      <div class="form-error" *ngIf="errorImport">{{ errorImport }}</div>
+      <div class="form-error" *ngIf="errorPeriodos">{{ errorPeriodos }}</div>
+
+      <div class="import-resultado" *ngIf="resultadoImport">
+        <p class="import-resumen">
+          <span class="import-ok">{{ resultadoImport.insertados }} agregados</span>
+          <span class="import-ok">{{ resultadoImport.actualizados }} actualizados</span>
+          <span *ngIf="resultadoImport.errores.length" class="import-err">
+            {{ resultadoImport.errores.length }} con error
+          </span>
+          <span class="import-total">de {{ resultadoImport.total_filas }} filas</span>
+        </p>
+        <ul class="import-errores" *ngIf="resultadoImport.errores.length">
+          <li *ngFor="let e of resultadoImport.errores">
+            <span *ngIf="e.fila">Fila {{ e.fila }} · </span>{{ e.sku }} — {{ e.motivo }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <table class="asig-tabla" *ngIf="productosFiltrados().length; else sinProductos">
+      <thead>
+        <tr>
+          <th class="celda-check">
+            <input type="checkbox" [checked]="todosSeleccionados()" (change)="toggleTodos($event)" />
+          </th>
+          <th>SKU</th><th>Descripción</th><th>Periodo</th>
+          <th class="num">Embarcado</th><th class="num">Reservado</th>
+          <th class="num" title="Reservas de una REASIGNACIÓN esperando que el cliente confirme si las quiere. Si no hay ninguna reasignación en curso, siempre se ve en 0.">
+            Pend. <i class="fas fa-circle-info"></i>
+          </th>
+          <th class="num">Sobrante</th><th class="num">Vendido</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of productosFiltrados()" class="fila-clickable" [class.fila-sel]="seleccionados.has(p.id)">
+          <td class="celda-check" (click)="$event.stopPropagation()">
+            <input type="checkbox" [checked]="seleccionados.has(p.id)" (change)="toggleSeleccion(p.id)" />
+          </td>
+          <td (click)="abrirDetalle(p)">{{ p.sku }}</td>
+          <td class="celda-desc" (click)="abrirDetalle(p)">{{ p.descripcion || '—' }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.periodo }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_embarcada }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.reservado_total }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.reservado_reasignacion_pendiente || '—' }}</td>
+          <td class="num celda-disponible" (click)="abrirDetalle(p)">{{ p.cantidad_sobrante }}</td>
+          <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_vendida }}</td>
+          <td (click)="abrirDetalle(p)"><i class="fas fa-chevron-right"></i></td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #sinProductos>
+      <p class="asig-vacio" *ngIf="soloSobrantes; else sinProductosRegistrados">
+        Ningún producto tiene sobrante con este filtro.
+      </p>
+      <ng-template #sinProductosRegistrados>
+        <p class="asig-vacio">Este embarque todavía no tiene productos registrados.</p>
+      </ng-template>
+    </ng-template>
+  </ng-container>
+</div>
+
+<ng-template #cargandoTpl>
+  <div class="asig-cargando">Cargando...</div>
+</ng-template>
+
+<app-asignaciones-detalle-producto
+  *ngIf="productoSeleccionado"
+  [importacionId]="importacionId"
+  [producto]="productoSeleccionado"
+  (cerrar)="cerrarDetalle()"
+  (cambio)="onCambioEnDetalle()"
+></app-asignaciones-detalle-producto>
+
+<app-asignaciones-propuesta-masiva
+  *ngIf="propuestaMasivaAbierta"
+  [importacionId]="importacionId"
+  [productos]="productosParaPropuesta"
+  (cerrar)="cerrarPropuestaMasiva()"
+  (cambio)="onCambioEnPropuestaMasiva()"
+></app-asignaciones-propuesta-masiva>
+
+<app-asignaciones-reservas-cliente
+  *ngIf="reservasClienteAbierto"
+  [importacionId]="importacionId"
+  (cerrar)="cerrarReservasCliente()"
+></app-asignaciones-reservas-cliente>
+
+<app-asignaciones-reservas-detalle
+  *ngIf="reservasDetalleAbierto"
+  [importacionId]="importacionId"
+  [estadoInicial]="reservasDetalleEstadoInicial"
+  (cerrar)="cerrarReservasDetalle()"
+></app-asignaciones-reservas-detalle>

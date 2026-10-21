@@ -7,6 +7,7 @@ import { AlertaService } from '../../../services/alerta.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-distribuidores',
@@ -49,8 +50,24 @@ export class DistribuidoresComponent implements OnInit {
     private clientesService: ClientesService,
     private metasService: MetasService,
     private alertaService: AlertaService,
+    private authService: AuthService,
     private router: Router
   ) { }
+
+  get puedeCrear(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('distribuidores', 'crear');
+  }
+
+  get puedeEditar(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('distribuidores', 'editar');
+  }
+
+  get puedeEliminar(): boolean {
+    return this.authService.getRol() !== 4 ||
+      this.authService.tienePermisoInterno('distribuidores', 'eliminar');
+  }
 
   ngOnInit() {
     this.obtenerNiveles();
@@ -117,6 +134,7 @@ export class DistribuidoresComponent implements OnInit {
   }
 
   mostrarFormularioAgregar() {
+    if (!this.puedeCrear) return;
     if (this.mostrarFormulario) {
       // Si ya está mostrando el formulario, lo oculta
       this.mostrarFormulario = false;
@@ -186,6 +204,10 @@ export class DistribuidoresComponent implements OnInit {
   }
 
   agregarCliente() {
+    if (!this.puedeCrear) {
+      this.alertaService.mostrarError('No cuenta con permiso para crear distribuidores.');
+      return;
+    }
     // Validar que las fechas tengan formato correcto
     const clienteParaEnviar = {
       ...this.nuevoCliente,
@@ -215,6 +237,10 @@ export class DistribuidoresComponent implements OnInit {
   }
 
   confirmarEdicion() {
+    if (!this.puedeEditar) {
+      this.alertaService.mostrarError('No cuenta con permiso para editar distribuidores.');
+      return;
+    }
     // Crear una copia del cliente con las fechas en formato correcto para el backend
     const clienteParaEnviar = {
       ...this.cliente,
@@ -239,6 +265,10 @@ export class DistribuidoresComponent implements OnInit {
   }
 
   eliminarCliente() {
+    if (!this.puedeEliminar) {
+      this.alertaService.mostrarError('No cuenta con permiso para eliminar distribuidores.');
+      return;
+    }
     if (!this.cliente?.id) return;
     if (confirm('¿Seguro que deseas eliminar este cliente?')) {
       this.clientesService.eliminarCliente(this.cliente.id).subscribe({
@@ -256,6 +286,10 @@ export class DistribuidoresComponent implements OnInit {
   }
 
   confirmarEliminacion() {
+    if (!this.puedeEliminar) {
+      this.alertaService.mostrarError('No cuenta con permiso para eliminar distribuidores.');
+      return;
+    }
     if (!this.cliente?.id) return;
 
     this.clientesService.eliminarCliente(this.cliente.id).subscribe({

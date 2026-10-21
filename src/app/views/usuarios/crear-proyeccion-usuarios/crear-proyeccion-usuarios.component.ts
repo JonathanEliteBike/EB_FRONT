@@ -9,6 +9,7 @@ import { ConfirmacionDialogComponent } from '../../../components/confirmacion-di
 import { AuthService } from '../../../services/auth.service';
 import { AlertaService } from '../../../services/alerta.service';
 import { AlertaComponent } from '../../../components/alerta/alerta.component';
+import { AccesoRestringidoComponent } from '../../../components/acceso-restringido/acceso-restringido.component';
 import { ClientesService } from '../../../services/clientes.service';
 import { Router, NavigationStart } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -68,7 +69,7 @@ interface Proyeccion {
   selector: 'app-crear-proyeccion-usuario',
   templateUrl: './crear-proyeccion-usuarios.component.html',
   styleUrls: ['./crear-proyeccion-usuarios.component.css'],
-  imports: [CommonModule, FormsModule, RouterModule, TopBarUsuariosComponent, AlertaComponent]
+  imports: [CommonModule, FormsModule, RouterModule, TopBarUsuariosComponent, AlertaComponent, AccesoRestringidoComponent]
 })
 export class CrearProyeccionUsuariosComponent implements OnInit, OnDestroy {
   proyecciones: Proyeccion[] = [];
@@ -133,7 +134,20 @@ export class CrearProyeccionUsuariosComponent implements OnInit, OnDestroy {
     });
   }
 
+  get puedeCrear(): boolean {
+    return this.authService.tieneModulo('usuarios_proyeccion_compras');
+  }
+
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('proyeccion_compras');
+  }
+
   ngOnInit(): void {
+    if (!this.puedeCrear) {
+      this.cargando = false;
+      return;
+    }
+
     this.cargarProyecciones();
     this.obtenerDatosCliente();
     this.iniciarAutoguardado();
@@ -165,7 +179,7 @@ export class CrearProyeccionUsuariosComponent implements OnInit, OnDestroy {
   }
 
   private guardarAutomaticamenteSync(): void {
-    if (!this.cambiosSinGuardar) return;
+    if (!this.puedeCrear || !this.cambiosSinGuardar) return;
 
     const proyeccionesParaGuardar = this.getProyeccionesParaGuardar();
 
@@ -210,6 +224,7 @@ export class CrearProyeccionUsuariosComponent implements OnInit, OnDestroy {
 
   // Añade estos nuevos métodos para el autoguardado
   private iniciarAutoguardado(): void {
+    if (!this.puedeCrear) return;
     // Cargar datos guardados al iniciar
     this.cargarDatosAutoguardados();
 
@@ -308,7 +323,7 @@ export class CrearProyeccionUsuariosComponent implements OnInit, OnDestroy {
   }
 
   private guardarAutomaticamente(): void {
-    if (!this.cambiosSinGuardar) return;
+    if (!this.puedeCrear || !this.cambiosSinGuardar) return;
 
     const proyeccionesParaGuardar = this.getProyeccionesParaGuardar();
 
@@ -666,6 +681,7 @@ export class CrearProyeccionUsuariosComponent implements OnInit, OnDestroy {
   }
 
   enviarProyeccion(proyeccionData: any[]): void {
+    if (!this.puedeCrear) return;
     const token = this.authService.getToken();
     if (!token) {
       this.alertaService.mostrarError('No estás autenticado. Por favor inicia sesión nuevamente.');

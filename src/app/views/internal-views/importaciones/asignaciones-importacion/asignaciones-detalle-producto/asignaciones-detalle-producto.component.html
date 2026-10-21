@@ -1,0 +1,218 @@
+<div class="panel-overlay" (click)="cerrarPanel()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    <div class="panel-header">
+      <div>
+        <div class="panel-titulo-linea">
+          <span class="panel-sku">{{ prod.sku }}</span>
+          <span class="panel-periodo">{{ prod.periodo }}</span>
+        </div>
+        <p class="panel-desc">{{ prod.descripcion || 'Sin descripción' }}</p>
+      </div>
+      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="panel-kpis">
+      <span>Embarcado: <b>{{ prod.cantidad_embarcada }}</b></span>
+      <span>Reservado: <b>{{ prod.reservado_total }}</b></span>
+      <span>Pend. conf.: <b>{{ prod.reservado_reasignacion_pendiente }}</b></span>
+      <span>Sobrante: <b>{{ prod.cantidad_sobrante }}</b></span>
+      <span>Disponible: <b class="disponible">{{ prod.cantidad_disponible }}</b></span>
+    </div>
+
+    <div class="panel-tabs">
+      <button [class.activo]="tab === 'proyecciones'" (click)="cambiarTab('proyecciones')">Proyecciones</button>
+      <button [class.activo]="tab === 'reservas'" (click)="cambiarTab('reservas')">
+        Reservas
+        <span class="tab-badge" *ngIf="detalle?.reservas?.length">{{ detalle!.reservas.length }}</span>
+      </button>
+      <button [class.activo]="tab === 'sobrantes'" (click)="cambiarTab('sobrantes')">Sobrantes / Ventas</button>
+      <button [class.activo]="tab === 'movimientos'" (click)="cambiarTab('movimientos')">Historial</button>
+    </div>
+
+    <div class="panel-body" *ngIf="!cargando; else cargandoTpl">
+      <div class="form-error" *ngIf="errorDetalle">{{ errorDetalle }}</div>
+
+      <!-- ══════════════ Proyecciones: ventana de meses → propuesta ══════════════ -->
+      <div *ngIf="tab === 'proyecciones'">
+        <div class="ventana-form">
+          <label>
+            Desde
+            <select [(ngModel)]="mesDesde" name="mesDesde">
+              <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+            </select>
+          </label>
+          <label>
+            Hasta
+            <select [(ngModel)]="mesHasta" name="mesHasta">
+              <option *ngFor="let m of meses" [value]="m.valor">{{ m.label }}</option>
+            </select>
+          </label>
+          <button class="btn-secundario" [disabled]="calculando" (click)="recalcular()">
+            {{ calculando && modo === 'inicial' ? 'Calculando…' : 'Recalcular propuesta' }}
+          </button>
+          <button class="btn-secundario" [disabled]="calculando" (click)="reasignar()"
+                  title="Reparte el sobrante disponible a proyecciones de meses anteriores a la ventana (excluye may/jun/jul)">
+            {{ calculando && modo === 'reasignacion' ? 'Calculando…' : 'Reasignar a meses anteriores' }}
+          </button>
+        </div>
+
+        <div class="form-error" *ngIf="errorPropuesta">{{ errorPropuesta }}</div>
+
+        <ng-container *ngIf="propuesta">
+          <p class="hint" *ngIf="!propuesta.proyecciones_disponibles">
+            Proyecciones no disponibles en este momento — la propuesta sale vacía.
+          </p>
+          <p class="propuesta-meta">
+            <span class="badge" [ngClass]="modo === 'reasignacion' ? 'badge-reasignacion' : 'badge-inicial'">
+              {{ modo === 'reasignacion' ? 'Reasignación' : 'Reserva inicial' }}
+            </span>
+            Ventana {{ propuesta.ventana.desde }} → {{ propuesta.ventana.hasta }} ·
+            Disponible {{ propuesta.disponible }} · Sobrante estimado {{ propuesta.sobrante_estimado }}
+          </p>
+
+          <table class="tabla-mini" *ngIf="filas.length; else sinPropuesta">
+            <thead>
+              <tr>
+                <th>Cliente</th><th>P</th><th>Mes</th>
+                <th class="num">Proyectado</th><th class="num">Ya reservado</th><th class="num">A reservar</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of filas; let i = index">
+                <td class="td-nombre" [title]="f.nombre_cliente">
+                  <span class="cli-clave">{{ f.clave_cliente }}</span> {{ f.nombre_cliente }}
+                </td>
+                <td>{{ f.prioridad }}</td>
+                <td>{{ f.mes }}</td>
+                <td class="num">{{ f.proyectado }}</td>
+                <td class="num">{{ f.vigente }}</td>
+                <td class="num">
+                  <input type="number" min="0" [(ngModel)]="f.cantidad" [name]="'cant' + i" />
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5">Total a reservar</td>
+                <td class="num"><b>{{ totalAReservar() }}</b> / {{ propuesta.disponible }}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <ng-template #sinPropuesta>
+            <p class="asig-vacio">La propuesta no sugiere reservas para esta ventana.</p>
+          </ng-template>
+
+          <div class="form-error" *ngIf="errorGuardar">{{ errorGuardar }}</div>
+          <button class="btn-primary" [disabled]="guardando || !filas.length" (click)="guardar()">
+            {{ guardando ? 'Guardando…' : (modo === 'reasignacion' ? 'Confirmar reasignación' : 'Reservar') }}
+          </button>
+        </ng-container>
+      </div>
+
+      <!-- ══════════════════════════ Reservas ══════════════════════════ -->
+      <div *ngIf="tab === 'reservas'">
+        <div class="form-error" *ngIf="errorReservas">{{ errorReservas }}</div>
+        <table class="tabla-mini" *ngIf="detalle?.reservas?.length; else sinDatos">
+          <thead>
+            <tr>
+              <th>Cliente</th><th>Mes objetivo</th><th>Origen</th>
+              <th class="num">Proyectado</th><th class="num">Reservado</th><th class="num">Faltante</th>
+              <th>Estado</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of detalle!.reservas"
+                [class.fila-cerrada]="r.estado === 'CANCELADA' || r.estado === 'RECHAZADA'">
+              <td class="td-nombre" [title]="nombreCliente(r.clave_cliente)">
+                <span class="cli-clave">{{ r.clave_cliente }}</span> {{ nombreCliente(r.clave_cliente) || '—' }}
+              </td>
+              <td>{{ r.mes_objetivo || '—' }}</td>
+              <td>
+                <span class="badge" [ngClass]="r.origen === 'REASIGNACION' ? 'badge-reasignacion' : 'badge-inicial'">
+                  {{ origenLabel(r.origen) }}
+                </span>
+              </td>
+              <td class="num">{{ r.proyectado }}</td>
+              <td class="num">{{ r.reservado }}</td>
+              <td class="num" [class.negativo]="r.faltante > 0">{{ r.faltante }}</td>
+              <td>
+                <span class="badge" [ngClass]="'badge-estado-' + r.estado.toLowerCase()">
+                  {{ estadoLabel(r.estado) }}
+                </span>
+              </td>
+              <td class="acciones-reserva">
+                <ng-container *ngIf="r.estado === 'PENDIENTE_CONFIRMACION'">
+                  <button class="btn-texto btn-ok" [disabled]="resolviendoId === r.id"
+                          (click)="resolver(r, 'ACEPTADA')">Cliente aceptó</button>
+                  <button class="btn-texto btn-danger" [disabled]="resolviendoId === r.id"
+                          (click)="resolver(r, 'RECHAZADA')">Cliente rechazó</button>
+                </ng-container>
+                <button class="btn-texto btn-danger"
+                        *ngIf="r.estado === 'RESERVADA' || r.estado === 'CONFIRMADA' || r.estado === 'PENDIENTE_CONFIRMACION'"
+                        (click)="cancelarReserva(r)">Cancelar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ══════════════ Sobrantes / ventas anticipadas ══════════════ -->
+      <div *ngIf="tab === 'sobrantes'">
+        <div class="form-nuevo">
+          <input type="text" placeholder="Cliente" [(ngModel)]="nuevaVenta.clave_cliente" name="ventaCliente" />
+          <input type="number" placeholder="Cantidad" min="1" [(ngModel)]="nuevaVenta.cantidad" name="ventaCantidad" />
+          <input type="text" placeholder="Pedido Odoo (opcional)" [(ngModel)]="nuevaVenta.numero_pedido_odoo" name="ventaFolio" />
+          <button class="btn-primary" [disabled]="guardandoVenta" (click)="registrarVenta()">Registrar venta</button>
+        </div>
+        <div class="form-error" *ngIf="errorVenta">{{ errorVenta }}</div>
+
+        <table class="tabla-mini" *ngIf="detalle?.sobrantes_ventas?.length; else sinDatos">
+          <thead><tr><th>Cliente</th><th>Cantidad</th><th>Pedido Odoo</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let v of detalle!.sobrantes_ventas">
+              <td>{{ v.clave_cliente }}</td>
+              <td>{{ v.cantidad }}</td>
+              <td>{{ v.numero_pedido_odoo || '—' }}</td>
+              <td><span class="badge" [ngClass]="'badge-' + v.estado.toLowerCase()">{{ v.estado }}</span></td>
+              <td class="acciones-venta">
+                <ng-container *ngIf="v.estado !== 'CANCELADO' && v.estado !== 'VALIDADO'">
+                  <ng-container *ngIf="validandoVentaId === v.id; else botonValidar">
+                    <input type="text" placeholder="Folio Odoo" [(ngModel)]="folioParaValidar" [name]="'folio' + v.id" />
+                    <button class="btn-texto" (click)="confirmarValidacionOdoo(v)">Validar</button>
+                    <button class="btn-texto" (click)="cancelarValidacion()">✕</button>
+                  </ng-container>
+                  <ng-template #botonValidar>
+                    <button class="btn-texto" (click)="iniciarValidacion(v)">Validar en Odoo</button>
+                  </ng-template>
+                  <button class="btn-texto btn-danger" (click)="cancelarVentaSobrante(v)">Cancelar</button>
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ══════════════════════ Historial de movimientos ══════════════════════ -->
+      <div *ngIf="tab === 'movimientos'">
+        <div class="asig-cargando" *ngIf="cargandoMovimientos">Cargando historial…</div>
+        <div class="form-error" *ngIf="errorMovimientos">{{ errorMovimientos }}</div>
+        <table class="tabla-mini" *ngIf="!cargandoMovimientos && movimientos.length; else sinDatos">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th class="num">Cantidad</th><th>Cliente</th><th>Referencia</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of movimientos">
+              <td>{{ m.created_at | date: 'short' }}</td>
+              <td>{{ m.tipo_movimiento }}</td>
+              <td class="num" [class.positivo]="m.cantidad > 0" [class.negativo]="m.cantidad < 0">{{ m.cantidad }}</td>
+              <td>{{ m.clave_cliente || '—' }}</td>
+              <td>{{ m.referencia_externa || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #sinDatos><p class="asig-vacio">Sin registros todavía.</p></ng-template>
+    </div>
+
+    <ng-template #cargandoTpl><div class="asig-cargando">Cargando…</div></ng-template>
+  </div>
+</div>

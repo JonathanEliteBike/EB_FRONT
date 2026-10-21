@@ -6,16 +6,18 @@ import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import { DatePickerComponent } from '../../../../components/date-picker/date-picker.component';
-import { ImportacionesService, Importacion } from '../../../../services/importaciones.service';
+import { ImportacionesService, Importacion, HitoAuditoriaResultado } from '../../../../services/importaciones.service';
+import { TiemposEstimadosService, TiempoEstimado } from '../../../../services/tiempos-estimados.service';
+import { AuthService } from '../../../../services/auth.service';
 
-type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos';
+type Seccion = 'logistica' | 'importacion' | 'despacho' | 'odoo' | 'almacen' | 'recepcion' | 'cierre' | 'costos' | 'auditoria';
 
 interface CampoValidar { campo: keyof Importacion; label: string; opcional?: boolean; }
 
 // Sección donde vive cada campo destino de un resaltado (?highlight=<campo> en la URL,
-// usado por el pipeline del dashboard para llevar al usuario directo al dato), y su
-// campo "proyectado" hermano -- ambos se resaltan juntos porque viven en la misma
-// sección y es contra lo que se compara el real.
+// usado por el pipeline del dashboard y por el pipeline de auditoría para llevar al
+// usuario directo al dato), y su campo "proyectado" hermano -- ambos se resaltan
+// juntos porque viven en la misma sección y es contra lo que se compara el real.
 const SECCION_POR_CAMPO_RESALTADO: Record<string, Seccion> = {
   log_fecha_entrega:           'logistica',
   log_fecha_booking:           'logistica',
@@ -27,6 +29,27 @@ const SECCION_POR_CAMPO_RESALTADO: Record<string, Seccion> = {
   rec_recepcion_odoo:          'recepcion',
   rec_liberacion_verificacion: 'recepcion',
   rec_liberacion_final:        'recepcion',
+  // Campos rastreados por la auditoría de llenado que no son parte del
+  // pipeline del dashboard -- la sección es la misma que trae cada hito en
+  // importaciones_hitos_auditoria.seccion (ej. "odoo_importador" vive en
+  // logística, no en Odoo/SAE, pese al prefijo del nombre de columna).
+  odoo_importador:              'logistica',
+  log_confirmacion_cotizacion:  'logistica',
+  log_contenedor:               'logistica',
+  cos_flete_proyectado_usd:     'costos',
+  cos_tipo_cambio_pedimento:    'costos',
+  imp_fecha_traduccion:         'importacion',
+  imp_recepcion_draft_pedimento:'importacion',
+  imp_fecha_pago_pedimento:     'importacion',
+  log_recepcion_documentos:     'odoo',
+  odoo_folio_orden:             'odoo',
+  des_solicitud_cita_cruce:     'despacho',
+  des_recepcion_eir:            'despacho',
+  alm_base_datos_etiquetas:     'almacen',
+  alm_envio_info_uva:           'almacen',
+  rec_cedula_costeo:            'recepcion',
+  cie_recepcion_cuenta_gastos:  'cierre',
+  cie_fecha_pago_aa:            'cierre',
 };
 
 const CAMPO_PROG_HERMANO: Record<string, string> = {
@@ -58,6 +81,29 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   seccionActiva: Seccion = 'logistica';
   cambiosPendientes: Partial<Importacion> = {};
 
+  auditoria: HitoAuditoriaResultado[] = [];
+  cargandoAuditoria = false;
+  errorAuditoria = '';
+
+  cargarAuditoria(): void {
+    if (!this.embarque?.id) return;
+    this.cargandoAuditoria = true;
+    this.errorAuditoria = '';
+    this.svc.obtenerAuditoria(this.embarque.id).subscribe({
+      next: (res) => { this.auditoria = res; this.cargandoAuditoria = false; },
+      error: () => { this.errorAuditoria = 'No se pudo cargar la auditoría.'; this.cargandoAuditoria = false; },
+    });
+  }
+
+  auditoriaPorSeccion(): { seccion: string; hitos: HitoAuditoriaResultado[] }[] {
+    const mapa = new Map<string, HitoAuditoriaResultado[]>();
+    for (const h of this.auditoria) {
+      if (!mapa.has(h.seccion)) mapa.set(h.seccion, []);
+      mapa.get(h.seccion)!.push(h);
+    }
+    return [...mapa.entries()].map(([seccion, hitos]) => ({ seccion, hitos }));
+  }
+
   validacionError: string[] = [];
   camposConError = new Set<string>();
   camposNA = new Set<string>();
@@ -81,6 +127,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     { key: 'recepcion',   label: 'Recepción',    icon: 'fa-box-open' },
     { key: 'costos',      label: 'Costos',       icon: 'fa-dollar-sign' },
     { key: 'cierre',      label: 'Cierre',       icon: 'fa-check-circle' },
+    { key: 'auditoria',   label: 'Auditoría',   icon: 'fa-magnifying-glass-chart' },
   ];
 
   private readonly CAMPOS_VALIDAR: Partial<Record<Seccion, CampoValidar[]>> = {
@@ -151,7 +198,6 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       { campo: 'des_solicitud_pase_maniobras',   label: 'Solicitud de pase para maniobras' },
       { campo: 'des_carta_maniobras',            label: 'Carta de maniobras (transportista)' },
       { campo: 'des_fecha_carta_porte',          label: 'Datos para carta porte' },
-      { campo: 'des_fecha_entrega_almacen_prog', label: 'Fecha de entrega en almacén programada' },
       { campo: 'des_lugar_destino',              label: 'Lugar de destino (Ciudad)' },
       { campo: 'des_llegada_almacen',            label: 'Llegada de contenedor a almacén' },
       { campo: 'des_solicitud_carta_vacio',      label: 'Solicitud de carta para entrega de vacío' },
@@ -165,7 +211,6 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       { campo: 'odoo_codificacion',     label: 'Codificación de productos' },
       { campo: 'odoo_alta_catalogo',    label: 'Alta de catálogo en Odoo' },
       { campo: 'odoo_alta_precios',     label: 'Alta de precios en Odoo' },
-      { campo: 'odoo_alta_orden_compra', label: 'Alta de orden de compra' },
       { campo: 'odoo_folio_orden',      label: 'Folio(s) de orden de compra' },
     ],
     almacen: [
@@ -183,7 +228,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     ],
     recepcion: [
       { campo: 'rec_cedula_costeo',           label: 'Cédula de costeo de IGI' },
-      { campo: 'rec_recepcion_odoo',          label: 'Recepción en Odoo' },
+      { campo: 'rec_recepcion_odoo',          label: 'Alta de la orden en Odoo' },
       { campo: 'rec_folio_compra',            label: 'Folio de Compra en Odoo' },
       { campo: 'rec_liberacion_verificacion', label: 'Liberación de productos a verificación' },
       { campo: 'rec_liberacion_final',        label: 'Liberación final del producto' },
@@ -237,10 +282,39 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private svc: ImportacionesService
+    private svc: ImportacionesService,
+    private tiemposSvc: TiemposEstimadosService,
+    private auth: AuthService
   ) {}
 
+  get puedeEditarImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'editar');
+  }
+
+  get puedeVerMontosImportacion(): boolean {
+    return !this.auth.debeOcultarMontos('importaciones');
+  }
+
+  // Rol 99 "Importaciones" no accede a Auditoría. Para el rol 4, la pestaña
+  // refleja el mismo permiso Importaciones/Ver que protege su endpoint.
+  get puedeVerAuditoria(): boolean {
+    const rol = this.auth.getRol();
+    return rol === 1 || (rol === 4 && this.auth.tienePermisoInterno('importaciones', 'ver'));
+  }
+
+  get tabsVisibles(): { key: Seccion; label: string; icon: string }[] {
+    return this.tabs.filter(tab =>
+      (tab.key !== 'costos' || this.puedeVerMontosImportacion) &&
+      (tab.key !== 'auditoria' || this.puedeVerAuditoria)
+    );
+  }
+
   private returnUrl = '/importaciones';
+  // Reglas de Tiempos Estimados, cargadas una vez, para mirror local del
+  // cálculo de fechas proyectadas (mismo criterio que _recalcular_campos()
+  // en el backend) -- feedback instantáneo mientras se edita, antes de que
+  // responda el autoguardado.
+  private _reglasTiempos: TiempoEstimado[] = [];
 
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(e: BeforeUnloadEvent): void {
@@ -250,10 +324,18 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('from') === 'dashboard') {
+    const from = this.route.snapshot.queryParamMap.get('from');
+    if (from === 'dashboard') {
       const tab = this.route.snapshot.queryParamMap.get('tab');
       this.returnUrl = '/importaciones/dashboard' + (tab ? `?tab=${tab}` : '');
+    } else if (from === 'auditoria') {
+      this.returnUrl = '/importaciones/auditoria';
     }
+    this.tiemposSvc.listar().subscribe({
+      next: (reglas) => { this._reglasTiempos = reglas; },
+      error: () => {},
+    });
+
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this._embarqueId = id;
     this.svc.obtener(id).subscribe({
@@ -272,10 +354,11 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Si venimos de un click en una etapa del pipeline del dashboard
-  // (?highlight=<campo>), cambia a la sección correspondiente y resalta el campo
-  // real Y su proyectado hermano -- ambos viven en la misma sección y es contra
-  // lo que se está comparando, así que tiene que verse el par completo.
+  // Si venimos de un click en una etapa del pipeline del dashboard o en un
+  // hito del pipeline de auditoría (?highlight=<campo>), cambia a la sección
+  // correspondiente y resalta el campo real Y su proyectado hermano (cuando
+  // existe) -- ambos viven en la misma sección y es contra lo que se está
+  // comparando, así que tiene que verse el par completo.
   private _resaltarCampoDesdeQuery(): void {
     const campo = this.route.snapshot.queryParamMap.get('highlight');
     if (!campo) return;
@@ -300,7 +383,13 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     if (this._autoguardadoTimer) clearTimeout(this._autoguardadoTimer);
     if (!this.embarque) return;
     const tieneCambios = Object.keys(this.cambiosPendientes).length > 0;
-    if (!tieneCambios) return;
+    if (!tieneCambios) {
+      // Sin esto, un borrador viejo que haya quedado de una sesión anterior
+      // (ej. se cerró la pestaña antes de que un guardado terminara) se
+      // queda ahí para siempre aunque esta sesión haya guardado todo bien.
+      localStorage.removeItem(`imp_draft_${this.embarque.id}`);
+      return;
+    }
     const draft = {
       seccion:  this.seccionActiva,
       cambios:  this.cambiosPendientes,
@@ -375,7 +464,22 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
           applied = true;
         }
       }
-      if (applied && draft.seccion) this.seccionActiva = draft.seccion;
+      // Un borrador local se consume una sola vez: en cuanto se aplica (se
+      // haya usado o no -- "applied" solo indica si quedaba algo vigente),
+      // se borra de inmediato. Si no se borrara aquí, un borrador viejo que
+      // alguna vez quedó con un N/A indebido resucitaría en cada carga de
+      // la página para siempre, sin importar cuántas veces se corrija en
+      // vivo -- el bug real detrás de "lo desmarco y al recargar se vuelve
+      // a marcar".
+      localStorage.removeItem(`imp_draft_${id}`);
+      if (applied && draft.seccion) {
+        this.seccionActiva = draft.seccion;
+        // seccionActiva se pone directo (no vía cambiarSeccion()), así que
+        // si el borrador restaura justo la pestaña de auditoría, hay que
+        // disparar la carga a mano o se queda vacía ("No hay hitos
+        // configurados" por error, no porque de verdad no haya).
+        if (draft.seccion === 'auditoria') this.cargarAuditoria();
+      }
       if (applied) {
         this._recalcularCamposLocales();
         // Persistir el borrador recuperado a columnas reales para que sea
@@ -411,6 +515,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   toggleNA(campo: string): void {
+    if (!this.puedeEditarImportacion) return;
     if (this.camposNA.has(campo)) {
       this.camposNA.delete(campo);
       // When removing N/A, register a pending change so Save button enables
@@ -440,10 +545,29 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     return pesos / tc;
   }
 
-  marcarCambio(campo: keyof Importacion, valor: any): void {
+  /** Catálogo cerrado de "Tipo de productos", igual al selector de chips usado al
+   *  crear el embarque — evita que el campo 7 vuelva a divergir del catálogo de
+   *  Tiempos Estimados por texto libre (ver caso R26-1564: "BICICLETAS" vs "Bicicleta"). */
+  private readonly TIPOS_PRODUCTO_BASE = ['Bicicleta', 'Cascos', 'Zapatos', 'Accesorios', 'Accesorios y Bicicletas'];
+
+  private esCombinacionBicicletaElectrica(): boolean {
+    return this.embarque?.via_transporte === 'AEREO' && this.embarque?.log_origen === 'ESPAÑA';
+  }
+
+  tiposProductoDisponibles(): string[] {
+    const tipos = [...this.TIPOS_PRODUCTO_BASE];
+    if (this.esCombinacionBicicletaElectrica()) {
+      tipos.unshift('Bicicleta eléctrica');
+    }
+    return tipos;
+  }
+
+  marcarCambio(campo: keyof Importacion, valor: any, opts?: { preservarTexto?: boolean }): void {
+    if (!this.puedeEditarImportacion) return;
     if (!this.embarque) return;
-    // Uppercase texto libre; excluye fechas ISO (YYYY-MM-DD) y valores nulos/numéricos
-    if (typeof valor === 'string' && valor && !/^\d{4}-\d{2}-\d{2}/.test(valor)) {
+    // Uppercase texto libre; excluye fechas ISO (YYYY-MM-DD), valores nulos/numéricos
+    // y los valores que ya vienen de un selector cerrado (ej. chips de Tipo de productos).
+    if (!opts?.preservarTexto && typeof valor === 'string' && valor && !/^\d{4}-\d{2}-\d{2}/.test(valor)) {
       valor = valor.toUpperCase();
     }
     (this.embarque as any)[campo] = valor;
@@ -464,11 +588,33 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       // otros usuarios vean los datos al instante vía polling.
       const payload: any = { ...this.cambiosPendientes };
       for (const campo of this.camposNA) { payload[campo] = '__NA__'; }
+      const camposEnviados = Object.keys(payload);
       this.svc.actualizar(this.embarque.id, payload).subscribe({
-        next: () => {
+        next: (res) => {
           this.autoguardandoOk = true;
+          // Quitar de cambiosPendientes justo lo que se acaba de guardar (no
+          // todo el objeto, por si el usuario ya editó algo más mientras la
+          // petición estaba en vuelo). Sin esto, cambiosPendientes nunca
+          // volvía a quedar vacío en toda la sesión después del primer
+          // cambio, así que CADA cierre/recarga de la pestaña escribía un
+          // borrador local nuevo -- la fuente del bug de "se vuelve a
+          // marcar solo": un N/A ya quitado y guardado podía resucitar
+          // desde un borrador local viejo en cualquier recarga posterior.
+          for (const c of camposEnviados) { delete (this.cambiosPendientes as any)[c]; }
+          if (Object.keys(this.cambiosPendientes).length === 0 && this.embarque) {
+            localStorage.removeItem(`imp_draft_${this.embarque.id}`);
+          }
           // Actualizar updated_at local para que el polling no genere falsa alerta
-          if (this.embarque) this.embarque.updated_at = new Date().toISOString();
+          if (this.embarque) {
+            this.embarque.updated_at = new Date().toISOString();
+            // Fechas proyectadas recalculadas de verdad en el backend -- reemplazan
+            // el adelanto local (_recalcularProyLocal) por el valor autoritativo.
+            this.embarque.log_fecha_booking_prog         = res.log_fecha_booking_prog ?? null;
+            this.embarque.imp_llegada_contenedor_prog    = res.imp_llegada_contenedor_prog ?? null;
+            this.embarque.des_fecha_cruce_prog           = res.des_fecha_cruce_prog ?? null;
+            this.embarque.des_fecha_entrega_almacen_prog = res.des_fecha_entrega_almacen_prog ?? null;
+            this.embarque.tiempos_estimados_faltantes    = res.tiempos_estimados_faltantes ?? false;
+          }
           setTimeout(() => { this.autoguardandoOk = false; }, 2000);
         },
         error: () => {}
@@ -512,6 +658,58 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
     // Real días etiquetado = terminación - inicio
     const diasEtiq = this._diffDias(e.alm_inicio_etiquetado, e.alm_terminacion_etiquetado);
     if (diasEtiq !== null) e.alm_real_dias_etiquetado = diasEtiq;
+
+    // Fechas proyectadas Booking→Almacén: mismo criterio que _recalcular_campos()
+    // en el backend (Entrega PROYECTADA + regla de Tiempos Estimados por
+    // origen+producto+vía -- nunca la Entrega Real, toda esta cadena son
+    // fechas proyectadas). Es solo un adelanto visual mientras se edita -- el
+    // backend recalcula y persiste el valor real de verdad al autoguardar.
+    this._recalcularProyLocal(e);
+  }
+
+  private _recalcularProyLocal(e: any): void {
+    const entrega = e.log_fecha_entrega_prog;
+    const regla = this._reglasTiempos.find(r =>
+      r.origen === e.log_origen &&
+      r.tipo_producto === e.log_tipo_productos &&
+      r.via_transporte === e.via_transporte
+    );
+
+    if (!entrega || !e.log_origen || !e.log_tipo_productos || !e.via_transporte) {
+      // Faltan datos base -- no tocar lo que ya haya (puede venir del backend).
+      return;
+    }
+
+    if (!regla) {
+      // Sin regla: NO se toca nada de lo que ya haya en pantalla (ni lo que
+      // vino del servidor, ni lo que el usuario acaba de escribir a mano) --
+      // mismo criterio que _recalcular_campos() en el backend. Antes esto
+      // forzaba las 4 fechas a null, lo que borraba en pantalla cualquier
+      // valor capturado a mano en cuanto corría este mismo cálculo local
+      // (al escribir, al recargar, o cada 10s por el polling).
+      e.tiempos_estimados_faltantes = true;
+      return;
+    }
+
+    try {
+      const sumar = (iso: string, dias: number) => {
+        const d = new Date(iso + 'T00:00:00');
+        d.setDate(d.getDate() + dias);
+        return d.toISOString().slice(0, 10);
+      };
+      const booking = sumar(entrega, regla.dias_hasta_booking);
+      const puerto  = sumar(booking, regla.dias_booking_a_puerto);
+      const destino = sumar(puerto, regla.dias_puerto_a_destino);
+      const almacen = sumar(destino, regla.dias_destino_a_almacen);
+      e.log_fecha_booking_prog = booking;
+      e.imp_llegada_contenedor_prog = puerto;
+      e.des_fecha_cruce_prog = destino;
+      e.des_fecha_entrega_almacen_prog = almacen;
+      e.tiempos_estimados_faltantes = false;
+    } catch {
+      // Fallo real de cálculo: no se puede confiar en el resultado, pero
+      // tampoco se borra lo que ya hubiera en pantalla.
+    }
   }
 
   isoADMY(iso: string | null | undefined): string {
@@ -546,12 +744,17 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   cambiarSeccion(s: Seccion): void {
+    // Siempre recargar (no solo si auditoria.length === 0): si el usuario
+    // llenó un campo y volvió a esta pestaña, debe ver el estado actual,
+    // no el que tenía la primera vez que la abrió.
+    if (s === 'auditoria') this.cargarAuditoria();
     this.validacionError = [];
     this.camposConError.clear();
     this.seccionActiva = s;
   }
 
   guardar(): void {
+    if (!this.puedeEditarImportacion) return;
     if (!this.embarque) return;
 
     const faltantes = this.validarSeccionActual();
@@ -610,6 +813,7 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   guardarBorrador(): void {
+    if (!this.puedeEditarImportacion) return;
     if (!this.embarque || !this.hayCambios()) return;
     const naPayload: any = {};
     for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }
@@ -619,8 +823,15 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
       next: () => {
         this.guardando = false;
         this.cambiosPendientes = {};
+        // Igual que guardar() -- ya se persistió, no debe quedar un
+        // borrador local que resucite esto en la próxima carga.
+        localStorage.removeItem(`imp_draft_${this.embarque!.id}`);
         this.svc.obtener(this.embarque!.id).subscribe(d => {
           this.embarque = d;
+          this.camposNA.clear();
+          for (const campo of (d.campos_na || [])) {
+            this.camposNA.add(campo);
+          }
           this._aplicarBorradores();
         });
       },
@@ -629,6 +840,10 @@ export class ImportacionesDetalleComponent implements OnInit, OnDestroy {
   }
 
   volver(): void {
+    if (!this.puedeEditarImportacion) {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
     if (this.hayCambios() || this.camposNA.size > 0) {
       const naPayload: any = {};
       for (const campo of this.camposNA) { naPayload[campo] = '__NA__'; }

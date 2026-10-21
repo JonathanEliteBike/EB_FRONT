@@ -1,6 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../../components/home-bar/home-bar.component';
 import {
@@ -12,6 +14,11 @@ import { AuthService } from '../../../../services/auth.service';
 import { environment } from '../../../../../environments/environment';
 
 const ESTATUSES = ['Todos', 'Enviado', 'En revisión', 'Aprobado', 'Rechazado', 'Cerrado'];
+
+/** Fecha de hoy (YYYY-MM-DD) en hora de CDMX, no en UTC. */
+function hoyCdmx(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
+}
 
 const COLOR_ESTATUS: Record<string, string> = {
   enviado:      '#f0ad4e',
@@ -89,7 +96,7 @@ const COLOR_PIEZA: Record<string, string> = {
   styleUrl: './garantias-tickets.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GarantiasTicketsComponent implements OnInit {
+export class GarantiasTicketsComponent implements OnInit, OnDestroy {
   readonly estatuses      = ESTATUSES;
   readonly estatusesPieza = ESTATUSES_PIEZA;
 
@@ -218,7 +225,7 @@ export class GarantiasTicketsComponent implements OnInit {
   editFechaCreacion    = '';
 
   get hoy(): string {
-    return new Date().toISOString().slice(0, 10);
+    return hoyCdmx();
   }
 
   // Validación por campo (docs + serie): campo → 'valido' | 'rechazado'
@@ -235,17 +242,43 @@ export class GarantiasTicketsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private location: Location,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer,
   ) {
     this.vieneDeDeepLink = !!this.route.snapshot.queryParamMap.get('id');
   }
 
+  ngOnDestroy(): void {
+    this.limpiarArchivoUrls();
+  }
+
   get esAdmin(): boolean { return this.auth.isAdmin(); }
+  get puedeVerNotasInternas(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'ver'));
+  }
+  get puedeCrearNotasInternas(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear'));
+  }
+  get puedeCrear(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear'));
+  }
+  get puedeEditar(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'editar'));
+  }
+  get puedeEliminar(): boolean {
+    return this.esAdmin || (this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'eliminar'));
+  }
 
   volver(): void {
     if (this.vieneDeDeepLink) {
+      // Llegaste con ?id= desde un drill-down del dashboard (ej. clic en un
+      // folio de "Piezas de Reemplazo") -- regresa justo a esa pagina.
       this.location.back();
     } else {
-      this.router.navigateByUrl('/garantias/dashboard');
+      // Entraste directo a Seguimiento de Tickets (desde el hub del modulo,
+      // una pestana nueva, etc.) -- el hub es el "padre" natural, no el
+      // dashboard, que es solo una de sus secciones.
+      this.router.navigateByUrl('/garantias');
     }
   }
 
@@ -352,7 +385,7 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   esHoy(dia: number | null): boolean {
-    return !!dia && this.diaAFecha(dia) === new Date().toISOString().slice(0, 10);
+    return !!dia && this.diaAFecha(dia) === hoyCdmx();
   }
 
   mesAnterior(): void {
@@ -477,6 +510,7 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   seleccionarTicket(t: GarantiaFormulario): void {
+    this.limpiarArchivoUrls();
     this.selected = t;
     this.comentarios = [];
     this.nuevoComentario = '';
@@ -516,6 +550,7 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   cerrarDetalle(): void {
+    this.limpiarArchivoUrls();
     this.selected = null;
     this.confirmandoEliminacion = false;
     this.cdr.markForCheck();
@@ -528,6 +563,7 @@ export class GarantiasTicketsComponent implements OnInit {
     this.svc.eliminarFormulario(this.selected.id).subscribe({
       next: () => {
         this.tickets = this.tickets.filter(t => t.id !== this.selected!.id);
+        this.limpiarArchivoUrls();
         this.selected = null;
         this.confirmandoEliminacion = false;
         this.eliminando = false;
@@ -551,6 +587,7 @@ export class GarantiasTicketsComponent implements OnInit {
         this.validandoDoc      = {};
         this.piezaSeleccionada = f.pieza_reemplazo ?? '';
         this.cargandoDetalle   = false;
+        this.cargarArchivosSeguros();
         this.cdr.markForCheck();
       },
       error: () => { this.cargandoDetalle = false; this.cdr.markForCheck(); },
@@ -830,7 +867,7 @@ export class GarantiasTicketsComponent implements OnInit {
   }
 
   enviarNotaInterna(): void {
-    if (!this.selected || !this.notaInterna.trim() || this.enviandoNota) return;
+    if (!this.puedeCrearNotasInternas || !this.selected || !this.notaInterna.trim() || this.enviandoNota) return;
     this.enviandoNota = true;
     this.cdr.markForCheck();
     this.svc.addComentario(this.selected.id, '', this.notaInterna.trim(), 'nota_interna').subscribe({
@@ -840,6 +877,64 @@ export class GarantiasTicketsComponent implements OnInit {
         this.cargarComentarios(this.selected!.id, true);
       },
       error: () => { this.enviandoNota = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  // ── Editar / eliminar comentarios y notas internas ──────────────────────────
+  editandoComentarioId: number | null = null;
+  textoComentarioEditado = '';
+  guardandoEdicionComentario = false;
+  confirmandoEliminarComentarioId: number | null = null;
+  eliminandoComentarioId: number | null = null;
+
+  iniciarEdicionComentario(c: GarantiaComentario): void {
+    this.editandoComentarioId = c.id;
+    this.textoComentarioEditado = c.texto;
+    this.cdr.markForCheck();
+  }
+
+  cancelarEdicionComentario(): void {
+    this.editandoComentarioId = null;
+    this.textoComentarioEditado = '';
+    this.cdr.markForCheck();
+  }
+
+  guardarEdicionComentario(): void {
+    if (!this.editandoComentarioId || !this.textoComentarioEditado.trim() || this.guardandoEdicionComentario) return;
+    this.guardandoEdicionComentario = true;
+    this.cdr.markForCheck();
+    this.svc.editarComentario(this.editandoComentarioId, this.textoComentarioEditado.trim()).subscribe({
+      next: () => {
+        this.editandoComentarioId = null;
+        this.textoComentarioEditado = '';
+        this.guardandoEdicionComentario = false;
+        this.cargarComentarios(this.selected!.id, true);
+      },
+      error: () => { this.guardandoEdicionComentario = false; this.cdr.markForCheck(); },
+    });
+  }
+
+  confirmarEliminarComentario(id: number): void {
+    this.confirmandoEliminarComentarioId = id;
+    this.cdr.markForCheck();
+  }
+
+  cancelarEliminarComentario(): void {
+    this.confirmandoEliminarComentarioId = null;
+    this.cdr.markForCheck();
+  }
+
+  eliminarComentario(id: number): void {
+    if (this.eliminandoComentarioId) return;
+    this.eliminandoComentarioId = id;
+    this.cdr.markForCheck();
+    this.svc.eliminarComentario(id).subscribe({
+      next: () => {
+        this.confirmandoEliminarComentarioId = null;
+        this.eliminandoComentarioId = null;
+        this.cargarComentarios(this.selected!.id, true);
+      },
+      error: () => { this.eliminandoComentarioId = null; this.cdr.markForCheck(); },
     });
   }
 
@@ -945,15 +1040,49 @@ export class GarantiasTicketsComponent implements OnInit {
     });
   }
 
-  readonly today = new Date().toISOString().split('T')[0];
+  readonly today = hoyCdmx();
 
   get notasInternas(): GarantiaComentario[] {
     return this.comentarios.filter(c => c.tipo === 'nota_interna');
   }
 
   // ── Helpers de archivo ──────────────────────────────────────────────────
-  archivoVerUrl(nombre: string): string {
-    return `${environment.apiUrl}/garantias/archivo/${nombre}`;
+  // La ruta /garantias/archivo/<nombre> exige JWT (Authorization header), así
+  // que no se puede usar directo en [src]/[href]: el navegador no manda el
+  // token en esas peticiones. Se descarga vía HttpClient (sí lleva el token
+  // por el interceptor) y se expone como blob URL.
+  private archivoUrls: Map<string, SafeUrl> = new Map();
+  private archivoRawUrls: Map<string, string> = new Map();
+
+  private limpiarArchivoUrls(): void {
+    for (const url of this.archivoRawUrls.values()) URL.revokeObjectURL(url);
+    this.archivoUrls.clear();
+    this.archivoRawUrls.clear();
+  }
+
+  private cargarArchivosSeguros(): void {
+    for (const doc of this.documentos) {
+      const nombre = doc.nombre;
+      if (this.archivoUrls.has(nombre)) continue;
+      this.http.get(`${environment.apiUrl}/garantias/archivo/${nombre}`, { responseType: 'blob' })
+        .subscribe({
+          next: (blob) => {
+            const raw = URL.createObjectURL(blob);
+            this.archivoRawUrls.set(nombre, raw);
+            this.archivoUrls.set(nombre, this.sanitizer.bypassSecurityTrustUrl(raw));
+            this.cdr.markForCheck();
+          },
+          error: () => { /* se deja sin URL: el doc-unit no será clicable */ },
+        });
+    }
+  }
+
+  archivoListo(nombre: string): boolean {
+    return this.archivoUrls.has(nombre);
+  }
+
+  archivoSrc(nombre: string): SafeUrl | null {
+    return this.archivoUrls.get(nombre) ?? null;
   }
 
   esImagen(nombre: string): boolean {

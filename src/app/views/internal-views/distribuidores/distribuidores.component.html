@@ -13,7 +13,7 @@
     </button>
 
     <!-- BOTÓN PARA MOSTRAR FORMULARIO DE AGREGAR -->
-    <button class="distribuidores-btn" (click)="mostrarFormularioAgregar()">
+    <button *ngIf="puedeCrear" class="distribuidores-btn" (click)="mostrarFormularioAgregar()">
         {{ mostrarFormulario ? 'Volver' : 'Agregar Nuevo Cliente' }}
     </button>
 
@@ -81,32 +81,32 @@
         <h3>Información del Cliente</h3>
 
         <label class="distribuidores-label">Clave:</label>
-        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.clave" required />
+        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.clave" [disabled]="!puedeEditar" required />
 
         <label class="distribuidores-label">EVAC:</label>
-        <select class="distribuidores-input" [(ngModel)]="cliente.evac" required>
+        <select class="distribuidores-input" [(ngModel)]="cliente.evac" [disabled]="!puedeEditar" required>
             <option *ngFor="let opcion of opcionesEvac" [value]="opcion">{{ opcion }}</option>
         </select>
 
         <label class="distribuidores-label">Nombre Cliente:</label>
-        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.nombre_cliente" required />
+        <input class="distribuidores-input" type="text" [(ngModel)]="cliente.nombre_cliente" [disabled]="!puedeEditar" required />
 
         <label class="distribuidores-label">Nivel:</label>
-        <select class="distribuidores-input" [(ngModel)]="cliente.nivel" required>
+        <select class="distribuidores-input" [(ngModel)]="cliente.nivel" [disabled]="!puedeEditar" required>
             <option *ngFor="let m of nivelesDisponibles" [value]="m.nivel">{{ m.nivel }}</option>
         </select>
 
         <label class="distribuidores-label">Fecha Inicio:</label>
-        <input class="distribuidores-input" type="date" [(ngModel)]="cliente.f_inicio" />
+        <input class="distribuidores-input" type="date" [(ngModel)]="cliente.f_inicio" [disabled]="!puedeEditar" />
 
         <label class="distribuidores-label">Fecha Fin:</label>
-        <input class="distribuidores-input" type="date" [(ngModel)]="cliente.f_fin" />
+        <input class="distribuidores-input" type="date" [(ngModel)]="cliente.f_fin" [disabled]="!puedeEditar" />
 
         <div class="distribuidores-botones">
-            <button class="distribuidores-btn" [disabled]="!hayCambios()" (click)="confirmacionVisible = true">
+            <button *ngIf="puedeEditar" class="distribuidores-btn" [disabled]="!hayCambios()" (click)="confirmacionVisible = true">
                 Aceptar
             </button>
-            <button class="distribuidores-btn distribuidor-btn-secundario eliminar"
+            <button *ngIf="puedeEliminar" class="distribuidores-btn distribuidor-btn-secundario eliminar"
                 (click)="confirmacionEliminarVisible = true">
                 Eliminar
             </button>

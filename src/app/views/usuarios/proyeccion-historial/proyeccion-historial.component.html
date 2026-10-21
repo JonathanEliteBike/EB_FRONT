@@ -1,5 +1,6 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 
+<ng-container *ngIf="puedeVer; else accesoRestringido">
 <div class="proyecciones-container-wide">
     <div class="proyecciones-header">
         <h1><i class="fas fa-history"></i> Historial de Proyecciones</h1>
@@ -33,7 +34,7 @@
                     <span class="group-date"><i class="far fa-calendar-alt"></i> {{ formatearFechaUTC(grupo.fecha) }}</span>
                     <span class="group-totals">
                         <span><i class="fas fa-bicycle"></i> {{ grupo.totalBicis }} bicicletas</span>
-                        <span><i class="fas fa-dollar-sign"></i> {{ grupo.totalImporte | currency:'MXN':'symbol' }}</span>
+                        <span *ngIf="puedeVerMontos"><i class="fas fa-dollar-sign"></i> {{ grupo.totalImporte | currency:'MXN':'symbol' }}</span>
                     </span>
                 </div>
                 
@@ -42,7 +43,7 @@
                     <div *ngFor="let quincena of quincenas" class="quincena-summary-item">
                         <div class="quincena-summary-title">{{ formatearQuincena(quincena) }}</div>
                         <div class="quincena-summary-cantidad">{{ grupo.totalesQuincena[quincena]?.cantidad || 0 }} unid</div>
-                        <div class="quincena-summary-importe">{{ grupo.totalesQuincena[quincena]?.importe | currency:'MXN':'symbol' }}</div>
+                        <div *ngIf="puedeVerMontos" class="quincena-summary-importe">{{ grupo.totalesQuincena[quincena]?.importe | currency:'MXN':'symbol' }}</div>
                     </div>
                 </div>
             </div>
@@ -55,12 +56,12 @@
                             <th>Referencia</th>
                             <th>Modelo</th>
                             <th>Especificaciones</th>
-                            <th>Precio Unitario</th>
+                            <th *ngIf="puedeVerMontos">Precio Unitario</th>
                             <th *ngFor="let quincena of quincenas" class="quincena-header">
                                 {{ formatearQuincena(quincena) }}
                             </th>
                             <th>Total Unidades</th>
-                            <th>Importe Total</th>
+                            <th *ngIf="puedeVerMontos">Importe Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,15 +76,15 @@
                             <td>{{ item.referencia }}</td>
                             <td>{{ item.modelo }}</td>
                             <td>{{ item.spec }}</td>
-                            <td class="price-cell">
+                            <td *ngIf="puedeVerMontos" class="price-cell">
                                 <div class="price-main">{{ item.precio_aplicado | currency:'MXN':'symbol' }}</div>
                             </td>
                             <td *ngFor="let quincena of quincenas" class="quincena-cell">
                                 <div class="quincena-cantidad">{{ item[quincena] || 0 }}</div>
-                                <div class="quincena-importe">{{ (item[quincena] || 0) * item.precio_aplicado | currency:'MXN':'symbol' }}</div>
+                                <div *ngIf="puedeVerMontos" class="quincena-importe">{{ (item[quincena] || 0) * item.precio_aplicado | currency:'MXN':'symbol' }}</div>
                             </td>
                             <td class="total-cell">{{ getTotalPorItem(item) }}</td>
-                            <td class="amount-cell">{{ getTotalPorItem(item) * item.precio_aplicado | currency:'MXN':'symbol' }}</td>
+                            <td *ngIf="puedeVerMontos" class="amount-cell">{{ getTotalPorItem(item) * item.precio_aplicado | currency:'MXN':'symbol' }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -91,3 +92,8 @@
         </div>
     </div>
 </div>
+</ng-container>
+
+<ng-template #accesoRestringido>
+    <app-acceso-restringido modulo="Proyección de Compras" rutaInicio="/usuarios/inicio"></app-acceso-restringido>
+</ng-template>

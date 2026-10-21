@@ -6,6 +6,7 @@ import { HomeBarComponent } from '../../../components/home-bar/home-bar.componen
 import { DatePickerComponent } from '../../../components/date-picker/date-picker.component';
 import { TemporadaSelectorComponent, TEMPORADA_HISTORICO } from '../../../components/temporada-selector/temporada-selector.component';
 import { ImportacionesService, Importacion } from '../../../services/importaciones.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-importaciones',
@@ -15,6 +16,23 @@ import { ImportacionesService, Importacion } from '../../../services/importacion
   styleUrl: './importaciones.component.css',
 })
 export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy {
+  get puedeVerTiemposEstimados(): boolean {
+    const rol = this.auth.getRol();
+    return rol === 1 || (rol === 4 && this.auth.tienePermisoInterno('importaciones', 'ver'));
+  }
+
+  // Rol 99 "Importaciones" queda fuera de Auditoría. El rol 4 hereda
+  // Importaciones/Ver para las pantallas hijas; los botones reflejan esa
+  // misma regla antes de que el guard valide la ruta.
+  get puedeVerAuditoria(): boolean {
+    const rol = this.auth.getRol();
+    return rol === 1 || (rol === 4 && this.auth.tienePermisoInterno('importaciones', 'ver'));
+  }
+
+  get puedeVerHitosAuditoria(): boolean {
+    return this.puedeVerAuditoria;
+  }
+
   embarques: Importacion[] = [];
   embarquesFiltrados: Importacion[] = [];
   cargando = true;
@@ -49,14 +67,15 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   readonly ETAPAS = [
-    { key: 'Booking',           bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
-    { key: 'Tránsito Mar/Aér',  bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
-    { key: 'En Aduana',         bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
-    { key: 'Tránsito Destino',  bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
-    { key: 'En Almacén',        bg: 'rgba(20,184,166,.18)',  color: '#2dd4bf' },
-    { key: 'Verificación',      bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
-    { key: 'Liberado',          bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
-    { key: 'Pendiente',         bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
+    { key: 'Entrega',      bg: 'rgba(236,72,153,.18)',  color: '#f472b6' },
+    { key: 'Booking',      bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
+    { key: 'Lleg. Puerto', bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
+    { key: 'Destino',      bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
+    { key: 'Almacén',      bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
+    { key: 'Verif.',       bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
+    { key: 'Etiq.',        bg: 'rgba(168,85,247,.18)',  color: '#c084fc' },
+    { key: 'Liberado',     bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
+    { key: 'Pendiente',    bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
   ];
   mostrarNuevo = false;
   guardandoNuevo = false;
@@ -68,6 +87,50 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     log_origen: '',
     log_tipo_productos: '',
   };
+
+  readonly ORIGENES_DISPONIBLES = ['VIETNAM', 'ESPAÑA', 'TAIWAN', 'BELGICA', 'CAMBOYA', 'ESTADOS UNIDOS', 'CHINA'];
+
+  /** Selección única; "Accesorios y Bicicletas" es la única combinación real que existe,
+   *  así que es una opción fija más, no una mezcla libre de las demás.
+   *  "Bicicleta eléctrica" se agrega aparte porque solo se trae de España y por vía aérea. */
+  private readonly TIPOS_PRODUCTO_BASE = ['Bicicleta', 'Cascos', 'Zapatos', 'Accesorios', 'Accesorios y Bicicletas'];
+
+  private esCombinacionBicicletaElectrica(): boolean {
+    return this.nuevoEmbarque.via_transporte === 'AEREO' && this.nuevoEmbarque.log_origen === 'ESPAÑA';
+  }
+
+  tiposProductoDisponibles(): string[] {
+    const tipos = [...this.TIPOS_PRODUCTO_BASE];
+    if (this.esCombinacionBicicletaElectrica()) {
+      tipos.unshift('Bicicleta eléctrica');
+    }
+    return tipos;
+  }
+
+  seleccionarTipoProducto(tipo: string): void {
+    this.nuevoEmbarque.log_tipo_productos = tipo;
+  }
+
+  private limpiarBicicletaElectricaSiYaNoAplica(): void {
+    if (!this.esCombinacionBicicletaElectrica() && this.nuevoEmbarque.log_tipo_productos === 'Bicicleta eléctrica') {
+      this.nuevoEmbarque.log_tipo_productos = '';
+    }
+  }
+
+  cambiarViaTransporte(via: 'MARITIMO' | 'AEREO'): void {
+    this.nuevoEmbarque.via_transporte = via;
+    this.limpiarBicicletaElectricaSiYaNoAplica();
+  }
+
+  cambiarOrigen(origen: string): void {
+    this.nuevoEmbarque.log_origen = origen;
+    this.limpiarBicicletaElectricaSiYaNoAplica();
+  }
+
+  abrirNuevo(): void {
+    this.nuevoEmbarque = { referencia: '', nombre: '', via_transporte: 'MARITIMO', log_origen: '', log_tipo_productos: '' };
+    this.mostrarNuevo = true;
+  }
 
   readonly secciones = [
     { key: 'logistica',   label: 'Logística',    icon: 'fa-ship',          color: '#3b82f6' },
@@ -82,7 +145,15 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private rowObserver?: IntersectionObserver;
 
-  constructor(private svc: ImportacionesService, private router: Router, private el: ElementRef) {}
+  constructor(private svc: ImportacionesService, private router: Router, private el: ElementRef, private auth: AuthService) {}
+
+  puedeCrearImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'crear');
+  }
+
+  puedeEliminarImportacion(): boolean {
+    return this.auth.getRol() !== 4 || this.auth.tienePermisoInterno('importaciones', 'eliminar');
+  }
 
   ngOnInit(): void {
     this.cargar();
@@ -180,26 +251,47 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
     this.router.navigate(['/importaciones', id]);
   }
 
+  private static readonly _ETAPAS_ORDEN: { nombre: string; campo: keyof Importacion }[] = [
+    { nombre: 'Entrega',      campo: 'log_fecha_entrega' },
+    { nombre: 'Booking',      campo: 'log_fecha_booking' },
+    { nombre: 'Lleg. Puerto', campo: 'imp_llegada_contenedor_puerto' },
+    { nombre: 'Destino',      campo: 'des_fecha_cruce_real' },
+    { nombre: 'Almacén',      campo: 'des_llegada_almacen' },
+    { nombre: 'Verif.',       campo: 'alm_liberacion_uva' },
+    { nombre: 'Etiq.',        campo: 'alm_terminacion_etiquetado' },
+    { nombre: 'Liberado',     campo: 'rec_liberacion_final' },
+  ];
+
+  /** Mismo campo y mismo nombre que _estado_actual() en el backend -- ver
+   *  routes/importaciones.py. Se duplica aquí porque esta pantalla filtra
+   *  sobre el listado ya cargado en el cliente, sin volver a pedirle al
+   *  backend el estado por cada embarque.
+   *
+   *  Una etapa con fecha real capturada ya quedó atrás: el estado debe
+   *  avanzar a la siguiente etapa de la secuencia, no quedarse mostrando
+   *  la que ya se completó. */
   estadoActual(e: Importacion): string {
-    if (e.rec_liberacion_final)  return 'Liberado';
-    if (e.alm_liberacion_uva)    return 'Verificación';
-    if (e.des_llegada_almacen)   return 'En Almacén';
-    if (e.des_fecha_cruce_real)  return 'Tránsito Destino';
-    if (e.imp_llegada_contenedor_puerto) return 'En Aduana';
-    if (e.log_fecha_booking)     return 'Tránsito Mar/Aér';
-    if (e.log_fecha_entrega)     return 'Booking';
-    return 'Pendiente';
+    const etapas = ImportacionesComponent._ETAPAS_ORDEN;
+    let ultimoCompletado = -1;
+    for (let i = 0; i < etapas.length; i++) {
+      if (e[etapas[i].campo]) ultimoCompletado = i;
+    }
+
+    if (ultimoCompletado === -1) return 'Pendiente';
+    if (ultimoCompletado === etapas.length - 1) return 'Liberado';
+    return etapas[ultimoCompletado + 1].nombre;
   }
 
   private static readonly _ESTADO_CFG: Record<string, { bg: string; color: string }> = {
-    'Liberado':          { bg: 'rgba(34,197,94,.18)',  color: '#22c55e' },
-    'Verificación':      { bg: 'rgba(99,102,241,.18)', color: '#818cf8' },
-    'En Almacén':        { bg: 'rgba(20,184,166,.18)', color: '#2dd4bf' },
-    'Tránsito Destino':  { bg: 'rgba(139,92,246,.18)', color: '#a78bfa' },
-    'En Aduana':         { bg: 'rgba(245,158,11,.18)', color: '#fbbf24' },
-    'Tránsito Mar/Aér':  { bg: 'rgba(6,182,212,.18)',  color: '#22d3ee' },
-    'Booking':           { bg: 'rgba(59,130,246,.18)', color: '#60a5fa' },
-    'Pendiente':         { bg: 'rgba(71,85,105,.18)',  color: '#94a3b8' },
+    'Liberado':     { bg: 'rgba(34,197,94,.18)',   color: '#22c55e' },
+    'Etiq.':        { bg: 'rgba(168,85,247,.18)',  color: '#c084fc' },
+    'Verif.':       { bg: 'rgba(99,102,241,.18)',  color: '#818cf8' },
+    'Almacén':      { bg: 'rgba(139,92,246,.18)',  color: '#a78bfa' },
+    'Destino':      { bg: 'rgba(245,158,11,.18)',  color: '#fbbf24' },
+    'Lleg. Puerto': { bg: 'rgba(6,182,212,.18)',   color: '#22d3ee' },
+    'Booking':      { bg: 'rgba(59,130,246,.18)',  color: '#60a5fa' },
+    'Entrega':      { bg: 'rgba(236,72,153,.18)',  color: '#f472b6' },
+    'Pendiente':    { bg: 'rgba(71,85,105,.18)',   color: '#94a3b8' },
   };
 
   estadoStyle(e: Importacion): { background: string; color: string } {
@@ -243,6 +335,7 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
   eliminando: number | null = null;
 
   eliminar(e: Importacion, event: MouseEvent): void {
+    if (!this.puedeEliminarImportacion()) return;
     event.stopPropagation();
     if (!confirm(`¿Eliminar el embarque "${e.referencia} - ${e.nombre || ''}"?\nEsta acción no se puede deshacer.`)) return;
     this.eliminando = e.id;
@@ -282,6 +375,7 @@ export class ImportacionesComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   crearNuevo(): void {
+    if (!this.puedeCrearImportacion()) return;
     if (!this.nuevoEmbarque.referencia?.trim()) return;
     this.guardandoNuevo = true;
     this.svc.crear(this.nuevoEmbarque).subscribe({

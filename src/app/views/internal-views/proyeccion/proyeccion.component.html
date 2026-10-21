@@ -7,7 +7,7 @@
         <button class="btn-volver" [routerLink]="['/home']">
             <i class="fas fa-arrow-left"></i> Volver
         </button>
-        <button class="btn-administrar" [routerLink]="['/proyeccion/control']">
+        <button *ngIf="puedeAdministrar" class="btn-administrar" [routerLink]="['/proyeccion/control']">
             <i class="fas fa-cog"></i> Administrar
         </button>
         <button class="btn-exportar" (click)="abrirDialogoExportar()">
@@ -178,14 +178,14 @@
                     <td>{{ item.precio_publico_con_iva | currency }}</td>
                     <td>{{ item.precio_publico_sin_iva | currency }}</td>
                     <td>{{ item.precio_publico_con_iva_my26 | currency }}</td>
-                    <td>{{ item.precio_distribuidor_con_iva | currency }}</td>
-                    <td>{{ item.precio_distribuidor_sin_iva | currency }}</td>
-                    <td>{{ item.precio_partner_con_iva | currency }}</td>
-                    <td>{{ item.precio_partner_sin_iva | currency }}</td>
-                    <td>{{ item.precio_elite_con_iva | currency }}</td>
-                    <td>{{ item.precio_elite_sin_iva | currency }}</td>
-                    <td>{{ item.precio_elite_plus_con_iva | currency }}</td>
-                    <td>{{ item.precio_elite_plus_sin_iva | currency }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_distribuidor_con_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_distribuidor_sin_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_partner_con_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_partner_sin_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_elite_con_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_elite_sin_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_elite_plus_con_iva | currency) }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.precio_elite_plus_sin_iva | currency) }}</td>
 
                     <!-- Quincenas -->
                     <td>{{ item.q1_sep_2025 }}</td>
@@ -205,7 +205,7 @@
 
                     <!-- Totales -->
                     <td>{{ item.orden_total_cant }}</td>
-                    <td>{{ item.orden_total_importe | currency }}</td>
+                    <td>{{ debeOcultarMontos ? '-' : (item.orden_total_importe | currency) }}</td>
 
                     <!-- Botón Detalles -->
                     <td>

@@ -5,6 +5,8 @@ import { AlertaService } from '../../../services/alerta.service';
 import { ClientesService } from '../../../services/clientes.service';
 import { RouterModule } from '@angular/router';
 import { TopBarUsuariosComponent } from '../../../components/top-bar-usuarios/top-bar-usuarios.component';
+import { AccesoRestringidoComponent } from '../../../components/acceso-restringido/acceso-restringido.component';
+import { AuthService } from '../../../services/auth.service';
 import * as XLSX from 'xlsx';
 import * as FileSaver from 'file-saver';
 
@@ -13,7 +15,7 @@ import * as FileSaver from 'file-saver';
   standalone: true,
   templateUrl: './proyeccion-historial.component.html',
   styleUrls: ['./proyeccion-historial.component.css'],
-  imports: [CommonModule, RouterModule, TopBarUsuariosComponent]
+  imports: [CommonModule, RouterModule, TopBarUsuariosComponent, AccesoRestringidoComponent]
 })
 export class ProyeccionHistorialComponent implements OnInit {
 
@@ -34,10 +36,24 @@ export class ProyeccionHistorialComponent implements OnInit {
   constructor(
     private proyeccionService: ProyeccionService,
     private alertaService: AlertaService,
-    private clientesService: ClientesService
+    private clientesService: ClientesService,
+    private authService: AuthService
   ) { }
 
+  get puedeVer(): boolean {
+    return this.authService.tieneModulo('usuarios_proyeccion_compras');
+  }
+
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('proyeccion_compras');
+  }
+
   ngOnInit(): void {
+    if (!this.puedeVer) {
+      this.cargando = false;
+      return;
+    }
+
     this.clientesService.getInfoClienteActual().subscribe({
       next: (cliente) => this.clienteInfo = cliente,
       error: (err) => console.error('Error al obtener cliente:', err)

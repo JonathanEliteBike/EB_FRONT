@@ -1,0 +1,297 @@
+<app-home-bar></app-home-bar>
+
+<div class="panel-page">
+ <div class="panel-inner">
+  <div class="panel-page-header">
+    <div class="header-izq">
+      <a routerLink="/importaciones" class="back-btn" title="Volver a Importaciones">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div>
+        <h2>Auditoría de llenado — todos los embarques</h2>
+        <p class="resumen-nota">
+          Proyectado (P) vs Real (R) por hito, en el mismo orden en que se llenan. Verde = se llenó antes
+          de lo esperado, rojo = después. Clic en un embarque para ver el detalle completo.
+        </p>
+      </div>
+    </div>
+    <div class="header-acciones">
+      <a *ngIf="esAdmin" routerLink="/importaciones/hitos-auditoria" [queryParams]="{ from: 'auditoria' }" class="btn-secundario" title="Configurar los hitos que mide esta auditoría">
+        <i class="fas fa-sliders"></i> Configurar hitos
+      </a>
+    </div>
+  </div>
+
+  <div class="wiz-error" *ngIf="error">{{ error }}</div>
+  <div *ngIf="cargando">Cargando…</div>
+
+  <div *ngIf="!cargando && !error">
+    <div class="panorama" *ngIf="embarques.length">
+      <div class="panorama-header">
+        <div class="panorama-titulo-wrap">
+          <h3>Panorama general</h3>
+          <p class="panorama-nota">
+            Solo embarques dados de alta desde {{ fmtD(FECHA_INICIO_PANORAMA) }} en adelante -- los anteriores
+            no tienen historial completo de captura y distorsionarían el promedio.
+          </p>
+        </div>
+        <div class="panorama-header-der">
+          <div class="panorama-kpis">
+            <div class="kpi-lat" *ngIf="latenciaTotalGeneral() !== null" [ngClass]="deltaClass(latenciaTotalGeneral())">
+              <span class="kpi-lat-lbl">Latencia total</span>
+              <span class="kpi-lat-val">
+                <i class="fas" [ngClass]="latenciaTotalGeneral()! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                {{ latenciaTotalGeneral()! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotalGeneral()!) }}d
+              </span>
+            </div>
+            <div class="cump-kpi" *ngIf="cumplimientoGeneral() as cg" [ngClass]="cumplimientoClass(cg.pct)" tabindex="0">
+              <div class="cump-kpi-ring">
+                <svg viewBox="0 0 36 36" class="cump-ring-svg">
+                  <path class="cump-ring-track"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="cump-ring-fill"
+                        [attr.stroke-dasharray]="cg.pct + ' 100'"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <span class="cump-kpi-pct">{{ cg.pct }}<small>%</small></span>
+              </div>
+              <div class="cump-kpi-txt">
+                <span class="cump-kpi-lbl">Cumplimiento general</span>
+                <span class="cump-kpi-frac">{{ cg.enTiempo }} de {{ cg.total }} hitos en tiempo</span>
+              </div>
+
+              <div class="cump-kpi-pop" role="tooltip">
+                <div class="cump-kpi-pop-card">
+                  <div class="cump-kpi-pop-head">
+                    <span>Embarques en el cálculo</span>
+                    <span class="cump-kpi-pop-count">{{ cumplimientoParticipantes().length }}</span>
+                  </div>
+                  <button type="button" class="cump-kpi-pop-row" *ngFor="let p of cumplimientoParticipantes()" (click)="irATarjeta(p.id)">
+                    <span class="cump-kpi-pop-line">
+                      <span class="cump-kpi-pop-ref">{{ p.referencia }}</span>
+                      <span class="cump-kpi-pop-val" [ngClass]="cumplimientoClass(p.pct)">
+                        {{ p.enTiempo }}/{{ p.total }}
+                        <span class="cump-kpi-pop-pct">{{ p.pct }}%</span>
+                      </span>
+                    </span>
+                    <span class="cump-kpi-pop-bar">
+                      <span class="cump-kpi-pop-fill" [ngClass]="cumplimientoClass(p.pct)" [style.width.%]="p.pct"></span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-toggle-desglose" *ngIf="embarquesDesdeHoy().length" (click)="mostrarDesglose = !mostrarDesglose">
+            {{ mostrarDesglose ? 'Ocultar desglose' : 'Ver desglose por sección' }}
+            <i class="fas" [ngClass]="mostrarDesglose ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+        </div>
+      </div>
+
+      <p class="panorama-vacio" *ngIf="!embarquesDesdeHoy().length">
+        Todavía no hay embarques dados de alta desde {{ fmtD(FECHA_INICIO_PANORAMA) }} -- este panorama se va a
+        ir llenando conforme se registren embarques nuevos.
+      </p>
+
+      <p class="panorama-vacio" *ngIf="embarquesDesdeHoy().length && mostrarDesglose && !promediosPorSeccion().length">
+        Los embarques de este periodo todavía no tienen ningún hito calculado -- vuelve a revisar en unos días.
+      </p>
+      <div class="panorama-grupos" *ngIf="embarquesDesdeHoy().length && mostrarDesglose && promediosPorSeccion().length">
+        <div class="pn-grupo" *ngFor="let grupo of promediosPorSeccion()">
+          <div class="pn-grupo-header">
+            <span class="pn-dot" [style.background]="seccionColor(grupo.seccion)"></span>
+            <span class="pn-titulo">{{ seccionLabel(grupo.seccion) }}</span>
+          </div>
+          <div class="pn-hitos">
+            <div class="pn-hito" *ngFor="let h of grupo.hitos" [ngClass]="deltaClass(h.promedio)" [title]="h.etiqueta">
+              <span class="pn-hito-prom">
+                {{ h.promedio >= 0 ? '+' : '−' }}{{ absDif(h.promedio) | number:'1.0-1' }}d
+              </span>
+              <span class="pn-hito-lbl">{{ h.etiqueta }}</span>
+              <span class="pn-hito-n">{{ h.n }} embarque{{ h.n === 1 ? '' : 's' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filtros-row" *ngIf="embarques.length">
+      <div class="filtro-busqueda">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="busqueda" placeholder="Buscar por referencia o nombre…" />
+      </div>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('atrasados')" (click)="toggleEstadoFiltro('atrasados')">
+        Atrasados
+      </button>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('adelantados')" (click)="toggleEstadoFiltro('adelantados')">
+        Adelantados
+      </button>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('sin_historial')" (click)="toggleEstadoFiltro('sin_historial')">
+        Sin dato histórico
+      </button>
+      <button class="filtro-chip" [class.active]="estadosFiltro.has('al_corriente')" (click)="toggleEstadoFiltro('al_corriente')">
+        Al corriente
+      </button>
+      <select class="filtro-select" [(ngModel)]="seccionFiltro" title="Mostrar solo embarques con pendientes en esta sección">
+        <option value="">Todas las secciones</option>
+        <option *ngFor="let s of seccionesFiltro" [value]="s.value">{{ s.label }}</option>
+      </select>
+      <div class="mes-picker">
+        <button type="button" class="mes-picker-trigger" (click)="toggleMesPicker()" [class.abierto]="mesPickerAbierto"
+                aria-label="Filtrar por mes de alta">
+          <i class="fas fa-calendar-days"></i>
+          <span>{{ mesFiltroLabel }}</span>
+          <i class="fas fa-chevron-down mes-picker-chev"></i>
+        </button>
+
+        <ng-container *ngIf="mesPickerAbierto">
+          <div class="mes-picker-backdrop" (click)="cerrarMesPicker()"></div>
+          <div class="mes-picker-panel" role="dialog" aria-label="Elegir mes">
+            <div class="mes-picker-anio">
+              <button type="button" class="mes-picker-nav" (click)="anioVista = anioVista - 1" aria-label="Año anterior">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="mes-picker-anio-val">{{ anioVista }}</span>
+              <button type="button" class="mes-picker-nav" (click)="anioVista = anioVista + 1" aria-label="Año siguiente">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+            <div class="mes-picker-grid">
+              <button type="button" class="mes-picker-celda" *ngFor="let m of mesesAbr; let i = index"
+                      [class.seleccionado]="mesEsSeleccionado(i)"
+                      [class.vacio]="!mesTieneEmbarques(i)"
+                      (click)="elegirMes(i)">{{ m }}</button>
+            </div>
+            <div class="mes-picker-pie">
+              <button type="button" class="mes-picker-todos" (click)="quitarMesFiltro()">Todos los meses</button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <div class="filtro-fechas-picker">
+        <app-date-picker
+          mode="range"
+          placeholder="Fecha de alta del embarque"
+          [desde]="fechaDesde"
+          [hasta]="fechaHasta"
+          (rangeChange)="onRangoFechaChange($event)">
+        </app-date-picker>
+      </div>
+      <button class="btn-limpiar-filtros" *ngIf="hayFiltrosActivos" (click)="limpiarFiltros()">
+        <i class="fas fa-xmark"></i> Limpiar
+      </button>
+    </div>
+
+    <div class="leyenda-row" *ngIf="embarques.length">
+      <span class="leg-item"><span class="rk rk-p">P</span>Proyectado</span>
+      <span class="leg-item"><span class="rk rk-r">R</span>Real</span>
+      <span class="leg-item leg-realcell"><span class="leg-cell-sw"></span>A tiempo / adelantado</span>
+      <span class="leg-item leg-realcell leg-sw-atrasado"><span class="leg-cell-sw"></span>Atrasado</span>
+      <span class="leg-item leg-realcell leg-sw-espera"><span class="leg-cell-sw"></span>En espera</span>
+      <span class="leg-divider"></span>
+      <span class="leg-sep">Ordenar por:</span>
+      <button class="orden-pill" [class.active]="orden === 'atrasados'" (click)="ordenarPor('atrasados')">Atrasados</button>
+      <button class="orden-pill" [class.active]="orden === 'adelantados'" (click)="ordenarPor('adelantados')">Adelantados</button>
+      <button class="orden-pill" [class.active]="orden === 'referencia'" (click)="ordenarPor('referencia')">Referencia</button>
+    </div>
+
+    <p class="asig-vacio" *ngIf="!embarques.length">No hay embarques para auditar.</p>
+    <div class="asig-vacio asig-vacio-filtro" *ngIf="embarques.length && !embarquesVisibles().length">
+      No hay embarques que coincidan con los filtros.
+      <button class="link-limpiar" (click)="limpiarFiltros()">Limpiar filtros</button>
+    </div>
+
+    <div class="cards-wrap" *ngIf="embarquesVisibles().length">
+      <div *ngFor="let e of embarquesVisibles(); let i = index" class="emb-card" [id]="'emb-card-' + e.id" [style.--stagger]="i"
+           (click)="irDetalle(e.id)">
+
+        <div class="ec-top">
+          <div class="ec-ident">
+            <div class="ec-ref-row">
+              <span class="ref-badge">{{ e.referencia }}</span>
+              <span class="badge-lat" *ngIf="latenciaTotal(e) !== null" [ngClass]="deltaClass(latenciaTotal(e))"
+                    title="Balance neto de días: suma de adelantos y atrasos de todos los hitos ya calculados">
+                <i class="fas" [ngClass]="latenciaTotal(e)! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                Latencia total: {{ latenciaTotal(e)! >= 0 ? '+' : '−' }}{{ absDif(latenciaTotal(e)!) }}d
+              </span>
+              <span class="auditoria-badge auditoria-neutra" *ngIf="e.no_aplica > 0" title="Embarque creado antes de implementarse esta auditoría -- sus hitos no reciben veredicto de atraso/adelanto">
+                <i class="fas fa-ban"></i> no aplica (anterior a la auditoría)
+              </span>
+              <ng-container *ngIf="e.no_aplica === 0">
+                <span class="auditoria-badge auditoria-rojo" *ngIf="atrasadosConVencidos(e) > 0">{{ atrasadosConVencidos(e) }} atrasado{{ atrasadosConVencidos(e) === 1 ? '' : 's' }}</span>
+                <span class="auditoria-badge auditoria-verde" *ngIf="e.adelantados > 0">{{ e.adelantados }} adelantado{{ e.adelantados === 1 ? '' : 's' }}</span>
+                <span class="auditoria-badge auditoria-gris" *ngIf="e.a_tiempo > 0">{{ e.a_tiempo }} a tiempo</span>
+                <span class="auditoria-badge auditoria-gris" *ngIf="e.sin_historial > 0">{{ e.sin_historial }} sin dato histórico</span>
+                <span class="auditoria-badge auditoria-neutra" *ngIf="atrasadosConVencidos(e) === 0 && e.adelantados === 0 && e.a_tiempo === 0">al corriente</span>
+              </ng-container>
+            </div>
+            <span class="ec-nombre" [title]="e.nombre">{{ e.nombre }}</span>
+            <div class="ec-progress" *ngIf="segmentosProgreso(e).length" [title]="e.hitos.length + ' hitos activos'">
+              <span class="ec-progress-seg" *ngFor="let s of segmentosProgreso(e)" [ngClass]="s.clase" [style.width.%]="s.pct" [title]="s.label"></span>
+            </div>
+          </div>
+
+          <div class="cump-ring" *ngIf="e.no_aplica === 0 && pctCumplimiento(e) !== null" [ngClass]="cumplimientoClass(pctCumplimiento(e))"
+               [title]="'Cumplimiento: ' + enTiempo(e) + '/' + e.hitos.length + ' hitos en tiempo (a tiempo o adelantados)'">
+            <svg viewBox="0 0 36 36" class="cump-ring-svg">
+              <path class="cump-ring-track"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="cump-ring-fill"
+                    [attr.stroke-dasharray]="pctCumplimiento(e) + ' 100'"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="cump-ring-center">
+              <span class="cump-ring-pct">{{ pctCumplimiento(e) }}<small>%</small></span>
+              <span class="cump-ring-frac">{{ enTiempo(e) }}/{{ e.hitos.length }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ec-vacio" *ngIf="!e.hitos.length">Sin hitos configurados o activos.</div>
+
+        <div class="ec-pipeline" *ngIf="e.hitos.length">
+          <div *ngFor="let h of e.hitos" class="ec-stage ec-stage-click" [ngClass]="stageCls(h)"
+               (click)="irHito(e, h, $event)" [title]="h.etiqueta + ' — ver en el detalle'">
+            <span class="ec-stage-seccion" [style.color]="seccionColor(h.seccion)">{{ seccionAbbr(h.seccion) }}</span>
+            <span class="ec-stage-lbl">{{ h.etiqueta }}</span>
+
+            <ng-container *ngIf="h.estado === 'no_aplica'; else bloqueNormal">
+              <span class="ec-stage-r" *ngIf="h.fecha_real">
+                <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
+              </span>
+              <span class="ec-stage-tag ec-tag-no-aplica" title="Embarque anterior a la implementación de esta auditoría">
+                <i class="fas fa-ban"></i> no aplica
+              </span>
+            </ng-container>
+            <ng-template #bloqueNormal>
+              <ng-container *ngIf="h.estado !== 'pendiente'; else bloquePendiente">
+                <span class="ec-stage-p">
+                  <span class="rk rk-p" title="Proyectado">P</span>{{ fmtD(h.fecha_esperada) }}
+                </span>
+                <span class="ec-stage-r">
+                  <span class="rk rk-r" title="Real">R</span>{{ fmtD(h.fecha_real) }}
+                </span>
+                <span class="ec-stage-d" *ngIf="diasConVencido(h) != null" [ngClass]="deltaClass(diasConVencido(h))" [title]="estaVencido(h) ? 'Venció y sigue sin llenarse' : ''">
+                  <i class="fas" [ngClass]="diasConVencido(h)! >= 0 ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                  {{ absDif(diasConVencido(h)!) }}d
+                </span>
+                <span class="ec-stage-tag ec-tag-espera" *ngIf="h.estado === 'en_espera' && !estaVencido(h)">
+                  <i class="fas fa-clock"></i> en espera
+                </span>
+                <span class="ec-stage-tag ec-tag-sin-historial" *ngIf="h.estado === 'sin_historial'">
+                  <i class="fas fa-circle-info"></i> sin dato histórico
+                </span>
+              </ng-container>
+              <ng-template #bloquePendiente>
+                <span class="ec-stage-tag ec-tag-pendiente"><i class="fas fa-minus"></i> pendiente</span>
+              </ng-template>
+            </ng-template>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+ </div>
+</div>

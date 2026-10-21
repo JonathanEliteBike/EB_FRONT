@@ -15,7 +15,7 @@
       <button class="btn btn-outline" (click)="cargar()">
         <i class="fas fa-sync-alt" [class.fa-spin]="cargando"></i> Actualizar
       </button>
-      <button *ngIf="esAdmin" class="btn btn-import" (click)="abrirModalImport()">
+      <button *ngIf="puedeCrear" class="btn btn-import" (click)="abrirModalImport()">
         <i class="fas fa-file-upload"></i> Importar histórico
       </button>
     </div>
@@ -270,7 +270,10 @@
               {{ t.estatus }}
             </span>
           </div>
-          <div class="tc-distribuidor">{{ t.distribuidor }}</div>
+          <div class="tc-distribuidor">
+            {{ t.distribuidor }}
+            <span *ngIf="t.clave_distribuidor" class="clave-badge" title="Clave del distribuidor">{{ t.clave_distribuidor }}</span>
+          </div>
           <div class="tc-meta">
             <span class="tc-marca">{{ t.marca }}</span>
             <span class="tc-dot">·</span>
@@ -297,12 +300,12 @@
         </div>
         <div class="dp-header-actions">
           <!-- Eliminación con confirmación inline (solo admins) -->
-          <ng-container *ngIf="esAdmin && !confirmandoEliminacion">
+          <ng-container *ngIf="puedeEliminar && !confirmandoEliminacion">
             <button class="del-btn" (click)="confirmandoEliminacion = true" title="Eliminar ticket">
               <i class="fas fa-trash-alt"></i>
             </button>
           </ng-container>
-          <ng-container *ngIf="esAdmin && confirmandoEliminacion">
+          <ng-container *ngIf="puedeEliminar && confirmandoEliminacion">
             <span class="del-confirm-label">¿Eliminar y renumerar?</span>
             <button class="del-confirm-yes" (click)="eliminarTicket()" [disabled]="eliminando">
               <i class="fas" [class.fa-check]="!eliminando" [class.fa-spinner]="eliminando" [class.fa-spin]="eliminando"></i>
@@ -331,7 +334,13 @@
               <div class="dp-section">
                 <h4 class="dp-section-title">Información del Ticket</h4>
                 <div class="dp-grid">
-                  <div class="dp-field"><span class="dp-key">Distribuidor</span><span class="dp-val">{{ selected.distribuidor }}</span></div>
+                  <div class="dp-field">
+                    <span class="dp-key">Distribuidor</span>
+                    <span class="dp-val">
+                      {{ selected.distribuidor }}
+                      <span *ngIf="selected.clave_distribuidor" class="clave-badge" title="Clave del distribuidor">{{ selected.clave_distribuidor }}</span>
+                    </span>
+                  </div>
                   <div class="dp-field"><span class="dp-key">Contacto</span><span class="dp-val">{{ selected.contacto }}</span></div>
                   <div class="dp-field"><span class="dp-key">Rol</span><span class="dp-val">{{ selected.puesto }}</span></div>
                   <div class="dp-field"><span class="dp-key">Email</span><span class="dp-val">{{ selected.datos?.['email'] || selected.email }}</span></div>
@@ -340,9 +349,9 @@
                     <span class="dp-key">Fecha</span>
                     <span class="dp-val" *ngIf="!editandoFechaCreacion" style="display:flex;align-items:center;gap:6px;">
                       {{ selected.fecha_creacion }}
-                      <button class="btn-icon-sm" title="Editar fecha de alta (retroactivo)" (click)="iniciarEditFechaCreacion()"><i class="fas fa-pen"></i></button>
+                      <button *ngIf="puedeEditar" class="btn-icon-sm" title="Editar fecha de alta (retroactivo)" (click)="iniciarEditFechaCreacion()"><i class="fas fa-pen"></i></button>
                     </span>
-                    <span class="dp-val" *ngIf="editandoFechaCreacion" style="display:flex;align-items:center;gap:6px;">
+                    <span class="dp-val" *ngIf="puedeEditar && editandoFechaCreacion" style="display:flex;align-items:center;gap:6px;">
                       <input type="date" [(ngModel)]="editFechaCreacion" [max]="hoy" style="font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid #555;background:#1a1a2e;color:#fff;">
                       <button class="btn-confirm-sm" (click)="guardarFechaCreacion()">Guardar</button>
                       <button class="btn-cancel-sm" (click)="editandoFechaCreacion=false">✕</button>
@@ -424,7 +433,7 @@
                 <h4 class="dp-section-title"><i class="fas fa-paperclip"></i> Documentos y validación</h4>
 
                 <!-- Fecha retroactiva de validación (solo admins) -->
-                <div class="fecha-retro-band" *ngIf="esAdmin" [class.fecha-retro-activa]="!!fechaValidacion">
+                <div class="fecha-retro-band" *ngIf="puedeEditar" [class.fecha-retro-activa]="!!fechaValidacion">
                   <div class="fecha-retro-icon"><i class="fas fa-calendar-alt"></i></div>
                   <div class="fecha-retro-body">
                     <span class="fecha-retro-label">
@@ -456,7 +465,7 @@
                         <span *ngIf="validacionDocs['numero_serie'] === 'rechazado'" class="val-status-chip rejected"><i class="fas fa-times"></i> Rechazado</span>
                       </div>
                     </div>
-                    <div class="doc-action-bar">
+                    <div class="doc-action-bar" *ngIf="puedeEditar">
                       <button class="val-action accept"
                               [class.active]="validacionDocs['numero_serie'] === 'valido'"
                               [disabled]="validandoDoc['numero_serie']"
@@ -476,9 +485,11 @@
                   <div *ngFor="let doc of documentos" class="doc-unit"
                        [class.doc-valido]="validacionDocs[doc.key] === 'valido'"
                        [class.doc-rechazado]="validacionDocs[doc.key] === 'rechazado'">
-                    <a [href]="archivoVerUrl(doc.nombre)" target="_blank" class="doc-body">
+                    <a [attr.href]="archivoListo(doc.nombre) ? archivoSrc(doc.nombre) : null"
+                       [class.doc-cargando]="!archivoListo(doc.nombre)"
+                       target="_blank" class="doc-body">
                       <div class="doc-body-icon">
-                        <i class="fas" [ngClass]="iconoArchivo(doc.nombre)"></i>
+                        <i class="fas" [ngClass]="archivoListo(doc.nombre) ? iconoArchivo(doc.nombre) : 'fa-spinner fa-spin'"></i>
                       </div>
                       <div class="doc-body-info">
                         <span class="doc-field-label">{{ doc.label }}</span>
@@ -489,14 +500,14 @@
                         </span>
                       </div>
                       <div class="doc-right">
-                        <img *ngIf="esImagen(doc.nombre)" [src]="archivoVerUrl(doc.nombre)" class="doc-thumb" alt="">
+                        <img *ngIf="esImagen(doc.nombre) && archivoListo(doc.nombre)" [src]="archivoSrc(doc.nombre)" class="doc-thumb" alt="">
                         <div class="doc-val-status">
                           <span *ngIf="validacionDocs[doc.key] === 'valido'"    class="val-status-chip valid"><i class="fas fa-check"></i></span>
                           <span *ngIf="validacionDocs[doc.key] === 'rechazado'" class="val-status-chip rejected"><i class="fas fa-times"></i></span>
                         </div>
                       </div>
                     </a>
-                    <div class="doc-action-bar">
+                    <div class="doc-action-bar" *ngIf="puedeEditar">
                       <button class="val-action accept"
                               [class.active]="validacionDocs[doc.key] === 'valido'"
                               [disabled]="validandoDoc[doc.key]"
@@ -525,11 +536,11 @@
               <div class="dp-section">
                 <h4 class="dp-section-title">
                   <i class="fas fa-wrench"></i> Pieza de reemplazo
-                  <span class="pieza-hdr-actions">
-                    <button class="btn-agregar-pieza" (click)="mostrarFormPieza = !mostrarFormPieza; mostrarGestionPiezas = false" title="Agregar nueva pieza al catálogo">
+                  <span class="pieza-hdr-actions" *ngIf="puedeCrear || puedeEliminar">
+                    <button *ngIf="puedeCrear" class="btn-agregar-pieza" (click)="mostrarFormPieza = !mostrarFormPieza; mostrarGestionPiezas = false" title="Agregar nueva pieza al catálogo">
                       <i class="fas fa-plus"></i> Nueva pieza
                     </button>
-                    <button class="btn-gestionar-piezas" [class.btn-gestionar-activo]="mostrarGestionPiezas"
+                    <button *ngIf="puedeEliminar" class="btn-gestionar-piezas" [class.btn-gestionar-activo]="mostrarGestionPiezas"
                             (click)="mostrarGestionPiezas ? cerrarGestionPiezas() : abrirGestionPiezas()"
                             title="Quitar piezas duplicadas o mal capturadas del catálogo">
                       <i class="fas fa-broom"></i> Gestionar
@@ -538,7 +549,7 @@
                 </h4>
 
                 <!-- Formulario agregar pieza -->
-                <div class="form-nueva-pieza" *ngIf="mostrarFormPieza">
+                <div class="form-nueva-pieza" *ngIf="puedeCrear && mostrarFormPieza">
                   <input type="text" class="input-nueva-pieza" [(ngModel)]="nuevaPieza"
                          placeholder="Nombre de la pieza (ej. HORQUILLA)"
                          (keyup.enter)="agregarNuevaPieza()">
@@ -552,7 +563,7 @@
                 </div>
 
                 <!-- Panel: gestionar catálogo (quitar duplicados / errores) -->
-                <div class="panel-gestion-piezas" *ngIf="mostrarGestionPiezas">
+                <div class="panel-gestion-piezas" *ngIf="puedeEliminar && mostrarGestionPiezas">
                   <div class="gestion-piezas-hint">
                     <i class="fas fa-info-circle"></i> Quita piezas duplicadas o capturadas por error. No afecta tickets que ya la tengan asignada.
                   </div>
@@ -588,7 +599,7 @@
                   </div>
                 </div>
 
-                <div class="pieza-reem-wrap">
+                <div class="pieza-reem-wrap" *ngIf="puedeEditar; else piezaSoloLectura">
                   <select class="pieza-select"
                           [(ngModel)]="piezaSeleccionada"
                           (ngModelChange)="cambiarPiezaReemplazo($event)"
@@ -606,6 +617,9 @@
                     <i class="fas fa-redo"></i> Reintentar
                   </button>
                 </div>
+                <ng-template #piezaSoloLectura>
+                  <span class="dp-val">{{ selected.pieza_reemplazo || 'Sin pieza asignada' }}</span>
+                </ng-template>
               </div>
 
               <!-- Estado de la pieza -->
@@ -614,7 +628,7 @@
                   <i class="fas fa-tools"></i> Estado de la pieza
                   <span class="na-hint" *ngIf="piezaEsNA">— No aplica</span>
                 </h4>
-                <div class="estatus-buttons">
+                <div class="estatus-buttons" *ngIf="puedeEditar; else estatusPiezaSoloLectura">
                   <button *ngFor="let p of estatusesPieza" class="estatus-btn"
                           [class.active]="selected.estatus_pieza === p"
                           [style.--accent]="colorPieza(p)"
@@ -624,8 +638,11 @@
                     {{ p }}
                   </button>
                 </div>
+                <ng-template #estatusPiezaSoloLectura>
+                  <span class="dp-val">{{ selected.estatus_pieza }}</span>
+                </ng-template>
                 <!-- Fecha del estatus de pieza actual -->
-                <div *ngIf="selected.estatus_pieza && selected.estatus_pieza !== 'Sin pieza' && !pendientePieza" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-secondary,#aaa);">
+                <div *ngIf="puedeEditar && selected.estatus_pieza && selected.estatus_pieza !== 'Sin pieza' && !pendientePieza" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-secondary,#aaa);">
                   <i class="fas fa-calendar-alt"></i>
                   <ng-container *ngIf="!editandoFechaPieza">
                     <span *ngIf="selected.fecha_pieza">{{ selected.fecha_pieza }}</span>
@@ -639,7 +656,7 @@
                   </ng-container>
                 </div>
                 <!-- Panel confirmación cambio de pieza -->
-                <div *ngIf="pendientePieza" class="fecha-confirm-panel">
+                <div *ngIf="puedeEditar && pendientePieza" class="fecha-confirm-panel">
                   <div class="fecha-confirm-info">
                     Cambiar a <strong>{{ pendientePieza }}</strong>
                   </div>
@@ -658,7 +675,7 @@
               <!-- Estatus del ticket -->
               <div class="dp-section">
                 <h4 class="dp-section-title"><i class="fas fa-exchange-alt"></i> Estatus del ticket</h4>
-                <div class="estatus-buttons">
+                <div class="estatus-buttons" *ngIf="puedeEditar; else estatusTicketSoloLectura">
                   <button *ngFor="let e of estatuses.slice(1)" class="estatus-btn"
                           [class.active]="selected.estatus === e"
                           [style.--accent]="colorEstatus(e)"
@@ -668,8 +685,11 @@
                     {{ e }}
                   </button>
                 </div>
+                <ng-template #estatusTicketSoloLectura>
+                  <span class="dp-val">{{ selected.estatus }}</span>
+                </ng-template>
                 <!-- Fecha del estatus actual del ticket -->
-                <div *ngIf="selected.estatus && !pendienteEstatus" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-secondary,#aaa);">
+                <div *ngIf="puedeEditar && selected.estatus && !pendienteEstatus" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-secondary,#aaa);">
                   <i class="fas fa-calendar-alt"></i>
                   <ng-container *ngIf="!editandoFechaEstatus">
                     <span *ngIf="selected.fecha_estatus">{{ selected.fecha_estatus }}</span>
@@ -683,7 +703,7 @@
                   </ng-container>
                 </div>
                 <!-- Panel confirmación cambio de estatus -->
-                <div *ngIf="pendienteEstatus" class="fecha-confirm-panel">
+                <div *ngIf="puedeEditar && pendienteEstatus" class="fecha-confirm-panel">
                   <div class="fecha-confirm-info">
                     Cambiar a <strong>{{ pendienteEstatus }}</strong>
                   </div>
@@ -730,17 +750,44 @@
                           {{ c.tipo === 'estatus' ? 'Estatus' : c.tipo === 'pieza' ? 'Pieza' : c.tipo === 'validacion' ? 'Validación' : c.tipo === 'nota_interna' ? 'Nota interna' : 'Nota' }}
                         </span>
                         <span class="tl-fecha">{{ c.fecha }}</span>
+                        <span class="tl-comment-actions" *ngIf="esAdmin && c.tipo === 'comentario' && editandoComentarioId !== c.id">
+                          <button class="tl-action-btn" title="Editar" (click)="iniciarEdicionComentario(c)">
+                            <i class="fas fa-pen"></i>
+                          </button>
+                          <button class="tl-action-btn tl-action-del" title="Eliminar"
+                                  (click)="confirmarEliminarComentario(c.id)" *ngIf="confirmandoEliminarComentarioId !== c.id">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                          <ng-container *ngIf="confirmandoEliminarComentarioId === c.id">
+                            <span class="tl-confirm-label">¿Eliminar?</span>
+                            <button class="tl-action-btn tl-action-del" [disabled]="eliminandoComentarioId === c.id" (click)="eliminarComentario(c.id)">
+                              <i class="fas" [class.fa-check]="eliminandoComentarioId !== c.id" [class.fa-spinner]="eliminandoComentarioId === c.id" [class.fa-spin]="eliminandoComentarioId === c.id"></i>
+                            </button>
+                            <button class="tl-action-btn" [disabled]="eliminandoComentarioId === c.id" (click)="cancelarEliminarComentario()">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          </ng-container>
+                        </span>
                       </div>
-                      <div class="tl-texto">{{ c.texto }}</div>
+                      <div class="tl-texto" *ngIf="editandoComentarioId !== c.id">{{ c.texto }}</div>
+                      <div class="tl-edit-form" *ngIf="editandoComentarioId === c.id">
+                        <textarea class="comment-input" [(ngModel)]="textoComentarioEditado" rows="2"></textarea>
+                        <div class="tl-edit-actions">
+                          <button class="btn btn-primary btn-sm" [disabled]="!textoComentarioEditado.trim() || guardandoEdicionComentario" (click)="guardarEdicionComentario()">
+                            {{ guardandoEdicionComentario ? 'Guardando…' : 'Guardar' }}
+                          </button>
+                          <button class="btn btn-outline btn-sm" [disabled]="guardandoEdicionComentario" (click)="cancelarEdicionComentario()">Cancelar</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Agregar comentario público -->
-                <div class="comment-form">
+                <div class="comment-form" *ngIf="puedeCrear">
                   <textarea class="comment-input" [(ngModel)]="nuevoComentario"
                             placeholder="Escribe un comentario visible para el cliente…"
-                            rows="3"></textarea>
+                            rows="7"></textarea>
                   <button class="btn btn-primary btn-sm" (click)="enviarComentario()"
                           [disabled]="!nuevoComentario.trim() || enviandoComentario">
                     <i class="fas" [class.fa-paper-plane]="!enviandoComentario" [class.fa-spinner]="enviandoComentario"
@@ -750,11 +797,11 @@
                 </div>
               </div>
 
-              <!-- Notas Internas (solo administradores) -->
-              <div class="dp-section nota-interna-section" *ngIf="esAdmin">
+              <!-- Notas Internas -->
+              <div class="dp-section nota-interna-section" *ngIf="puedeVerNotasInternas">
                 <h4 class="dp-section-title nota-interna-title">
                   <i class="fas fa-lock"></i> Notas Internas
-                  <span class="nota-interna-badge">Solo admins</span>
+                  <span class="nota-interna-badge">Personal autorizado</span>
                 </h4>
                 <p class="nota-interna-hint">Estas notas no son visibles para el cliente.</p>
 
@@ -770,17 +817,44 @@
                           <span class="tl-autor">{{ c.autor }}</span>
                           <span class="tl-tipo-badge" data-tipo="nota_interna">Nota interna</span>
                           <span class="tl-fecha">{{ c.fecha }}</span>
+                          <span class="tl-comment-actions" *ngIf="editandoComentarioId !== c.id">
+                            <button class="tl-action-btn" title="Editar" (click)="iniciarEdicionComentario(c)">
+                              <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="tl-action-btn tl-action-del" title="Eliminar"
+                                    (click)="confirmarEliminarComentario(c.id)" *ngIf="confirmandoEliminarComentarioId !== c.id">
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <ng-container *ngIf="confirmandoEliminarComentarioId === c.id">
+                              <span class="tl-confirm-label">¿Eliminar?</span>
+                              <button class="tl-action-btn tl-action-del" [disabled]="eliminandoComentarioId === c.id" (click)="eliminarComentario(c.id)">
+                                <i class="fas" [class.fa-check]="eliminandoComentarioId !== c.id" [class.fa-spinner]="eliminandoComentarioId === c.id" [class.fa-spin]="eliminandoComentarioId === c.id"></i>
+                              </button>
+                              <button class="tl-action-btn" [disabled]="eliminandoComentarioId === c.id" (click)="cancelarEliminarComentario()">
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </ng-container>
+                          </span>
                         </div>
-                        <div class="tl-texto">{{ c.texto }}</div>
+                        <div class="tl-texto" *ngIf="editandoComentarioId !== c.id">{{ c.texto }}</div>
+                        <div class="tl-edit-form" *ngIf="editandoComentarioId === c.id">
+                          <textarea class="comment-input" [(ngModel)]="textoComentarioEditado" rows="2"></textarea>
+                          <div class="tl-edit-actions">
+                            <button class="btn btn-primary btn-sm" [disabled]="!textoComentarioEditado.trim() || guardandoEdicionComentario" (click)="guardarEdicionComentario()">
+                              {{ guardandoEdicionComentario ? 'Guardando…' : 'Guardar' }}
+                            </button>
+                            <button class="btn btn-outline btn-sm" [disabled]="guardandoEdicionComentario" (click)="cancelarEdicionComentario()">Cancelar</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </ng-container>
                 </div>
 
-                <div class="comment-form nota-interna-form">
+                <div class="comment-form nota-interna-form" *ngIf="puedeCrearNotasInternas">
                   <textarea class="comment-input" [(ngModel)]="notaInterna"
                             placeholder="Escribe una nota interna (solo visible para administradores)…"
-                            rows="3"></textarea>
+                            rows="7"></textarea>
                   <button class="btn btn-nota-interna btn-sm" (click)="enviarNotaInterna()"
                           [disabled]="!notaInterna.trim() || enviandoNota">
                     <i class="fas" [class.fa-lock]="!enviandoNota" [class.fa-spinner]="enviandoNota"

@@ -12,10 +12,20 @@ export interface GarantiasKpis {
 }
 
 export interface CuadroDetalle {
+  id: number;
   folio: string;
   distribuidor: string;
   tipo_marco: string;
   tipo_dano: string;
+}
+
+export interface PiezaDetalle {
+  id: number;
+  folio: string;
+  distribuidor: string;
+  marca: string;
+  estatus: string;
+  pieza_reemplazo: string;
 }
 
 export interface GarantiasDashboard {
@@ -25,6 +35,7 @@ export interface GarantiasDashboard {
   latencia_por_cliente: Record<string, number>;
   garantias_por_cliente: Record<string, number>;
   piezas_reemplazo: Record<string, number>;
+  piezas_detalle: PiezaDetalle[];
   ubicacion_dano: Record<string, number>;
   por_marca: Record<string, number>;
   cuadros_por_tipo_marco: Record<string, number>;
@@ -64,6 +75,7 @@ export interface GarantiaFormulario {
   folio: string;
   email: string;
   distribuidor: string;
+  clave_distribuidor?: string | null;
   contacto: string;
   puesto: string;
   marca: string;
@@ -231,6 +243,14 @@ export class GarantiasService {
     });
   }
 
+  editarComentario(comentarioId: number, texto: string): Observable<any> {
+    return this.http.put(`${this.api}/garantias/comentario/${comentarioId}`, { texto });
+  }
+
+  eliminarComentario(comentarioId: number): Observable<any> {
+    return this.http.delete(`${this.api}/garantias/comentario/${comentarioId}`);
+  }
+
   getMisTickets(): Observable<GarantiaFormulario[]> {
     return this.http.get<GarantiaFormulario[]>(`${this.api}/garantias/mis-tickets`);
   }
@@ -300,10 +320,12 @@ export class GarantiasService {
   // ── File uploads ─────────────────────────────────────
   subirArchivo(
     file: File,
+    accion: 'crear' | 'editar',
     onProgress?: (pct: number) => void
   ): Observable<{ ok: boolean; nombre: string; original: string }> {
     const fd = new FormData();
     fd.append('archivo', file);
+    fd.append('accion', accion);
 
     if (!onProgress) {
       return this.http.post<{ ok: boolean; nombre: string; original: string }>(

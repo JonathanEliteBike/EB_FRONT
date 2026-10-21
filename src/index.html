@@ -2,6 +2,11 @@
 <html lang="en">
 
 <head>
+  <!-- Debe ir aquí, síncrono, antes que cualquier otra cosa: el navegador
+       restaura su scroll nativo (history.scrollRestoration) como parte de la
+       navegación/pintado inicial, antes de que main.ts (un módulo diferido)
+       alcance a ejecutarse -- para esa altura ya es tarde para evitarlo. -->
+  <script>if ('scrollRestoration' in history) history.scrollRestoration = 'manual';</script>
   <meta charset="utf-8">
   <title>Elite Bike</title>
   <base href="/">

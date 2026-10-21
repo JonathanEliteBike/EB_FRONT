@@ -1,0 +1,86 @@
+.sin-acceso-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 2rem 1rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.sin-acceso-card {
+  max-width: 550px;
+  width: 100%;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-top: 4px solid #EB5E28;
+  border-radius: 14px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  color: #FFFCF2;
+}
+
+.sin-acceso-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.2rem auto;
+  background: rgba(235, 94, 40, 0.12);
+  border: 1px solid rgba(235, 94, 40, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #EB5E28;
+  font-size: 1.8rem;
+}
+
+.sin-acceso-card h2 {
+  margin: 0 0 0.8rem 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #FFFCF2;
+  letter-spacing: -0.3px;
+}
+
+.sin-acceso-msj {
+  font-size: 0.95rem;
+  color: #CCC5B9;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.sin-acceso-msj strong {
+  color: #EB5E28;
+}
+
+.sin-acceso-submsj {
+  display: block;
+  font-size: 0.82rem;
+  color: #8a8077;
+  margin-bottom: 1.8rem;
+}
+
+.btn-volver-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #252525;
+  color: #EB5E28;
+  border: 1px solid #3a3a3a;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  text-decoration: none;
+}
+
+.btn-volver-primary:hover {
+  background-color: #EB5E28;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(235, 94, 40, 0.4);
+}

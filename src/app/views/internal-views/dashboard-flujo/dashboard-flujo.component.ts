@@ -23,4 +23,16 @@ export class FlujoDashboardComponent implements OnInit {
     const flujo = this.authService.getFlujoPermiso();
     this.permisoCompleto = (flujo === 1);
   }
+
+  get puedeVerTableroMaestro(): boolean {
+    return this.authService.getRol() === 4
+      ? this.authService.tienePermisoInterno('flujo_tablero_anual', 'ver')
+      : this.permisoCompleto;
+  }
+
+  get puedeVerIngresos(): boolean {
+    return this.authService.getRol() === 4
+      ? this.authService.tienePermisoInterno('ingresos', 'ver')
+      : this.permisoCompleto;
+  }
 }

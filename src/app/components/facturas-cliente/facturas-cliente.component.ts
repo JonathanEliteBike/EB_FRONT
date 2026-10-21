@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientesService } from '../../services/clientes.service';
 import { ProyeccionesTabComponent } from '../proyecciones-tab/proyecciones-tab.component';
+import { AuthService } from '../../services/auth.service';
 import * as XLSX from 'xlsx';
 import { Observable } from 'rxjs';
 
@@ -160,7 +161,14 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     );
     return Array.from(set).sort();
   }
-  constructor(private clientesService: ClientesService) { }
+  constructor(
+    private clientesService: ClientesService,
+    private authService: AuthService,
+  ) { }
+
+  get puedeVerMontos(): boolean {
+    return !this.authService.debeOcultarMontos('detalle_compras');
+  }
 
   /** Ciclo de vida: sin lógica de inicialización (la carga se dispara en ngOnChanges). */
   ngOnInit() {}
@@ -252,9 +260,9 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
             contacto_referencia: r.contacto_referencia ?? '',
             contacto_nombre: r.contacto_nombre ?? '',
             fecha_factura: r.fecha ?? r.fecha_factura ?? '',
-            precio_unitario: Number(r.precio_unitario ?? r.precio ?? 0) || 0,
+            precio_unitario: Number(r.precio_unitario ?? r.precio ?? r.price_unit ?? 0) || 0,
             cantidad: Number(r.cantidad ?? r.qty ?? 0) || 0,
-            venta_total: Number(r.total ?? r.venta_total ?? 0) || 0,
+            venta_total: Number(r.total ?? r.venta_total ?? r.total_linea ?? r.price_total ?? r.price_subtotal ?? 0) || 0,
             total_entregado: Number(r.total_entregado ?? r.total ?? r.venta_total ?? 0) || 0,
             marca: r.marca ?? '',
             subcategoria: r.subcategoria ?? '',
@@ -355,9 +363,9 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
                 contacto_referencia: r.contacto_referencia ?? '',
                 contacto_nombre: r.contacto_nombre ?? '',
                 fecha_factura: r.fecha ?? r.fecha_factura ?? '',
-                precio_unitario: Number(r.precio_unitario ?? r.precio ?? 0) || 0,
+                precio_unitario: Number(r.precio_unitario ?? r.precio ?? r.price_unit ?? 0) || 0,
                 cantidad: Number(r.cantidad ?? r.qty ?? r.cantidad_entregada ?? 0) || 0,
-                venta_total: Number(r.total ?? r.venta_total ?? 0) || 0,
+                venta_total: Number(r.total ?? r.venta_total ?? r.total_linea ?? r.price_total ?? r.price_subtotal ?? 0) || 0,
                 total_entregado: Number(r.total_entregado ?? r.total ?? r.venta_total ?? 0) || 0,
                 marca: r.marca ?? '',
                 subcategoria: r.subcategoria ?? '',
@@ -445,9 +453,9 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
                     contacto_referencia: r.contacto_referencia ?? '',
                     contacto_nombre: r.contacto_nombre ?? '',
                     fecha_factura: r.fecha ?? r.fecha_factura ?? '',
-                    precio_unitario: Number(r.precio_unitario ?? r.precio ?? 0) || 0,
+                    precio_unitario: Number(r.precio_unitario ?? r.precio ?? r.price_unit ?? 0) || 0,
                     cantidad: Number(r.cantidad ?? r.qty ?? r.cantidad_entregada ?? 0) || 0,
-                    venta_total: Number(r.total ?? r.venta_factura ?? 0) || 0,
+                    venta_total: Number(r.total ?? r.venta_factura ?? r.total_linea ?? r.price_total ?? r.price_subtotal ?? 0) || 0,
                     total_entregado: Number(r.total_entregado ?? r.total ?? r.venta_factura ?? 0) || 0,
                     marca: r.marca ?? '',
                     subcategoria: r.subcategoria ?? '',
@@ -798,16 +806,17 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
    * El nombre del archivo incluye la clave del cliente y la fecha actual.
    */
   exportarExcel() {
+    const incluirMontos = this.puedeVerMontos;
     const datosExportar = this.facturasFiltradas.map(factura => {
       const fila: any = {};
       fila['Número Pedido'] = factura.numero_factura ?? '';
       fila['Clave Producto'] = factura.referencia_interna ?? '';
       fila['Producto'] = factura.nombre_producto ?? '';
       fila['Fecha'] = factura.fecha_factura ? new Date(factura.fecha_factura).toISOString().slice(0, 10) : '';
-      fila['Precio Unit.'] = this.formatearNumeroParaExcel(factura.precio_unitario);
+      if (incluirMontos) fila['Precio Unit.'] = this.formatearNumeroParaExcel(factura.precio_unitario);
       fila['Cantidad Pedida'] = Number(factura.cantidad ?? 0);
       fila['Cantidad Entregada'] = Number(factura.cantidad_entregada ?? 0);
-      fila['Total'] = this.formatearNumeroParaExcel(factura.venta_total);
+      if (incluirMontos) fila['Total'] = this.formatearNumeroParaExcel(factura.venta_total);
       fila['Estatus Entrega'] = factura.estado_factura ?? '';
       fila['Estado Orden'] = factura.estado_orden ?? '';
       fila['Cliente / EVAC'] = factura.evac ?? '';
@@ -823,10 +832,10 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     filaTotal['Clave Producto'] = '';
     filaTotal['Producto'] = '';
     filaTotal['Fecha'] = '';
-    filaTotal['Precio Unit.'] = '';
+    if (incluirMontos) filaTotal['Precio Unit.'] = '';
     filaTotal['Cantidad Pedida'] = this.totalCantidad;
     filaTotal['Cantidad Entregada'] = this.totalEntregado;
-    filaTotal['Total'] = this.formatearNumeroParaExcel(this.totalMonto);
+    if (incluirMontos) filaTotal['Total'] = this.formatearNumeroParaExcel(this.totalMonto);
     filaTotal['Estatus Entrega'] = '';
     filaTotal['Estado Orden'] = '';
     filaTotal['Cliente / EVAC'] = '';
@@ -839,7 +848,9 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
 
     const headers = [
       'Número Pedido', 'Clave Producto', 'Producto', 'Fecha',
-      'Precio Unit.', 'Cantidad Pedida', 'Cantidad Entregada', 'Total',
+      ...(incluirMontos ? ['Precio Unit.'] : []),
+      'Cantidad Pedida', 'Cantidad Entregada',
+      ...(incluirMontos ? ['Total'] : []),
       'Estatus Entrega', 'Estado Orden', 'Cliente / EVAC', 'Marca', 'Subcategoría', 'Proyección'
     ];
 

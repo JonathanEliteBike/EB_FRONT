@@ -36,8 +36,16 @@ export class GastosOperativosComponent {
 
   ngOnInit() {
     const permiso = this.authService.getFlujoPermiso();
-    this.permisoCompleto = (permiso === 1);
+    this.permisoCompleto = this.authService.getRol() === 4
+      ? this.authService.tienePermisoInterno('gastos_operativos', 'crear')
+      : permiso === 1;
     this.cargarGastos();
+  }
+
+  get puedeVerGastos(): boolean {
+    return this.authService.getRol() === 4
+      ? this.authService.tienePermisoInterno('gastos_operativos', 'ver')
+      : this.permisoCompleto;
   }
 
   cargarGastos() {
@@ -51,11 +59,13 @@ export class GastosOperativosComponent {
   }
 
   toggleFormulario() {
+    if (!this.permisoCompleto) return;
     this.mostrarFormulario = !this.mostrarFormulario;
     this.cd.detectChanges();
   }
 
   guardar() {
+    if (!this.permisoCompleto) return;
     if (this.form.invalid) return;
 
     const val = this.form.value;

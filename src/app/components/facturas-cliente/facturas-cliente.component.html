@@ -84,14 +84,14 @@
                     </span>
                     <span class="resumen-valor">{{ totalCantidad | number:'1.0-0' }} pz</span>
                 </div>
-                <div class="resumen-separador"></div>
-                <div class="resumen-item resumen-monto">
+                <div *ngIf="puedeVerMontos" class="resumen-separador"></div>
+                <div *ngIf="puedeVerMontos" class="resumen-item resumen-monto">
                     <span class="resumen-label">
                         <i class="fas fa-dollar-sign"></i> Importe total
                     </span>
                     <span class="resumen-valor resumen-valor-monto">{{ formatearMoneda(totalMonto) }}</span>
                 </div>
-                <div class="resumen-separador"></div>
+                <div *ngIf="puedeVerMontos" class="resumen-separador"></div>
                 <div class="resumen-item">
                     <span class="resumen-temporada" *ngIf="etiquetaTemporadaMostrada">Temporada {{ etiquetaTemporadaMostrada }}</span>
                 </div>
@@ -162,10 +162,10 @@
                                 </div>
                             </th>
                             <th>Fecha</th>
-                            <th>Precio Unit.</th>
+                            <th *ngIf="puedeVerMontos">Precio Unit.</th>
                             <th>Cantidad</th>
                             <th>Entregado</th>
-                            <th>Total</th>
+                            <th *ngIf="puedeVerMontos">Total</th>
                             <th class="th-filtrable">
                                 <div class="th-content">Estatus Actual
                                     <span *ngIf="colSort?.col === 'estado_factura'" class="col-sort-badge">{{ colSort!.dir === 'asc' ? '▲' : '▼' }}</span>
@@ -187,10 +187,10 @@
                             <td>{{ factura.referencia_interna }}</td>
                             <td>{{ factura.nombre_producto }}</td>
                             <td>{{ formatearFecha(factura.fecha_factura) }}</td>
-                            <td>{{ formatearMoneda(factura.precio_unitario) }}</td>
+                            <td *ngIf="puedeVerMontos">{{ formatearMoneda(factura.precio_unitario) }}</td>
                             <td>{{ factura.cantidad }}</td>
                             <td>{{ factura.cantidad_entregada }}</td>
-                            <td>{{ formatearMoneda(factura.venta_total) }}</td>
+                            <td *ngIf="puedeVerMontos">{{ formatearMoneda(factura.venta_total) }}</td>
                             <td>{{ factura.estado_factura }}<span *ngIf="factura.estado_factura === 'En tránsito' && factura.fecha_esperada" class="fecha-esperada-badge"><i class="fas fa-truck"></i> {{ formatearFechaCorta(factura.fecha_esperada) }}</span></td>
                         </tr>
                     </tbody>

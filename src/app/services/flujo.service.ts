@@ -44,6 +44,7 @@ export interface AuditoriaLog {
   nombre_usuario: string;
   accion: string;
   tabla_afectada: string;
+  categoria: string;
   descripcion: string;
   fecha_hora: string;
 }

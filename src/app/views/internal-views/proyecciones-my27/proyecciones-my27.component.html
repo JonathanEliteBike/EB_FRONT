@@ -32,7 +32,7 @@
               class="btn btn-primary" (click)="exportarCobertura()">
         <i class="fas fa-file-excel"></i> Exportar Inventario
       </button>
-      <button *ngIf="activeTab === 'inventario' && productosParaReserva.length > 0"
+      <button *ngIf="puedeCrear && activeTab === 'inventario' && productosParaReserva.length > 0"
               class="btn btn-reserva" (click)="abrirReserva()">
         <i class="fas fa-shopping-cart"></i> Generar Reserva
       </button>
@@ -120,7 +120,7 @@
           <div class="kpi-icon-wrap kpi-icon-gold"><i class="fas fa-dollar-sign"></i></div>
         </div>
         <div class="kpi-value kpi-val-gold">
-          {{ datos.kpis.inversion_total > 0 ? formatCosto(datos.kpis.inversion_total) : '$0' }}
+          {{ formatCosto(datos.kpis.inversion_total) }}
         </div>
         <div class="kpi-foot">costo total proyectado</div>
       </div>
@@ -131,7 +131,7 @@
           <div class="kpi-icon-wrap kpi-icon-gold2"><i class="fas fa-tag"></i></div>
         </div>
         <div class="kpi-value kpi-val-gold2">
-          {{ datos.kpis.inversion_promedio > 0 ? formatCosto(datos.kpis.inversion_promedio) : '$0' }}
+          {{ formatCosto(datos.kpis.inversion_promedio) }}
         </div>
         <div class="kpi-foot">por unidad proyectada · {{ datos.kpis.skus_con_costo }} SKUs con costo</div>
       </div>
@@ -191,16 +191,10 @@
                 </span>
               </td>
               <td class="col-costo-u">
-                <span *ngIf="art.costo_unitario > 0" class="costo-chip">
-                  {{ formatCosto(art.costo_unitario) }}
-                </span>
-                <span *ngIf="!art.costo_unitario" class="costo-cero">—</span>
+                <span class="costo-chip">{{ formatCosto(art.costo_unitario) }}</span>
               </td>
               <td class="col-costo-t">
-                <span *ngIf="art.costo_total > 0" class="costo-total-chip">
-                  {{ formatCosto(art.costo_total) }}
-                </span>
-                <span *ngIf="!art.costo_total" class="costo-cero">—</span>
+                <span class="costo-total-chip">{{ formatCosto(art.costo_total) }}</span>
               </td>
               <td class="col-dists">{{ art.num_distribuidores }}</td>
               <td class="col-actions">
@@ -235,13 +229,12 @@
           <tr class="fila-costo-total">
             <td colspan="2" class="lbl-totales lbl-costo">COSTO x MES</td>
             <td *ngFor="let mes of mesesKeys" class="col-mes total-costo-cel tc-center">
-              <span *ngIf="getTotalCostoMes(mes) > 0">{{ formatCosto(getTotalCostoMes(mes)) }}</span>
-              <span *ngIf="getTotalCostoMes(mes) === 0" class="costo-cero-cel">—</span>
+              {{ formatCosto(getTotalCostoMes(mes)) }}
             </td>
             <td class="col-total total-costo-cel tc-center">—</td>
             <td class="col-costo-u total-costo-cel tc-center">—</td>
             <td class="col-costo-t total-costo-cel costo-grand-total tc-center">
-              {{ datos.total_costo_general > 0 ? formatCosto(datos.total_costo_general) : '—' }}
+              {{ formatCosto(datos.total_costo_general) }}
             </td>
             <td class="col-dists total-costo-cel tc-center"></td>
             <td class="col-actions"></td>
@@ -258,7 +251,7 @@
   <div *ngIf="activeTab === 'inventario'" class="inventario-tab">
 
     <!-- Sección de carga de archivo -->
-    <div class="inv-upload-card">
+    <div *ngIf="puedeEditar" class="inv-upload-card">
       <h2><i class="fas fa-file-excel"></i> Cargar inventario entrante</h2>
       <p class="inv-upload-desc">
         Sube un archivo Excel con las columnas <strong>SKU</strong> y <strong>CANTIDAD</strong>

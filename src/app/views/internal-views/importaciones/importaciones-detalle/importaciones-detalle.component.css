@@ -5,7 +5,7 @@
 :host {
   --surface2: #1a1f2e; --border2: #2d3748;
   --t1: #e2e8f0; --t2: #cbd5e1; --t3: #64748b;
-  --orange: #EB5E28;
+  --orange: #3b82f6;
   /* Easing curves (Emil Kowalski) */
   --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -142,6 +142,23 @@
 
 .det-header-right { display: flex; align-items: center; gap: 16px; }
 
+/* Asignaciones */
+.btn-asignaciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e3a5f;
+  color: #60a5fa;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-right: 12px;
+}
+.btn-asignaciones:hover { background: #274a73; }
+
 /* Progreso global */
 .prog-global { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .prog-ring {
@@ -230,6 +247,10 @@
 .det-section {
   background: #111827; border: 1px solid #1e2535; border-radius: 12px; padding: 24px;
   animation: sectionIn 220ms var(--ease-out, cubic-bezier(0.23,1,0.32,1)) both;
+}
+
+.det-section-readonly {
+  pointer-events: none;
 }
 
 /* ── Fields grid ── */
@@ -345,6 +366,20 @@
 .via-btn-det:hover { background: #243044; color: #e2e8f0; }
 .via-btn-det.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; font-weight: 600; }
 
+/* ── Selector de tipo de producto en detalle (catálogo cerrado) ── */
+.tipo-producto-selector-det { display: flex; flex-wrap: wrap; gap: 8px; }
+.tipo-chip-det {
+  background: #1a1f2e; border: 1px solid #2d3748; border-radius: 999px;
+  color: #94a3b8; padding: 7px 14px; font-size: .8125rem; cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, transform 120ms ease-out;
+}
+.tipo-chip-det:hover  { background: #243044; color: #e2e8f0; }
+.tipo-chip-det:active { transform: scale(0.96); }
+.tipo-chip-det.active { background: #1e3a5f; border-color: #3b82f6; color: #60a5fa; font-weight: 600; }
+.tipo-producto-legacy {
+  display: block; margin-top: 8px; font-size: .75rem; color: #f59e0b;
+}
+
 /* ── FAB guardar ── */
 .fab-guardar {
   position: fixed; bottom: 28px; right: 28px; z-index: 50;
@@ -365,6 +400,12 @@
   background: #0d1117; color: #64748b; font-size: .82rem; min-height: 36px;
   display: flex; align-items: center;
 }
+
+/* Fecha proyectada sin regla de Tiempos Estimados configurada para esta combinación */
+.calc-alerta {
+  color: #fbbf24; font-size: .76rem; display: flex; align-items: center; gap: 6px; line-height: 1.3;
+}
+.calc-alerta i { color: #f59e0b; }
 
 /* Equivalente USD para campos en pesos */
 .usd-equiv {
@@ -422,3 +463,19 @@
 .precio-bici-total span:last-child {
   font-family: monospace; color: #34d399; font-size: .9rem;
 }
+
+/* ── Auditoría de llenado ── */
+.auditoria-header { margin-bottom: 16px; }
+.auditoria-nota { color: #94a3b8; font-size: 12.5px; max-width: 640px; }
+.auditoria-grupo { margin-bottom: 24px; }
+.auditoria-grupo-titulo { color: #e2e8f0; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.auditoria-tabla { width: 100%; border-collapse: collapse; }
+.auditoria-tabla th { text-align: left; font-size: 11px; color: #94a3b8; text-transform: uppercase; padding: 8px; border-bottom: 1px solid #2d3748; }
+.auditoria-tabla td { padding: 10px 8px; border-bottom: 1px solid #1e2535; font-size: 13px; color: #e2e8f0; }
+.auditoria-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.auditoria-verde { background: #12251a; color: #4ade80; }
+.auditoria-rojo { background: #2a1416; color: #f87171; }
+.auditoria-gris { background: #1e293b; color: #94a3b8; }
+.auditoria-vacio-cell { color: #64748b; font-style: italic; font-size: 12.5px; }
+.auditoria-cargando, .auditoria-error { color: #94a3b8; padding: 24px; text-align: center; }
+.asig-vacio { color: #94a3b8; text-align: center; padding: 32px; font-size: 13px; }

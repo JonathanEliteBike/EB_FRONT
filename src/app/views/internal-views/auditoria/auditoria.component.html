@@ -28,6 +28,7 @@
             <th style="width: 150px;">Fecha / Hora</th>
             <th style="width: 150px;">Usuario</th>
             <th style="width: 120px;">Acción</th>
+            <th style="width: 170px;">Categoría</th>
             <th>Descripción del Evento</th>
           </tr>
         </thead>
@@ -48,6 +49,8 @@
                   {{ log.accion }}
                 </span>
               </td>
+
+              <td>{{ log.categoria }}</td>
 
               <td class="desc-cell">
                 {{ log.descripcion }}

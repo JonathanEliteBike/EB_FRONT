@@ -17,7 +17,7 @@
         </button>
         <h2>Campañas de Retroactivos</h2>
       </div>
-      <button type="button" class="btn btn-primary" (click)="nuevaCampania()">
+      <button *ngIf="puedeCrear" type="button" class="btn btn-primary" (click)="nuevaCampania()">
         + Nueva Campaña
       </button>
     </div>
@@ -58,7 +58,7 @@
         <tbody>
           <tr *ngFor="let c of campaniasFiltradas">
             <td><strong>{{ c.nombre }}</strong></td>
-            <td>{{ c.fecha_inicio | date:'dd/MM/yyyy' }} - {{ c.fecha_fin | date:'dd/MM/yyyy' }}</td>
+            <td>{{ normalizarFecha(c.fecha_inicio) | date:'dd/MM/yyyy' }} - {{ normalizarFecha(c.fecha_fin) | date:'dd/MM/yyyy' }}</td>
             <td>
               <span class="msi-chip" *ngFor="let m of c.msi">{{ m.plazo_meses }}m ({{ m.porcentaje }}%)</span>
               <span *ngIf="!c.msi.length">—</span>
@@ -68,8 +68,8 @@
               <span class="badge" [ngClass]="estado.clase">{{ estado.texto }}</span>
             </td>
             <td class="td-actions">
-              <button type="button" class="btn-action" (click)="editarCampania(c)" title="Editar">✏️</button>
-              <button type="button" class="btn-action delete" (click)="eliminarCampania(c.id)" title="Eliminar">🗑️</button>
+              <button *ngIf="puedeEditar" type="button" class="btn-action" (click)="editarCampania(c)" title="Editar">✏️</button>
+              <button *ngIf="puedeEliminar" type="button" class="btn-action delete" (click)="eliminarCampania(c.id)" title="Eliminar">🗑️</button>
             </td>
           </tr>
         </tbody>

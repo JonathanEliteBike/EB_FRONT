@@ -222,6 +222,7 @@
 }
 .doc-link { display: flex; align-items: center; gap: 12px; flex: 1; text-decoration: none; color: inherit; }
 .doc-link:hover .doc-label { color: var(--orange); }
+.doc-link.doc-cargando { cursor: default; opacity: .6; }
 .doc-icon { font-size: 1.2rem; color: var(--t3); flex-shrink: 0; width: 20px; text-align: center; }
 .doc-texts { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .doc-label { font-size: 0.85rem; font-weight: 600; color: var(--t2); }
@@ -316,7 +317,7 @@
 .tl-rechazado .tl-tipo[data-tipo="validacion"] { background: rgba(229,57,53,0.12); color: var(--red); }
 .tl-rechazado .tl-texto { color: #e57373; }
 .tl-fecha { font-size: 0.75rem; color: var(--t3); }
-.tl-texto { font-size: 0.85rem; color: var(--t2); line-height: 1.4; }
+.tl-texto { font-size: 0.85rem; color: var(--t2); line-height: 1.4; white-space: pre-wrap; }
 
 @media (max-width: 750px) {
   .garantias-page { padding: 16px 16px 60px; }

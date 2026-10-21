@@ -14,10 +14,10 @@
       </h1>
     </div>
     <div class="header-actions">
-      <a class="btn btn-outline" routerLink="/garantias/formulario" target="_blank">
+      <a *ngIf="puedeEditar" class="btn btn-outline" routerLink="/garantias/formulario" target="_blank">
         <i class="fas fa-eye"></i> Ver Formulario
       </a>
-      <button class="btn btn-primary" (click)="guardarEstructura()" [disabled]="guardando">
+      <button *ngIf="puedeEditar" class="btn btn-primary" (click)="guardarEstructura()" [disabled]="guardando">
         <i class="fas" [class.fa-save]="!guardando" [class.fa-spinner]="guardando"
            [class.fa-spin]="guardando"></i>
         {{ guardando ? 'Guardando…' : 'Guardar Cambios' }}
@@ -70,14 +70,14 @@
           <div class="sec-left">
             <span class="sec-num">{{ sec.id }}</span>
             <div class="sec-info">
-              <input *ngIf="sec.expandida" type="text" class="sec-title-input"
+              <input *ngIf="sec.expandida && puedeEditar" type="text" class="sec-title-input"
                      [(ngModel)]="sec.titulo" (click)="$event.stopPropagation()"
                      placeholder="Título de la sección">
-              <span *ngIf="!sec.expandida" class="sec-title">{{ sec.titulo }}</span>
+              <span *ngIf="!sec.expandida || !puedeEditar" class="sec-title">{{ sec.titulo }}</span>
               <span class="sec-meta">{{ sec.campos.length }} campo{{ sec.campos.length !== 1 ? 's' : '' }}</span>
             </div>
           </div>
-          <div class="sec-right" (click)="$event.stopPropagation()">
+          <div class="sec-right" *ngIf="puedeEditar" (click)="$event.stopPropagation()">
             <label class="toggle-wrap" title="{{ sec.activa ? 'Desactivar' : 'Activar' }} sección">
               <input type="checkbox" [(ngModel)]="sec.activa">
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
@@ -93,8 +93,9 @@
           <!-- Description -->
           <div class="field-row">
             <label class="field-label-sm">Descripción / instrucciones (opcional)</label>
-            <textarea class="field-input-sm" [(ngModel)]="sec.descripcion"
+            <textarea *ngIf="puedeEditar; else descripcionSoloLectura" class="field-input-sm" [(ngModel)]="sec.descripcion"
                       placeholder="Texto de ayuda que aparece al inicio de la sección…"></textarea>
+            <ng-template #descripcionSoloLectura><span>{{ sec.descripcion || 'Sin descripción.' }}</span></ng-template>
           </div>
 
           <!-- Fields list -->
@@ -108,7 +109,7 @@
                     <span class="campo-label">{{ campo.label }}</span>
                     <span class="campo-type-tag">{{ campo.tipo }}</span>
                   </ng-container>
-                  <ng-container *ngIf="campo.editando">
+                  <ng-container *ngIf="campo.editando && puedeEditar">
                     <input type="text" class="campo-label-input" [(ngModel)]="campo.label"
                            placeholder="Etiqueta del campo">
                     <select class="campo-tipo-select" [(ngModel)]="campo.tipo">
@@ -128,7 +129,7 @@
                     </label>
                   </ng-container>
                 </div>
-                <div class="campo-actions">
+                <div class="campo-actions" *ngIf="puedeEditar">
                   <span class="req-badge" *ngIf="campo.requerido && !campo.editando">obligatorio</span>
                   <button class="icon-btn" title="Mover arriba" (click)="moverCampoArriba(sec, i)">
                     <i class="fas fa-arrow-up"></i>
@@ -147,7 +148,7 @@
               </div>
 
               <!-- Options editor for radio/select -->
-              <div *ngIf="campo.editando && (campo.tipo === 'radio' || campo.tipo === 'select')"
+              <div *ngIf="puedeEditar && campo.editando && (campo.tipo === 'radio' || campo.tipo === 'select')"
                    class="opciones-editor">
                 <label class="field-label-sm">Opciones (una por línea)</label>
                 <textarea class="field-input-sm"
@@ -159,7 +160,7 @@
           </div>
 
           <!-- Add new field — Google Forms style -->
-          <div class="add-campo-panel" *ngIf="nuevoCampoSecId === sec.id">
+          <div class="add-campo-panel" *ngIf="puedeEditar && nuevoCampoSecId === sec.id">
             <div class="new-field-header">
               <i class="fas fa-plus-circle"></i>
               <span>Nuevo campo</span>
@@ -206,7 +207,7 @@
             </div>
           </div>
 
-          <div class="add-campo-row" *ngIf="nuevoCampoSecId !== sec.id">
+          <div class="add-campo-row" *ngIf="puedeEditar && nuevoCampoSecId !== sec.id">
             <button class="btn btn-sm btn-ghost" (click)="nuevoCampoSecId = sec.id; nuevoLabel = ''">
               <i class="fas fa-plus-circle"></i> Agregar campo
             </button>
@@ -247,7 +248,7 @@
             <td>{{ f.contacto }}</td>
             <td class="date-cell">{{ f.fecha_creacion }}</td>
             <td>
-              <select class="estatus-select" [value]="f.estatus"
+              <select *ngIf="puedeEditar; else estatusSoloLectura" class="estatus-select" [value]="f.estatus"
                       (change)="actualizarEstatus(f.id, $any($event.target).value)"
                       (click)="$event.stopPropagation()">
                 <option>Enviado</option>
@@ -256,6 +257,7 @@
                 <option>Rechazado</option>
                 <option>Cerrado</option>
               </select>
+              <ng-template #estatusSoloLectura><span>{{ f.estatus }}</span></ng-template>
             </td>
             <td>
               <button class="icon-btn" (click)="verDetalle(f); $event.stopPropagation()" title="Ver detalle">
@@ -304,7 +306,7 @@
               <div class="detail-item">
                 <span class="detail-key">Estatus</span>
                 <span class="detail-val">
-                  <select class="estatus-select" [value]="detalle.estatus"
+                  <select *ngIf="puedeEditar; else detalleEstatusSoloLectura" class="estatus-select" [value]="detalle.estatus"
                           (change)="actualizarEstatus(detalle.id, $any($event.target).value)">
                     <option>Enviado</option>
                     <option>En revisión</option>
@@ -312,6 +314,7 @@
                     <option>Rechazado</option>
                     <option>Cerrado</option>
                   </select>
+                  <ng-template #detalleEstatusSoloLectura><span>{{ detalle.estatus }}</span></ng-template>
                 </span>
               </div>
             </div>

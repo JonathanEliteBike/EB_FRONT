@@ -1,38 +1,43 @@
 <app-top-bar-usuarios></app-top-bar-usuarios>
 
-<div class="pu-container">
 
-  <div class="pu-header">
-    <a routerLink="/usuarios/dashboard" class="pu-back">
-      <i class="fas fa-arrow-left"></i> Regresar
-    </a>
-    <h1>Proyección de Compra</h1>
+ <ng-container *ngIf="tieneAcceso; else sinAcceso">
+    <div class="pu-container">
+
+    <div class="pu-header">
+      <a routerLink="/usuarios/dashboard" class="pu-back">
+        <i class="fas fa-arrow-left"></i> Regresar
+      </a>
+      <h1>Proyección de Compra</h1>
+    </div>
+
+    <!-- Cargando -->
+    <div *ngIf="cargando" class="pu-spinner">
+      <div class="spinner"></div>
+      <p>Cargando proyecciones...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !cargando" class="pu-error">
+      <i class="fas fa-exclamation-circle"></i> {{ error }}
+    </div>
+
+    <!-- Sin clave asignada -->
+    <div *ngIf="!cargando && !error && !clienteClave" class="pu-sin-datos">
+      <i class="fas fa-inbox"></i>
+      <p>Tu cuenta no tiene una clave de cliente asignada aún.</p>
+    </div>
+
+    <!-- Proyecciones -->
+    <div *ngIf="!cargando && !error && clienteClave" class="pu-tab-wrap">
+      <app-proyecciones-tab
+        [clienteClave]="clienteClave"
+        [idCliente]="idCliente"
+        [ocultarBotonesImport]="true">
+      </app-proyecciones-tab>
+    </div>
   </div>
-
-  <!-- Cargando -->
-  <div *ngIf="cargando" class="pu-spinner">
-    <div class="spinner"></div>
-    <p>Cargando proyecciones...</p>
-  </div>
-
-  <!-- Error -->
-  <div *ngIf="error && !cargando" class="pu-error">
-    <i class="fas fa-exclamation-circle"></i> {{ error }}
-  </div>
-
-  <!-- Sin clave asignada -->
-  <div *ngIf="!cargando && !error && !clienteClave" class="pu-sin-datos">
-    <i class="fas fa-inbox"></i>
-    <p>Tu cuenta no tiene una clave de cliente asignada aún.</p>
-  </div>
-
-  <!-- Proyecciones -->
-  <div *ngIf="!cargando && !error && clienteClave" class="pu-tab-wrap">
-    <app-proyecciones-tab
-      [clienteClave]="clienteClave"
-      [idCliente]="idCliente"
-      [ocultarBotonesImport]="true">
-    </app-proyecciones-tab>
-  </div>
-
-</div>
+</ng-container>
+<ng-template #sinAcceso>
+  <app-acceso-restringido [modulo]="modulo"></app-acceso-restringido>
+</ng-template>

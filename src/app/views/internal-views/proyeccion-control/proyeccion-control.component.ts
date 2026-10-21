@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { ProyeccionService } from '../../../services/proyeccion.service';
 import { AlertaService } from '../../../services/alerta.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface Producto {
   id: number;
@@ -127,8 +128,24 @@ export class ProyeccionControlComponent implements OnInit {
   constructor(
     private proyeccionService: ProyeccionService,
     private alertaService: AlertaService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService,
   ) { }
+
+  get puedeCrear(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('proyeccion_compra', 'crear');
+  }
+
+  get puedeEditar(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('proyeccion_compra', 'editar');
+  }
+
+  get puedeEliminar(): boolean {
+    return this.authService.getRol() !== 4
+      || this.authService.tienePermisoInternoActual('proyeccion_compra', 'eliminar');
+  }
 
   ngOnInit() {
     this.obtenerDisponibilidades();
@@ -229,6 +246,7 @@ export class ProyeccionControlComponent implements OnInit {
   }
 
   agregarProyeccion() {
+    if (!this.puedeCrear) return;
     this.cargando = true;
     this.proyeccionService.agregarProyeccion(this.nuevaProyeccion).subscribe({
       next: () => {
@@ -246,7 +264,7 @@ export class ProyeccionControlComponent implements OnInit {
   }
 
   confirmarEdicion() {
-    if (!this.proyeccion) return;
+    if (!this.proyeccion || !this.puedeEditar) return;
 
     this.cargando = true;
     this.proyeccionService.editarProyeccion(this.proyeccion.id, this.proyeccion).subscribe({
@@ -317,7 +335,7 @@ export class ProyeccionControlComponent implements OnInit {
   }
 
   confirmarEliminacion() {
-    if (!this.proyeccion) return;
+    if (!this.proyeccion || !this.puedeEliminar) return;
 
     this.cargando = true;
     this.proyeccionService.eliminarProyeccion(this.proyeccion.id).subscribe({

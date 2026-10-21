@@ -22,10 +22,10 @@ export interface ArticuloMY27 {
   modelo: string;
   color: string;
   talla: string;
-  precio_dist: number;
-  costo_unitario: number;
-  costo_total: number;
-  costos_mes: Record<string, number>;
+  precio_dist: number | null;
+  costo_unitario: number | null;
+  costo_total: number | null;
+  costos_mes: Record<string, number | null>;
   num_distribuidores: number;
   total_anual: number;
   meses: Record<string, MesData>;
@@ -39,16 +39,16 @@ export interface KpisMY27 {
   total_unidades: number;
   distribuidores_activos: number;
   skus_con_costo: number;
-  inversion_total: number;
-  inversion_promedio: number;
+  inversion_total: number | null;
+  inversion_promedio: number | null;
 }
 
 export interface ProyeccionesMY27Response {
   articulos: ArticuloMY27[];
   totales_mes: Record<string, number>;
   total_general: number;
-  total_costo_mes: Record<string, number>;
-  total_costo_general: number;
+  total_costo_mes: Record<string, number | null>;
+  total_costo_general: number | null;
   kpis: KpisMY27;
   meses: string[];
   meses_labels: string[];
@@ -131,9 +131,13 @@ export class ProyeccionesMY27Service {
     return this.http.get<ProyeccionesMY27Response>(`${this.api}/proyecciones-my27`, { params });
   }
 
-  getExportUrl(periodo = '2026-2027', marca = ''): string {
-    const m = marca ? `&marca=${marca}` : '';
-    return `${this.api}/proyecciones-my27/exportar?periodo=${periodo}${m}`;
+  exportar(periodo = '2026-2027', marca = ''): Observable<Blob> {
+    let params = new HttpParams().set('periodo', periodo);
+    if (marca) params = params.set('marca', marca);
+    return this.http.get(`${this.api}/proyecciones-my27/exportar`, {
+      params,
+      responseType: 'blob',
+    });
   }
 
   subirInventarioMegamo(file: File, periodo: string = '2026-2027'): Observable<any> {
@@ -155,8 +159,11 @@ export class ProyeccionesMY27Service {
     return this.http.get<any>(`${this.api}/proyecciones-my27/cobertura-megamo`, { params });
   }
 
-  getExportCoberturaUrl(periodo = '2026-2027'): string {
-    return `${this.api}/proyecciones-my27/exportar-cobertura?periodo=${periodo}`;
+  exportarCobertura(periodo = '2026-2027'): Observable<Blob> {
+    return this.http.get(`${this.api}/proyecciones-my27/exportar-cobertura`, {
+      params: { periodo },
+      responseType: 'blob',
+    });
   }
 
   getDistribucionPrioritaria(periodo = '2026-2027'): Observable<DistribucionResponse> {

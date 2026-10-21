@@ -10,13 +10,15 @@
             <button class="btn btn-outline" routerLink="/flujo-dashboard">
                 <i class="fas fa-arrow-left"></i> Volver al Tablero
             </button>
-            <button class="btn btn-primary" (click)="toggleFormulario()">
-                {{ mostrarFormulario ? 'Cancelar Registro' : '+ Registrar Nueva Factura' }}
-            </button>
+            @if (puedeCrearIngreso) {
+                <button class="btn btn-primary" (click)="toggleFormulario()">
+                    {{ mostrarFormulario ? 'Cancelar Registro' : '+ Registrar Nueva Factura' }}
+                </button>
+            }
         </div>
     </header>
 
-    @if (mostrarFormulario) {
+    @if (mostrarFormulario && puedeCrearIngreso) {
     <section class="form-section">
         <div class="card border-create">
             <div class="card-header">
