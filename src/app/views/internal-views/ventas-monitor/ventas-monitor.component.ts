@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { forkJoin, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
-import ExcelJS from 'exceljs';
+import type ExcelJS from 'exceljs';
 import { Chart, registerables } from 'chart.js';
 import { HomeBarComponent } from '../../../components/home-bar/home-bar.component';
 import { FacturasClienteComponent } from '../../../components/facturas-cliente/facturas-cliente.component';
@@ -1221,6 +1221,10 @@ export class VentasMonitorComponent implements OnInit, OnDestroy, AfterViewInit 
     this.dashboardErrorExportacion = null;
     try {
       await new Promise<void>(resolve => setTimeout(resolve));
+      // Import dinámico: exceljs pesa ~947 KB y antes se cargaba completo en
+      // main.js para todos aunque nunca exportaran -- ahora solo se descarga
+      // la primera vez que alguien le da clic a exportar.
+      const { default: ExcelJS } = await import('exceljs');
       const libro = new ExcelJS.Workbook();
       libro.creator = 'Elite Bike';
       libro.created = new Date();
