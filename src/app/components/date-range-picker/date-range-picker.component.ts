@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 /**
@@ -12,7 +12,12 @@ import { CommonModule } from '@angular/common';
   templateUrl: './date-range-picker.component.html',
   styleUrl: './date-range-picker.component.css'
 })
-export class DateRangePickerComponent {
+export class DateRangePickerComponent implements OnChanges {
+  ngOnChanges(): void {
+    // Si los filtros externos se limpian, la siguiente selección comienza en INICIO.
+    if (!this.fechaDesde && !this.fechaHasta) this.seleccionando = 'inicio';
+  }
+
   @Input() fechaDesde: string | null = null;
   @Input() fechaHasta: string | null = null;
   @Input() placeholder = 'Filtrar por fecha';

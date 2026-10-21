@@ -1,0 +1,269 @@
+<section class="control-cambios" aria-label="Control mensual de cambios">
+  <header class="control-head">
+    <div>
+      <p class="control-kicker">TRAZABILIDAD · REVISIÓN ADMINISTRATIVA</p>
+      <h2>Control mensual de cambios</h2>
+      <p>Consulta qué modificó Sistemas, compara los datos disponibles y registra el dictamen de Auditoría.</p>
+    </div>
+    <button class="control-btn export" type="button" (click)="exportar()" [disabled]="exportando || cargando">
+      {{ exportando ? 'Generando Excel…' : 'Exportar Excel del periodo' }}
+    </button>
+  </header>
+
+  <div class="control-filtros">
+    <div class="fecha-rango-inventario">
+      <span class="fecha-rango-titulo">Periodo del movimiento</span>
+      <app-fecha-inventario mode="range" placeholder="Seleccionar periodo"
+        [desde]="desde" [hasta]="hasta"
+        (desdeChange)="desde = $event" (hastaChange)="hasta = $event"
+        (rangeChange)="aplicar()"></app-fecha-inventario>
+    </div>
+    <label>Usuario que realizó el cambio
+      <input type="search" [(ngModel)]="usuario" (keyup.enter)="aplicar()" placeholder="Buscar responsable">
+    </label>
+    <label>Tipo de movimiento
+      <select [(ngModel)]="tipo" (change)="aplicar()" aria-label="Tipo de operación">
+        <option *ngFor="let opcion of tipos" [value]="opcion">{{ etiquetaTipo(opcion) }}</option>
+      </select>
+    </label>
+    <label>Folio, serie, ID o nombre
+      <input type="search" [(ngModel)]="buscar" (keyup.enter)="aplicar()" placeholder="Buscar equipo o evento">
+    </label>
+    <label>Orden
+      <select [(ngModel)]="orden" (change)="aplicar()" aria-label="Orden de los eventos">
+        <option value="recientes">Más recientes primero</option>
+        <option value="antiguos">Más antiguos primero</option>
+      </select>
+    </label>
+    <button class="control-btn" type="button" (click)="aplicar()" [disabled]="cargando">Aplicar</button>
+    <button class="control-btn muted" type="button" (click)="limpiar()" [disabled]="cargando">Limpiar</button>
+  </div>
+
+  <div class="control-shortcuts" aria-label="Periodos rápidos">
+    <span>Consultar:</span>
+    <button type="button" (click)="filtrarUltimosDias(1)">Hoy</button>
+    <button type="button" (click)="filtrarUltimosDias(7)">Últimos 7 días</button>
+    <button type="button" (click)="limpiar()">Mes actual</button>
+    <span class="control-shortcuts-tip">Los registros más recientes se muestran primero.</span>
+  </div>
+
+  <p class="control-msg error" role="alert" *ngIf="error && !seleccionado">{{ error }}</p>
+  <p class="control-msg ok" role="status" *ngIf="exito">{{ exito }}</p>
+
+  <div class="control-estados" aria-label="Filtrar estado de revisión">
+    <button type="button" [class.active]="estado === 'Todos'" (click)="seleccionarEstado('Todos')">
+      <small>Cambios registrados</small><strong>{{ resumen.total }}</strong>
+    </button>
+    <button type="button" [class.active]="estado === 'Pendiente'" (click)="seleccionarEstado('Pendiente')">
+      <small>Pendientes de revisar</small><strong>{{ resumen.pendientes }}</strong>
+    </button>
+    <button type="button" [class.active]="estado === 'Validado'" (click)="seleccionarEstado('Validado')">
+      <small>Validados</small><strong>{{ resumen.validados }}</strong>
+    </button>
+    <button type="button" [class.active]="estado === 'Observado'" (click)="seleccionarEstado('Observado')">
+      <small>Con observación</small><strong>{{ resumen.observados }}</strong>
+    </button>
+  </div>
+
+  <p class="control-hint">Se muestran los movimientos registrados en la bitácora. Un movimiento sin diferencias guardadas no acredita por sí solo que se haya modificado algún dato.</p>
+
+  <div class="control-tabla-wrapper">
+    <table class="control-tabla">
+      <thead><tr><th>Fecha y hora</th><th>Realizado por</th><th>Operación</th><th>Registro</th><th>Detalle</th><th>Revisión</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let evento of eventos">
+          <td>{{ evento.fecha }}</td>
+          <td>{{ evento.usuario }}</td>
+          <td>{{ tituloAccion(evento.accion) }}</td>
+          <td><strong>{{ evento.entidad }}</strong> <span *ngIf="evento.entidadId !== null">#{{ evento.entidadId }}</span></td>
+          <td>
+            <span class="control-detail-count" *ngIf="evento.cambios.length">{{ evento.cambios.length }} {{ evento.cambios.length === 1 ? 'campo' : 'campos' }}</span>
+            <span class="control-detail-unavailable" *ngIf="!evento.cambios.length">Sin comparativo</span>
+          </td>
+          <td><span class="control-estado" [ngClass]="evento.estadoRevision">{{ evento.estadoRevision }}</span></td>
+          <td><button type="button" class="control-link" (click)="abrir(evento)">Ver detalle →</button></td>
+        </tr>
+        <tr *ngIf="!cargando && eventos.length === 0"><td colspan="7" class="sin-registros">Sin movimientos para este periodo y filtros.</td></tr>
+        <tr *ngIf="cargando"><td colspan="7" class="sin-registros">Consultando movimientos…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="control-paginacion">
+    <small>Mostrando {{ eventos.length ? offset + 1 : 0 }}–{{ offset + eventos.length }} de {{ totalFiltrado }} registros</small>
+    <div><button class="control-btn muted" type="button" (click)="anterior()" [disabled]="offset === 0 || cargando">← Anterior</button>
+    <button class="control-btn muted" type="button" (click)="siguiente()" [disabled]="!haySiguiente || cargando">Siguiente →</button></div>
+  </div>
+
+  <div class="control-overlay" *ngIf="seleccionado as evento" (click)="cerrar()">
+    <section class="control-modal" role="dialog" aria-modal="true" aria-labelledby="control-dialog-title" (click)="$event.stopPropagation()">
+      <header class="control-modal-head">
+        <div class="control-modal-identity">
+          <p class="control-kicker">MOVIMIENTO #{{ evento.id }} · REVISIÓN ADMINISTRATIVA</p>
+          <h3 id="control-dialog-title">{{ tituloAccion(evento.accion) }} · {{ identificadorRegistro(evento) }}</h3>
+          <p>Compara la información registrada y después determina si el movimiento cuenta con respaldo suficiente.</p>
+        </div>
+        <button type="button" class="control-close" (click)="cerrar()" aria-label="Cerrar">✕</button>
+      </header>
+
+      <div class="control-modal-scroll control-audit-simplified">
+        <p class="control-msg error" role="alert" *ngIf="error">{{ error }}</p>
+
+        <!-- Primero: identificar el evento, sin obligar a abrir la ficha de otro módulo. -->
+        <div class="control-audit-meta">
+          <span><b>Realizado por</b>{{ evento.usuario }}</span>
+          <span><b>Fecha y hora</b>{{ evento.fecha }}</span>
+          <span class="control-estado" [ngClass]="evento.estadoRevision">{{ evento.estadoRevision }}</span>
+        </div>
+
+        <section class="control-audit-device" aria-labelledby="control-equipo-resumen">
+          <p class="control-kicker">REGISTRO RELACIONADO · INFORMACIÓN ACTUAL</p>
+          <p *ngIf="cargandoExpediente" class="control-hint">Buscando el dispositivo asociado al movimiento…</p>
+          <p *ngIf="errorExpediente" class="control-msg error">{{ errorExpediente }}</p>
+          <ng-container *ngIf="!cargandoExpediente && expediente as ficha">
+            <div *ngIf="!ficha.disponible" class="control-audit-empty">
+              <strong>No se pudo identificar el equipo de este movimiento.</strong>
+              <p>{{ ficha.motivo }} No se abrirá otro dispositivo por aproximación.</p>
+            </div>
+            <ng-container *ngIf="ficha.disponible && ficha.equipo as eq">
+              <div class="control-audit-device-row">
+                <div class="control-audit-device-title">
+                  <h4 id="control-equipo-resumen">{{ textoCampo(eq['numero_inventario']) }} <span>· {{ textoCampo(eq['categoria']) }}</span></h4>
+                  <p>{{ textoCampo(eq['marca']) }} {{ textoCampo(eq['modelo']) }} · Serie: <strong>{{ textoCampo(eq['numero_serie']) }}</strong></p>
+                  <p *ngIf="ficha.asignacion as a">Asignación #{{ a.id }} · {{ textoCampo(a.colaborador) }} <small>({{ a.origen }})</small></p>
+                </div>
+                <a *ngIf="eq['id']" class="control-btn muted control-audit-action"
+                   [routerLink]="['/inventario-it/equipos']" [queryParams]="{ equipoId: eq['id'] }">
+                   Abrir este equipo ↗
+                </a>
+              </div>
+              <details class="control-audit-expand">
+                <summary>Ver información completa del dispositivo <span>Mostrar datos actuales, no históricos</span></summary>
+                <div class="control-audit-extra-grid">
+                  <div><small>Descripción</small><strong>{{ textoCampo(eq['descripcion']) }}</strong></div>
+                  <div><small>Estado</small><strong>{{ textoCampo(eq['estado']) }}</strong></div>
+                  <div><small>Empresa</small><strong>{{ textoCampo(eq['empresa']) }}</strong></div>
+                  <div><small>Departamento</small><strong>{{ textoCampo(eq['departamento']) }}</strong></div>
+                  <div><small>Ubicación</small><strong>{{ textoCampo(eq['ubicacion']) }}</strong></div>
+                  <div><small>Funcionamiento</small><strong>{{ textoCampo(eq['funcionamiento']) }}</strong></div>
+                  <div><small>Responsable en ficha</small><strong>{{ textoCampo(eq['responsable']) }}</strong></div>
+                  <div><small>Registrado por</small><strong>{{ ficha.creacion ? ficha.creacion.usuario : 'No disponible en bitácora' }}</strong></div>
+                  <div><small>Fecha de registro</small><strong>{{ textoCampo(eq['fecha_registro']) }}</strong></div>
+                  <div><small>Accesorios</small><strong>{{ textoCampo(eq['extras']) }}</strong></div>
+                  <div><small>Comentarios de Sistemas</small><strong>{{ textoCampo(eq['comentarios_sistemas']) }}</strong></div>
+                </div>
+                <p class="control-historical-note">{{ ficha.notaHistorica }}</p>
+              </details>
+            </ng-container>
+          </ng-container>
+        </section>
+
+        <div class="control-review-grid">
+          <div class="control-audit-main">
+            <!-- Segundo: el motivo de la revisión, sin largas tablas de propiedades. -->
+            <section class="control-diff-panel">
+              <div class="control-section-heading">
+                <div><p class="control-kicker">1 · CAMBIOS DEL MOVIMIENTO</p><h4>¿Qué se registró?</h4></div>
+                <span class="control-change-count" *ngIf="evento.cambios.length">{{ evento.cambios.length }} {{ evento.cambios.length === 1 ? 'campo' : 'campos' }}</span>
+              </div>
+              <ng-container *ngIf="evento.cambios.length; else sinDetalle">
+                <div class="control-change-list">
+                  <article class="control-change-card" *ngFor="let c of evento.cambios">
+                    <h5>{{ campo(c.campo) }}</h5>
+                    <div class="control-compare">
+                      <div class="control-compare-side before"><small>ANTES</small><p>{{ valorComparacion(c.antes, evento.accion, true) }}</p></div>
+                      <span class="control-compare-arrow" aria-hidden="true">→</span>
+                      <div class="control-compare-side after"><small>DESPUÉS</small><p>{{ valorComparacion(c.despues, evento.accion, false) }}</p></div>
+                    </div>
+                  </article>
+                </div>
+              </ng-container>
+              <ng-template #sinDetalle>
+                <div class="control-audit-empty">
+                  <strong>Este evento no tiene un comparativo histórico disponible.</strong>
+                  <p>El movimiento quedó registrado, pero no podemos afirmar qué campos cambiaron. Consulta la evidencia antes de validarlo.</p>
+                </div>
+                <details *ngIf="evento.camposEnviados.length" class="control-audit-expand">
+                  <summary>Campos enviados en la operación (no necesariamente cambiaron)</summary>
+                  <div class="control-field-chips"><span *ngFor="let nombre of evento.camposEnviados">{{ campo(nombre) }}</span></div>
+                </details>
+              </ng-template>
+            </section>
+
+            <!-- Tercero: evidencia documental vinculada exactamente a la asignación. -->
+            <section class="control-audit-doc" aria-label="Comprobación documental">
+              <div class="control-section-heading">
+                <div><p class="control-kicker">2 · DOCUMENTACIÓN</p><h4>Responsiva y comprobaciones</h4></div>
+              </div>
+              <p *ngIf="cargandoExpediente" class="control-hint">Consultando documentación…</p>
+              <ng-container *ngIf="!cargandoExpediente && expediente as ficha">
+                <ng-container *ngIf="ficha.disponible">
+                  <div class="control-audit-doc-line" *ngIf="ficha.responsiva as resp; else sinDocumento">
+                    <div>
+                      <strong>{{ textoCampo(resp.folio) }} · {{ textoCampo(resp.estado) }}</strong>
+                      <p>{{ textoCampo(resp.responsable) }} · Firma registrada: {{ textoCampo(resp.fecha_firma) }}</p>
+                      <small>La firma y serie del PDF requieren comprobación visual.</small>
+                    </div>
+                    <div class="control-audit-doc-links">
+                      <a *ngIf="urlDocumento(resp.archivo_pdf) as link" [href]="link" target="_blank" rel="noopener noreferrer">Abrir documento ↗</a>
+                      <a [routerLink]="['/inventario-it/responsivas']" [queryParams]="{ responsivaId: resp.id }">Ver esta responsiva ↗</a>
+                    </div>
+                  </div>
+                  <ng-template #sinDocumento>
+                    <div class="control-audit-empty">
+                      <strong *ngIf="ficha.asignacion">No hay responsiva vinculada a esta asignación.</strong>
+                      <strong *ngIf="!ficha.asignacion">Sin asignación relacionada con este movimiento.</strong>
+                      <p *ngIf="ficha.asignacion">Es necesario comprobar si el documento era obligatorio y solicitarlo cuando corresponda.</p>
+                      <p *ngIf="!ficha.asignacion">Una responsiva puede no ser necesaria para un equipo sin asignación.</p>
+                    </div>
+                  </ng-template>
+                  <div class="control-audit-warnings" *ngIf="alertasExpediente.length">
+                    <div *ngFor="let c of alertasExpediente" [class.control-audit-danger]="c.estado === 'advertencia'">
+                      <span aria-hidden="true">{{ c.estado === 'advertencia' ? '!' : '•' }}</span>
+                      <p><strong>{{ c.nombre }}:</strong> {{ c.mensaje }}</p>
+                    </div>
+                  </div>
+                  <details class="control-audit-expand" *ngIf="ficha.comprobaciones.length">
+                    <summary>Ver todas las comprobaciones ({{ ficha.comprobaciones.length }})</summary>
+                    <div class="control-check-row" *ngFor="let c of ficha.comprobaciones" [ngClass]="c.estado">
+                      <span class="control-check-indicator" aria-hidden="true">{{ c.estado === 'ok' ? '✓' : c.estado === 'advertencia' ? '!' : '•' }}</span>
+                      <div><strong>{{ c.nombre }}</strong><p>{{ c.mensaje }}</p></div>
+                    </div>
+                  </details>
+                </ng-container>
+              </ng-container>
+            </section>
+          </div>
+
+          <aside class="control-review-panel" aria-label="Dictamen de auditoría">
+            <div class="control-section-heading">
+              <div><p class="control-kicker">3 · DICTAMEN</p><h4>Resultado de la revisión</h4></div>
+            </div>
+            <p *ngIf="evento.revisorNombre" class="control-last-review">Última revisión por <b>{{ evento.revisorNombre }}</b><span>{{ evento.revisadoEn }}</span></p>
+            <div class="control-decision-options" role="group" aria-label="Estado del movimiento">
+              <button type="button" [class.chosen]="estadoEdicion === 'Pendiente'" (click)="estadoEdicion = 'Pendiente'" [disabled]="guardando" [attr.aria-pressed]="estadoEdicion === 'Pendiente'"><strong>Pendiente</strong><small>Aún falta comprobar evidencia.</small></button>
+              <button type="button" [class.chosen]="estadoEdicion === 'Validado'" (click)="estadoEdicion = 'Validado'" [disabled]="guardando" [attr.aria-pressed]="estadoEdicion === 'Validado'"><strong>Validado</strong><small>Auditor independiente confirmó el cambio.</small></button>
+              <button type="button" [class.chosen]="estadoEdicion === 'Observado'" (click)="estadoEdicion = 'Observado'" [disabled]="guardando" [attr.aria-pressed]="estadoEdicion === 'Observado'"><strong>Observado</strong><small>Existen diferencias o evidencia faltante.</small></button>
+            </div>
+            <label for="observacion-dictamen">Comentario {{ estadoEdicion === 'Observado' ? '(obligatorio)' : '(opcional)' }}
+              <textarea id="observacion-dictamen" [(ngModel)]="observacionEdicion" [disabled]="guardando" rows="3" maxlength="2000" placeholder="Qué verificaste o qué falta…"></textarea>
+            </label>
+            <p class="control-rule">Guardar el dictamen no modifica el inventario. Nadie puede validar su propio cambio.</p>
+            <details class="control-audit-expand control-audit-history">
+              <summary>Historial de dictámenes ({{ historial.length }})</summary>
+              <p *ngIf="cargandoHistorial" class="control-hint">Consultando revisiones…</p>
+              <p *ngIf="!cargandoHistorial && !historial.length" class="control-hint">Sin dictámenes anteriores.</p>
+              <div *ngFor="let h of historial" class="control-historial-item"><strong>{{ h.anterior }} → {{ h.nuevo }}</strong><small>{{ h.revisor }} · {{ h.fecha }}</small><p *ngIf="h.observacionNueva">{{ h.observacionNueva }}</p></div>
+            </details>
+          </aside>
+        </div>
+      </div>
+      <footer class="control-footer">
+        <span>Revisión del evento #{{ evento.id }} · Sin alterar el inventario</span>
+        <div>
+          <button type="button" class="control-btn muted" (click)="cerrar()" [disabled]="guardando">Cerrar sin guardar</button>
+          <button type="button" class="control-btn primary" (click)="guardar()" [disabled]="guardando">{{ guardando ? 'Guardando…' : 'Guardar dictamen' }}</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+</section>

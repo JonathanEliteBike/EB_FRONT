@@ -1,0 +1,1448 @@
+<section class="equipos-page">
+
+  <!-- ======================================================
+       ENCABEZADO PRINCIPAL
+       ====================================================== -->
+
+  <header class="equipos-header">
+    <div class="header-left">
+      <button
+        type="button"
+        class="back-btn"
+        routerLink="/inventario-it"
+        aria-label="Volver a Inventario IT">
+        ←
+      </button>
+
+      <div class="title-line">
+        <span
+          class="title-icon"
+          aria-hidden="true">
+          ▤
+        </span>
+
+        <div class="title-block">
+          <h1>
+            Gestión de equipos
+          </h1>
+
+          <p>
+            Consulta, filtra y administra los activos tecnológicos
+            registrados en el sistema.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="primary-btn"
+      (click)="abrirFormulario()">
+
+      <span aria-hidden="true">
+        ＋
+      </span>
+
+      Nuevo equipo
+    </button>
+  </header>
+
+
+  <div class="form-alert success" role="status" *ngIf="folioRecienGenerado">
+    ✓ Equipo registrado correctamente. Folio asignado:
+    <strong>{{ folioRecienGenerado }}</strong>
+  </div>
+
+  <!-- ======================================================
+       FORMULARIO DE REGISTRO Y EDICIÓN
+       ====================================================== -->
+
+  <section
+    id="formulario-equipo"
+    class="form-panel"
+    *ngIf="mostrarFormulario">
+
+    <!-- CABECERA DEL FORMULARIO -->
+
+    <div class="form-header">
+      <div>
+        <p class="form-eyebrow">
+          {{
+            modoEdicion
+              ? 'ACTUALIZACIÓN DE ACTIVO'
+              : 'ALTA DE ACTIVO'
+          }}
+        </p>
+
+        <h2>
+          {{
+            modoEdicion
+              ? 'Editar equipo'
+              : 'Registrar nuevo equipo'
+          }}
+        </h2>
+
+        <p *ngIf="!modoEdicion">
+          Captura la información principal del activo tecnológico.
+          La asignación del responsable se realiza posteriormente
+          desde el módulo de asignaciones.
+        </p>
+
+        <p *ngIf="modoEdicion">
+          Modifica la información del activo seleccionado y guarda
+          los cambios para mantener actualizado el inventario.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="close-btn"
+        aria-label="Cerrar formulario"
+        title="Cerrar formulario"
+        (click)="cerrarFormulario()">
+        ×
+      </button>
+    </div>
+
+
+    <!-- FORMULARIO -->
+
+    <form
+      class="equipment-form"
+      autocomplete="off"
+      (ngSubmit)="guardarEquipo()">
+
+
+      <!-- ==================================================
+           SECCIÓN 01: IDENTIFICACIÓN
+           ================================================== -->
+
+      <fieldset class="form-section">
+        <legend>
+          <span>
+            01
+          </span>
+
+          <div>
+            <strong>
+              Identificación
+            </strong>
+
+            <small>
+              Información principal para identificar el activo.
+            </small>
+          </div>
+        </legend>
+
+
+        <div class="form-grid identification-grid">
+
+          <!-- NÚMERO DE INVENTARIO -->
+
+          <label>
+            <span class="field-label">
+              No. inventario
+
+              <b
+                *ngIf="modoEdicion"
+                class="required"
+                aria-label="Campo obligatorio">
+                *
+              </b>
+            </span>
+
+            <input
+              *ngIf="!modoEdicion"
+              type="text"
+              value="Se genera al guardar"
+              readonly
+              aria-label="Folio automático al registrar equipo"
+            />
+            <input
+              *ngIf="modoEdicion"
+              type="text"
+              name="inventario"
+              [(ngModel)]="nuevoEquipo.inventario"
+              maxlength="100"
+              required
+            />
+
+            <small class="field-help" *ngIf="!modoEdicion">
+              Se asigna automáticamente al guardar. Ejemplo: EB-IT-000123.
+            </small>
+            <small class="field-help" *ngIf="modoEdicion">
+              Identificador actual del equipo. No lo cambies salvo una corrección justificada.
+            </small>
+          </label>
+
+
+          <!-- FECHA DE REGISTRO -->
+
+          <label>
+            <span class="field-label">
+              Fecha de registro
+            </span>
+
+            <app-fecha-inventario mode="single" placeholder="Seleccionar fecha"
+              [value]="nuevoEquipo.fechaRegistro || ''"
+              (dateChange)="nuevoEquipo.fechaRegistro = $event">
+            </app-fecha-inventario>
+
+            <small class="field-help">
+              Se precarga automáticamente con la fecha actual.
+            </small>
+          </label>
+
+
+          <!-- EMPRESA -->
+
+          <label>
+            <span class="field-label">
+              Empresa
+            </span>
+
+            <select
+              name="empresa"
+              [(ngModel)]="nuevoEquipo.empresa">
+
+              <option
+                *ngFor="let empresa of empresas"
+                [value]="empresa">
+                {{ empresa }}
+              </option>
+            </select>
+
+            <small class="field-help">
+              Empresa propietaria o responsable del activo.
+            </small>
+          </label>
+
+
+          <!-- CATEGORÍA -->
+
+          <label>
+            <span class="field-label">
+              Categoría
+
+              <b
+                class="required"
+                aria-label="Campo obligatorio">
+                *
+              </b>
+            </span>
+
+            <select
+              name="categoria"
+              [(ngModel)]="nuevoEquipo.categoria"
+              required>
+
+              <option value="">
+                Selecciona una categoría
+              </option>
+
+              <option
+                *ngFor="let categoria of categorias"
+                [value]="categoria">
+                {{ categoria }}
+              </option>
+            </select>
+
+            <small class="field-help">
+              Clasificación general del equipo tecnológico.
+            </small>
+          </label>
+        </div>
+      </fieldset>
+
+
+      <!-- ==================================================
+           SECCIÓN 02: DETALLE DEL EQUIPO
+           ================================================== -->
+
+      <fieldset class="form-section">
+        <legend>
+          <span>
+            02
+          </span>
+
+          <div>
+            <strong>
+              Detalle del equipo
+            </strong>
+
+            <small>
+              Características, condición y ubicación física.
+            </small>
+          </div>
+        </legend>
+
+
+        <div class="form-grid detail-grid">
+
+          <!-- NOMBRE O DESCRIPCIÓN -->
+
+          <label class="span-4">
+            <span class="field-label">
+              Equipo / descripción
+
+              <b
+                class="required"
+                aria-label="Campo obligatorio">
+                *
+              </b>
+            </span>
+
+            <input
+              type="text"
+              name="nombre"
+              [(ngModel)]="nuevoEquipo.nombre"
+              (blur)="normalizarCampoTexto('nombre')"
+              placeholder="Ej. Laptop Dell Latitude, monitor, impresora, teléfono..."
+              maxlength="255"
+              required
+            />
+
+            <small class="field-help">
+              Escribe un nombre breve que permita reconocer
+              rápidamente el activo.
+            </small>
+          </label>
+
+
+          <!-- MARCA -->
+
+          <label>
+            <span class="field-label">
+              Marca
+            </span>
+
+            <input
+              type="text"
+              name="marca"
+              [(ngModel)]="nuevoEquipo.marca"
+              (blur)="normalizarCampoTexto('marca')"
+              placeholder="Ej. Dell, HP, Asus..."
+              maxlength="100"
+            />
+          </label>
+
+
+          <!-- MODELO -->
+
+          <label>
+            <span class="field-label">
+              Modelo
+            </span>
+
+            <input
+              type="text"
+              name="modelo"
+              [(ngModel)]="nuevoEquipo.modelo"
+              placeholder="Ej. Latitude 5420"
+              maxlength="150"
+            />
+          </label>
+
+
+          <!-- NÚMERO DE SERIE -->
+
+          <label>
+            <span class="field-label">
+              No. serie
+            </span>
+
+            <input
+              type="text"
+              name="serie"
+              [(ngModel)]="nuevoEquipo.serie"
+              placeholder="Número de serie del fabricante"
+              maxlength="200"
+            />
+          </label>
+
+
+          <!-- FUNCIONAMIENTO -->
+
+          <label>
+            <span class="field-label">
+              Funcionamiento
+            </span>
+
+            <select
+              name="funcionamiento"
+              [(ngModel)]="nuevoEquipo.funcionamiento">
+
+              <option
+                *ngFor="let funcionamiento of funcionamientos"
+                [value]="funcionamiento">
+                {{ funcionamiento }}
+              </option>
+            </select>
+          </label>
+
+
+          <!-- ESTADO -->
+
+          <label>
+            <span class="field-label">
+              Estado
+            </span>
+
+            <select
+              name="estado"
+              [(ngModel)]="nuevoEquipo.estado">
+
+              <option
+                *ngIf="
+                  modoEdicion &&
+                  estadoOriginalEdicion === 'Asignado'
+                "
+                value="Asignado">
+                Asignado
+              </option>
+
+              <option
+                *ngFor="let estado of estadosRegistro"
+                [value]="estado">
+                {{ estado }}
+              </option>
+            </select>
+
+            <small class="field-help">
+              Los equipos nuevos se registran disponibles.
+            </small>
+          </label>
+
+
+          <!-- UBICACIÓN -->
+
+          <label class="span-3">
+            <span class="field-label">
+              Ubicación física
+            </span>
+
+            <select
+              name="ubicacion"
+              [(ngModel)]="nuevoEquipo.ubicacion">
+
+              <option value="">
+                Selecciona una ubicación
+              </option>
+
+              <option
+                *ngFor="
+                  let ubicacion of ubicacionesFisicas
+                "
+                [value]="ubicacion">
+
+                {{ ubicacion }}
+              </option>
+            </select>
+
+            <small class="field-help">
+              Selecciona Almacen, Oficina o Tienda.
+            </small>
+          </label>
+        </div>
+      </fieldset>
+
+
+      <!-- ==================================================
+           SECCIÓN 03: EVIDENCIA Y NOTAS
+           ================================================== -->
+
+      <fieldset class="form-section optional-section">
+        <legend>
+          <span>
+            03
+          </span>
+
+          <div>
+            <strong>
+              Evidencia y notas
+
+              <em>
+                Opcional
+              </em>
+            </strong>
+
+            <small>
+              Enlaces, accesorios y observaciones técnicas.
+            </small>
+          </div>
+        </legend>
+
+
+        <div class="form-grid evidence-grid">
+
+          <!-- URL DE EVIDENCIA -->
+
+          <label class="span-2">
+            <span class="field-label">
+              URL de evidencia
+            </span>
+
+            <input
+              type="url"
+              name="imagenUrl"
+              [(ngModel)]="nuevoEquipo.imagenUrl"
+              placeholder="Pega el enlace compartido de Google Drive"
+            />
+
+            <small class="field-help">
+              Guarda únicamente una liga compartida. La imagen
+              no se subirá directamente al servidor.
+            </small>
+          </label>
+
+
+          <!-- EXTRAS -->
+
+          <label class="span-2">
+            <span class="field-label">
+              Accesorios y extras
+            </span>
+
+            <input
+              type="text"
+              name="extras"
+              [(ngModel)]="nuevoEquipo.extras"
+              placeholder="Ej. Cargador, mouse, teclado, cable HDMI..."
+              maxlength="500"
+            />
+
+            <small class="field-help">
+              Registra los accesorios entregados junto con el activo.
+            </small>
+          </label>
+
+
+          <!-- COMENTARIOS -->
+
+          <label class="span-4">
+            <span class="field-label">
+              Comentarios de sistemas
+            </span>
+
+            <textarea
+              name="comentariosSistemas"
+              [(ngModel)]="nuevoEquipo.comentariosSistemas"
+              placeholder="Agrega observaciones técnicas, condiciones especiales o información relevante..."
+              rows="4">
+            </textarea>
+          </label>
+        </div>
+      </fieldset>
+
+
+      <!-- ==================================================
+           MENSAJES DEL FORMULARIO
+           ================================================== -->
+
+      <div
+        class="form-alert error"
+        role="alert"
+        *ngIf="errorFormulario">
+
+        <span aria-hidden="true">
+          !
+        </span>
+
+        {{ errorFormulario }}
+      </div>
+
+
+      <div
+        class="form-alert success"
+        role="status"
+        *ngIf="mensajeExito">
+
+        <span aria-hidden="true">
+          ✓
+        </span>
+
+        {{ mensajeExito }}
+      </div>
+
+
+      <!-- ==================================================
+           BOTONES DEL FORMULARIO
+           ================================================== -->
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          [disabled]="guardando"
+          (click)="cerrarFormulario()">
+
+          Cancelar
+        </button>
+
+
+        <button
+          type="submit"
+          class="save-btn"
+          [disabled]="guardando">
+
+          <span
+            class="button-loader"
+            *ngIf="guardando"
+            aria-hidden="true">
+          </span>
+
+          {{
+            guardando
+              ? (
+                  modoEdicion
+                    ? 'Actualizando equipo...'
+                    : 'Guardando equipo...'
+                )
+              : (
+                  modoEdicion
+                    ? 'Actualizar equipo'
+                    : 'Guardar equipo'
+                )
+          }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+
+  <!-- ======================================================
+       KPI: FILTROS PRINCIPALES DE ESTADO
+       ====================================================== -->
+
+  <section
+    class="stats-grid"
+    aria-label="Filtrar equipos por estado">
+
+    <!-- TODOS -->
+
+    <button
+      type="button"
+      class="stat-card total"
+      [class.active]="filtroEstado === 'Todos'"
+      [attr.aria-pressed]="filtroEstado === 'Todos'"
+      (click)="seleccionarEstado('Todos')">
+
+      <span>
+        Total
+      </span>
+
+      <strong>
+        {{ totalEquipos }}
+      </strong>
+
+      <small>
+        Todos los activos
+      </small>
+    </button>
+
+
+    <!-- ASIGNADOS -->
+
+    <button
+      type="button"
+      class="stat-card asignados"
+      [class.active]="filtroEstado === 'Asignado'"
+      [attr.aria-pressed]="filtroEstado === 'Asignado'"
+      (click)="seleccionarEstado('Asignado')">
+
+      <span>
+        Asignados
+      </span>
+
+      <strong>
+        {{ asignados }}
+      </strong>
+
+      <small>
+        Equipos bajo resguardo
+      </small>
+    </button>
+
+
+    <!-- DISPONIBLES -->
+
+    <button
+      type="button"
+      class="stat-card disponibles"
+      [class.active]="filtroEstado === 'Disponible'"
+      [attr.aria-pressed]="filtroEstado === 'Disponible'"
+      (click)="seleccionarEstado('Disponible')">
+
+      <span>
+        Disponibles
+      </span>
+
+      <strong>
+        {{ disponibles }}
+      </strong>
+
+      <small>
+        Listos para asignar
+      </small>
+    </button>
+
+
+    <!-- BAJAS -->
+
+    <button
+      type="button"
+      class="stat-card bajas"
+      [class.active]="filtroEstado === 'Baja'"
+      [attr.aria-pressed]="filtroEstado === 'Baja'"
+      (click)="seleccionarEstado('Baja')">
+
+      <span>
+        Baja
+      </span>
+
+      <strong>
+        {{ bajas }}
+      </strong>
+
+      <small>
+        Fuera de operación
+      </small>
+    </button>
+  </section>
+
+
+  <p class="stats-help">
+    Las tarjetas funcionan como filtros y actualizan directamente
+    el listado de equipos.
+  </p>
+
+
+  <!-- ======================================================
+       BÚSQUEDA Y FILTROS COMPLEMENTARIOS
+       ====================================================== -->
+
+  <section class="filters-panel">
+
+    <!-- BÚSQUEDA -->
+
+    <div class="search-box">
+      <span
+        class="search-icon"
+        aria-hidden="true">
+        ⌕
+      </span>
+
+      <input
+        type="search"
+        [(ngModel)]="terminoBusqueda"
+        placeholder="Buscar por inventario, equipo, marca, modelo, serie, responsable o ubicación..."
+        aria-label="Buscar equipos"
+      />
+    </div>
+
+
+    <!-- FILTROS -->
+
+    <div class="filters-toolbar">
+
+      <!-- EMPRESA -->
+
+      <label class="select-filter">
+        <span>
+          Empresa
+        </span>
+
+        <select
+          [(ngModel)]="filtroEmpresa"
+          aria-label="Filtrar por empresa">
+
+          <option value="Todas">
+            Todas las empresas
+          </option>
+
+          <option
+            *ngFor="let empresa of empresas"
+            [value]="empresa">
+            {{ empresa }}
+          </option>
+        </select>
+      </label>
+
+
+      <!-- RESPONSIVA -->
+
+      <div class="filter-group">
+        <span class="filter-label">
+          Responsiva
+        </span>
+
+        <div
+          class="chips"
+          role="group"
+          aria-label="Filtrar por estado de responsiva">
+
+          <button
+            *ngFor="let responsiva of responsivasFiltro"
+            type="button"
+            class="filter-chip"
+            [class.active]="filtroResponsiva === responsiva"
+            [attr.aria-pressed]="
+              filtroResponsiva === responsiva
+            "
+            (click)="filtroResponsiva = responsiva">
+
+            {{ responsiva }}
+          </button>
+        </div>
+      </div>
+
+
+      <!-- LIMPIAR FILTROS -->
+
+      <button
+        type="button"
+        class="clear-btn"
+        *ngIf="
+          terminoBusqueda ||
+          filtroEstado !== 'Todos' ||
+          filtroResponsiva !== 'Todas' ||
+          filtroEmpresa !== 'Todas'
+        "
+        (click)="limpiarFiltros()">
+
+        Limpiar filtros
+      </button>
+    </div>
+
+
+    <!-- RESULTADOS -->
+
+    <div class="results-row">
+      <p class="results-text">
+        Mostrando
+
+        <strong>
+          {{ equiposFiltrados.length }}
+        </strong>
+
+        de
+
+        <strong>
+          {{ equipos.length }}
+        </strong>
+
+        equipos.
+      </p>
+
+      <span class="active-filter">
+        Estado:
+
+        <strong>
+          {{ filtroEstado }}
+        </strong>
+      </span>
+    </div>
+  </section>
+
+
+  <!-- ======================================================
+       MENSAJES DE CARGA
+       ====================================================== -->
+
+  <div
+    class="loading-message"
+    *ngIf="cargando">
+
+    Cargando equipos desde el backend...
+  </div>
+
+
+  <div class="alert error" role="alert" *ngIf="avisoEquipoVinculado">{{ avisoEquipoVinculado }}</div>
+
+  <div
+    class="error-message"
+    *ngIf="errorCarga">
+
+    {{ errorCarga }}
+  </div>
+
+
+  <!-- ======================================================
+       TABLA DE EQUIPOS
+       ====================================================== -->
+
+  <section class="table-card">
+
+    <!-- ENCABEZADO DE LA TABLA -->
+
+    <div class="table-header">
+      <div>
+        <p class="table-eyebrow">
+          ACTIVOS REGISTRADOS
+        </p>
+
+        <h2>
+          Listado de equipos
+        </h2>
+
+        <p>
+          Consulta rápida del activo, estado, responsiva
+          y ubicación física.
+        </p>
+      </div>
+
+      <span class="table-count">
+        {{ equiposFiltrados.length }}
+
+        resultado{{
+          equiposFiltrados.length === 1
+            ? ''
+            : 's'
+        }}
+      </span>
+    </div>
+
+
+    <!-- TABLA -->
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              Inventario
+            </th>
+
+            <th>
+              Equipo
+            </th>
+
+            <th>
+              Estado
+            </th>
+
+            <th>
+              Responsiva
+            </th>
+
+            <th>
+              Ubicación
+            </th>
+
+            <th class="actions-heading">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+
+
+        <tbody>
+          <tr
+            *ngFor="
+              let equipo of equiposFiltrados;
+              trackBy: trackByEquipo
+            ">
+
+            <!-- INVENTARIO -->
+
+            <td class="inventory-code">
+              {{ equipo.inventario }}
+            </td>
+
+
+            <!-- EQUIPO -->
+
+            <td class="equipment-cell">
+              <strong>
+                {{
+                  equipo.nombre ||
+                  'Equipo sin descripción'
+                }}
+              </strong>
+
+              <small class="equipment-meta">
+                {{
+                  equipo.marca ||
+                  'Sin marca'
+                }}
+
+                ·
+
+                {{
+                  equipo.modelo ||
+                  'Sin modelo'
+                }}
+
+                · S/N:
+
+                {{
+                  equipo.serie ||
+                  'Sin serie'
+                }}
+              </small>
+
+              <small class="equipment-category">
+                {{
+                  equipo.categoria ||
+                  'Sin categoría'
+                }}
+              </small>
+            </td>
+
+
+            <!-- ESTADO -->
+
+            <td>
+              <span
+                class="status"
+                [ngClass]="estadoClase(equipo.estado)">
+
+                {{ equipo.estado }}
+              </span>
+            </td>
+
+
+            <!-- RESPONSIVA -->
+
+            <td>
+              <span
+                class="responsiva"
+                [ngClass]="
+                  responsivaClase(
+                    equipo.responsiva
+                  )
+                ">
+
+                {{
+                  equipo.responsiva ||
+                  'No aplica'
+                }}
+              </span>
+            </td>
+
+
+            <!-- UBICACIÓN -->
+
+            <td class="location-cell">
+              {{
+                equipo.ubicacion ||
+                'Sin ubicación'
+              }}
+            </td>
+
+
+            <!-- ACCIONES -->
+
+            <td class="actions-cell">
+              <div class="actions-wrapper">
+
+                <button
+                  type="button"
+                  class="action-btn view-btn"
+                  title="Ver detalle"
+                  [attr.aria-label]="
+                    'Ver detalle de ' +
+                    equipo.inventario
+                  "
+                  (click)="verEquipo(equipo)">
+                  ◉
+                </button>
+
+
+                <button
+                  type="button"
+                  class="action-btn edit-btn"
+                  title="Editar equipo"
+                  [attr.aria-label]="
+                    'Editar ' +
+                    equipo.inventario
+                  "
+                  (click)="editarEquipo(equipo)">
+                  ✎
+                </button>
+              </div>
+            </td>
+          </tr>
+
+
+          <!-- SIN RESULTADOS -->
+
+          <tr
+            *ngIf="
+              !cargando &&
+              equiposFiltrados.length === 0
+            ">
+
+            <td
+              colspan="6"
+              class="empty-state">
+
+              No se encontraron equipos con los filtros
+              seleccionados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ======================================================
+       MODAL DE DETALLE DEL EQUIPO
+       ====================================================== -->
+
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarDetalle"
+    (click)="cerrarDetalle()">
+
+    <div
+      class="detalle-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Detalle del equipo"
+      (click)="$event.stopPropagation()">
+
+
+      <!-- ENCABEZADO DEL MODAL -->
+
+      <div class="detalle-header">
+        <div>
+          <p>
+            INFORMACIÓN DEL ACTIVO
+          </p>
+
+          <h2>
+            Detalle del equipo
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          aria-label="Cerrar detalle"
+          (click)="cerrarDetalle()">
+          ×
+        </button>
+      </div>
+
+
+      <!-- CUERPO DEL MODAL -->
+
+      <div
+        class="detalle-body"
+        *ngIf="equipoSeleccionado">
+
+        <div class="detalle-grid">
+
+          <div>
+            <label>
+              No. inventario
+            </label>
+
+            <p>
+              {{ equipoSeleccionado.inventario }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Empresa
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.empresa ||
+                'Sin empresa'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Categoría
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.categoria ||
+                'Sin categoría'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Equipo
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.nombre ||
+                'Sin descripción'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Marca
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.marca ||
+                'Sin marca'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Modelo
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.modelo ||
+                'Sin modelo'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Serie
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.serie ||
+                'Sin serie'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Estado
+            </label>
+
+            <p>
+              {{ equipoSeleccionado.estado }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Funcionamiento
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.funcionamiento ||
+                'Sin información'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Área
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.departamento ||
+                'Sin departamento'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Cargo
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.cargo ||
+                'Sin cargo'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Responsable
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.responsable ||
+                'Sin asignar'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Ubicación
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.ubicacion ||
+                'Sin ubicación'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Responsiva
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.responsiva ||
+                'No aplica'
+              }}
+            </p>
+          </div>
+
+
+          <div>
+            <label>
+              Fecha de registro
+            </label>
+
+            <p>
+              {{
+                equipoSeleccionado.fechaRegistro ||
+                'Sin fecha'
+              }}
+            </p>
+          </div>
+        </div>
+
+
+        <!-- INFORMACIÓN ADICIONAL -->
+
+        <div class="detalle-extra">
+          <h3>
+            Accesorios y extras
+          </h3>
+
+          <p>
+            {{
+              equipoSeleccionado.extras ||
+              'Sin información'
+            }}
+          </p>
+
+
+          <h3>
+            Comentarios de sistemas
+          </h3>
+
+          <p>
+            {{
+              equipoSeleccionado.comentariosSistemas ||
+              'Sin comentarios'
+            }}
+          </p>
+        </div>
+
+
+        <!-- EVIDENCIA -->
+
+        <section class="evidencia-equipo">
+          <h3>
+            Evidencia fotográfica
+          </h3>
+
+          <ng-container
+            *ngIf="
+              equipoSeleccionado.imagenUrl;
+              else sinEvidencia
+            ">
+
+            <div class="evidencia-box">
+              <div class="evidencia-info">
+                <span class="evidencia-icono">
+                  🔗
+                </span>
+
+                <div class="evidencia-texto">
+                  <strong>
+                    Enlace de Google Drive
+                  </strong>
+
+                  <p class="evidencia-url">
+                    {{
+                      equipoSeleccionado.imagenUrl
+                    }}
+                  </p>
+                </div>
+              </div>
+
+
+              <div class="evidencia-actions">
+                <button
+                  type="button"
+                  class="copy-link-btn"
+                  (click)="
+                    copiarUrlImagen(
+                      equipoSeleccionado.imagenUrl
+                    )
+                  ">
+
+                  Copiar enlace
+                </button>
+
+
+                <a
+                  class="open-link-btn"
+                  [href]="equipoSeleccionado.imagenUrl"
+                  target="_blank"
+                  rel="noopener noreferrer">
+
+                  Abrir en Drive ↗
+                </a>
+              </div>
+            </div>
+
+
+            <div
+              class="copy-message"
+              *ngIf="mensajeUrlCopiada">
+
+              {{ mensajeUrlCopiada }}
+            </div>
+          </ng-container>
+
+
+          <ng-template #sinEvidencia>
+            <div class="sin-evidencia">
+              Este equipo no tiene una liga de evidencia registrada.
+            </div>
+          </ng-template>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>

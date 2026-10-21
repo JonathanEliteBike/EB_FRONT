@@ -1,0 +1,211 @@
+<section class="inventory-home">
+  <!-- Luces ambientales decorativas -->
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <!-- BARRA SUPERIOR -->
+  <header class="topbar">
+    <a
+      class="back-link"
+      routerLink="/">
+      <span aria-hidden="true">←</span>
+      Regresar al Inicio
+    </a>
+
+  </header>
+
+  <main class="content">
+    <!-- ENCABEZADO PRINCIPAL -->
+    <section class="hero">
+      <p class="eyebrow">
+        <span></span>
+
+        INVENTARIO IT
+
+        <b>·</b>
+
+        ELITE BIKE
+      </p>
+
+      <h1>
+        Gestión de
+        <strong>Inventario IT</strong>
+      </h1>
+
+      <p class="hero-description">
+        Plataforma centralizada para el control, seguimiento,
+        auditoría y administración de los activos tecnológicos.
+      </p>
+
+
+
+      <!-- ERROR DE CARGA -->
+      <div
+        class="status-message error"
+        *ngIf="errorCarga">
+
+        <span>
+          !
+        </span>
+
+        {{ errorCarga }}
+      </div>
+    </section>
+
+    <!-- MÓDULOS DESTACADOS -->
+    <section class="featured-layout">
+      <!-- DASHBOARD PRINCIPAL -->
+      <a
+        class="dashboard-card"
+        routerLink="/inventario-it/dashboard">
+
+        <div class="dashboard-top">
+          <span class="module-icon orange-icon">
+            ◔
+          </span>
+
+          <span
+            class="pending-badge"
+            [class.clear]="pendientesTotales === 0">
+
+            {{ etiquetaPendientes }}
+          </span>
+        </div>
+
+        <div class="dashboard-copy">
+          <p class="card-kicker">
+            MÓDULO PRINCIPAL
+          </p>
+
+          <h2>
+            Dashboard
+            <br />
+            General
+          </h2>
+
+          <p>
+            Consulta alertas, cambios pendientes de validar,
+            verificaciones físicas y el estado general del inventario.
+          </p>
+        </div>
+
+        <div class="card-action">
+          <span>
+            Abrir módulo
+          </span>
+
+          <b>
+            →
+          </b>
+        </div>
+
+        <span class="card-number">
+          01
+        </span>
+      </a>
+
+      <!-- EQUIPOS, ASIGNACIONES Y REPORTES -->
+      <div class="featured-stack">
+        <a
+          *ngFor="
+            let modulo of modulosDestacados;
+            trackBy: trackByModulo
+          "
+          class="compact-card"
+          [ngClass]="modulo.clase"
+          [routerLink]="modulo.ruta">
+
+          <span class="module-icon">
+            {{ modulo.icono }}
+          </span>
+
+          <div>
+            <h3>
+              {{ modulo.titulo }}
+            </h3>
+
+            <p>
+              {{ modulo.descripcion }}
+            </p>
+          </div>
+
+          <b class="compact-arrow">
+            ›
+          </b>
+
+          <span class="compact-number">
+            {{ modulo.numero }}
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <!-- MÓDULOS SECUNDARIOS -->
+    <section class="secondary-section">
+      <div class="section-title">
+        <div>
+          <p>
+            MÁS HERRAMIENTAS
+          </p>
+
+          <h2>
+            Administración y control
+          </h2>
+        </div>
+
+        <span>
+          {{ modulosSecundarios.length }} módulos
+        </span>
+      </div>
+
+      <div class="secondary-grid">
+        <a
+          *ngFor="
+            let modulo of modulosSecundarios;
+            trackBy: trackByModulo
+          "
+          class="secondary-card"
+          [ngClass]="modulo.clase"
+          [routerLink]="modulo.ruta">
+
+          <div class="secondary-top">
+            <span class="module-icon">
+              {{ modulo.icono }}
+            </span>
+
+            <b>
+              ↗
+            </b>
+          </div>
+
+          <div>
+            <h3>
+              {{ modulo.titulo }}
+            </h3>
+
+            <p>
+              {{ modulo.descripcion }}
+            </p>
+          </div>
+
+          <span class="secondary-number">
+            {{ modulo.numero }}
+          </span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="page-footer">
+    <span>
+      ELITE BIKE
+    </span>
+
+    <i></i>
+
+    <span>
+      SISTEMA DE GESTIÓN DE INVENTARIO IT
+    </span>
+  </footer>
+</section>

@@ -1,0 +1,23 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+  /* Variables utilizadas por el componente compartido de fecha única. */
+  --surface2: #1e201e;
+  --border2: #3a3e39;
+  --t1: #f7f4ee;
+  --t2: #c9c9c3;
+  --t3: #8f958e;
+  --orange: #f46b2a;
+}
+:host app-date-range-picker,
+:host app-date-picker { display: block; flex: 1 1 auto; min-width: 0; }
+:host .hora-field { flex: 0 0 116px; display: flex; flex-direction: column; gap: 3px; color: #bfc3bd; font-size: 11px; }
+:host .hora-field input { color-scheme: dark; height: 42px; border: 1px solid #3a3e39; border-radius: 8px; color: #f7f4ee; background: #1e201e; padding: 0 8px; width: 100%; }
+:host .hora-field input:focus { outline: 2px solid rgba(244,107,42,.55); outline-offset: 1px; }
+@media (max-width: 560px) {
+  :host { flex-wrap: wrap; }
+  :host .hora-field { flex: 1 1 100%; }
+}

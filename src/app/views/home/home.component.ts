@@ -1,8 +1,8 @@
-﻿import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { MonitorOdooService } from '../../services/monitor-odoo.service';
 import { HomeBarComponent } from '../../components/home-bar/home-bar.component';
 import { environment } from '../../../environments/environment';
@@ -65,6 +65,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   private timerInterval: any;
 
   busquedaModulos = '';
+
+  inventarioItAutorizado = false;
   permisosInternosCargados = false;
 
   modulos: Modulo[] = [
@@ -174,27 +176,63 @@ export class HomeComponent implements OnInit, OnDestroy {
       boton: 'Ir a Importaciones',
       ruta: '/importaciones',
       accion: null
-    }
+    },
+    {
+      icono: 'fa-laptop',
+      titulo: 'Inventario IT',
+      descripcion: 'Administra equipos tecnológicos, asignaciones, responsivas, auditorías e historial de movimientos.',
+      boton: 'Ir a Inventario',
+      ruta: '/inventario-it',
+      accion: null
+    },
   ];
 
   private readonly PINS_KEY = 'eb_home_pinned';
 
   get modulosFiltrados(): Modulo[] {
     const q = this.busquedaModulos.trim().toLowerCase();
-    const lista = q
-      ? this.modulos.filter(m =>
-          m.titulo.toLowerCase().includes(q) || m.descripcion.toLowerCase().includes(q)
-        )
-      : this.modulos;
-    if (this.authService.getRol() === 4 && !this.permisosInternosCargados) return [];
 
-    const visibles = lista.filter(modulo =>
-      this.authService.getRol() !== 4 ||
-      this.authService.tieneAccesoInternoRuta(modulo.ruta || '') ||
-      (!this.authService.resolverModuloInternoPorRuta(modulo.ruta || '') &&
-        !!modulo.permisoInterno && this.authService.tienePermisoInterno(modulo.permisoInterno, 'ver'))
+    // El acceso a Inventario IT se valida de forma independiente en el backend.
+    const permitidos = this.modulos.filter(
+      modulo => modulo.ruta !== '/inventario-it' || this.inventarioItAutorizado
     );
-    return [...visibles.filter(m => m.pinned), ...visibles.filter(m => !m.pinned)];
+
+    const lista = q
+      ? permitidos.filter(modulo =>
+          modulo.titulo.toLowerCase().includes(q) ||
+          modulo.descripcion.toLowerCase().includes(q)
+        )
+      : permitidos;
+
+    // Los usuarios del rol 4 deben esperar a que se carguen los permisos internos.
+    if (this.authService.getRol() === 4 && !this.permisosInternosCargados) {
+      return [];
+    }
+
+    const visibles = lista.filter(modulo => {
+      // No esconder un Inventario IT autorizado por la matriz de permisos de main.
+      if (modulo.ruta === '/inventario-it') {
+        return this.inventarioItAutorizado;
+      }
+
+      if (this.authService.getRol() !== 4) {
+        return true;
+      }
+
+      return (
+        this.authService.tieneAccesoInternoRuta(modulo.ruta || '') ||
+        (
+          !this.authService.resolverModuloInternoPorRuta(modulo.ruta || '') &&
+          !!modulo.permisoInterno &&
+          this.authService.tienePermisoInterno(modulo.permisoInterno, 'ver')
+        )
+      );
+    });
+
+    return [
+      ...visibles.filter(modulo => modulo.pinned),
+      ...visibles.filter(modulo => !modulo.pinned)
+    ];
   }
 
   ejecutarAccion(accion: string | null): void {
@@ -260,15 +298,34 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPins();
+    this.comprobarAccesoInventario();
+
+    // Mantener la carga de permisos de main para usuarios del rol 4.
     if (this.authService.getRol() === 4) {
       forkJoin({
         permisos: this.authService.obtenerPermisosInternosEnVivo(),
         modulos: this.authService.cargarModulosRutasInternas()
       }).subscribe({
-        next: () => this.permisosInternosCargados = true,
-        error: () => this.permisosInternosCargados = true
+        next: () => { this.permisosInternosCargados = true; },
+        error: () => { this.permisosInternosCargados = true; }
       });
     }
+  }
+
+  private comprobarAccesoInventario(): void {
+    this.inventarioItAutorizado = false;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    this.http.get<{ autorizado: boolean }>(
+      `${this.apiUrl}/api/inventario/acceso`,
+      { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
+    ).subscribe({
+      next: (respuesta) => {
+        this.inventarioItAutorizado = respuesta.autorizado === true;
+      },
+      error: () => { this.inventarioItAutorizado = false; }
+    });
   }
 
   ngOnDestroy(): void {
