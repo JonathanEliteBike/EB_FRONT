@@ -524,9 +524,9 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
   folio = '';
   errorMensaje = '';
 
-  // Admin-only assignment
+  // Asignación y fecha retroactiva para administradores y personal autorizado.
   esAdmin = false;
-  usuariosDisponibles: { id: number; nombre: string; correo: string; usuario: string; rol: string }[] = [];
+  usuariosDisponibles: { id: number; nombre: string; correo: string; usuario: string }[] = [];
   emailAsignado = '';
   busquedaUsuario = '';
   mostrarListaUsuarios = false;
@@ -569,6 +569,23 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
       return this.auth.tienePermisoInterno('garantias', 'crear');
     }
     return this.auth.tieneModulo('usuarios_garantias');
+  }
+
+  get puedeAsignarYFecharGarantia(): boolean {
+    return this.esAdmin || (
+      this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear')
+    );
+  }
+
+  /**
+   * Los administradores operativos pueden recorrer el formulario para revisar
+   * sus secciones. El envío y la carga de archivos mantienen sus validaciones
+   * y permisos propios.
+   */
+  get puedeNavegarSinValidar(): boolean {
+    return this.esAdmin || (
+      this.auth.getRol() === 4 && this.auth.tienePermisoInterno('garantias', 'crear')
+    );
   }
 
   // ── Alerta al recargar/cerrar pestaña ────────────────────────────────────
@@ -624,12 +641,11 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
     this.restaurarBorrador();
     this.autoSaveInterval = setInterval(() => this.guardarBorrador(), 10_000);
     this.esAdmin = this.auth.isAdmin();
-    if (this.esAdmin) {
+    if (this.puedeAsignarYFecharGarantia) {
       this.svc.getUsuariosParaAsignar().subscribe({
         next: (us) => {
         this.usuariosDisponibles = (us as any[])
-          .filter(u => u.rol !== 'Administrador')
-          .map(u => ({ id: u.id, nombre: u.nombre, correo: u.correo, usuario: u.usuario ?? u.nombre, rol: u.rol }));
+          .map(u => ({ id: u.id, nombre: u.nombre, correo: u.correo, usuario: u.usuario ?? u.nombre }));
       },
         error: () => {},
       });
@@ -684,7 +700,7 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
 
   next(): void {
     if (!this.isLastStep) {
-      if (!this.esAdmin && !this.validarSeccionActual()) return;
+      if (!this.puedeNavegarSinValidar && !this.validarSeccionActual()) return;
       this.currentStepIdx++;
       this.errorMensaje = '';
       this.guardarBorrador();
@@ -819,10 +835,10 @@ export class GarantiasFormularioComponent implements OnInit, OnDestroy {
     this.errorMensaje = '';
 
     const payload = { ...this.formData };
-    if (this.esAdmin && this.emailAsignado) {
+    if (this.puedeAsignarYFecharGarantia && this.emailAsignado) {
       payload['email_asignado'] = this.emailAsignado;
     }
-    if (this.esAdmin && this.fechaIngreso) {
+    if (this.puedeAsignarYFecharGarantia && this.fechaIngreso) {
       payload['fecha_ingreso'] = this.fechaIngreso;
     }
 

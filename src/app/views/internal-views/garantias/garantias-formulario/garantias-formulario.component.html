@@ -1122,12 +1122,12 @@
           </label>
         </div>
 
-        <!-- ── ASIGNACIÓN DE USUARIO (Solo Administradores) ── -->
-        <div class="admin-assign-box" *ngIf="esAdmin">
+        <!-- ── ASIGNACIÓN DE USUARIO ── -->
+        <div class="admin-assign-box" *ngIf="puedeAsignarYFecharGarantia">
           <div class="admin-assign-header">
             <i class="fas fa-user-tag"></i>
             <h4>Asignar Ticket a Usuario</h4>
-            <span class="admin-badge">Solo administradores</span>
+            <span class="admin-badge">Personal autorizado</span>
           </div>
           <p class="admin-assign-hint">
             Busca por clave o nombre del usuario al que se le asignará este ticket.
