@@ -311,9 +311,9 @@ export class GarantiasService {
   }
 
   // ── Usuarios ─────────────────────────────────────────
-  getUsuariosParaAsignar(): Observable<{ id: number; nombre: string; correo: string; rol: string }[]> {
-    return this.http.get<{ id: number; nombre: string; correo: string; rol: string }[]>(
-      `${this.api}/usuarios`
+  getUsuariosParaAsignar(): Observable<{ id: number; nombre: string; correo: string; usuario: string }[]> {
+    return this.http.get<{ id: number; nombre: string; correo: string; usuario: string }[]>(
+      `${this.api}/garantias/usuarios-asignables`
     );
   }
 

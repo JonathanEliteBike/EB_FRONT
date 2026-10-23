@@ -605,7 +605,7 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
 
     this.svc.getComentarios(id).subscribe({
       next: (c) => {
-        this.comentarios = c;
+        this.comentarios = this.ordenarComentariosParaVista(c);
         this.cargandoComentarios = false;
         this.cdr.markForCheck();
         if (savedScroll !== null && scrollEl) {
@@ -614,6 +614,25 @@ export class GarantiasTicketsComponent implements OnInit, OnDestroy {
       },
       error: () => { this.cargandoComentarios = false; this.cdr.markForCheck(); },
     });
+  }
+
+  /** Presenta el historial más reciente primero, sin alterar la respuesta recibida. */
+  private ordenarComentariosParaVista(comentarios: GarantiaComentario[]): GarantiaComentario[] {
+    const copia = [...(comentarios ?? [])];
+    return copia.sort((a, b) => this.fechaComentarioMs(b.fecha) - this.fechaComentarioMs(a.fecha));
+  }
+
+  private fechaComentarioMs(fecha: string | null | undefined): number {
+    const [fechaParte = '', horaParte = '00:00'] = (fecha ?? '').split(' ');
+    const [dia, mes, anio] = fechaParte.split('/').map(Number);
+    const [hora, minuto] = horaParte.split(':').map(Number);
+
+    if ([dia, mes, anio, hora, minuto].every(Number.isFinite)) {
+      return new Date(anio, mes - 1, dia, hora, minuto).getTime();
+    }
+
+    const timestamp = Date.parse(fecha ?? '');
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
 
   // ── Importación masiva ────────────────────────────────────────────────────
