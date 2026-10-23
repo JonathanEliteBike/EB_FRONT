@@ -38,15 +38,13 @@ const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: Htt
 
   return next(authReq).pipe(
     catchError(err => {
-      // Un 403 representa falta de autorización, no una sesión inválida.
-      // No se renueva ni se elimina el JWT en este caso.
+      // Un 403 deniega la operación HTTP específica; NO invalida la sesión
+      // ni significa que el usuario haya perdido acceso a toda la aplicación.
+      // Ejemplo: Home consulta /api/inventario/acceso para saber si muestra
+      // Inventario IT. Esa ruta devuelve 403 legítimamente a quien no tenga
+      // acceso, pero no debe expulsarlo de los demás módulos.
+      // La navegación a /acceso-restringido pertenece a los guards de rutas.
       if (err.status === 403) {
-        // Rol 4 conserva la pantalla ante una operación denegada. El guard
-        // sigue decidiendo el acceso al módulo; los demás roles no cambian.
-        if (esInterno) return throwError(() => err);
-        if (!router.url.startsWith('/acceso-restringido')) {
-          router.navigate(['/acceso-restringido']);
-        }
         return throwError(() => err);
       }
 
