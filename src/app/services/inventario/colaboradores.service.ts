@@ -36,6 +36,7 @@ export interface Colaborador {
   empresa: string;
   departamento: string;
   puesto: string;
+  prefijo?: string;
   correo: string;
   fechaIngreso: string;
   estado: EstadoColaborador;
@@ -54,6 +55,7 @@ export interface NuevoColaborador {
   empresa: string;
   departamento: string;
   puesto: string;
+  prefijo?: string;
   correo?: string;
   fechaIngreso?: string;
   estado: EstadoColaborador;

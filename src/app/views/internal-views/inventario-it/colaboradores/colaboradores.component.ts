@@ -27,11 +27,6 @@ import {
 } from '../../../../services/inventario/colaboradores.service';
 
 
-interface PuestoCatalogo {
-  sigla: string;
-  nombre: string;
-}
-
 
 type FiltroKpi =
   | 'Todos'
@@ -66,125 +61,60 @@ implements OnInit, OnDestroy {
   ];
 
 
-  departamentos: string[] = [
-    'OPERACIONES',
-    'ADMINISTRACIÓN',
-    'TIENDA'
-  ];
+  // Catálogo aprobado y fijo. No se alimenta desde MySQL.
+  readonly puestosPorDepartamento: Record<string, readonly string[]> = {
+    'DIRECCIÓN': [
+      'Director General',
+      'Gerente General',
+    ],
+    'ADMINISTRACIÓN Y FINANZAS': [
+      'Contador General',
+      'Contador General Comercializadora',
+      'Auxiliar Contable',
+      'Ejecutivo de Banca y Pagos',
+    ],
+    'SISTEMAS': [
+      'Coordinador de Sistemas',
+      'Analista de Sistemas',
+      'Auxiliar de Sistemas',
+    ],
+    'OPERACIONES': [
+      'Gerente de Operaciones',
+      'Auxiliar de Operaciones',
+      'Coordinador de Almacenes',
+      'Auxiliar de Almacén',
+    ],
+    'RECURSOS HUMANOS': [
+      'Coordinador de Recursos Humanos',
+      'Analista de Procesos / Auditor',
+      'Analista de Mejora Continua',
+    ],
+    'MARKETING': [
+      'Coordinador de Mercadotecnia',
+      'Community Manager',
+      'Social Media Manager',
+      'Diseñador Gráfico',
+    ],
+    'COMERCIAL / VENTAS': [
+      'Ejecutivo de Eventos y Atención al Cliente',
+    ],
+    'TIENDA': [
+      'Coordinador de Sucursal',
+      'Vendedor',
+      'Mecánico',
+    ],
+    'LOGÍSTICA E IMPORTACIONES': [
+      'Ejecutivo de Logística e Importaciones',
+    ],
+  };
 
+  readonly departamentos: string[] = Object.keys(this.puestosPorDepartamento);
+  readonly estados: EstadoColaborador[] = ['Activo', 'Inactivo'];
+  readonly opcionOtroPuesto = '__otro_puesto__';
 
-  estados: EstadoColaborador[] = [
-    'Activo',
-    'Inactivo'
-  ];
-
-
-  puestos: PuestoCatalogo[] = [
-    {
-      sigla: 'DG',
-      nombre: 'Dirección General'
-    },
-    {
-      sigla: 'GG',
-      nombre: 'Gerencia General'
-    },
-    {
-      sigla: 'GO',
-      nombre: 'Gerente de Operaciones'
-    },
-    {
-      sigla: 'AO',
-      nombre: 'Auxiliar de Operaciones'
-    },
-    {
-      sigla: 'ELEI',
-      nombre: 'Ejecutivo de Logística e Importaciones'
-    },
-    {
-      sigla: 'CA',
-      nombre: 'Coordinador de Almacenes'
-    },
-    {
-      sigla: 'AA-A',
-      nombre: 'Auxiliar de Almacén A'
-    },
-    {
-      sigla: 'AA-B',
-      nombre: 'Auxiliar de Almacén B'
-    },
-    {
-      sigla: 'CGC',
-      nombre: 'Contador General Comercializadora'
-    },
-    {
-      sigla: 'CG',
-      nombre: 'Contador General'
-    },
-    {
-      sigla: 'AC',
-      nombre: 'Auxiliar Contable'
-    },
-    {
-      sigla: 'BPC',
-      nombre: 'Ejecutivo de Banca y Pagos'
-    },
-    {
-      sigla: 'AS-A',
-      nombre: 'Auxiliar de Sistemas A'
-    },
-    {
-      sigla: 'AS-B',
-      nombre: 'Auxiliar de Sistemas B'
-    },
-    {
-      sigla: 'AS-C',
-      nombre: 'Auxiliar de Sistemas C'
-    },
-    {
-      sigla: 'CRH',
-      nombre: 'Coordinador de Recursos Humanos'
-    },
-    {
-      sigla: 'APA',
-      nombre: 'Analista de Procesos / Auditor'
-    },
-    {
-      sigla: 'AUX-APA',
-      nombre: 'Auxiliar de Procesos / APA'
-    },
-    {
-      sigla: 'CMKT',
-      nombre: 'Coordinador de Mercadotecnia'
-    },
-    {
-      sigla: 'SMM',
-      nombre: 'Social Media Manager'
-    },
-    {
-      sigla: 'DIS',
-      nombre: 'Diseñador Gráfico'
-    },
-    {
-      sigla: 'EVAC-A',
-      nombre: 'Ejecutivo de Eventos y Atención al Cliente A'
-    },
-    {
-      sigla: 'EVAC-B',
-      nombre: 'Ejecutivo de Eventos y Atención al Cliente B'
-    },
-    {
-      sigla: 'CS',
-      nombre: 'Coordinador de Sucursal'
-    },
-    {
-      sigla: 'MEC-A',
-      nombre: 'Mecánico A'
-    },
-    {
-      sigla: 'MEC-B',
-      nombre: 'Mecánico B'
-    }
-  ];
+  // Solo controla el formulario, nunca añade opciones a los catálogos.
+  puestoSeleccionado = '';
+  otroPuesto = '';
 
 
   terminoBusqueda = '';
@@ -332,6 +262,45 @@ implements OnInit, OnDestroy {
     this.cargarEstadisticas();
   }
 
+
+
+  get puestosDisponibles(): readonly string[] {
+    return this.puestosPorDepartamento[this.nuevoColaborador.departamento] || [];
+  }
+
+  // En edición respetamos el departamento histórico sin añadirlo al menú fijo.
+  get departamentoHistorico(): string {
+    const actual = this.nuevoColaborador.departamento;
+    return this.modoEdicion && actual && !this.departamentos.includes(actual)
+      ? actual
+      : '';
+  }
+
+  cambiarDepartamento(): void {
+    this.puestoSeleccionado = '';
+    this.otroPuesto = '';
+    this.nuevoColaborador.puesto = '';
+  }
+
+  cambiarPuesto(): void {
+    if (this.puestoSeleccionado === this.opcionOtroPuesto) {
+      this.nuevoColaborador.puesto = this.otroPuesto.trim();
+    } else {
+      this.otroPuesto = '';
+      this.nuevoColaborador.puesto = this.puestoSeleccionado;
+    }
+  }
+
+  private configurarPuestoEnEdicion(puesto: string): void {
+    if (this.puestosDisponibles.includes(puesto)) {
+      this.puestoSeleccionado = puesto;
+      this.otroPuesto = '';
+    } else {
+      // Un puesto anterior o personalizado conserva su texto original.
+      this.puestoSeleccionado = this.opcionOtroPuesto;
+      this.otroPuesto = puesto;
+    }
+  }
 
   cargarColaboradores(): void {
     this.cargando = true;
@@ -556,6 +525,8 @@ implements OnInit, OnDestroy {
     this.nuevoColaborador =
       this.crearColaboradorVacio();
 
+    this.puestoSeleccionado = '';
+    this.otroPuesto = '';
     this.errorFormulario = '';
     this.mensajeExito = '';
     this.mostrarFormulario = true;
@@ -594,6 +565,7 @@ implements OnInit, OnDestroy {
 
       puesto:
         colaborador.puesto ?? '',
+      prefijo: colaborador.prefijo ?? '',
 
       correo:
         colaborador.correo ?? '',
@@ -609,6 +581,7 @@ implements OnInit, OnDestroy {
         colaborador.comentarios ?? ''
     };
 
+    this.configurarPuestoEnEdicion(this.nuevoColaborador.puesto);
     this.errorFormulario = '';
     this.mensajeExito = '';
 
@@ -633,6 +606,8 @@ implements OnInit, OnDestroy {
 
     this.nuevoColaborador =
       this.crearColaboradorVacio();
+    this.puestoSeleccionado = '';
+    this.otroPuesto = '';
   }
 
 
@@ -660,10 +635,9 @@ implements OnInit, OnDestroy {
         .departamento
         ?.trim();
 
-    const puesto =
-      this.nuevoColaborador
-        .puesto
-        ?.trim();
+    const puesto = this.puestoSeleccionado === this.opcionOtroPuesto
+      ? this.otroPuesto.trim()
+      : this.puestoSeleccionado.trim();
 
 
     if (
@@ -680,6 +654,11 @@ implements OnInit, OnDestroy {
     }
 
 
+    if (puesto.length > 120) {
+      this.errorFormulario = 'El puesto debe tener máximo 120 caracteres.';
+      return;
+    }
+
     const colaboradorGuardar:
       NuevoColaborador = {
         ...this.nuevoColaborador,
@@ -689,6 +668,7 @@ implements OnInit, OnDestroy {
         apellidoPaterno,
         departamento,
         puesto,
+        prefijo: (this.nuevoColaborador.prefijo || '').trim().toUpperCase(),
 
         apellidoMaterno:
           this.nuevoColaborador
@@ -936,17 +916,8 @@ implements OnInit, OnDestroy {
   }
 
 
-  obtenerSiglaPuesto(
-    nombrePuesto: string
-  ): string {
-    const puestoEncontrado =
-      this.puestos.find(
-        puesto =>
-          puesto.nombre ===
-          nombrePuesto
-      );
-
-    return puestoEncontrado?.sigla || '';
+  obtenerSiglaPuesto(colaborador: Colaborador): string {
+    return colaborador.prefijo || '';
   }
 
 
@@ -968,6 +939,7 @@ implements OnInit, OnDestroy {
       empresa: 'ELITE BIKE',
       departamento: '',
       puesto: '',
+      prefijo: '',
       correo: '',
       fechaIngreso: '',
       estado: 'Activo',
