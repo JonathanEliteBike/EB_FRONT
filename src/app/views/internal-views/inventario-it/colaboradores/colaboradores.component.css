@@ -1886,3 +1886,13 @@ tbody tr:last-child td {
     width: 100%;
   }
 }
+/* Catálogos persistentes de colaboradores */
+.catalog-action { display: flex; flex-direction: column; gap: 8px; }
+.catalog-link { align-self: flex-start; background: transparent; border: 0; color: #ffac77; cursor: pointer; padding: 5px 0; font-weight: 650; }
+.catalog-link:disabled { opacity: .5; cursor: not-allowed; }
+.catalog-create { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.catalog-create input { flex: 1; min-width: 190px; background: #252b24; border: 1px solid #495044; border-radius: 8px; padding: 10px 12px; color: #fff; }
+.catalog-create button { background: #313e2f; border: 1px solid #64765e; border-radius: 8px; padding: 10px 14px; color: #fff; cursor: pointer; }
+.catalog-create button:disabled { opacity: .5; cursor: not-allowed; }
+.catalog-error { margin: 0; color: #ffae98; font-size: 0.88rem; }
+.catalog-help { color: #aab5a5; font-size: .8rem; margin-top: 4px; }

@@ -334,7 +334,7 @@
             </strong>
 
             <small>
-              Área, puesto y situación actual del colaborador.
+              Departamento, puesto, prefijo y situación actual del colaborador.
             </small>
 
           </div>
@@ -362,10 +362,15 @@
             <select
               name="departamento"
               [(ngModel)]="nuevoColaborador.departamento"
+              (ngModelChange)="cambiarDepartamento()"
               required>
 
               <option value="">
                 Selecciona un departamento
+              </option>
+
+              <option *ngIf="departamentoHistorico" [value]="departamentoHistorico">
+                {{ departamentoHistorico }} (histórico)
               </option>
 
               <option
@@ -382,44 +387,34 @@
 
 
 
-          <!-- PUESTO -->
-
+          <!-- PUESTOS FIJOS POR DEPARTAMENTO, SIN CONSULTA A CATÁLOGOS DE BD -->
           <label class="span-2">
-
-            <span class="field-label">
-
-              Puesto
-
-              <b class="required">
-                *
-              </b>
-
-            </span>
-
-            <select
-              name="puesto"
-              [(ngModel)]="nuevoColaborador.puesto"
-              required>
-
-              <option value="">
-                Selecciona un puesto
-              </option>
-
-              <option
-                *ngFor="let puesto of puestos"
-                [value]="puesto.nombre">
-
-                {{ puesto.sigla }}
-                —
-                {{ puesto.nombre }}
-
-              </option>
-
+            <span class="field-label">Puesto <b class="required">*</b></span>
+            <select name="puestoSeleccionado" [(ngModel)]="puestoSeleccionado"
+              (ngModelChange)="cambiarPuesto()" required
+              [disabled]="!nuevoColaborador.departamento">
+              <option value="">Selecciona un puesto</option>
+              <option *ngFor="let puesto of puestosDisponibles" [value]="puesto">{{ puesto }}</option>
+              <option [value]="opcionOtroPuesto">Otro puesto (especificar)</option>
             </select>
-
           </label>
 
+          <label class="span-2" *ngIf="puestoSeleccionado === opcionOtroPuesto">
+            <span class="field-label">Especificar puesto <b class="required">*</b></span>
+            <input name="otroPuesto" [(ngModel)]="otroPuesto" (ngModelChange)="cambiarPuesto()"
+              maxlength="120" placeholder="Escribe el nombre completo del puesto" required />
+            <small class="field-help">
+              Este puesto se guardará solo para este colaborador; no aparecerá en el menú.
+            </small>
+          </label>
 
+          <!-- PREFIJO DE LA PLAZA, NO DEL PUESTO -->
+          <label>
+            <span class="field-label">Prefijo interno</span>
+            <input name="prefijo" [(ngModel)]="nuevoColaborador.prefijo"
+              maxlength="50" placeholder="Ej. AS-A, AS-B, CA" />
+            <small class="catalog-help">Identifica la plaza usada en el inventario, no el nombre del puesto.</small>
+          </label>
 
           <!-- FECHA DE INGRESO -->
 
@@ -1203,13 +1198,13 @@
                 <ng-container
                   *ngIf="
                     obtenerSiglaPuesto(
-                      colaborador.puesto
+                      colaborador
                     )
                   ">
 
                   {{
                     obtenerSiglaPuesto(
-                      colaborador.puesto
+                      colaborador
                     )
                   }}
 
@@ -1516,13 +1511,13 @@
               <ng-container
                 *ngIf="
                   obtenerSiglaPuesto(
-                    colaboradorSeleccionado.puesto
+                    colaboradorSeleccionado
                   )
                 ">
 
                 {{
                   obtenerSiglaPuesto(
-                    colaboradorSeleccionado.puesto
+                    colaboradorSeleccionado
                   )
                 }}
 
@@ -1611,13 +1606,13 @@
               <ng-container
                 *ngIf="
                   obtenerSiglaPuesto(
-                    colaboradorSeleccionado.puesto
+                    colaboradorSeleccionado
                   )
                 ">
 
                 {{
                   obtenerSiglaPuesto(
-                    colaboradorSeleccionado.puesto
+                    colaboradorSeleccionado
                   )
                 }}
 
