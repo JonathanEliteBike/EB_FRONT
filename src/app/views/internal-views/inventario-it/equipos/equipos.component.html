@@ -769,6 +769,32 @@
       </label>
 
 
+      <!-- CATEGORÍA: MISMO CATÁLOGO UTILIZADO AL REGISTRAR EQUIPOS -->
+
+      <label
+        class="select-filter category-filter"
+        [class.is-active]="filtroCategoria !== 'Todas'">
+        <span>
+          Categoría
+        </span>
+
+        <select
+          [(ngModel)]="filtroCategoria"
+          aria-label="Filtrar equipos por categoría">
+
+          <option value="Todas">
+            Todas las categorías
+          </option>
+
+          <option
+            *ngFor="let categoria of categorias"
+            [value]="categoria">
+            {{ categoria }}
+          </option>
+        </select>
+      </label>
+
+
       <!-- RESPONSIVA -->
 
       <div class="filter-group">
@@ -806,7 +832,8 @@
           terminoBusqueda ||
           filtroEstado !== 'Todos' ||
           filtroResponsiva !== 'Todas' ||
-          filtroEmpresa !== 'Todas'
+          filtroEmpresa !== 'Todas' ||
+          filtroCategoria !== 'Todas'
         "
         (click)="limpiarFiltros()">
 
@@ -834,13 +861,25 @@
         equipos.
       </p>
 
-      <span class="active-filter">
-        Estado:
+      <div class="active-filters" aria-label="Filtros activos">
+        <span class="active-filter">
+          Estado:
 
-        <strong>
-          {{ filtroEstado }}
-        </strong>
-      </span>
+          <strong>
+            {{ filtroEstado }}
+          </strong>
+        </span>
+
+        <span
+          *ngIf="filtroCategoria !== 'Todas'"
+          class="active-filter active-filter-category">
+          Categoría:
+
+          <strong>
+            {{ filtroCategoria }}
+          </strong>
+        </span>
+      </div>
     </div>
   </section>
 

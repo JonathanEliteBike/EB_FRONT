@@ -1490,3 +1490,107 @@ td {
     font-size: 12px;
   }
 }
+
+/* Edición puntual del enlace del documento firmado */
+.edit-link-panel {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid rgba(244, 107, 42, 0.45);
+  border-radius: 12px;
+  background: var(--orange-soft);
+}
+
+.edit-link-heading h3 {
+  margin: 0 0 5px;
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.edit-link-heading p {
+  margin: 0 0 15px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.edit-link-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-main);
+  border-radius: 9px;
+  background: var(--background-input);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 12px;
+}
+
+.edit-link-input:focus {
+  border-color: var(--orange);
+  outline: 2px solid rgba(244, 107, 42, 0.2);
+}
+
+.edit-link-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.edit-link-btn {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--orange);
+  border-radius: 9px;
+  padding: 0 16px;
+  background: transparent;
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.edit-link-btn:hover:not(:disabled) {
+  background: var(--orange-soft);
+}
+
+.edit-link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .edit-link-actions {
+    flex-direction: column-reverse;
+  }
+
+  .edit-link-actions button,
+  .edit-link-btn {
+    width: 100%;
+  }
+}
+
+
+/* Restauración de una responsiva anulada */
+.restore-btn { color: var(--green); }
+.restore-btn:hover { border-color: var(--green); background: var(--green-soft); }
+.restore-primary-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 42px; padding: 0 16px;
+  border: 1px solid var(--green); border-radius: 9px;
+  background: var(--green-soft); color: var(--green);
+  font-size: 11px; font-weight: 900; cursor: pointer;
+}
+.restore-primary-btn:hover:not(:disabled) { background: rgba(85,201,167,0.24); }
+.restore-primary-btn:disabled { opacity: .6; cursor: not-allowed; }
+.restore-description { line-height: 1.7; color: var(--text-secondary); font-size: 13px; }
+.restore-description strong { color: var(--green); }
+.restore-note {
+  padding: 12px 14px; border-radius: 8px;
+  background: var(--background-panel-soft);
+  color: var(--text-secondary); font-size: 11px; line-height: 1.6;
+}
+@media (max-width: 760px) { .restore-primary-btn { width: 100%; } }

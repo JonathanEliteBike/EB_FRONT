@@ -28,6 +28,7 @@ export class EquiposComponent implements OnInit {
   filtroEstado = 'Todos';
   filtroResponsiva = 'Todas';
   filtroEmpresa = 'Todas';
+  filtroCategoria = 'Todas';
 
   cargando = false;
   errorCarga = '';
@@ -113,7 +114,7 @@ export class EquiposComponent implements OnInit {
 
   /*
    * Las tarjetas se calculan con los filtros de búsqueda,
-   * empresa y responsiva, pero sin aplicar el estado.
+   * empresa, categoría y responsiva, pero sin aplicar el estado.
    *
    * Así cada tarjeta conserva el total correcto de su estado
    * y funciona como filtro principal.
@@ -173,6 +174,10 @@ export class EquiposComponent implements OnInit {
         this.filtroEmpresa === 'Todas' ||
         equipo.empresa === this.filtroEmpresa;
 
+      const coincideCategoria =
+        this.filtroCategoria === 'Todas' ||
+        equipo.categoria === this.filtroCategoria;
+
       const coincideResponsiva =
         this.filtroResponsiva === 'Todas' ||
         equipo.responsiva === this.filtroResponsiva;
@@ -180,6 +185,7 @@ export class EquiposComponent implements OnInit {
       return (
         coincideBusqueda &&
         coincideEmpresa &&
+        coincideCategoria &&
         coincideResponsiva
       );
     });
@@ -272,6 +278,7 @@ export class EquiposComponent implements OnInit {
     this.filtroEstado = 'Todos';
     this.filtroResponsiva = 'Todas';
     this.filtroEmpresa = 'Todas';
+    this.filtroCategoria = 'Todas';
   }
 
   estadoClase(estado: string): string {
@@ -505,6 +512,7 @@ export class EquiposComponent implements OnInit {
           this.filtroEstado = 'Todos';
           this.filtroResponsiva = 'Todas';
           this.filtroEmpresa = 'Todas';
+          this.filtroCategoria = 'Todas';
         }
         this.cargarEquipos();
       },
@@ -545,6 +553,7 @@ export class EquiposComponent implements OnInit {
     const estado = parametros.get('estado');
     const responsiva = parametros.get('responsiva');
     const empresa = parametros.get('empresa');
+    const categoria = parametros.get('categoria');
 
     if (
       estado &&
@@ -565,6 +574,13 @@ export class EquiposComponent implements OnInit {
       this.empresas.includes(empresa)
     ) {
       this.filtroEmpresa = empresa;
+    }
+
+    if (
+      categoria &&
+      this.categorias.includes(categoria)
+    ) {
+      this.filtroCategoria = categoria;
     }
   }
 

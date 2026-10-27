@@ -164,6 +164,13 @@ private readonly apiUrl =
     );
   }
 
+  restaurarResponsiva(id: number): Observable<unknown> {
+    return this.http.put(
+      `${this.apiUrl}/${id}/restaurar`,
+      {}
+    );
+  }
+
   descargarPdf(
     id: number
   ): Observable<Blob> {
