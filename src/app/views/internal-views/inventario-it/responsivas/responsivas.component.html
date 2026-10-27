@@ -665,7 +665,7 @@
           <button
             type="button"
             class="close-btn"
-            [disabled]="descargandoId !== null"
+            [disabled]="descargandoId !== null || procesando"
             (click)="cerrarDetalle()">
 
             ×
@@ -1070,6 +1070,51 @@
           </section>
 
 
+          <!-- CORRECCIÓN DE URL EN RESPONSIVA FIRMADA -->
+
+          <section
+            class="edit-link-panel"
+            *ngIf="editandoEnlace && seleccionada.estado === 'Firmada'"
+            aria-label="Editar enlace de responsiva firmada">
+
+            <div class="edit-link-heading">
+              <h3>Corregir enlace del documento firmado</h3>
+              <p>Se reemplazará únicamente el enlace registrado. No es necesario volver a firmar.</p>
+            </div>
+
+            <label class="form-label" for="url-responsiva-editada">
+              Enlace correcto de la responsiva *
+            </label>
+            <input
+              id="url-responsiva-editada"
+              class="edit-link-input"
+              type="url"
+              name="urlResponsivaEditada"
+              [(ngModel)]="enlaceResponsivaEditado"
+              [disabled]="procesando"
+              maxlength="2048"
+              autocomplete="off"
+              placeholder="https://drive.google.com/..."
+              (keyup.enter)="guardarEdicionEnlace()" />
+
+            <div class="edit-link-actions">
+              <button
+                type="button"
+                class="secondary-btn"
+                [disabled]="procesando"
+                (click)="cancelarEdicionEnlace()">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="primary-btn"
+                [disabled]="procesando || !enlaceResponsivaEditado.trim() || enlaceResponsivaEditado.trim() === (seleccionada.archivoPdf || '').trim()"
+                (click)="guardarEdicionEnlace()">
+                {{ procesando ? 'Guardando enlace...' : 'Guardar enlace' }}
+              </button>
+            </div>
+          </section>
+
           <!-- MENSAJES -->
 
           <div
@@ -1097,7 +1142,7 @@
             <button
               type="button"
               class="secondary-btn"
-              [disabled]="descargandoId !== null"
+              [disabled]="descargandoId !== null || procesando"
               (click)="cerrarDetalle()">
 
               Cerrar
@@ -1108,7 +1153,7 @@
             <button
               type="button"
               class="download-btn"
-              [disabled]="descargandoId === seleccionada.id"
+              [disabled]="descargandoId !== null || procesando"
               (click)="
                 descargarResponsiva(
                   seleccionada.id,
@@ -1126,10 +1171,19 @@
 
 
             <button
+              *ngIf="seleccionada.estado === 'Firmada' && !editandoEnlace"
+              type="button"
+              class="edit-link-btn"
+              [disabled]="descargandoId !== null || procesando"
+              (click)="iniciarEdicionEnlace()">
+              ✎ Editar enlace
+            </button>
+
+            <button
               *ngIf="seleccionada.archivoPdf"
               type="button"
               class="primary-btn"
-              [disabled]="descargandoId !== null"
+              [disabled]="descargandoId !== null || procesando"
               (click)="abrirDocumento(seleccionada.archivoPdf)">
 
               Abrir responsiva firmada
