@@ -1572,3 +1572,25 @@ td {
     width: 100%;
   }
 }
+
+
+/* Restauración de una responsiva anulada */
+.restore-btn { color: var(--green); }
+.restore-btn:hover { border-color: var(--green); background: var(--green-soft); }
+.restore-primary-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 42px; padding: 0 16px;
+  border: 1px solid var(--green); border-radius: 9px;
+  background: var(--green-soft); color: var(--green);
+  font-size: 11px; font-weight: 900; cursor: pointer;
+}
+.restore-primary-btn:hover:not(:disabled) { background: rgba(85,201,167,0.24); }
+.restore-primary-btn:disabled { opacity: .6; cursor: not-allowed; }
+.restore-description { line-height: 1.7; color: var(--text-secondary); font-size: 13px; }
+.restore-description strong { color: var(--green); }
+.restore-note {
+  padding: 12px 14px; border-radius: 8px;
+  background: var(--background-panel-soft);
+  color: var(--text-secondary); font-size: 11px; line-height: 1.6;
+}
+@media (max-width: 760px) { .restore-primary-btn { width: 100%; } }

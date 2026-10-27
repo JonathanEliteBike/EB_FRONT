@@ -130,6 +130,7 @@ implements OnInit, OnDestroy {
   mostrarFirma = false;
 
   mostrarAnulacion = false;
+  mostrarRestauracion = false;
 
 
   responsivaSeleccionada:
@@ -221,6 +222,11 @@ implements OnInit, OnDestroy {
 
     if (this.mostrarAnulacion) {
       this.cerrarAnulacion();
+      return;
+    }
+
+    if (this.mostrarRestauracion) {
+      this.cerrarRestauracion();
     }
   }
 
@@ -849,6 +855,66 @@ implements OnInit, OnDestroy {
   }
 
 
+  /* =========================================================
+   * RESTAURACIÓN DE RESPONSIVAS ANULADAS
+   * ========================================================= */
+
+  abrirRestauracion(responsiva: Responsiva): void {
+    if (responsiva.estado !== 'Anulada' || this.procesando) return;
+    this.cerrarTodosLosModales();
+    this.responsivaSeleccionada = responsiva;
+    this.mostrarRestauracion = true;
+    this.limpiarMensajes();
+  }
+
+  cerrarRestauracion(): void {
+    if (this.procesando) return;
+    this.mostrarRestauracion = false;
+    this.responsivaSeleccionada = null;
+    this.errorAccion = '';
+  }
+
+  confirmarRestauracion(): void {
+    const seleccionada = this.responsivaSeleccionada;
+    if (!seleccionada || seleccionada.estado !== 'Anulada' || this.procesando) return;
+
+    this.procesando = true;
+    this.limpiarMensajes();
+
+    // La API verifica la asignación activa y evita restaurar duplicados.
+    this.responsivasService.restaurarResponsiva(seleccionada.id).pipe(
+      switchMap(() => this.responsivasService.obtenerResponsiva(seleccionada.id))
+    ).subscribe({
+      next: actualizada => {
+        this.procesando = false;
+        this.mostrarRestauracion = false;
+        this.responsivaSeleccionada = null;
+        this.responsivas = this.responsivas.map(registro =>
+          registro.id === actualizada.id ? actualizada : registro
+        );
+        this.cargarInformacion();
+
+        const estadoEsperado = seleccionada.fechaFirma ? 'Firmada' : 'Pendiente';
+        if (actualizada.estado !== estadoEsperado || actualizada.folio !== seleccionada.folio ||
+            actualizada.fechaFirma !== seleccionada.fechaFirma ||
+            actualizada.archivoPdf !== seleccionada.archivoPdf) {
+          this.errorAccion = 'La restauración fue procesada, pero la verificación encontró diferencias. Revisa el detalle antes de continuar.';
+          return;
+        }
+        this.mensajeExito = `Responsiva ${actualizada.folio} restaurada a ${actualizada.estado}, con su documento y folio originales.`;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.procesando = false;
+        this.errorAccion = this.obtenerMensajeError(
+          error,
+          'No fue posible restaurar la responsiva.'
+        );
+        // Si la petición se procesó y falló la lectura, la lista permite verificar el estado.
+        this.cargarInformacion();
+      }
+    });
+  }
+
   /*
    * =========================================================
    * DESCARGA DEL PDF
@@ -1108,6 +1174,7 @@ implements OnInit, OnDestroy {
     this.mostrarFirma = false;
 
     this.mostrarAnulacion = false;
+    this.mostrarRestauracion = false;
 
     this.responsivaSeleccionada =
       null;

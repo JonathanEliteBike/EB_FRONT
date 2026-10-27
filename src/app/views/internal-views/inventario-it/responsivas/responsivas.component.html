@@ -591,6 +591,14 @@
 
                 </button>
 
+                <button
+                  *ngIf="responsiva.estado === 'Anulada'"
+                  type="button"
+                  class="action-btn restore-btn"
+                  (click)="abrirRestauracion(responsiva)">
+                  Restaurar
+                </button>
+
               </div>
 
             </td>
@@ -1048,10 +1056,10 @@
 
               <div
                 class="wide"
-                *ngIf="seleccionada.estado === 'Anulada'">
+                *ngIf="seleccionada.fechaAnulacion">
 
                 <label>
-                  Motivo de anulación
+                  {{ seleccionada.estado === 'Anulada' ? 'Motivo de anulación' : 'Motivo de anulación anterior (restaurada)' }}
                 </label>
 
                 <p>
@@ -1169,6 +1177,15 @@
 
             </button>
 
+
+            <button
+              *ngIf="seleccionada.estado === 'Anulada'"
+              type="button"
+              class="restore-primary-btn"
+              [disabled]="descargandoId !== null || procesando"
+              (click)="abrirRestauracion(seleccionada)">
+              ↶ Restaurar responsiva
+            </button>
 
             <button
               *ngIf="seleccionada.estado === 'Firmada' && !editandoEnlace"
@@ -1322,6 +1339,49 @@
 
   </ng-container>
 
+
+  <!-- =========================================================
+       MODAL DE RESTAURACIÓN
+  ========================================================== -->
+
+  <ng-container *ngIf="responsivaSeleccionada as seleccionadaRestauracion">
+    <div class="modal-overlay" *ngIf="mostrarRestauracion">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Restaurar responsiva">
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">{{ seleccionadaRestauracion.folio }}</p>
+            <h2>Restaurar responsiva</h2>
+          </div>
+          <button type="button" class="close-btn" [disabled]="procesando"
+                  (click)="cerrarRestauracion()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="restore-description">
+            Se recuperará el estado
+            <strong>{{ seleccionadaRestauracion.fechaFirma ? 'Firmada' : 'Pendiente' }}</strong>
+            con su mismo folio, documento y fecha de firma, si corresponde.
+            La asignación debe seguir activa y no tener otra responsiva vigente.
+          </p>
+
+          <p class="restore-note" *ngIf="seleccionadaRestauracion.motivoAnulacion">
+            Motivo de anulación anterior: {{ seleccionadaRestauracion.motivoAnulacion }}
+          </p>
+
+          <div class="alert error" *ngIf="errorAccion">{{ errorAccion }}</div>
+
+          <div class="modal-actions">
+            <button type="button" class="secondary-btn" [disabled]="procesando"
+                    (click)="cerrarRestauracion()">Cancelar</button>
+            <button type="button" class="restore-primary-btn" [disabled]="procesando"
+                    (click)="confirmarRestauracion()">
+              {{ procesando ? 'Restaurando...' : 'Confirmar restauración' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 
   <!-- =========================================================
        MODAL DE ANULACIÓN
