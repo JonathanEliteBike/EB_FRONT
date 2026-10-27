@@ -46,11 +46,9 @@ export class AsignacionesComponent implements OnInit {
   colaboradores: ColaboradorCatalogo[] = [];
   equipos: EquipoCatalogo[] = [];
 
-  departamentos: string[] = [
-    'OPERACIONES',
-    'ADMINISTRACIÓN',
-    'TIENDA'
-  ];
+  // Opciones dinámicas: departamentos reales del catálogo y de las asignaciones.
+  departamentos: string[] = [];
+  private departamentosDetectados = new Map<string, string>();
 
   empresas: string[] = [
     'ELITE BIKE',
@@ -159,6 +157,7 @@ export class AsignacionesComponent implements OnInit {
       .subscribe({
         next: data => {
           this.asignaciones = data || [];
+          this.actualizarDepartamentos();
           this.cargando = false;
         },
 
@@ -205,6 +204,8 @@ export class AsignacionesComponent implements OnInit {
 
           this.equipos =
             data.equipos || [];
+
+          this.actualizarDepartamentos();
         },
 
         error: error => {
@@ -214,6 +215,32 @@ export class AsignacionesComponent implements OnInit {
           );
         }
       });
+  }
+
+  // Conserva los departamentos descubiertos para que no desaparezcan
+  // del desplegable al filtrar una lista de asignaciones.
+  private actualizarDepartamentos(): void {
+    const nombres = [
+      ...this.colaboradores.map(c => c.departamento),
+      ...this.asignaciones.map(a => a.colaborador?.departamento)
+    ];
+
+    for (const nombre of nombres) {
+      const departamento = (nombre || '').trim();
+      if (!departamento) continue;
+
+      const clave = departamento
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleUpperCase('es-MX');
+
+      if (!this.departamentosDetectados.has(clave)) {
+        this.departamentosDetectados.set(clave, departamento);
+      }
+    }
+
+    this.departamentos = Array.from(this.departamentosDetectados.values())
+      .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
   }
 
   seleccionarEstado(
