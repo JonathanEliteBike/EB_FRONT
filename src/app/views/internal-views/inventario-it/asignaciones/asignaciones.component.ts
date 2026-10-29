@@ -72,6 +72,12 @@ export class AsignacionesComponent implements OnInit {
   cargandoDetalle = false;
   errorDetalle = '';
   asignacionSeleccionada: Asignacion | null = null;
+  editandoObservacionesEntrega = false;
+  guardandoObservacionesEntrega = false;
+  textoObservacionesEntrega = '';
+  errorObservacionesEntrega = '';
+  mensajeObservacionesEntrega = '';
+
 
   mostrarDevolucion = false;
   finalizando = false;
@@ -399,6 +405,67 @@ export class AsignacionesComponent implements OnInit {
             'No se pudo cargar la asignación.';
 
           this.cargandoDetalle = false;
+        }
+      });
+  }
+
+
+  iniciarEdicionObservaciones(): void {
+    if (
+      !this.asignacionSeleccionada ||
+      this.asignacionSeleccionada.estado !== 'Activa'
+    ) {
+      return;
+    }
+
+    this.textoObservacionesEntrega =
+      this.asignacionSeleccionada.observacionesEntrega || '';
+
+    this.errorObservacionesEntrega = '';
+    this.mensajeObservacionesEntrega = '';
+    this.editandoObservacionesEntrega = true;
+  }
+
+  cancelarEdicionObservaciones(): void {
+    this.editandoObservacionesEntrega = false;
+    this.errorObservacionesEntrega = '';
+  }
+
+  guardarObservacionesEntrega(): void {
+    const asignacion = this.asignacionSeleccionada;
+
+    if (!asignacion || this.guardandoObservacionesEntrega) {
+      return;
+    }
+
+    this.guardandoObservacionesEntrega = true;
+    this.errorObservacionesEntrega = '';
+
+    this.asignacionesService
+      .actualizarObservacionesEntrega(
+        asignacion.id,
+        this.textoObservacionesEntrega
+      )
+      .subscribe({
+        next: respuesta => {
+          this.guardandoObservacionesEntrega = false;
+          this.editandoObservacionesEntrega = false;
+          this.mensajeObservacionesEntrega = respuesta.message;
+
+          if (this.asignacionSeleccionada?.id === asignacion.id) {
+            this.asignacionSeleccionada = {
+              ...this.asignacionSeleccionada,
+              observacionesEntrega: respuesta.observacionesEntrega
+            };
+          }
+
+          this.cargarModulo();
+        },
+        error: error => {
+          this.guardandoObservacionesEntrega = false;
+          this.errorObservacionesEntrega =
+            error?.error?.error ||
+            'No se pudieron guardar las observaciones.';
         }
       });
   }
