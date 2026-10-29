@@ -215,6 +215,24 @@ export class AsignacionesService {
     );
   }
 
+  actualizarObservacionesEntrega(
+    id: number,
+    observacionesEntrega: string
+  ): Observable<{
+    message: string;
+    id: number;
+    observacionesEntrega: string;
+  }> {
+    return this.http.put<{
+      message: string;
+      id: number;
+      observacionesEntrega: string;
+    }>(
+      `${this.apiUrl}/${id}/observaciones-entrega`,
+      { observacionesEntrega }
+    );
+  }
+
   finalizarAsignacion(
     id: number,
     datos: FinalizarAsignacion

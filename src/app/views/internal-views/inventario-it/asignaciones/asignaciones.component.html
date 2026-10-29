@@ -1429,14 +1429,74 @@
             Observaciones de entrega
           </h3>
 
-          <p>
+          <p *ngIf="!editandoObservacionesEntrega">
             {{
               asignacionSeleccionada.observacionesEntrega ||
               'Sin observaciones.'
             }}
           </p>
 
-        </section>
+
+          <div
+            class="observaciones-edit-actions"
+            *ngIf="
+              asignacionSeleccionada.estado === 'Activa' &&
+              !editandoObservacionesEntrega
+            ">
+            <button
+              type="button"
+              (click)="iniciarEdicionObservaciones()">
+              Editar observaciones
+            </button>
+          </div>
+
+          <div
+            class="observaciones-edit-form"
+            *ngIf="editandoObservacionesEntrega">
+
+            <textarea
+              aria-label="Editar observaciones de entrega"
+              placeholder="Escribe las observaciones corregidas..."
+              name="textoObservacionesEntrega"
+              [(ngModel)]="textoObservacionesEntrega"
+              [disabled]="guardandoObservacionesEntrega"
+              rows="4">
+            </textarea>
+
+            <div class="observaciones-edit-actions">
+              <button
+                type="button"
+                (click)="cancelarEdicionObservaciones()"
+                [disabled]="guardandoObservacionesEntrega">
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                (click)="guardarObservacionesEntrega()"
+                [disabled]="guardandoObservacionesEntrega">
+                {{
+                  guardandoObservacionesEntrega
+                    ? 'Guardando...'
+                    : 'Guardar cambios'
+                }}
+              </button>
+            </div>
+          </div>
+
+          <p
+            *ngIf="errorObservacionesEntrega"
+            class="observaciones-edit-error">
+            {{ errorObservacionesEntrega }}
+          </p>
+
+          <p
+            *ngIf="mensajeObservacionesEntrega"
+            class="observaciones-edit-success">
+            {{ mensajeObservacionesEntrega }}
+          </p>
+
+</section>
 
 
 

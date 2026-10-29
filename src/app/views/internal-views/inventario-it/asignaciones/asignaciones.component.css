@@ -1403,3 +1403,121 @@ tbody tr:last-child td {
     border-radius: 18px 18px 0 0;
   }
 }
+
+
+/* ==================================================
+   EDICION DE OBSERVACIONES - INVENTARIO IT
+   ================================================== */
+
+.comments-section .observaciones-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.comments-section .observaciones-edit-actions button {
+  appearance: none;
+  border: 1px solid #484944;
+  border-radius: 10px;
+  background: #30332f;
+  color: #f5f5f4;
+  padding: 11px 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.comments-section .observaciones-edit-actions button:hover:not(:disabled) {
+  background: #3c403a;
+  border-color: #fd7131;
+}
+
+.comments-section .observaciones-edit-actions button:focus-visible,
+.comments-section .observaciones-edit-form textarea:focus-visible {
+  outline: 2px solid #ff792f;
+  outline-offset: 2px;
+}
+
+.comments-section .observaciones-edit-actions button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.comments-section > .observaciones-edit-actions button {
+  color: #ff894b;
+  border-color: #a14f2c;
+  background: rgba(255, 113, 49, .08);
+}
+
+.comments-section .observaciones-edit-form {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.comments-section .observaciones-edit-form textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  padding: 15px 17px;
+  resize: vertical;
+  background: #252824;
+  color: #fafaf9;
+  border: 1px solid #4b4d47;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.comments-section .observaciones-edit-form textarea:focus {
+  border-color: #ff792f;
+}
+
+.comments-section .observaciones-edit-form textarea::placeholder {
+  color: #999d96;
+}
+
+.comments-section .observaciones-edit-form
+.observaciones-edit-actions button:last-child {
+  background: #f26b2e;
+  border-color: #f26b2e;
+  color: #181818;
+  font-weight: 700;
+}
+
+.comments-section .observaciones-edit-form
+.observaciones-edit-actions button:last-child:hover:not(:disabled) {
+  background: #ff874e;
+}
+
+.comments-section .observaciones-edit-error,
+.comments-section .observaciones-edit-success {
+  margin-top: 12px;
+  padding: 12px 15px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.comments-section .observaciones-edit-error {
+  color: #ffb3a9;
+  background: rgba(220, 53, 69, .10);
+  border: 1px solid rgba(220, 53, 69, .25);
+}
+
+.comments-section .observaciones-edit-success {
+  color: #a9dfb5;
+  background: rgba(46, 160, 91, .10);
+  border: 1px solid rgba(46, 160, 91, .25);
+}
+
+@media (max-width: 600px) {
+  .comments-section .observaciones-edit-actions button {
+    flex: 1;
+  }
+}
