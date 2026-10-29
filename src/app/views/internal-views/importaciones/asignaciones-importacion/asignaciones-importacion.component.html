@@ -44,6 +44,14 @@
         </span>
       </h2>
       <div class="asig-toolbar-acciones">
+        <label class="sku-estado-filtro">
+          <span>Estado SKU</span>
+          <select [(ngModel)]="estadoSku" (ngModelChange)="cambiarEstadoSku()" name="estadoSku">
+            <option value="activos">Activos</option>
+            <option value="desactivados">Desactivados</option>
+            <option value="todos">Todos</option>
+          </select>
+        </label>
         <button class="btn-secundario" (click)="abrirReservasCliente()">
           <i class="fas fa-search"></i> Buscar por cliente
         </button>
@@ -112,11 +120,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of productosFiltrados()" class="fila-clickable" [class.fila-sel]="seleccionados.has(p.id)">
+        <tr *ngFor="let p of productosFiltrados()" class="fila-clickable"
+            [class.fila-sel]="seleccionados.has(p.id)" [class.fila-desactivada]="!esProductoActivo(p)">
           <td class="celda-check" (click)="$event.stopPropagation()">
-            <input type="checkbox" [checked]="seleccionados.has(p.id)" (change)="toggleSeleccion(p.id)" />
+            <input type="checkbox" [checked]="seleccionados.has(p.id)" [disabled]="!esProductoActivo(p)"
+                   (change)="toggleSeleccion(p.id)" />
           </td>
-          <td (click)="abrirDetalle(p)">{{ p.sku }}</td>
+          <td (click)="abrirDetalle(p)">{{ p.sku }} <span class="sku-estado-badge" *ngIf="!esProductoActivo(p)">Desactivado</span></td>
           <td class="celda-desc" (click)="abrirDetalle(p)">{{ p.descripcion || '—' }}</td>
           <td (click)="abrirDetalle(p)">{{ p.periodo }}</td>
           <td class="num" (click)="abrirDetalle(p)">{{ p.cantidad_embarcada }}</td>

@@ -35,7 +35,7 @@ describe('AsignacionesImportacionService', () => {
 
     service.resumen(1).subscribe(res => expect(res).toEqual(mockResumen));
 
-    const req = httpMock.expectOne(`${base}/1/asignaciones`);
+    const req = httpMock.expectOne(`${base}/1/asignaciones?estado=activos`);
     expect(req.request.method).toBe('GET');
     req.flush({ ok: true, data: mockResumen });
   });
@@ -49,6 +49,15 @@ describe('AsignacionesImportacionService', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(body);
     req.flush({ ok: true, data: { id: 10, ...body } });
+  });
+
+  it('desactivarProducto() hace POST al endpoint con el motivo', () => {
+    service.desactivarProducto(1, 10, 'Carga incorrecta').subscribe();
+
+    const req = httpMock.expectOne(`${base}/1/asignaciones/productos/10/desactivar`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ motivo: 'Carga incorrecta' });
+    req.flush({ ok: true, data: { id: 10, activo: 0 } });
   });
 
   it('recalcular() hace POST con la ventana de meses', () => {

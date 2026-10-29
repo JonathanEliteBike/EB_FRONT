@@ -54,7 +54,7 @@ describe('AsignacionesImportacionComponent', () => {
   });
 
   it('carga el resumen al iniciar', () => {
-    expect(svcSpy.resumen).toHaveBeenCalledWith(1);
+    expect(svcSpy.resumen).toHaveBeenCalledWith(1, 'activos');
     expect(component.resumen).toEqual(resumenMock);
     expect(component.cargando).toBeFalse();
   });
@@ -79,6 +79,17 @@ describe('AsignacionesImportacionComponent', () => {
     const producto = { id: 5 } as any;
     component.abrirDetalle(producto);
     expect(component.productoSeleccionado).toBe(producto);
+  });
+
+  it('cambiarEstadoSku() limpia selección y recarga con el filtro elegido', () => {
+    component.seleccionados.add(5);
+    component.estadoSku = 'desactivados';
+    svcSpy.resumen.calls.reset();
+
+    component.cambiarEstadoSku();
+
+    expect(component.seleccionados.size).toBe(0);
+    expect(svcSpy.resumen).toHaveBeenCalledWith(1, 'desactivados');
   });
 
   it('cerrarDetalle() limpia productoSeleccionado', () => {

@@ -9,6 +9,7 @@ import {
   AsignacionesProducto,
   ImportacionResultado,
   EstadoReserva,
+  EstadoSku,
 } from '../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 import { AsignacionesPropuestaMasivaComponent } from './asignaciones-propuesta-masiva/asignaciones-propuesta-masiva.component';
@@ -31,6 +32,7 @@ export class AsignacionesImportacionComponent implements OnInit {
   resumen: AsignacionesResumen | null = null;
   cargando = true;
   error = '';
+  estadoSku: EstadoSku = 'activos';
 
   /** Periodos disponibles para importar (YYYY-YYYY). Lista explícita que trae
    *  el backend (no un rango calculado en el navegador): arranca con un solo
@@ -127,13 +129,19 @@ export class AsignacionesImportacionComponent implements OnInit {
   cargar(): void {
     this.cargando = true;
     this.error = '';
-    this.svc.resumen(this.importacionId).subscribe({
+    this.svc.resumen(this.importacionId, this.estadoSku).subscribe({
       next: (data) => { this.resumen = data; this.cargando = false; },
       error: (err) => {
         this.error = err?.error?.error?.message || 'No se pudo cargar el embarque';
         this.cargando = false;
       },
     });
+  }
+
+  cambiarEstadoSku(): void {
+    this.seleccionados.clear();
+    this.soloSobrantes = false;
+    this.cargar();
   }
 
   volver(): void {
@@ -188,6 +196,8 @@ export class AsignacionesImportacionComponent implements OnInit {
   }
 
   toggleSeleccion(productoId: number): void {
+    const producto = this.resumen?.productos.find((p) => p.id === productoId);
+    if (!producto || !this.esProductoActivo(producto)) return;
     if (this.seleccionados.has(productoId)) this.seleccionados.delete(productoId);
     else this.seleccionados.add(productoId);
   }
@@ -217,7 +227,11 @@ export class AsignacionesImportacionComponent implements OnInit {
 
   productosSeleccionados(): AsignacionesProducto[] {
     const productos = this.resumen?.productos || [];
-    return productos.filter((p) => this.seleccionados.has(p.id));
+    return productos.filter((p) => this.seleccionados.has(p.id) && this.esProductoActivo(p));
+  }
+
+  esProductoActivo(producto: AsignacionesProducto): boolean {
+    return producto.activo !== false && producto.activo !== 0;
   }
 
   abrirPropuestaMasiva(): void {

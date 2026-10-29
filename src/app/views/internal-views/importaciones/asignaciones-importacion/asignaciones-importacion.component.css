@@ -36,6 +36,9 @@
 .asig-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .asig-toolbar h2 { color: #e2e8f0; }
 .asig-toolbar-acciones { display: flex; align-items: center; gap: 8px; }
+.sku-estado-filtro { display: inline-flex; align-items: center; gap: 7px; color: #94a3b8; font-size: 12px; font-weight: 600; }
+.sku-estado-filtro select { background: #151b2a; border: 1px solid #334155; color: #e2e8f0; border-radius: 7px; padding: 7px 9px; }
+.sku-estado-filtro select:focus { outline: 2px solid #60a5fa; outline-offset: 1px; }
 .btn-primary { background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: background 150ms ease-out, transform 120ms ease-out; }
 .btn-primary:hover:not(:disabled) { background: #2f6fd8; }
 .btn-primary:active:not(:disabled) { transform: scale(0.97); }
@@ -87,6 +90,9 @@
 .asig-tabla th.num i { margin-left: 3px; color: #64748b; font-size: 10px; cursor: help; }
 .fila-clickable { cursor: pointer; }
 .fila-clickable:hover { background: #1a2333; }
+.asig-tabla tbody tr.fila-desactivada { background: #1b1619; color: #c8b6bc; }
+.asig-tabla tbody tr.fila-desactivada:hover { background: #261a1f; }
+.sku-estado-badge { display: inline-block; margin-left: 6px; padding: 2px 6px; border: 1px solid #9f465a; border-radius: 999px; color: #fda4af; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; vertical-align: middle; }
 .celda-disponible { font-weight: 700; color: #60a5fa; }
 .celda-desc { color: #cbd5e1; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .asig-vacio { color: #94a3b8; text-align: center; padding: 40px; }
