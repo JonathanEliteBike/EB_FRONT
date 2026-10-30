@@ -5,7 +5,7 @@ import { ClientesService } from '../../services/clientes.service';
 import { ProyeccionesTabComponent } from '../proyecciones-tab/proyecciones-tab.component';
 import { AuthService } from '../../services/auth.service';
 import * as XLSX from 'xlsx';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 /**
  * Modelo de datos que representa una línea de orden de venta.
@@ -115,6 +115,13 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
   loadingTimer: any = null;
   /** true cuando el usuario pidió forzar recarga desde Odoo (ignora caché) */
   refrescando = false;
+  /**
+   * Suscripción de la petición de facturas en curso. Se cancela al inicio de cada
+   * obtenerFacturas() para que una respuesta tardía de un cliente/grupo anterior
+   * (ej. al cambiar rápido de selección antes de que resuelva) no sobrescriba el
+   * estado del cliente/grupo actual.
+   */
+  private peticionActual?: Subscription;
 
   // ── Paginación ────────────────────────────────────────────────────────────
   paginaActual = 1;
@@ -227,6 +234,9 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
   }
 
   obtenerFacturas(forceRefresh = false) {
+    // Cancela la petición anterior: si aún estaba en curso, su respuesta tardía
+    // ya no debe poder sobrescribir el estado del cliente/grupo seleccionado ahora.
+    this.peticionActual?.unsubscribe();
     this.cargando = true;
     this.error = null;
     this.facturas = [];
@@ -241,16 +251,18 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     this.fechaInicioTemporada = null;
     this.avancePrevio = null;
     this.proyeccionesCount = 0;
+    this.infoCliente = null;
 
     // ── RUTA 0: Vista Global integral ← prioridad más alta ───────────────────────
     if (this.idGrupoOdoo) {
-      this.clientesService.getDetalleComprasCliente(
+      this.peticionActual = this.clientesService.getDetalleComprasCliente(
         undefined, undefined, undefined, undefined, false, this.idGrupoOdoo, forceRefresh, this.temporadaSeleccionada
       ).subscribe({
         next: (response: any) => {
           if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
           this.fechaInicioTemporada = response.meta?.fecha_inicio_temporada ?? null;
           this.avancePrevio = response.meta?.avance_previo != null ? Number(response.meta.avance_previo) : null;
+          this.infoCliente = response.cliente ?? null;
           const rows = response.rows ?? response.data ?? [];
           this.facturas = (rows || []).map((r: any) => ({
             id: r.id || 0,
@@ -306,7 +318,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
     }
 
     if (this.idGrupo) {
-      this.clientesService.getFacturasGrupo(this.idGrupo).subscribe({
+      this.peticionActual = this.clientesService.getFacturasGrupo(this.idGrupo).subscribe({
         next: (response: any) => {
           if (response.success) {
             this.facturas = (response.data || []).map((r: any) => ({
@@ -344,7 +356,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
       if (clienteParam) {
         this.infoCliente = { nombre_cliente: clienteParam };
         // Sin límite: traer todos los registros; la paginación local se encarga de mostrarlos por páginas
-        this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam, this.claveExacta, undefined, forceRefresh, this.temporadaSeleccionada).subscribe({
+        this.peticionActual = this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam, this.claveExacta, undefined, forceRefresh, this.temporadaSeleccionada).subscribe({
             next: (response: any) => {
             if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
               this.fechaInicioTemporada = response.meta?.fecha_inicio_temporada ?? null;
@@ -425,7 +437,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
         this.cargando = false;
       } else {
         // Fallback: try the token-backed info endpoint (may 401 if token missing)
-        this.clientesService.getInfoClienteActual().subscribe({
+        this.peticionActual = this.clientesService.getInfoClienteActual().subscribe({
           next: (resp: any) => {
             const clienteInfo = resp?.cliente ?? null;
             this.infoCliente = clienteInfo ?? null;
@@ -435,7 +447,7 @@ export class FacturasClienteComponent implements OnInit, OnDestroy {
               this.cargando = false;
               return;
             }
-            this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam2, this.claveExacta, undefined, false, this.temporadaSeleccionada).subscribe({
+            this.peticionActual = this.clientesService.getDetalleComprasCliente(undefined, undefined, undefined, clienteParam2, this.claveExacta, undefined, false, this.temporadaSeleccionada).subscribe({
               next: (response: any) => {
                 if (this.loadingTimer) { clearTimeout(this.loadingTimer); this.loadingTimer = null; }
                 this.error = null;

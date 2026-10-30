@@ -17,6 +17,8 @@ import {
   FormsModule
 } from '@angular/forms';
 
+import { switchMap, tap, throwError } from 'rxjs';
+
 import {
   ActivatedRoute, RouterLink
 } from '@angular/router';
@@ -121,9 +123,14 @@ implements OnInit, OnDestroy {
 
   mostrarDetalle = false;
 
+  // La edición no modifica la firma ni los demás datos del documento.
+  editandoEnlace = false;
+  enlaceResponsivaEditado = '';
+
   mostrarFirma = false;
 
   mostrarAnulacion = false;
+  mostrarRestauracion = false;
 
 
   responsivaSeleccionada:
@@ -200,7 +207,11 @@ implements OnInit, OnDestroy {
     }
 
     if (this.mostrarDetalle) {
-      this.cerrarDetalle();
+      if (this.editandoEnlace) {
+        this.cancelarEdicionEnlace();
+      } else {
+        this.cerrarDetalle();
+      }
       return;
     }
 
@@ -211,6 +222,11 @@ implements OnInit, OnDestroy {
 
     if (this.mostrarAnulacion) {
       this.cerrarAnulacion();
+      return;
+    }
+
+    if (this.mostrarRestauracion) {
+      this.cerrarRestauracion();
     }
   }
 
@@ -450,17 +466,131 @@ implements OnInit, OnDestroy {
 
 
   cerrarDetalle(): void {
-    if (
-      this.descargandoId !== null
-    ) {
+    if (this.descargandoId !== null || this.procesando) {
       return;
     }
 
     this.mostrarDetalle = false;
-
     this.responsivaSeleccionada = null;
-
+    this.editandoEnlace = false;
+    this.enlaceResponsivaEditado = '';
     this.errorAccion = '';
+  }
+
+
+  /* =========================================================
+   * CORRECCIÓN DEL ENLACE DE UNA RESPONSIVA YA FIRMADA
+   * ========================================================= */
+
+  iniciarEdicionEnlace(): void {
+    const responsiva = this.responsivaSeleccionada;
+    if (!responsiva || responsiva.estado !== 'Firmada' || this.procesando || this.descargandoId !== null) {
+      return;
+    }
+
+    this.enlaceResponsivaEditado = responsiva.archivoPdf || '';
+    this.editandoEnlace = true;
+    this.limpiarMensajes();
+  }
+
+  cancelarEdicionEnlace(): void {
+    if (this.procesando) return;
+    this.editandoEnlace = false;
+    this.enlaceResponsivaEditado = '';
+    this.errorAccion = '';
+  }
+
+  guardarEdicionEnlace(): void {
+    const responsiva = this.responsivaSeleccionada;
+    if (!this.editandoEnlace || !responsiva || this.procesando || this.descargandoId !== null) {
+      return;
+    }
+    if (responsiva.estado !== 'Firmada') {
+      this.errorAccion = 'Solo se puede corregir el enlace de una responsiva firmada.';
+      return;
+    }
+
+    const enlaceNuevo = this.enlaceResponsivaEditado.trim();
+    if (!enlaceNuevo || !this.esUrlValida(enlaceNuevo)) {
+      this.errorAccion = 'Ingresa un enlace válido que comience con https:// o http://.';
+      return;
+    }
+    if (enlaceNuevo.length > 2048) {
+      this.errorAccion = 'El enlace no puede superar los 2048 caracteres.';
+      return;
+    }
+    if (enlaceNuevo === (responsiva.archivoPdf || '').trim()) {
+      this.errorAccion = 'El enlace nuevo es igual al que ya está registrado.';
+      return;
+    }
+
+    this.procesando = true;
+    this.limpiarMensajes();
+    let antesDeGuardar: Responsiva | null = null;
+    let servidorAceptoActualizacion = false;
+
+    // Volvemos a consultar para evitar sobrescribir una corrección hecha en otra sesión.
+    this.responsivasService.obtenerResponsiva(responsiva.id).pipe(
+      switchMap(actual => {
+        if (actual.estado !== 'Firmada') {
+          return throwError(() => new Error('La responsiva ya no está firmada. Actualiza la página.'));
+        }
+        if ((actual.archivoPdf || '').trim() !== (responsiva.archivoPdf || '').trim()) {
+          return throwError(() => new Error('El enlace fue modificado en otra sesión. Cierra el detalle y vuelve a abrirlo.'));
+        }
+        antesDeGuardar = actual;
+        // El endpoint existente requiere observaciones: enviamos el valor actual sin cambiarlo.
+        return this.responsivasService.corregirEnlaceResponsiva(actual.id, {
+          archivoPdf: enlaceNuevo,
+          enlaceAnterior: actual.archivoPdf || ''
+        }).pipe(
+          tap(() => { servidorAceptoActualizacion = true; }),
+          switchMap(() => this.responsivasService.obtenerResponsiva(actual.id))
+        );
+      })
+    ).subscribe({
+      next: actualizada => {
+        this.procesando = false;
+        this.responsivaSeleccionada = actualizada;
+        this.responsivas = this.responsivas.map(item =>
+          item.id === actualizada.id ? actualizada : item
+        );
+
+        const original = antesDeGuardar;
+        const camposIntactos = !!original &&
+          actualizada.folio === original.folio &&
+          actualizada.estado === 'Firmada' &&
+          actualizada.fechaGeneracion === original.fechaGeneracion &&
+          actualizada.fechaFirma === original.fechaFirma &&
+          actualizada.equipoId === original.equipoId &&
+          actualizada.colaboradorId === original.colaboradorId &&
+          actualizada.asignacionId === original.asignacionId &&
+          actualizada.observaciones === original.observaciones;
+
+        this.cargarInformacion();
+        if ((actualizada.archivoPdf || '').trim() !== enlaceNuevo || !camposIntactos) {
+          this.editandoEnlace = false;
+          this.enlaceResponsivaEditado = '';
+          this.errorAccion = 'El servidor respondió, pero no se confirmó que el enlace y el resto de los datos se hayan conservado correctamente. Revisa la responsiva antes de continuar.';
+          return;
+        }
+
+        this.editandoEnlace = false;
+        this.enlaceResponsivaEditado = '';
+        this.mensajeExito = 'Enlace corregido y verificado. Se conservaron el folio, la firma y los datos del equipo.';
+      },
+      error: (error: HttpErrorResponse | Error) => {
+        this.procesando = false;
+        if (servidorAceptoActualizacion) {
+          this.errorAccion = 'El servidor aceptó la actualización, pero no fue posible verificarla. Vuelve a consultar esta responsiva antes de intentar guardar otra vez.';
+          this.cargarInformacion();
+          return;
+        }
+        this.errorAccion = error instanceof HttpErrorResponse
+          ? this.obtenerMensajeError(error, 'No fue posible corregir el enlace de la responsiva.')
+          : (error.message || 'No fue posible corregir el enlace.');
+      }
+    });
   }
 
 
@@ -725,6 +855,66 @@ implements OnInit, OnDestroy {
   }
 
 
+  /* =========================================================
+   * RESTAURACIÓN DE RESPONSIVAS ANULADAS
+   * ========================================================= */
+
+  abrirRestauracion(responsiva: Responsiva): void {
+    if (responsiva.estado !== 'Anulada' || this.procesando) return;
+    this.cerrarTodosLosModales();
+    this.responsivaSeleccionada = responsiva;
+    this.mostrarRestauracion = true;
+    this.limpiarMensajes();
+  }
+
+  cerrarRestauracion(): void {
+    if (this.procesando) return;
+    this.mostrarRestauracion = false;
+    this.responsivaSeleccionada = null;
+    this.errorAccion = '';
+  }
+
+  confirmarRestauracion(): void {
+    const seleccionada = this.responsivaSeleccionada;
+    if (!seleccionada || seleccionada.estado !== 'Anulada' || this.procesando) return;
+
+    this.procesando = true;
+    this.limpiarMensajes();
+
+    // La API verifica la asignación activa y evita restaurar duplicados.
+    this.responsivasService.restaurarResponsiva(seleccionada.id).pipe(
+      switchMap(() => this.responsivasService.obtenerResponsiva(seleccionada.id))
+    ).subscribe({
+      next: actualizada => {
+        this.procesando = false;
+        this.mostrarRestauracion = false;
+        this.responsivaSeleccionada = null;
+        this.responsivas = this.responsivas.map(registro =>
+          registro.id === actualizada.id ? actualizada : registro
+        );
+        this.cargarInformacion();
+
+        const estadoEsperado = seleccionada.fechaFirma ? 'Firmada' : 'Pendiente';
+        if (actualizada.estado !== estadoEsperado || actualizada.folio !== seleccionada.folio ||
+            actualizada.fechaFirma !== seleccionada.fechaFirma ||
+            actualizada.archivoPdf !== seleccionada.archivoPdf) {
+          this.errorAccion = 'La restauración fue procesada, pero la verificación encontró diferencias. Revisa el detalle antes de continuar.';
+          return;
+        }
+        this.mensajeExito = `Responsiva ${actualizada.folio} restaurada a ${actualizada.estado}, con su documento y folio originales.`;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.procesando = false;
+        this.errorAccion = this.obtenerMensajeError(
+          error,
+          'No fue posible restaurar la responsiva.'
+        );
+        // Si la petición se procesó y falló la lectura, la lista permite verificar el estado.
+        this.cargarInformacion();
+      }
+    });
+  }
+
   /*
    * =========================================================
    * DESCARGA DEL PDF
@@ -978,10 +1168,13 @@ implements OnInit, OnDestroy {
 
   private cerrarTodosLosModales(): void {
     this.mostrarDetalle = false;
+    this.editandoEnlace = false;
+    this.enlaceResponsivaEditado = '';
 
     this.mostrarFirma = false;
 
     this.mostrarAnulacion = false;
+    this.mostrarRestauracion = false;
 
     this.responsivaSeleccionada =
       null;

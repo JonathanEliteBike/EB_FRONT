@@ -139,6 +139,18 @@ private readonly apiUrl =
     );
   }
 
+  corregirEnlaceResponsiva(
+    id: number,
+    datos: {
+      archivoPdf: string;
+      enlaceAnterior: string;
+    }
+  ): Observable<unknown> {
+    return this.http.put(
+      `${this.apiUrl}/${id}/corregir-enlace`,
+      datos
+    );
+  }
   firmarResponsiva(
     id: number,
     datos: {
@@ -161,6 +173,13 @@ private readonly apiUrl =
       {
         motivoAnulacion
       }
+    );
+  }
+
+  restaurarResponsiva(id: number): Observable<unknown> {
+    return this.http.put(
+      `${this.apiUrl}/${id}/restaurar`,
+      {}
     );
   }
 

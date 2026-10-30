@@ -808,6 +808,20 @@ a {
   border-color: #f46b2a;
 }
 
+/* La categoría utiliza el mismo estilo que Empresa, con énfasis al activarse. */
+.category-filter {
+  flex: 0 1 315px;
+}
+
+.select-filter.is-active > span {
+  color: #f58a55;
+}
+
+.select-filter.is-active select {
+  border-color: #f46b2a;
+  box-shadow: 0 0 0 2px rgba(244, 107, 42, 0.08);
+}
+
 .filter-group {
   display: flex;
   align-items: center;
@@ -883,6 +897,14 @@ a {
 
 .results-text strong {
   color: #f3f3ef;
+}
+
+.active-filters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .active-filter {
@@ -1496,6 +1518,14 @@ tbody tr:last-child td {
   .select-filter {
     width: 100%;
     min-width: 0;
+  }
+
+  .category-filter {
+    flex: 1 1 auto;
+  }
+
+  .active-filters {
+    justify-content: flex-start;
   }
 
   .filter-group {
