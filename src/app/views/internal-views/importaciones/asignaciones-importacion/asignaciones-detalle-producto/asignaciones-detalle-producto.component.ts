@@ -10,6 +10,7 @@ import {
   Movimiento,
   VentaSobrante,
 } from '../../../../../services/asignaciones-importacion.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 /** Fila editable de la propuesta: una por (cliente, mes). */
 interface FilaPropuesta {
@@ -82,10 +83,19 @@ export class AsignacionesDetalleProductoComponent implements OnChanges, OnInit {
   cargandoMovimientos = false;
   errorMovimientos = '';
 
+  // ── Desactivación lógica ──
+  confirmandoDesactivacion = false;
+  motivoDesactivacion = '';
+  errorDesactivacion = '';
+  desactivando = false;
+
   /** clave -> nombre, para mostrar el cliente identificable en la pestaña de reservas. */
   private nombresPorClave = new Map<string, string>();
 
-  constructor(private svc: AsignacionesImportacionService) {}
+  constructor(
+    private svc: AsignacionesImportacionService,
+    private auth: AuthService,
+  ) {}
 
   ngOnInit(): void {
     this.svc.prioridadClientes().subscribe({
@@ -99,7 +109,7 @@ export class AsignacionesDetalleProductoComponent implements OnChanges, OnInit {
   }
 
   ngOnChanges(): void {
-    this.tab = 'proyecciones';
+    this.tab = this.productoActivo ? 'proyecciones' : 'reservas';
     this.modo = 'inicial';
     this.propuesta = null;
     this.filas = [];
@@ -117,11 +127,27 @@ export class AsignacionesDetalleProductoComponent implements OnChanges, OnInit {
     this.movimientos = [];
     this.errorDetalle = '';
     this.errorMovimientos = '';
+    this.confirmandoDesactivacion = false;
+    this.motivoDesactivacion = '';
+    this.errorDesactivacion = '';
+    this.desactivando = false;
     this.cargarDetalle();
   }
 
   get prod(): AsignacionesProducto {
     return this.detalle?.producto ?? this.producto;
+  }
+
+  get productoActivo(): boolean {
+    return this.prod.activo !== false && this.prod.activo !== 0;
+  }
+
+  get puedeDesactivarSku(): boolean {
+    return this.productoActivo && (
+      this.auth.isAdmin()
+      || this.auth.getRol() === 99
+      || (this.auth.getRol() === 4 && this.auth.tienePermisoInternoActual('importaciones', 'editar'))
+    );
   }
 
   cargarDetalle(): void {
@@ -137,10 +163,55 @@ export class AsignacionesDetalleProductoComponent implements OnChanges, OnInit {
   }
 
   cambiarTab(tab: Tab): void {
+    if (!this.productoActivo && tab === 'proyecciones') return;
     this.tab = tab;
     if (tab === 'movimientos' && this.movimientos.length === 0) {
       this.cargarMovimientos();
     }
+  }
+
+  abrirDesactivacion(): void {
+    if (!this.puedeDesactivarSku) return;
+    this.confirmandoDesactivacion = true;
+    this.motivoDesactivacion = '';
+    this.errorDesactivacion = '';
+  }
+
+  cerrarDesactivacion(): void {
+    if (this.desactivando) return;
+    this.confirmandoDesactivacion = false;
+    this.motivoDesactivacion = '';
+    this.errorDesactivacion = '';
+  }
+
+  confirmarDesactivacion(): void {
+    const motivo = this.motivoDesactivacion.trim();
+    if (!motivo) {
+      this.errorDesactivacion = 'El motivo de desactivación es obligatorio.';
+      return;
+    }
+    if (motivo.length > 500) {
+      this.errorDesactivacion = 'El motivo no puede exceder 500 caracteres.';
+      return;
+    }
+    this.desactivando = true;
+    this.errorDesactivacion = '';
+    this.svc.desactivarProducto(this.importacionId, this.prod.id, motivo).subscribe({
+      next: () => {
+        this.desactivando = false;
+        this.confirmandoDesactivacion = false;
+        this.tab = 'reservas';
+        this.cargarDetalle();
+        this.cambio.emit();
+      },
+      error: (err) => {
+        this.desactivando = false;
+        this.errorDesactivacion = err?.status === 403
+          ? 'No tienes permiso para desactivar este SKU.'
+          : err?.error?.error?.message
+            || 'No se pudo desactivar el SKU. Verifica tu conexión e intenta de nuevo.';
+      },
+    });
   }
 
   // ── Propuesta ────────────────────────────────────────────────────────────

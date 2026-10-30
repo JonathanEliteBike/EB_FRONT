@@ -11,6 +11,7 @@ import {
   AsignacionesProductoGlobal,
   AsignacionesGlobalFiltros,
   AsignacionesProducto,
+  EstadoSku,
 } from '../../../../../services/asignaciones-importacion.service';
 import { AsignacionesDetalleProductoComponent } from '../../asignaciones-importacion/asignaciones-detalle-producto/asignaciones-detalle-producto.component';
 import { AsignacionesImportarWizardComponent } from './asignaciones-importar-wizard/asignaciones-importar-wizard.component';
@@ -37,6 +38,7 @@ export class AsignacionesPanelComponent implements OnInit, OnChanges, OnDestroy 
   soloDisponible = false;
   periodo = '';
   sku = '';
+  estadoSku: EstadoSku = 'activos';
 
   cargando = false;
   error = '';
@@ -91,6 +93,7 @@ export class AsignacionesPanelComponent implements OnInit, OnChanges, OnDestroy 
       origen: this.origen || undefined,
       anio: this.anio || undefined,
       q: this.busqueda.trim() || undefined,
+      estado_sku: this.estadoSku,
     };
     if (this.vista === 'embarques') {
       return { ...base, solo_con_disponible: this.soloDisponible || undefined };

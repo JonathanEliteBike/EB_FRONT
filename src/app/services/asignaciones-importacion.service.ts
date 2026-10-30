@@ -21,6 +21,10 @@ export interface AsignacionesProducto {
   cantidad_vendida: number;
   cantidad_sobrante: number;
   cantidad_disponible: number;
+  activo?: boolean | number;
+  desactivado_at?: string | null;
+  desactivado_por?: number | null;
+  motivo_desactivacion?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -226,6 +230,7 @@ export interface AsignacionesProductosGlobal {
 
 export interface AsignacionesGlobalFiltros {
   estado?: string;
+  estado_sku?: EstadoSku;
   origen?: string;
   anio?: string;
   q?: string;
@@ -238,6 +243,8 @@ export interface AsignacionesGlobalFiltros {
   offset?: number;
 }
 
+export type EstadoSku = 'activos' | 'desactivados' | 'todos';
+
 interface ApiOk<T> { ok: true; data: T; }
 
 @Injectable({ providedIn: 'root' })
@@ -246,8 +253,10 @@ export class AsignacionesImportacionService {
 
   constructor(private http: HttpClient) {}
 
-  resumen(importacionId: number): Observable<AsignacionesResumen> {
-    return this.http.get<ApiOk<AsignacionesResumen>>(`${this.base}/${importacionId}/asignaciones`)
+  resumen(importacionId: number, estado: EstadoSku = 'activos'): Observable<AsignacionesResumen> {
+    return this.http.get<ApiOk<AsignacionesResumen>>(`${this.base}/${importacionId}/asignaciones`, {
+      params: new HttpParams().set('estado', estado),
+    })
       .pipe(map(r => r.data));
   }
 
@@ -274,8 +283,10 @@ export class AsignacionesImportacionService {
       .pipe(map(r => r.data));
   }
 
-  listarProductos(importacionId: number): Observable<AsignacionesProducto[]> {
-    return this.http.get<ApiOk<AsignacionesProducto[]>>(`${this.base}/${importacionId}/asignaciones/productos`)
+  listarProductos(importacionId: number, estado: EstadoSku = 'activos'): Observable<AsignacionesProducto[]> {
+    return this.http.get<ApiOk<AsignacionesProducto[]>>(`${this.base}/${importacionId}/asignaciones/productos`, {
+      params: new HttpParams().set('estado', estado),
+    })
       .pipe(map(r => r.data));
   }
 
@@ -295,6 +306,16 @@ export class AsignacionesImportacionService {
   ): Observable<AsignacionesProducto> {
     return this.http
       .put<ApiOk<AsignacionesProducto>>(`${this.base}/${importacionId}/asignaciones/productos/${productoId}`, body)
+      .pipe(map(r => r.data));
+  }
+
+  desactivarProducto(
+    importacionId: number, productoId: number, motivo: string
+  ): Observable<AsignacionesProducto> {
+    return this.http
+      .post<ApiOk<AsignacionesProducto>>(
+        `${this.base}/${importacionId}/asignaciones/productos/${productoId}/desactivar`, { motivo }
+      )
       .pipe(map(r => r.data));
   }
 

@@ -4,11 +4,13 @@ import { AsignacionesDetalleProductoComponent } from './asignaciones-detalle-pro
 import {
   AsignacionesImportacionService, ClientePrioridad, DetalleProducto, AsignacionesProducto, PropuestaProducto,
 } from '../../../../../services/asignaciones-importacion.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 describe('AsignacionesDetalleProductoComponent', () => {
   let fixture: ComponentFixture<AsignacionesDetalleProductoComponent>;
   let component: AsignacionesDetalleProductoComponent;
   let svcSpy: jasmine.SpyObj<AsignacionesImportacionService>;
+  let authSpy: jasmine.SpyObj<AuthService>;
 
   const producto: AsignacionesProducto = {
     id: 10, importacion_id: 1, periodo: '2026-2027', sku: 'SKU-1', sku_norm: 'SKU1',
@@ -43,8 +45,10 @@ describe('AsignacionesDetalleProductoComponent', () => {
     svcSpy = jasmine.createSpyObj('AsignacionesImportacionService', [
       'detalleProducto', 'recalcular', 'proponerReasignacion', 'reservar', 'confirmarReasignacion',
       'resolverReserva', 'cancelarAsignacion', 'ventaSobrante', 'validarOdoo', 'cancelarVenta', 'movimientos',
-      'prioridadClientes',
+      'prioridadClientes', 'desactivarProducto',
     ]);
+    authSpy = jasmine.createSpyObj('AuthService', ['isAdmin', 'getRol', 'tienePermisoInternoActual']);
+    authSpy.isAdmin.and.returnValue(true);
     svcSpy.prioridadClientes.and.returnValue(of(clientes));
     svcSpy.detalleProducto.and.returnValue(of(detalleMock));
     svcSpy.recalcular.and.returnValue(of([propMock]));
@@ -55,7 +59,10 @@ describe('AsignacionesDetalleProductoComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [AsignacionesDetalleProductoComponent],
-      providers: [{ provide: AsignacionesImportacionService, useValue: svcSpy }],
+      providers: [
+        { provide: AsignacionesImportacionService, useValue: svcSpy },
+        { provide: AuthService, useValue: authSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AsignacionesDetalleProductoComponent);
@@ -133,6 +140,41 @@ describe('AsignacionesDetalleProductoComponent', () => {
     component.registrarVenta();
     expect(component.errorVenta).toContain('obligatorios');
     expect(svcSpy.ventaSobrante).not.toHaveBeenCalled();
+  });
+
+  it('confirmarDesactivacion() exige motivo y llama al endpoint al confirmarse', () => {
+    component.confirmarDesactivacion();
+    expect(component.errorDesactivacion).toContain('obligatorio');
+
+    svcSpy.desactivarProducto.and.returnValue(of({ ...producto, activo: 0 }));
+    component.motivoDesactivacion = 'Carga incorrecta';
+    component.confirmarDesactivacion();
+
+    expect(svcSpy.desactivarProducto).toHaveBeenCalledWith(1, 10, 'Carga incorrecta');
+    expect(component.confirmandoDesactivacion).toBeFalse();
+  });
+
+  it('puedeDesactivarSku aplica la matriz específica de roles', () => {
+    authSpy.isAdmin.and.returnValue(false);
+
+    authSpy.getRol.and.returnValue(99);
+    expect(component.puedeDesactivarSku).toBeTrue();
+
+    authSpy.getRol.and.returnValue(4);
+    authSpy.tienePermisoInternoActual.and.returnValue(true);
+    expect(component.puedeDesactivarSku).toBeTrue();
+
+    authSpy.tienePermisoInternoActual.and.returnValue(false);
+    expect(component.puedeDesactivarSku).toBeFalse();
+
+    authSpy.getRol.and.returnValue(2);
+    expect(component.puedeDesactivarSku).toBeFalse();
+    authSpy.getRol.and.returnValue(3);
+    expect(component.puedeDesactivarSku).toBeFalse();
+
+    component.detalle = { ...detalleMock, producto: { ...producto, activo: 0 } };
+    authSpy.getRol.and.returnValue(99);
+    expect(component.puedeDesactivarSku).toBeFalse();
   });
 
   it('cerrarPanel() emite el evento cerrar', () => {

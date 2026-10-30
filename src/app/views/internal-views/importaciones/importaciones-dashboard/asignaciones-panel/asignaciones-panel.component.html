@@ -8,6 +8,14 @@
     <div class="ap-filtros">
       <input type="text" class="ap-input" placeholder="Buscar…"
              [(ngModel)]="busqueda" (ngModelChange)="pedirRecarga()" />
+      <label class="ap-check">
+        Estado SKU
+        <select [(ngModel)]="estadoSku" (ngModelChange)="pedirRecarga(true)">
+          <option value="activos">Activos</option>
+          <option value="desactivados">Desactivados</option>
+          <option value="todos">Todos</option>
+        </select>
+      </label>
       <ng-container *ngIf="vista === 'productos'">
         <input type="text" class="ap-input ap-input--sm" placeholder="Periodo"
                [(ngModel)]="periodo" (ngModelChange)="pedirRecarga()" />

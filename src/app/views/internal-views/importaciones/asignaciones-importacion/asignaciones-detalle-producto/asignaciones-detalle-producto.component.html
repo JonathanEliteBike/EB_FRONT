@@ -8,7 +8,22 @@
         </div>
         <p class="panel-desc">{{ prod.descripcion || 'Sin descripción' }}</p>
       </div>
-      <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+      <div class="panel-header-actions">
+        <button *ngIf="puedeDesactivarSku" class="btn-desactivar" (click)="abrirDesactivacion()">
+          <i class="fas fa-ban"></i> Desactivar SKU
+        </button>
+        <button class="panel-close" (click)="cerrarPanel()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <div class="sku-desactivado-notice" *ngIf="!productoActivo" role="status">
+      <strong><i class="fas fa-circle-pause"></i> SKU desactivado</strong>
+      <span>Solo disponible para consulta histórica; no participa en operaciones normales.</span>
+      <dl>
+        <div><dt>Fecha</dt><dd>{{ prod.desactivado_at ? (prod.desactivado_at | date: 'medium') : 'No disponible' }}</dd></div>
+        <div><dt>Usuario</dt><dd>{{ prod.desactivado_por ? ('#' + prod.desactivado_por) : 'No disponible' }}</dd></div>
+        <div><dt>Motivo</dt><dd>{{ prod.motivo_desactivacion || 'No disponible' }}</dd></div>
+      </dl>
     </div>
 
     <div class="panel-kpis">
@@ -20,7 +35,7 @@
     </div>
 
     <div class="panel-tabs">
-      <button [class.activo]="tab === 'proyecciones'" (click)="cambiarTab('proyecciones')">Proyecciones</button>
+      <button *ngIf="productoActivo" [class.activo]="tab === 'proyecciones'" (click)="cambiarTab('proyecciones')">Proyecciones</button>
       <button [class.activo]="tab === 'reservas'" (click)="cambiarTab('reservas')">
         Reservas
         <span class="tab-badge" *ngIf="detalle?.reservas?.length">{{ detalle!.reservas.length }}</span>
@@ -141,15 +156,17 @@
                 </span>
               </td>
               <td class="acciones-reserva">
-                <ng-container *ngIf="r.estado === 'PENDIENTE_CONFIRMACION'">
-                  <button class="btn-texto btn-ok" [disabled]="resolviendoId === r.id"
-                          (click)="resolver(r, 'ACEPTADA')">Cliente aceptó</button>
-                  <button class="btn-texto btn-danger" [disabled]="resolviendoId === r.id"
-                          (click)="resolver(r, 'RECHAZADA')">Cliente rechazó</button>
+                <ng-container *ngIf="productoActivo">
+                  <ng-container *ngIf="r.estado === 'PENDIENTE_CONFIRMACION'">
+                    <button class="btn-texto btn-ok" [disabled]="resolviendoId === r.id"
+                            (click)="resolver(r, 'ACEPTADA')">Cliente aceptó</button>
+                    <button class="btn-texto btn-danger" [disabled]="resolviendoId === r.id"
+                            (click)="resolver(r, 'RECHAZADA')">Cliente rechazó</button>
+                  </ng-container>
+                  <button class="btn-texto btn-danger"
+                          *ngIf="r.estado === 'RESERVADA' || r.estado === 'CONFIRMADA' || r.estado === 'PENDIENTE_CONFIRMACION'"
+                          (click)="cancelarReserva(r)">Cancelar</button>
                 </ng-container>
-                <button class="btn-texto btn-danger"
-                        *ngIf="r.estado === 'RESERVADA' || r.estado === 'CONFIRMADA' || r.estado === 'PENDIENTE_CONFIRMACION'"
-                        (click)="cancelarReserva(r)">Cancelar</button>
               </td>
             </tr>
           </tbody>
@@ -158,7 +175,7 @@
 
       <!-- ══════════════ Sobrantes / ventas anticipadas ══════════════ -->
       <div *ngIf="tab === 'sobrantes'">
-        <div class="form-nuevo">
+        <div class="form-nuevo" *ngIf="productoActivo">
           <input type="text" placeholder="Cliente" [(ngModel)]="nuevaVenta.clave_cliente" name="ventaCliente" />
           <input type="number" placeholder="Cantidad" min="1" [(ngModel)]="nuevaVenta.cantidad" name="ventaCantidad" />
           <input type="text" placeholder="Pedido Odoo (opcional)" [(ngModel)]="nuevaVenta.numero_pedido_odoo" name="ventaFolio" />
@@ -175,7 +192,7 @@
               <td>{{ v.numero_pedido_odoo || '—' }}</td>
               <td><span class="badge" [ngClass]="'badge-' + v.estado.toLowerCase()">{{ v.estado }}</span></td>
               <td class="acciones-venta">
-                <ng-container *ngIf="v.estado !== 'CANCELADO' && v.estado !== 'VALIDADO'">
+                <ng-container *ngIf="productoActivo && v.estado !== 'CANCELADO' && v.estado !== 'VALIDADO'">
                   <ng-container *ngIf="validandoVentaId === v.id; else botonValidar">
                     <input type="text" placeholder="Folio Odoo" [(ngModel)]="folioParaValidar" [name]="'folio' + v.id" />
                     <button class="btn-texto" (click)="confirmarValidacionOdoo(v)">Validar</button>
@@ -214,5 +231,26 @@
     </div>
 
     <ng-template #cargandoTpl><div class="asig-cargando">Cargando…</div></ng-template>
+
+    <div class="desactivar-modal-overlay" *ngIf="confirmandoDesactivacion" (click)="cerrarDesactivacion()">
+      <section class="desactivar-modal" role="dialog" aria-modal="true" aria-labelledby="desactivarTitulo"
+               (click)="$event.stopPropagation()">
+        <span class="desactivar-eyebrow">Acción irreversible en esta fase</span>
+        <h2 id="desactivarTitulo">Desactivar {{ prod.sku }}</h2>
+        <p>Dejará de participar en las operaciones normales de este embarque. Su historial y movimientos se conservarán.</p>
+        <label for="motivoDesactivacion">Motivo de desactivación <span aria-hidden="true">*</span></label>
+        <textarea id="motivoDesactivacion" [(ngModel)]="motivoDesactivacion" name="motivoDesactivacion"
+                  maxlength="500" rows="4" [disabled]="desactivando"
+                  placeholder="Describe por qué este SKU debe ocultarse de la operación."></textarea>
+        <div class="desactivar-contador">{{ motivoDesactivacion.trim().length }}/500</div>
+        <p class="form-error" *ngIf="errorDesactivacion" role="alert">{{ errorDesactivacion }}</p>
+        <div class="desactivar-modal-actions">
+          <button class="btn-secundario" [disabled]="desactivando" (click)="cerrarDesactivacion()">Cancelar</button>
+          <button class="btn-desactivar-confirmar" [disabled]="desactivando" (click)="confirmarDesactivacion()">
+            {{ desactivando ? 'Desactivando…' : 'Confirmar desactivación' }}
+          </button>
+        </div>
+      </section>
+    </div>
   </div>
 </div>
