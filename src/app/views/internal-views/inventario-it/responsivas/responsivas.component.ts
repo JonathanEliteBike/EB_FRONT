@@ -540,9 +540,9 @@ implements OnInit, OnDestroy {
         }
         antesDeGuardar = actual;
         // El endpoint existente requiere observaciones: enviamos el valor actual sin cambiarlo.
-        return this.responsivasService.actualizarResponsiva(actual.id, {
+        return this.responsivasService.corregirEnlaceResponsiva(actual.id, {
           archivoPdf: enlaceNuevo,
-          observaciones: actual.observaciones || ''
+          enlaceAnterior: actual.archivoPdf || ''
         }).pipe(
           tap(() => { servidorAceptoActualizacion = true; }),
           switchMap(() => this.responsivasService.obtenerResponsiva(actual.id))

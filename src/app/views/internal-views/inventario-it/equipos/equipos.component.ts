@@ -70,11 +70,11 @@ export class EquiposComponent implements OnInit {
   ];
 
   categorias: string[] = [
-    'EQUIPO DE COMPUTO',
-    'ACCESORIOS',
-    'DISPOSITIVO E IMPRESORAS',
-    'EQUIPO DE VIDEO'
-  ];
+  'Equipo De Computo',
+  'Accesorios',
+  'Dispositivo E Impresoras',
+  'Equipo De Video'
+];
 
   funcionamientos: string[] = [
     'Excelente',
@@ -174,9 +174,10 @@ export class EquiposComponent implements OnInit {
         this.filtroEmpresa === 'Todas' ||
         equipo.empresa === this.filtroEmpresa;
 
-      const coincideCategoria =
-        this.filtroCategoria === 'Todas' ||
-        equipo.categoria === this.filtroCategoria;
+    const coincideCategoria =
+  this.filtroCategoria === 'Todas' ||
+  (equipo.categoria ?? '').trim().toLocaleLowerCase('es-MX') ===
+    this.filtroCategoria.trim().toLocaleLowerCase('es-MX');
 
       const coincideResponsiva =
         this.filtroResponsiva === 'Todas' ||
